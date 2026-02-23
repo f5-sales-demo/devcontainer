@@ -20,6 +20,7 @@ ARG HELM_VERSION=3.17.1
 ARG ACT_VERSION=0.2.74
 ARG UV_VERSION=0.6.2
 ARG ACTIONLINT_VERSION=1.7.7
+ARG PWSH_VERSION=7.5.4
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -74,7 +75,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Node.js
     nodejs \
     # Python
-    "python${PYTHON_VERSION}" "python${PYTHON_VERSION}-dev" "python${PYTHON_VERSION}-venv" "python${PYTHON_VERSION}-distutils" \
+    "python${PYTHON_VERSION}" "python${PYTHON_VERSION}-dev" "python${PYTHON_VERSION}-venv" \
     # Java
     "openjdk-${JAVA_VERSION}-jdk-headless" \
     # Terraform
@@ -85,9 +86,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     docker-ce-cli docker-buildx-plugin docker-compose-plugin \
     # Azure CLI
     azure-cli \
-    # PowerShell
-    powershell \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# PowerShell — Microsoft only publishes amd64 .deb packages;
+# arm64 uses the official tar.gz from GitHub releases.
+# hadolint ignore=DL3008,DL3059
+RUN DPKG_ARCH=$(dpkg --print-architecture) \
+    && if [ "$DPKG_ARCH" = "amd64" ]; then \
+      apt-get update && apt-get install -y --no-install-recommends powershell \
+      && apt-get clean && rm -rf /var/lib/apt/lists/*; \
+    else \
+      mkdir -p /opt/microsoft/powershell/7 \
+      && curl -fsSL "https://github.com/PowerShell/PowerShell/releases/download/v${PWSH_VERSION}/powershell-${PWSH_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
+        | tar -xz -C /opt/microsoft/powershell/7 \
+      && chmod 755 /opt/microsoft/powershell/7/pwsh \
+      && ln -sf /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh \
+      && ln -sf /usr/bin/pwsh /usr/bin/powershell; \
+    fi
 
 # ============================================================
 # 3. Python bootstrap (symlinks + pip)
