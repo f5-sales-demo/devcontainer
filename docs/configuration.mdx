@@ -1,6 +1,8 @@
 ---
 title: Configuration
-description: Customize the dev container for your environment.
+description: Environment variables, build layers, data persistence, and customization.
+sidebar:
+  order: 2
 ---
 
 # Configuration
@@ -18,7 +20,7 @@ All configuration lives in the `.env` file at the project root. This file is git
 
 ### User Identity
 
-These ensure files you create inside the container have the correct ownership:
+These ensure files created inside the container have correct ownership:
 
 | Variable | Description | How to Set |
 |----------|-------------|------------|
@@ -58,9 +60,35 @@ The proxy maps generic model names to your backend's model identifiers:
 | `REQUEST_TIMEOUT` | `120` | Request timeout in seconds |
 | `ANTHROPIC_API_KEY` | `changeme` | Key passed from dev container to proxy |
 
-## Adding Devcontainer Features
+## How Tools Are Installed
 
-To add more tools, edit `.devcontainer/devcontainer.json` and add entries to the `features` object:
+Tools are installed in three layers:
+
+### Layer 1: Dockerfile (Image Build)
+
+Runs once when you build the image. Installs system packages (`apt-get`), standalone binaries (actionlint, yt-dlp), and sets up the container user with UID/GID mapping.
+
+### Layer 2: Devcontainer Features (Container Creation)
+
+Applied by VS Code or the `devcontainer` CLI. These are [OCI-distributed packages](https://containers.dev/features) that install runtimes and tools:
+
+| Source | Features |
+|--------|----------|
+| **Official** (`devcontainers/features`) | common-utils, git, github-cli, node, python, go, rust, java, terraform, kubectl-helm, docker-outside-of-docker, aws-cli, azure-cli, powershell |
+| **Community** | claude-code, opencode, codex, uv, prettier, act, terraform-docs, devcontainers-cli |
+
+### Layer 3: Post-Create Script
+
+Runs after features are installed, using the runtimes they provide:
+
+- **pip**: pre-commit, ansible, black, pylint, yamllint
+- **npm**: markdownlint-cli2, openclaw
+
+## Adding Tools
+
+### Devcontainer Features
+
+Edit `.devcontainer/devcontainer.json` and add entries to the `features` object:
 
 ```json
 {
@@ -71,19 +99,11 @@ To add more tools, edit `.devcontainer/devcontainer.json` and add entries to the
 }
 ```
 
-Browse available features at [containers.dev/features](https://containers.dev/features).
+Browse available features at [containers.dev/features](https://containers.dev/features). Rebuild after adding: `docker compose up -d --build` (or in VS Code: **Dev Containers → Rebuild Container**).
 
-After adding features, rebuild:
+### System Packages
 
-```bash
-docker compose up -d --build
-```
-
-Or in VS Code: **Dev Containers → Rebuild Container**.
-
-## Adding System Packages
-
-To install additional apt packages, edit the `Dockerfile`:
+Edit the `Dockerfile`:
 
 ```dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -92,53 +112,35 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 ```
 
-Then rebuild:
-
-```bash
-docker compose up -d --build
-```
-
-## Adding Python or npm Tools
+### Python or npm Tools
 
 Edit `.devcontainer/scripts/post-create.sh`:
 
 ```bash
-# Python tools
 pip install --user your-python-tool
-
-# npm tools
 npm install -g your-npm-tool
 ```
 
-These run after the container is created, when devcontainer features (including Python and Node.js) are already installed.
-
 ## VS Code Extensions
 
-Extensions are configured in `.devcontainer/devcontainer.json` under `customizations.vscode.extensions`:
-
-```json
-{
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-python.python",
-        "hashicorp.terraform"
-      ]
-    }
-  }
-}
-```
-
-Extensions are installed automatically when you open the project in VS Code with the Dev Containers extension.
+Extensions are configured in `.devcontainer/devcontainer.json` under `customizations.vscode.extensions` and installed automatically when opening in VS Code.
 
 ## Data Persistence
+
+All data lives in Docker named volumes — no host directories are mounted:
 
 | Volume | Mount Point | Contents |
 |--------|-------------|----------|
 | `workspace` | `/workspace` | Your cloned repositories and project files |
 | `home` | `/home/<username>` | Shell history, tool configs, caches, SSH keys |
 
-Both persist across container restarts and rebuilds. Only `docker compose down -v` deletes them.
+Both persist across container restarts and rebuilds.
+
+| Action | Data |
+|--------|------|
+| `docker compose down` | Preserved |
+| `docker compose up -d --build` | Preserved |
+| `docker compose down -v` | **Deleted** |
 
 ## Port Mapping
 
