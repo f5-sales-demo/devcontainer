@@ -14,7 +14,7 @@ fi
 # Install/update Claude Code on first boot (persists in home volume)
 if ! command -v claude &> /dev/null; then
     echo "  📦 Installing Claude Code..."
-    curl -fsSL https://claude.ai/install.sh | bash
+    curl -fsSL https://claude.ai/install.sh -o /tmp/claude-install.sh && bash /tmp/claude-install.sh && rm -f /tmp/claude-install.sh
     export PATH="$HOME/.local/bin:$PATH"
 fi
 
