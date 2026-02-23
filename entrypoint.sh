@@ -6,18 +6,17 @@ for dir in "$HOME/.cache" "$HOME/.local" "$HOME/.claude" "$HOME/.ssh"; do
     fi
 done
 
-# Ensure home directory ownership
 if [ ! -O "$HOME" ]; then
     sudo chown -R "$(id -u):$(id -g)" "$HOME" 2>/dev/null || true
 fi
 
-# Ensure PATH includes local bin and npm global bin
-export PATH="$HOME/.local/bin:$(npm prefix -g 2>/dev/null)/bin:$PATH"
+# Configure npm to use home directory for global installs
+export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+mkdir -p "$NPM_CONFIG_PREFIX/bin"
+export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$NPM_CONFIG_PREFIX/bin:$PATH"
 
 # ============================================================
 # Install AI coding tools on first boot
-# Native installers: user-owned, self-updating, persist in home volume
-# npm packages: installed globally as user, updated via npm
 # ============================================================
 
 # Claude Code — native installer
@@ -38,7 +37,7 @@ if ! command -v codex &> /dev/null; then
     npm install -g @openai/codex 2>/dev/null
 fi
 
-# OpenClaw — npm (requires Node.js, skip onboarding)
+# OpenClaw — npm
 if ! command -v openclaw &> /dev/null; then
     echo "  📦 Installing OpenClaw (npm)..."
     npm install -g openclaw 2>/dev/null
@@ -48,7 +47,6 @@ fi
 # Configure user environment
 # ============================================================
 
-# Git config from env vars
 if [ -n "$GIT_AUTHOR_NAME" ]; then
     git config --global user.name "$GIT_AUTHOR_NAME"
 fi
@@ -56,7 +54,6 @@ if [ -n "$GIT_AUTHOR_EMAIL" ]; then
     git config --global user.email "$GIT_AUTHOR_EMAIL"
 fi
 
-# SSH key from env var (base64 encoded)
 if [ -n "$SSH_PRIVATE_KEY" ]; then
     mkdir -p "$HOME/.ssh"
     echo "$SSH_PRIVATE_KEY" | base64 -d > "$HOME/.ssh/id_ed25519"
@@ -75,9 +72,21 @@ SSHCONF
     fi
 fi
 
-# Seed AI tool config if missing
 if [ ! -f "$HOME/.claude.json" ] || [ ! -s "$HOME/.claude.json" ]; then
     echo '{"hasCompletedOnboarding": true}' > "$HOME/.claude.json"
 fi
+
+# Write PATH config for interactive shells
+cat > "$HOME/.path.sh" << PATHEOF
+export NPM_CONFIG_PREFIX="\$HOME/.npm-global"
+export PATH="\$HOME/.local/bin:\$HOME/.opencode/bin:\$HOME/.npm-global/bin:\$PATH"
+PATHEOF
+
+# Source it from zshrc/bashrc if not already there
+for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
+    if [ -f "$rc" ] && ! grep -q ".path.sh" "$rc" 2>/dev/null; then
+        echo 'source "$HOME/.path.sh"' >> "$rc"
+    fi
+done
 
 exec "$@"
