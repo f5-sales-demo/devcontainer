@@ -1,0 +1,10 @@
+# tools.txt — Additional tools to install on first container creation
+# One command per line. Lines starting with # are comments.
+# Add your own tools here and rebuild the container.
+#
+# Examples:
+# pip install httpie
+# npm install -g typescript ts-node
+# go install github.com/mikefarah/yq/v4@latest
+# cargo install tokei
+# pipx install poetry

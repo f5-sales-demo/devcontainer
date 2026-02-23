@@ -1,0 +1,14 @@
+# Secrets — never commit
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Docker volumes
+.docker-data/
