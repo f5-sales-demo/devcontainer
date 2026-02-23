@@ -1,4 +1,4 @@
-FROM python:3.14-slim
+FROM python:3.13-slim
 # OpenAI-compatible API proxy — translates between API formats
 WORKDIR /app
 
@@ -6,7 +6,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir uv
 
 # Clone the proxy and install dependencies
-# Build tools are needed for C extensions (httptools, uvloop) on Python 3.14
+# Build tools are needed for C extensions (httptools, uvloop) on Python 3.13
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git build-essential \
