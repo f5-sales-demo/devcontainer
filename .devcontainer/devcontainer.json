@@ -27,10 +27,8 @@
       "version": "3.13",
       "installTools": true
     },
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest",
-      "moby": true,
-      "dockerDashComposeVersion": "v2"
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "version": "latest"
     },
     "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
       "version": "latest",
@@ -51,6 +49,15 @@
       "version": "latest",
       "installGradle": true,
       "installMaven": true
+    },
+    "ghcr.io/devcontainers/features/aws-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/azure-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/powershell:1": {
+      "version": "latest"
     }
   },
 
@@ -79,9 +86,5 @@
   "containerEnv": {
     "ANTHROPIC_BASE_URL": "http://proxy:8082",
     "EDITOR": "vim"
-  },
-
-  "remoteEnv": {
-    "PATH": "${containerEnv:PATH}:/home/${localEnv:USER}/.local/bin"
   }
 }
