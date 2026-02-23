@@ -62,8 +62,7 @@ RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/sh
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # npm global packages (as root)
-RUN npm install -g @anthropic-ai/claude-code \
-    opencode-ai \
+RUN npm install -g opencode-ai \
     @openai/codex
 
 # pre-commit
@@ -97,6 +96,9 @@ WORKDIR /home/$USERNAME
 
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install Claude Code (native installer)
+RUN curl -fsSL https://cli.anthropic.com/install.sh | sh
 
 # Pre-create directories for volumes
 RUN mkdir -p ~/.cache/opencode ~/.cache/pre-commit ~/.local/bin ~/.claude
