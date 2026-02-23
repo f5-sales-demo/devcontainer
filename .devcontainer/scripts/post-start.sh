@@ -1,14 +1,23 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Running post-start checks..."
+echo "Running post-start checks..."
 
-# Verify proxy
-echo -n "  Checking AI proxy (proxy:8082)... "
-if curl -sf --connect-timeout 5 http://proxy:8082/ >/dev/null 2>&1; then
-  echo "✅ reachable"
+# Check AI provider mode
+if [ -n "$ANTHROPIC_BASE_URL" ]; then
+  echo -n "  Checking AI proxy ($ANTHROPIC_BASE_URL)... "
+  if curl -sf --connect-timeout 5 "$ANTHROPIC_BASE_URL/" >/dev/null 2>&1; then
+    echo "reachable"
+  else
+    echo "not reachable (check proxy logs: docker compose logs proxy)"
+  fi
 else
-  echo "⚠️  Not reachable (start proxy with: docker compose up -d proxy)"
+  echo "  Mode: direct API (no proxy)"
+  if [ -n "$ANTHROPIC_API_KEY" ]; then
+    echo "  ANTHROPIC_API_KEY is set"
+  else
+    echo "  ANTHROPIC_API_KEY is not set — AI tools will not work"
+  fi
 fi
 
 # Check installed tools
@@ -19,9 +28,9 @@ for cmd in node python3 go rustc javac git gh docker kubectl helm terraform \
   aws az pwsh devcontainer; do
   if command -v $cmd &>/dev/null; then
     ver=$($cmd --version 2>&1 | head -1 | sed 's/^[[:space:]]*//')
-    printf "    ✅ %-20s %s\n" "$cmd" "$ver"
+    printf "    %-20s %s\n" "$cmd" "$ver"
   fi
 done
 
 echo ""
-echo "✅ Ready! Start coding in /workspace"
+echo "Ready! Start coding in /workspace"

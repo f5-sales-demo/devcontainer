@@ -34,7 +34,7 @@ git --version
 
 ### An API Key
 
-The AI coding tools need an API endpoint. You'll need an **API key** and the **base URL** for your provider (OpenAI, Anthropic via proxy, Azure OpenAI, or any OpenAI-compatible API).
+You need an **API key** from your AI provider (Anthropic, OpenAI, or any compatible API). By default the devcontainer connects directly to your provider — no proxy required.
 
 ### System Resources
 
@@ -44,7 +44,7 @@ The AI coding tools need an API endpoint. You'll need an **API key** and the **b
 | RAM | 4 GB allocated to Docker | 8 GB+ |
 | CPU | 2 cores | 4+ cores |
 
-Adjust Docker resource limits in Docker Desktop → Settings → Resources.
+Adjust Docker resource limits in Docker Desktop &rarr; Settings &rarr; Resources.
 
 ## 1. Clone the Repository
 
@@ -68,14 +68,30 @@ GIT_AUTHOR_EMAIL=$(git config user.email)
 EOF
 ```
 
-## 3. Set Your API Keys
+## 3. Set Your API Key
 
-Open `.env` and set the two required fields:
+### Direct mode (default)
+
+Open `.env` and set your API key:
 
 ```ini
+ANTHROPIC_API_KEY=sk-ant-your-api-key-here
+```
+
+That's it — the dev container will connect directly to your AI provider.
+
+### Proxy mode (optional)
+
+If you need to route traffic through the built-in proxy sidecar (for example, to remap model names or target an OpenAI-compatible endpoint), uncomment the proxy block in `.env`:
+
+```ini
+COMPOSE_PROFILES=proxy
+ANTHROPIC_BASE_URL=http://proxy:8082
 OPENAI_API_KEY=sk-your-api-key-here
 OPENAI_BASE_URL=https://your-api-endpoint.example.com/v1
 ```
+
+See [Configuration — AI Proxy](./configuration#ai-proxy-optional) for model mapping and tuning options.
 
 ## 4. (Optional) Add Your SSH Key
 
@@ -137,9 +153,14 @@ az --version
 terraform --version
 ```
 
-Test the AI proxy connection:
+Test the AI connection:
 
 ```bash
+# Direct mode — connects to your provider
+claude -p "Say hello"
+
+# Proxy mode — verify proxy is reachable first
+curl http://proxy:8082/
 claude -p "Say hello"
 ```
 

@@ -18,10 +18,12 @@ docker compose up -d
 
 ### Proxy fails health check
 
+This only applies if you are running in **proxy mode** (`COMPOSE_PROFILES=proxy` in `.env`). If you are using direct mode, the proxy is not running and health check messages can be ignored.
+
 Check proxy logs:
 
 ```bash
-docker compose logs proxy
+docker compose --profile proxy logs proxy
 ```
 
 Common causes:
@@ -50,16 +52,26 @@ echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
 
 ### API requests fail with 401
 
-Check that the proxy is running and configured:
+**Direct mode** — Check that your API key is set correctly:
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+Verify it works by making a direct call to your provider.
+
+**Proxy mode** — Check that the proxy is running and configured:
 
 ```bash
 curl http://proxy:8082/
-docker compose exec proxy env | grep -E 'OPENAI|MODEL'
+docker compose --profile proxy exec proxy env | grep -E 'OPENAI|MODEL'
 ```
 
 ### Claude says "model not found"
 
-Check `BIG_MODEL`, `MIDDLE_MODEL`, and `SMALL_MODEL` in `.env` — these must match model names your API provider accepts. See [Configuration — Model Mapping](./configuration#model-mapping).
+In proxy mode, check `BIG_MODEL`, `MIDDLE_MODEL`, and `SMALL_MODEL` in `.env` — these must match model names your API provider accepts. See [Configuration — Model Mapping](./configuration#model-mapping-proxy-mode-only).
+
+In direct mode, the model is determined by your provider and API key. Check your provider's documentation for available models.
 
 ## Permission Issues
 
@@ -118,7 +130,7 @@ Then restart Docker.
 
 ### Port 18082 already in use
 
-Change the port in `docker-compose.yml`:
+This only applies in proxy mode. Change the port in `docker-compose.yml`:
 
 ```yaml
 ports:
@@ -128,7 +140,7 @@ ports:
 ## Reset Everything
 
 ```bash
-docker compose down -v
+docker compose --profile proxy down -v
 docker rm -f devcontainer devcontainer-proxy 2>/dev/null
 docker compose up -d --build
 ```
