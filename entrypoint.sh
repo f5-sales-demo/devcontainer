@@ -11,11 +11,18 @@ if [ ! -O "$HOME" ]; then
     sudo chown -R "$(id -u):$(id -g)" "$HOME" 2>/dev/null || true
 fi
 
-# Install/update Claude Code on first boot (persists in home volume)
+# Ensure PATH includes local bin
+export PATH="$HOME/.local/bin:$PATH"
+
+# Install AI coding tools on first boot (native installers, user-owned, self-updating)
 if ! command -v claude &> /dev/null; then
     echo "  📦 Installing Claude Code..."
     curl -fsSL https://claude.ai/install.sh -o /tmp/claude-install.sh && bash /tmp/claude-install.sh && rm -f /tmp/claude-install.sh
-    export PATH="$HOME/.local/bin:$PATH"
+fi
+
+if ! command -v opencode &> /dev/null; then
+    echo "  📦 Installing OpenCode..."
+    curl -fsSL https://opencode.ai/install -o /tmp/opencode-install.sh && bash /tmp/opencode-install.sh && rm -f /tmp/opencode-install.sh
 fi
 
 # Set up git config from env vars
@@ -49,8 +56,5 @@ fi
 if [ ! -f "$HOME/.claude.json" ] || [ ! -s "$HOME/.claude.json" ]; then
     echo '{"hasCompletedOnboarding": true}' > "$HOME/.claude.json"
 fi
-
-# Ensure PATH includes local bin
-export PATH="$HOME/.local/bin:$PATH"
 
 exec "$@"
