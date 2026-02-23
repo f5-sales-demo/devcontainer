@@ -1,9 +1,50 @@
 ---
 title: Getting Started
-description: Set up the dev container in five minutes.
+description: Prerequisites and setup — from zero to a working dev environment.
+sidebar:
+  order: 1
 ---
 
 # Getting Started
+
+## Prerequisites
+
+### Docker
+
+You need Docker running on your machine. Any recent version will work.
+
+| Platform | Install |
+|----------|---------|
+| macOS | [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) |
+| Windows | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) (WSL2 backend) |
+| Linux | [Docker Engine](https://docs.docker.com/engine/install/) or [Docker Desktop for Linux](https://docs.docker.com/desktop/install/linux/) |
+
+Verify it's working:
+
+```bash
+docker --version
+docker compose version
+```
+
+### Git
+
+```bash
+git --version
+```
+
+### An API Key
+
+The AI coding tools need an API endpoint. You'll need an **API key** and the **base URL** for your provider (OpenAI, Anthropic via proxy, Azure OpenAI, or any OpenAI-compatible API).
+
+### System Resources
+
+| Resource | Minimum | Recommended |
+|----------|---------|-------------|
+| Disk | 5 GB | 10 GB+ |
+| RAM | 4 GB allocated to Docker | 8 GB+ |
+| CPU | 2 cores | 4+ cores |
+
+Adjust Docker resource limits in Docker Desktop → Settings → Resources.
 
 ## 1. Clone the Repository
 
@@ -14,15 +55,10 @@ cd devcontainer
 
 ## 2. Create Your Configuration
 
-Copy the example environment file and fill in your details:
+Copy the example environment file and append your system-specific values:
 
 ```bash
 cp .env.example .env
-```
-
-Append your system-specific values:
-
-```bash
 cat >> .env << EOF
 USER_UID=$(id -u)
 USER_GID=$(id -g)
@@ -34,25 +70,25 @@ EOF
 
 ## 3. Set Your API Keys
 
-Open `.env` in your editor and set the two required fields at the top:
-
-```bash
-nano .env
-```
+Open `.env` and set the two required fields:
 
 ```ini
 OPENAI_API_KEY=sk-your-api-key-here
 OPENAI_BASE_URL=https://your-api-endpoint.example.com/v1
 ```
 
-These tell the proxy container where to route AI requests.
-
 ## 4. (Optional) Add Your SSH Key
 
-If you need to `git clone` private repos over SSH from inside the container:
+If you need to clone private repos over SSH from inside the container:
 
 ```bash
 echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
+```
+
+Don't have an SSH key? Generate one:
+
+```bash
+ssh-keygen -t ed25519 -C "your-email@example.com"
 ```
 
 ## 5. Build and Start
@@ -61,12 +97,7 @@ echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 docker compose up -d --build
 ```
 
-This builds two containers:
-
-- **devcontainer** — your development environment
-- **devcontainer-proxy** — the API proxy
-
-The first build takes a few minutes to download base images and install tools. Subsequent starts are fast.
+The first build takes a few minutes. Subsequent starts are fast.
 
 ## 6. Connect
 
@@ -76,13 +107,9 @@ The first build takes a few minutes to download base images and install tools. S
 docker compose exec dev zsh
 ```
 
-You're now inside the container with all tools available.
-
 ### Option B: VS Code
 
-Open the project folder in VS Code. It will detect the `.devcontainer/devcontainer.json` and prompt you to "Reopen in Container." Click it.
-
-VS Code will build the container (if needed), install extensions, and connect your editor to the container environment.
+Open the project folder in VS Code. It will detect `.devcontainer/devcontainer.json` and prompt you to "Reopen in Container."
 
 ### Option C: Devcontainer CLI
 
@@ -92,8 +119,6 @@ devcontainer exec --workspace-folder . zsh
 ```
 
 ## Verify Everything Works
-
-Once inside the container, check that tools are available:
 
 ```bash
 # AI tools
@@ -105,7 +130,6 @@ codex --version
 node --version
 python3 --version
 go version
-rustc --version
 
 # Cloud CLIs
 aws --version
@@ -119,37 +143,14 @@ Test the AI proxy connection:
 claude -p "Say hello"
 ```
 
-If you see a response, everything is working.
-
 ## Your First Project
-
-Clone a repo into the `/workspace` directory:
 
 ```bash
 cd /workspace
 git clone https://github.com/your-org/your-project.git
 cd your-project
-```
-
-Then start an AI coding session:
-
-```bash
 claude
 ```
-
-## What Happens at Startup
-
-When the container starts, the `entrypoint.sh` script:
-
-1. Fixes ownership on volume-mounted directories
-2. Configures Git with your name and email
-3. Installs your SSH key (if provided)
-4. Seeds Claude Code configuration to skip the onboarding wizard
-
-When opened via VS Code or the devcontainer CLI, the `postCreateCommand` additionally:
-
-1. Installs Python linting tools (black, pylint, yamllint, pre-commit, ansible)
-2. Installs npm tools (markdownlint-cli2, openclaw)
 
 ## Stopping and Restarting
 
@@ -157,11 +158,15 @@ When opened via VS Code or the devcontainer CLI, the `postCreateCommand` additio
 # Stop (preserves data)
 docker compose down
 
-# Start again (instant, no rebuild)
+# Start again
 docker compose up -d
 
 # Rebuild after config changes
 docker compose up -d --build
+
+# Destroy everything and start fresh
+docker compose down -v
+docker compose up -d --build
 ```
 
-Your code in `/workspace` and home directory persist in Docker volumes across restarts.
+Your code in `/workspace` and home directory persist across restarts. See [Configuration — Data Persistence](./configuration#data-persistence) for details.

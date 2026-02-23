@@ -1,6 +1,8 @@
 ---
 title: Troubleshooting
 description: Common issues and how to fix them.
+sidebar:
+  order: 4
 ---
 
 # Troubleshooting
@@ -9,8 +11,6 @@ description: Common issues and how to fix them.
 
 ### "Conflict. The container name is already in use"
 
-A leftover container from a previous run is blocking the name.
-
 ```bash
 docker rm -f devcontainer devcontainer-proxy
 docker compose up -d
@@ -18,7 +18,7 @@ docker compose up -d
 
 ### Proxy fails health check
 
-The dev container depends on the proxy being healthy. Check proxy logs:
+Check proxy logs:
 
 ```bash
 docker compose logs proxy
@@ -26,17 +26,15 @@ docker compose logs proxy
 
 Common causes:
 
-- **Missing `.env`** — Copy `.env.example` to `.env` and set `OPENAI_API_KEY` and `OPENAI_BASE_URL`.
-- **Invalid API key** — Verify your key works: `curl -H "Authorization: Bearer $OPENAI_API_KEY" $OPENAI_BASE_URL/models`
+- **Missing `.env`** — See [Getting Started](./getting-started#2-create-your-configuration).
+- **Invalid API key** — Verify your key: `curl -H "Authorization: Bearer $OPENAI_API_KEY" $OPENAI_BASE_URL/models`
 - **Network issue** — The proxy needs outbound HTTPS access to your API provider.
 
 ## AI Tools Not Working
 
 ### "claude: command not found"
 
-If you started the container with `docker compose` (not VS Code), devcontainer features haven't been applied. AI tools are installed by features at container creation time.
-
-**Fix:** Either open in VS Code, or install manually:
+If you started with `docker compose` (not VS Code), devcontainer features haven't been applied. Either open in VS Code, or install manually:
 
 ```bash
 curl -fsSL https://claude.ai/install.sh | bash
@@ -44,7 +42,7 @@ curl -fsSL https://claude.ai/install.sh | bash
 
 ### Claude shows "Not logged in"
 
-The entrypoint seeds `~/.claude.json` with onboarding flags. If the file is missing or empty:
+The entrypoint seeds `~/.claude.json` with onboarding flags. If missing:
 
 ```bash
 echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
@@ -52,40 +50,26 @@ echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
 
 ### API requests fail with 401
 
-Check that the proxy is running and configured correctly:
+Check that the proxy is running and configured:
 
 ```bash
-# Test proxy directly
 curl http://proxy:8082/
-
-# Check proxy environment
 docker compose exec proxy env | grep -E 'OPENAI|MODEL'
 ```
 
 ### Claude says "model not found"
 
-The proxy maps model names. Check your `BIG_MODEL`, `MIDDLE_MODEL`, and `SMALL_MODEL` settings in `.env`. These must match model names your API provider accepts.
+Check `BIG_MODEL`, `MIDDLE_MODEL`, and `SMALL_MODEL` in `.env` — these must match model names your API provider accepts. See [Configuration — Model Mapping](./configuration#model-mapping).
 
 ## Permission Issues
 
 ### "Permission denied" on /workspace or /home
 
-Volume ownership can get out of sync. Fix it from inside the container:
-
 ```bash
-sudo chown -R $(id -u):$(id -g) /workspace
-sudo chown -R $(id -u):$(id -g) ~
-```
-
-Or from the host:
-
-```bash
-docker compose exec dev sudo chown -R $(id -u):$(id -g) /workspace /home/$(whoami)
+sudo chown -R $(id -u):$(id -g) /workspace ~
 ```
 
 ### npm install fails with EACCES
-
-If npm global installs fail, configure a user-local prefix:
 
 ```bash
 mkdir -p ~/.npm-global
@@ -98,17 +82,13 @@ source ~/.zshrc
 
 ### Build takes a very long time
 
-The first build downloads the base image (~1 GB) and installs packages. Subsequent builds use Docker's layer cache and are fast.
-
-If builds are slow every time, Docker's build cache may be full:
+The first build downloads the base image (~1 GB). Subsequent builds use cache. If slow every time:
 
 ```bash
 docker builder prune
 ```
 
 ### "No space left on device"
-
-Docker ran out of disk space. Clean up unused images and volumes:
 
 ```bash
 docker system prune -a --volumes
@@ -120,16 +100,13 @@ docker system prune -a --volumes
 
 ### Can't reach the internet from inside the container
 
-Check Docker's DNS and network:
-
 ```bash
-# Inside the container
-ping -c 1 8.8.8.8        # Direct IP
-nslookup google.com       # DNS resolution
-curl -I https://github.com # HTTPS
+ping -c 1 8.8.8.8
+nslookup google.com
+curl -I https://github.com
 ```
 
-If DNS fails, Docker's DNS may need configuration. Add to `/etc/docker/daemon.json` on the host:
+If DNS fails, add to `/etc/docker/daemon.json` on the host:
 
 ```json
 {
@@ -141,22 +118,19 @@ Then restart Docker.
 
 ### Port 18082 already in use
 
-Another service is using the host port mapped to the proxy. Either stop that service or change the port in `docker-compose.yml`:
+Change the port in `docker-compose.yml`:
 
 ```yaml
 ports:
-  - "127.0.0.1:28082:8082"  # Changed from 18082
+  - "127.0.0.1:28082:8082"
 ```
 
 ## Reset Everything
 
-When all else fails, start completely fresh:
-
 ```bash
-# Nuclear option — destroys all data in volumes
 docker compose down -v
 docker rm -f devcontainer devcontainer-proxy 2>/dev/null
 docker compose up -d --build
 ```
 
-This removes containers, volumes, and rebuilds from scratch. You'll need to re-clone any repos into `/workspace` and reconfigure tools.
+This destroys all data in volumes. You'll need to re-clone repos and reconfigure tools.

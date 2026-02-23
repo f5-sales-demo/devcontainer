@@ -1,6 +1,8 @@
 ---
 title: Security
 description: How the isolation model protects your host machine and corporate environment.
+sidebar:
+  order: 3
 ---
 
 # Security
@@ -45,55 +47,32 @@ Many corporate security teams now require that AI coding tools run only inside d
 
 ### No Host Volume Mounts
 
-All data lives in Docker named volumes — not bind-mounted host directories. A compromise inside the container **cannot** access files on your host machine.
-
-```yaml
-# docker-compose.yml
-volumes:
-  - workspace:/workspace    # Docker volume, not a host path
-  - home:/home/${USERNAME}  # Docker volume, not a host path
-```
+All data lives in Docker named volumes — not bind-mounted host directories. A compromise inside the container **cannot** access files on your host machine. See [Configuration — Data Persistence](./configuration#data-persistence) for volume details.
 
 ### No Shared Credential Stores
 
-The container has no access to:
-
-- **macOS Keychain** or **Windows Credential Manager**
-- **Browser profiles** or saved passwords
-- **SSH agent** on the host
-
-SSH keys are injected at startup via a base64-encoded environment variable. They exist only inside the container's filesystem and are destroyed when the container is removed.
+The container has no access to macOS Keychain, Windows Credential Manager, browser profiles, or the host SSH agent. SSH keys are injected at startup via a base64-encoded environment variable and exist only inside the container.
 
 ### No Clipboard Sync
 
-Docker containers do not share clipboard state with the host. Data cannot leak through copy/paste between the container and host applications.
+Docker containers do not share clipboard state with the host. Data cannot leak through copy/paste.
 
 ### Network Isolation
 
 The container communicates only with:
 
-1. **The API proxy sidecar** — via the internal Docker network (not exposed to the host)
+1. **The API proxy sidecar** — via the internal Docker network
 2. **Your configured API endpoint** — outbound HTTPS through Docker's NAT
 
-It has no access to the host's VPN tunnels, corporate network interfaces, or other services running on localhost.
+It has no access to VPN tunnels, corporate network interfaces, or other services on the host.
 
 ### Ephemeral by Design
 
-The entire environment can be destroyed and recreated:
-
-```bash
-# Destroy everything — containers, volumes, all data
-docker compose down -v
-
-# Recreate from scratch
-docker compose up -d --build
-```
-
-Treat the container as disposable. Nothing inside it should be irreplaceable.
+The entire environment can be destroyed and recreated with `docker compose down -v` followed by `docker compose up -d --build`. Treat the container as disposable.
 
 ### CLI-Only Tools
 
-This environment runs AI tools as **command-line interfaces only**. There are no desktop applications, no browser extensions, and no DXT (Desktop Extension) frameworks. The vulnerability that prompted this isolation model does not apply to CLI usage inside a container.
+This environment runs AI tools as **command-line interfaces only**. No desktop applications, no browser extensions, no DXT frameworks. The vulnerability that prompted this isolation model does not apply to CLI usage inside a container.
 
 ## Compliance Checklist
 
@@ -111,11 +90,11 @@ This environment runs AI tools as **command-line interfaces only**. There are no
 ## Best Practices
 
 1. **Do not install AI coding tools on your host machine.** Use this container instead.
-2. **Do not add bind mounts** to the `docker-compose.yml`. The named-volume configuration is intentional.
+2. **Do not add bind mounts** to `docker-compose.yml`. The named-volume configuration is intentional.
 3. **Rotate SSH keys** used inside the container periodically.
 4. **Review `.env` before sharing.** It contains API keys and may contain SSH private keys.
 5. **Rebuild periodically** to pick up security patches: `docker compose up -d --build`
-6. **Do not expose the proxy port** to anything other than localhost. The default config binds to `127.0.0.1:18082` only.
+6. **Do not expose the proxy port** to anything other than localhost. The default binds to `127.0.0.1:18082` only.
 
 ## References
 
