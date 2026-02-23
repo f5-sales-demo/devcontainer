@@ -69,7 +69,6 @@
   "postStartCommand": "bash /workspace/.devcontainer/scripts/post-start.sh",
 
   "containerEnv": {
-    "ANTHROPIC_BASE_URL": "http://proxy:8082",
     "EDITOR": "vim"
   }
 }

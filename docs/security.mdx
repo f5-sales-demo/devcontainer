@@ -18,29 +18,29 @@ Many corporate security teams now require that AI coding tools run only inside d
 ## Isolation Model
 
 ```
-┌────────────────────────────────────────────────┐
-│  Host Machine (corporate endpoint)             │
-│                                                │
-│  ● No AI tool binaries installed               │
-│  ● No AI tool extensions or plugins            │
-│  ● Only Docker is required                     │
-│                                                │
-│  ┌──────────────────────────────────────────┐  │
-│  │  Docker Container (isolated)             │  │
-│  │                                          │  │
-│  │  AI tools run here:                      │  │
-│  │  ├── Claude Code CLI                     │  │
-│  │  ├── OpenCode                            │  │
-│  │  └── Codex                               │  │
-│  │                                          │  │
-│  │  No access to:                           │  │
-│  │  ✗ Host filesystem                       │  │
-│  │  ✗ Host keychain / credential store      │  │
-│  │  ✗ Host clipboard                        │  │
-│  │  ✗ Host network interfaces               │  │
-│  │  ✗ Other host applications               │  │
-│  └──────────────────────────────────────────┘  │
-└────────────────────────────────────────────────┘
++------------------------------------------------+
+|  Host Machine (corporate endpoint)             |
+|                                                |
+|  - No AI tool binaries installed               |
+|  - No AI tool extensions or plugins            |
+|  - Only Docker is required                     |
+|                                                |
+|  +------------------------------------------+  |
+|  |  Docker Container (isolated)             |  |
+|  |                                          |  |
+|  |  AI tools run here:                      |  |
+|  |  - Claude Code CLI                       |  |
+|  |  - OpenCode                              |  |
+|  |  - Codex                                 |  |
+|  |                                          |  |
+|  |  No access to:                           |  |
+|  |  x Host filesystem                       |  |
+|  |  x Host keychain / credential store      |  |
+|  |  x Host clipboard                        |  |
+|  |  x Host network interfaces               |  |
+|  |  x Other host applications               |  |
+|  +------------------------------------------+  |
++------------------------------------------------+
 ```
 
 ## Security Controls
@@ -59,12 +59,12 @@ Docker containers do not share clipboard state with the host. Data cannot leak t
 
 ### Network Isolation
 
-The container communicates only with:
+The container communicates with the outside world in one of two modes:
 
-1. **The API proxy sidecar** — via the internal Docker network
-2. **Your configured API endpoint** — outbound HTTPS through Docker's NAT
+- **Direct mode (default)** — outbound HTTPS to your AI provider through Docker's NAT. No sidecar proxy is involved.
+- **Proxy mode (optional)** — traffic routes through an in-container proxy sidecar on the internal Docker network, which then connects outbound to your API endpoint.
 
-It has no access to VPN tunnels, corporate network interfaces, or other services on the host.
+In both modes, the container has no access to VPN tunnels, corporate network interfaces, or other services on the host.
 
 ### Ephemeral by Design
 
@@ -78,14 +78,14 @@ This environment runs AI tools as **command-line interfaces only**. No desktop a
 
 | Requirement | Status |
 |---|---|
-| AI tools not installed on host endpoint | ✅ |
-| Runs in isolated VM or container | ✅ |
-| No access to host file shares | ✅ |
-| No clipboard sync | ✅ |
-| No shared credential stores | ✅ |
-| No VPN split tunneling into prod networks | ✅ |
-| Environment is disposable | ✅ |
-| No desktop extensions or plugins | ✅ |
+| AI tools not installed on host endpoint | Yes |
+| Runs in isolated VM or container | Yes |
+| No access to host file shares | Yes |
+| No clipboard sync | Yes |
+| No shared credential stores | Yes |
+| No VPN split tunneling into prod networks | Yes |
+| Environment is disposable | Yes |
+| No desktop extensions or plugins | Yes |
 
 ## Best Practices
 
@@ -94,7 +94,7 @@ This environment runs AI tools as **command-line interfaces only**. No desktop a
 3. **Rotate SSH keys** used inside the container periodically.
 4. **Review `.env` before sharing.** It contains API keys and may contain SSH private keys.
 5. **Rebuild periodically** to pick up security patches: `docker compose up -d --build`
-6. **Do not expose the proxy port** to anything other than localhost. The default binds to `127.0.0.1:18082` only.
+6. **Do not expose the proxy port** to anything other than localhost. The default binds to `127.0.0.1:18082` only (proxy mode).
 
 ## References
 

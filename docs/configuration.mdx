@@ -11,12 +11,42 @@ All configuration lives in the `.env` file at the project root. This file is git
 
 ## Environment Variables
 
-### Required
+### AI Provider
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `OPENAI_API_KEY` | API key for your AI provider | `sk-abc123...` |
-| `OPENAI_BASE_URL` | Base URL of your API endpoint | `https://api.openai.com/v1` |
+| `ANTHROPIC_API_KEY` | API key for your AI provider | `sk-ant-abc123...` |
+
+This is the only variable required for AI tools to work. The dev container connects directly to your provider by default.
+
+### AI Proxy (Optional)
+
+To route AI traffic through the built-in proxy sidecar, add these to `.env`:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `COMPOSE_PROFILES` | Set to `proxy` to enable the sidecar | `proxy` |
+| `ANTHROPIC_BASE_URL` | Proxy URL seen by AI tools | `http://proxy:8082` |
+| `OPENAI_API_KEY` | API key for the upstream provider | `sk-abc123...` |
+| `OPENAI_BASE_URL` | Upstream API endpoint | `https://api.openai.com/v1` |
+
+#### Model Mapping (proxy mode only)
+
+The proxy maps generic model names to your backend's model identifiers:
+
+| Variable | Default | Used For |
+|----------|---------|----------|
+| `BIG_MODEL` | `gpt-4o` | Primary model for complex tasks |
+| `MIDDLE_MODEL` | `gpt-4o` | General-purpose model |
+| `SMALL_MODEL` | `gpt-4o-mini` | Fast model for simple tasks |
+
+#### Proxy Tuning (proxy mode only)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOG_LEVEL` | `WARNING` | Proxy log verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `MAX_TOKENS_LIMIT` | `64000` | Maximum tokens per request |
+| `REQUEST_TIMEOUT` | `120` | Request timeout in seconds |
 
 ### User Identity
 
@@ -40,25 +70,6 @@ These ensure files created inside the container have correct ownership:
 | Variable | Description | How to Set |
 |----------|-------------|------------|
 | `SSH_PRIVATE_KEY` | Base64-encoded private key | `base64 < ~/.ssh/id_ed25519` |
-
-### Model Mapping
-
-The proxy maps generic model names to your backend's model identifiers:
-
-| Variable | Default | Used For |
-|----------|---------|----------|
-| `BIG_MODEL` | `gpt-4o` | Primary model for complex tasks |
-| `MIDDLE_MODEL` | `gpt-4o` | General-purpose model |
-| `SMALL_MODEL` | `gpt-4o-mini` | Fast model for simple tasks |
-
-### Proxy Tuning
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LOG_LEVEL` | `WARNING` | Proxy log verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-| `MAX_TOKENS_LIMIT` | `64000` | Maximum tokens per request |
-| `REQUEST_TIMEOUT` | `120` | Request timeout in seconds |
-| `ANTHROPIC_API_KEY` | `changeme` | Key passed from dev container to proxy |
 
 ## How Tools Are Installed
 
@@ -99,7 +110,7 @@ Edit `.devcontainer/devcontainer.json` and add entries to the `features` object:
 }
 ```
 
-Browse available features at [containers.dev/features](https://containers.dev/features). Rebuild after adding: `docker compose up -d --build` (or in VS Code: **Dev Containers → Rebuild Container**).
+Browse available features at [containers.dev/features](https://containers.dev/features). Rebuild after adding: `docker compose up -d --build` (or in VS Code: **Dev Containers &rarr; Rebuild Container**).
 
 ### System Packages
 
@@ -144,8 +155,10 @@ Both persist across container restarts and rebuilds.
 
 ## Port Mapping
 
+When running in proxy mode (`COMPOSE_PROFILES=proxy`):
+
 | Host | Container | Service |
 |------|-----------|---------|
 | `127.0.0.1:18082` | `8082` | API proxy (localhost only) |
 
-The proxy is bound to `127.0.0.1` so it's only accessible from your machine, not the network.
+The proxy is bound to `127.0.0.1` so it's only accessible from your machine, not the network. In direct mode, no ports are published.
