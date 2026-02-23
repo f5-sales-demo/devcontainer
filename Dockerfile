@@ -6,9 +6,12 @@ ARG USERNAME=vscode
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 # ============================================================
 # System packages (only what devcontainer features don't cover)
 # ============================================================
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     pkg-config \
@@ -68,11 +71,13 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 USER $USERNAME
 WORKDIR /home/$USERNAME
 
-RUN mkdir -p ~/.cache ~/.local/bin ~/.claude
-RUN echo '{"hasCompletedOnboarding": true}' > ~/.claude.json.default
+RUN mkdir -p ~/.cache ~/.local/bin ~/.claude \
+    && echo '{"hasCompletedOnboarding": true}' > ~/.claude.json.default
 
 ENV SHELL=/bin/zsh
 WORKDIR /workspace
+
+HEALTHCHECK NONE
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["sleep", "infinity"]

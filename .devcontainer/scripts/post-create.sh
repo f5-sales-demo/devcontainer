@@ -6,12 +6,12 @@ echo "🔧 Running post-create setup..."
 # Python tools (installed after Python feature)
 echo "  📦 Installing Python tools..."
 pip install --user \
-    pre-commit \
-    ansible \
-    black \
-    pylint \
-    yamllint \
-    2>/dev/null
+  pre-commit \
+  ansible \
+  black \
+  pylint \
+  yamllint \
+  2>/dev/null
 
 # npm tools (installed after Node feature)
 echo "  📦 Installing npm tools..."

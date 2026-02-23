@@ -4,7 +4,11 @@ This devcontainer is designed to run AI coding tools in an isolated environment,
 
 ## Background
 
-In February 2025, [LayerX Security Research](https://layerxsecurity.com/blog/claude-desktop-extensions-rce/) disclosed a critical zero-click remote code execution (RCE) vulnerability in Anthropic's Claude Desktop Extensions (DXT) framework. The vulnerability affects the Claude Desktop application and its extension ecosystem, where extensions run unsandboxed with full system privileges, acting as privileged execution bridges between the language model and the local operating system.
+In February 2025, [LayerX Security Research](https://layerxsecurity.com/blog/claude-desktop-extensions-rce/)
+disclosed a critical zero-click remote code execution (RCE) vulnerability in Anthropic's Claude Desktop
+Extensions (DXT) framework. The vulnerability affects the Claude Desktop application and its extension
+ecosystem, where extensions run unsandboxed with full system privileges, acting as privileged execution
+bridges between the language model and the local operating system.
 
 Many corporate security teams now require that AI coding tools be run only inside dedicated virtual machines, containers, or disposable environments — not directly on corporate endpoints.
 
@@ -71,7 +75,7 @@ This environment runs AI tools as **command-line interfaces only** — not as de
 ## Compliance Checklist
 
 | Requirement | Status |
-|---|---|
+| --- | --- |
 | AI tools not installed on host endpoint | ✅ Tools are inside the container only |
 | Run in VM or isolated environment | ✅ Docker container provides isolation |
 | No access to host file shares | ✅ No bind mounts — Docker volumes only |
