@@ -7,33 +7,18 @@ ARG USERNAME=vscode
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ============================================================
-# System packages
+# System packages (only what devcontainer features don't cover)
 # ============================================================
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Core tools
+    # Build essentials
     build-essential \
-    curl \
-    wget \
-    git \
-    vim \
-    neovim \
-    tmux \
-    jq \
-    yq \
-    ripgrep \
-    fd-find \
-    fzf \
-    bat \
-    tree \
-    htop \
-    unzip \
-    zip \
-    less \
-    file \
-    gnupg2 \
-    ca-certificates \
-    apt-transport-https \
-    software-properties-common \
+    pkg-config \
+    libssl-dev \
+    libffi-dev \
+    # Media & document tools
+    ffmpeg \
+    poppler-utils \
+    qrencode \
     # Networking & debugging
     dnsutils \
     net-tools \
@@ -41,41 +26,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     traceroute \
     tcpdump \
     nmap \
-    openssh-client \
-    # Development libraries
-    libssl-dev \
-    libffi-dev \
-    pkg-config \
-    # Python
-    python3-pip \
-    python3-venv \
-    pipx \
-    # Media & document tools
-    ffmpeg \
-    poppler-utils \
-    qrencode \
+    # Utilities not in base image
+    bat \
+    fd-find \
+    neovim \
+    htop \
+    tree \
+    file \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Node.js 24.x
-RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
-    && apt-get install -y nodejs \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Terraform
-RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" > /etc/apt/sources.list.d/hashicorp.list \
-    && apt-get update && apt-get install -y terraform \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# GitHub CLI
-RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list \
-    && apt-get update && apt-get install -y gh \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Python tools (pip)
+# ============================================================
+# Python tools (no devcontainer features available for these)
+# ============================================================
 RUN pip install --break-system-packages \
     pre-commit \
     ansible \
@@ -83,26 +46,22 @@ RUN pip install --break-system-packages \
     pylint \
     yamllint
 
-# npm global tools (as root)
+# ============================================================
+# npm tools (no devcontainer features available for these)
+# ============================================================
 RUN npm install -g \
-    prettier \
-    markdownlint-cli2 \
-    @devcontainers/cli
+    markdownlint-cli2
 
-# Standalone tools
-RUN curl -sSfL https://raw.githubusercontent.com/nektos/act/master/install.sh | bash -s -- -b /usr/local/bin \
-    && curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash -s -- -b /usr/local/bin \
-    && curl -sSfL https://terraform-docs.io/dl/latest/terraform-docs-linux-$(dpkg --print-architecture).tar.gz | tar -xz -C /usr/local/bin terraform-docs \
-    && chmod +x /usr/local/bin/terraform-docs
+# ============================================================
+# Standalone tools (no devcontainer features available)
+# ============================================================
+
+# actionlint
+RUN curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash -s -- -b /usr/local/bin
 
 # yt-dlp
 RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
     && chmod +x /usr/local/bin/yt-dlp
-
-# VS Code CLI
-RUN curl -sSfL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-$(dpkg --print-architecture | sed 's/amd64/x64/;s/arm64/arm64/')" -o /tmp/vscode-cli.tar.gz \
-    && tar -xz -C /usr/local/bin -f /tmp/vscode-cli.tar.gz \
-    && rm /tmp/vscode-cli.tar.gz
 
 # ============================================================
 # User setup
@@ -128,11 +87,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 USER $USERNAME
 WORKDIR /home/$USERNAME
 
-# Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-
 # Pre-create directories for volumes
-RUN mkdir -p ~/.cache/opencode ~/.cache/pre-commit ~/.local/bin ~/.claude
+RUN mkdir -p ~/.cache ~/.local/bin ~/.claude
 
 # Seed AI tool config
 RUN echo '{"hasCompletedOnboarding": true}' > ~/.claude.json.default

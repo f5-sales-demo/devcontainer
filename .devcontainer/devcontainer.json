@@ -6,59 +6,44 @@
   "remoteUser": "${localEnv:USER}",
 
   "features": {
-    "ghcr.io/devcontainers/features/common-utils:2": {
+    "ghcr.io/devcontainers/features/common-utils": {
       "installZsh": true,
       "configureZshAsDefaultShell": true,
-      "installOhMyZsh": true,
-      "username": "${localEnv:USER}",
-      "userUid": "automatic",
-      "userGid": "automatic"
+      "installOhMyZsh": true
     },
-    "ghcr.io/devcontainers/features/git:1": {
-      "version": "latest"
-    },
-    "ghcr.io/devcontainers/features/github-cli:1": {
-      "version": "latest"
-    },
-    "ghcr.io/devcontainers/features/node:1": {
+    "ghcr.io/devcontainers/features/git": {},
+    "ghcr.io/devcontainers/features/github-cli": {},
+    "ghcr.io/devcontainers/features/node": {
       "version": "24"
     },
-    "ghcr.io/devcontainers/features/python:1": {
+    "ghcr.io/devcontainers/features/python": {
       "version": "3.13",
       "installTools": true
     },
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
-      "version": "latest"
-    },
-    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
-      "version": "latest",
-      "helm": "latest",
-      "minikube": "none"
-    },
-    "ghcr.io/devcontainers/features/terraform:1": {
-      "version": "latest",
-      "tflint": "latest"
-    },
-    "ghcr.io/devcontainers/features/go:1": {
-      "version": "latest"
-    },
-    "ghcr.io/devcontainers/features/rust:1": {
-      "version": "latest"
-    },
-    "ghcr.io/devcontainers/features/java:1": {
-      "version": "latest",
+    "ghcr.io/devcontainers/features/go": {},
+    "ghcr.io/devcontainers/features/rust": {},
+    "ghcr.io/devcontainers/features/java": {
       "installGradle": true,
       "installMaven": true
     },
-    "ghcr.io/devcontainers/features/aws-cli:1": {
-      "version": "latest"
+    "ghcr.io/devcontainers/features/terraform": {
+      "tflint": "latest"
     },
-    "ghcr.io/devcontainers/features/azure-cli:1": {
-      "version": "latest"
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube": {
+      "minikube": "none"
     },
-    "ghcr.io/devcontainers/features/powershell:1": {
-      "version": "latest"
-    }
+    "ghcr.io/devcontainers/features/docker-outside-of-docker": {},
+    "ghcr.io/devcontainers/features/aws-cli": {},
+    "ghcr.io/devcontainers/features/azure-cli": {},
+    "ghcr.io/devcontainers/features/powershell": {},
+    "ghcr.io/devcontainers-community/npm-features/prettier": {},
+    "ghcr.io/dhoeric/features/act": {},
+    "ghcr.io/dhoeric/features/terraform-docs": {},
+    "ghcr.io/eliises/devcontainer-features/devcontainers-cli": {},
+    "ghcr.io/jsburckhardt/devcontainer-features/codex": {},
+    "ghcr.io/jsburckhardt/devcontainer-features/opencode": {},
+    "ghcr.io/jsburckhardt/devcontainer-features/uv": {},
+    "ghcr.io/stu-bell/devcontainer-features/claude-code": {}
   },
 
   "customizations": {
@@ -80,8 +65,8 @@
     }
   },
 
-  "postCreateCommand": "/workspace/.devcontainer/scripts/post-create.sh",
-  "postStartCommand": "/workspace/.devcontainer/scripts/post-start.sh",
+  "postCreateCommand": "bash /workspace/.devcontainer/scripts/post-create.sh",
+  "postStartCommand": "bash /workspace/.devcontainer/scripts/post-start.sh",
 
   "containerEnv": {
     "ANTHROPIC_BASE_URL": "http://proxy:8082",
