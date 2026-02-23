@@ -6,6 +6,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir uv
 
 # Clone the proxy
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends git \
     && git clone https://github.com/fuergaosi233/claude-code-proxy.git . \
     && apt-get purge -y git \
@@ -15,6 +16,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends git \
 # Install dependencies
 RUN uv sync
 
+# Create non-root user
+RUN groupadd -r proxyuser && useradd -r -g proxyuser proxyuser \
+    && chown -R proxyuser:proxyuser /app
+USER proxyuser
+
 EXPOSE 8082
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8082/')" || exit 1
 
 CMD ["uv", "run", "python", "start_proxy.py"]
