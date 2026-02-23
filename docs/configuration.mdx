@@ -73,48 +73,38 @@ These ensure files created inside the container have correct ownership:
 
 ## How Tools Are Installed
 
-Tools are installed in three layers:
+Every language runtime, CLI, and tool is installed directly in the `Dockerfile` at image build time. The image is fully self-contained — no devcontainer features or post-create scripts are needed.
 
-### Layer 1: Dockerfile (Image Build)
+This means tools are available regardless of how you start the container: `docker compose`, VS Code, or the `devcontainer` CLI.
 
-Runs once when you build the image. Installs system packages (`apt-get`), standalone binaries (actionlint, yt-dlp), and sets up the container user with UID/GID mapping.
+The Dockerfile is organized into numbered sections for Docker layer caching:
 
-### Layer 2: Devcontainer Features (Container Creation)
-
-Applied by VS Code or the `devcontainer` CLI. These are [OCI-distributed packages](https://containers.dev/features) that install runtimes and tools:
-
-| Source | Features |
-|--------|----------|
-| **Official** (`devcontainers/features`) | common-utils, git, github-cli, node, python, go, rust, java, terraform, kubectl-helm, docker-outside-of-docker, aws-cli, azure-cli, powershell |
-| **Community** | claude-code, opencode, codex, uv, prettier, act, terraform-docs, devcontainers-cli |
-
-### Layer 3: Post-Create Script
-
-Runs after features are installed, using the runtimes they provide:
-
-- **pip**: pre-commit, ansible, black, pylint, yamllint
-- **npm**: markdownlint-cli2, openclaw
+| Section | Contents |
+|---------|----------|
+| 1. APT repos | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft |
+| 2. APT packages | System tools, Node.js, Python, Java, Terraform, GitHub CLI, Docker CLI, Azure CLI, PowerShell |
+| 3. Python bootstrap | Symlinks + pip via get-pip.py |
+| 4. Go | Official tarball |
+| 5. Rust | rustup (system-wide) |
+| 6. Maven + Gradle | Binary downloads to `/opt` |
+| 7. AWS CLI v2 | Official installer |
+| 8. Binary tools | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv, opencode |
+| 9. npm global tools | claude-code, codex, prettier, markdownlint-cli2, openclaw, devcontainers-cli |
+| 10. pip tools | pre-commit, ansible, black, pylint, yamllint |
 
 ## Adding Tools
 
-### Devcontainer Features
+Edit the `Dockerfile` and add your tool to the appropriate section. Rebuild after adding:
 
-Edit `.devcontainer/devcontainer.json` and add entries to the `features` object:
-
-```json
-{
-  "features": {
-    "ghcr.io/devcontainers/features/ruby": {},
-    "ghcr.io/dhoeric/features/google-cloud-cli": {}
-  }
-}
+```bash
+docker compose up -d --build
 ```
 
-Browse available features at [containers.dev/features](https://containers.dev/features). Rebuild after adding: `docker compose up -d --build` (or in VS Code: **Dev Containers &rarr; Rebuild Container**).
+Or in VS Code: **Dev Containers &rarr; Rebuild Container**.
 
-### System Packages
+### APT packages
 
-Edit the `Dockerfile`:
+Add to the section 2 `apt-get install` block:
 
 ```dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -123,13 +113,32 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 ```
 
-### Python or npm Tools
+### npm tools
 
-Edit `.devcontainer/scripts/post-create.sh`:
+Add to the section 9 `npm install -g` block:
 
-```bash
-pip install --user your-python-tool
-npm install -g your-npm-tool
+```dockerfile
+RUN npm install -g \
+    your-npm-tool
+```
+
+### pip tools
+
+Add to the section 10 `pip install` block:
+
+```dockerfile
+RUN pip install --no-cache-dir --break-system-packages \
+    your-python-tool
+```
+
+### Binary downloads
+
+Add to section 8 or create a new `RUN` layer with architecture detection:
+
+```dockerfile
+RUN ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL "https://example.com/tool-linux-${ARCH}.tar.gz" \
+       | tar -xz -C /usr/local/bin tool
 ```
 
 ## VS Code Extensions

@@ -12,6 +12,8 @@ services:
     volumes:
       - workspace:/workspace
       - home:/home/${USERNAME:-vscode}
+      # Uncomment to use Docker from inside the container:
+      # - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}

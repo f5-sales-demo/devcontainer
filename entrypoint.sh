@@ -46,9 +46,4 @@ if [ ! -f "$HOME/.claude.json" ] || [ ! -s "$HOME/.claude.json" ]; then
   echo '{"hasCompletedOnboarding": true}' >"$HOME/.claude.json"
 fi
 
-# Install OpenClaw (npm, no devcontainer feature available yet)
-if ! command -v openclaw &>/dev/null; then
-  npm install -g openclaw 2>/dev/null &
-fi
-
 exec "$@"

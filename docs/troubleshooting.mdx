@@ -36,10 +36,10 @@ Common causes:
 
 ### "claude: command not found"
 
-If you started with `docker compose` (not VS Code), devcontainer features haven't been applied. Either open in VS Code, or install manually:
+The image may be outdated. Rebuild it:
 
 ```bash
-curl -fsSL https://claude.ai/install.sh | bash
+docker compose up -d --build
 ```
 
 ### Claude shows "Not logged in"
