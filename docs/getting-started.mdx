@@ -113,7 +113,7 @@ ssh-keygen -t ed25519 -C "your-email@example.com"
 docker compose up -d --build
 ```
 
-The first build takes a few minutes. Subsequent starts are fast.
+The first build takes 5-10 minutes (all languages, CLIs, and tools are compiled/downloaded). Subsequent builds use Docker layer caching and are much faster.
 
 ## 6. Connect
 

@@ -5,47 +5,6 @@
   "workspaceFolder": "/workspace",
   "remoteUser": "${localEnv:USER}",
 
-  "features": {
-    "ghcr.io/devcontainers/features/common-utils": {
-      "installZsh": true,
-      "configureZshAsDefaultShell": true,
-      "installOhMyZsh": true
-    },
-    "ghcr.io/devcontainers/features/git": {},
-    "ghcr.io/devcontainers/features/github-cli": {},
-    "ghcr.io/devcontainers/features/node": {
-      "version": "24"
-    },
-    "ghcr.io/devcontainers/features/python": {
-      "version": "3.13",
-      "installTools": true
-    },
-    "ghcr.io/devcontainers/features/go": {},
-    "ghcr.io/devcontainers/features/rust": {},
-    "ghcr.io/devcontainers/features/java": {
-      "installGradle": true,
-      "installMaven": true
-    },
-    "ghcr.io/devcontainers/features/terraform": {
-      "tflint": "latest"
-    },
-    "ghcr.io/devcontainers/features/kubectl-helm-minikube": {
-      "minikube": "none"
-    },
-    "ghcr.io/devcontainers/features/docker-outside-of-docker": {},
-    "ghcr.io/devcontainers/features/aws-cli": {},
-    "ghcr.io/devcontainers/features/azure-cli": {},
-    "ghcr.io/devcontainers/features/powershell": {},
-    "ghcr.io/devcontainers-community/npm-features/prettier": {},
-    "ghcr.io/dhoeric/features/act": {},
-    "ghcr.io/dhoeric/features/terraform-docs": {},
-    "ghcr.io/eliises/devcontainer-features/devcontainers-cli": {},
-    "ghcr.io/jsburckhardt/devcontainer-features/codex": {},
-    "ghcr.io/jsburckhardt/devcontainer-features/opencode": {},
-    "ghcr.io/jsburckhardt/devcontainer-features/uv": {},
-    "ghcr.io/stu-bell/devcontainer-features/claude-code": {}
-  },
-
   "customizations": {
     "vscode": {
       "extensions": [
@@ -65,7 +24,6 @@
     }
   },
 
-  "postCreateCommand": "bash /workspace/.devcontainer/scripts/post-create.sh",
   "postStartCommand": "bash /workspace/.devcontainer/scripts/post-start.sh",
 
   "containerEnv": {
