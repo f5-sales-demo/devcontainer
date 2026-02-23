@@ -61,9 +61,6 @@ RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/sh
     && apt-get update && apt-get install -y terraform \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# npm global packages (as root)
-RUN npm install -g @openai/codex
-
 # pre-commit
 RUN pip install --break-system-packages pre-commit
 

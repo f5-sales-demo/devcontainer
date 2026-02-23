@@ -23,7 +23,7 @@ nano .env
 docker compose up -d --build && docker compose exec dev zsh
 ```
 
-Clone your repos into `/workspace` and start coding.
+Clone your repos into `/workspace` and start coding. First boot takes ~1 minute to install AI tools.
 
 ## What Goes in `.env`
 
@@ -39,9 +39,11 @@ Everything else has sensible defaults. See `.env.example` for all options.
 | Category | Tools |
 |----------|-------|
 | **Languages** | Node.js 24, Python 3.13, Go, Rust, Java |
-| **AI Coding** | Claude Code, OpenCode, Codex |
+| **AI Coding** | Claude Code, OpenCode, Codex, OpenClaw |
 | **DevOps** | Docker, kubectl, Helm, Terraform, pre-commit |
 | **Utilities** | git, gh, vim, neovim, tmux, ripgrep, fzf, jq, yq, curl, nmap |
+
+AI tools are installed on first boot using native installers where available. They persist in the home volume, self-update, and are owned by your user.
 
 ## Data Persistence
 
@@ -50,7 +52,7 @@ All data lives in Docker named volumes (no host mounts):
 | Volume | Path | Contents |
 |--------|------|----------|
 | `workspace` | `/workspace` | Your code and repos |
-| `home` | `/home/<username>` | Shell config, SSH, git, caches |
+| `home` | `/home/<username>` | Shell config, SSH, git, tools, caches |
 
 Data persists across restarts and rebuilds. To start fresh: `docker compose down -v`
 

@@ -11,21 +11,44 @@ if [ ! -O "$HOME" ]; then
     sudo chown -R "$(id -u):$(id -g)" "$HOME" 2>/dev/null || true
 fi
 
-# Ensure PATH includes local bin
-export PATH="$HOME/.local/bin:$PATH"
+# Ensure PATH includes local bin and npm global bin
+export PATH="$HOME/.local/bin:$(npm prefix -g 2>/dev/null)/bin:$PATH"
 
-# Install AI coding tools on first boot (native installers, user-owned, self-updating)
+# ============================================================
+# Install AI coding tools on first boot
+# Native installers: user-owned, self-updating, persist in home volume
+# npm packages: installed globally as user, updated via npm
+# ============================================================
+
+# Claude Code — native installer
 if ! command -v claude &> /dev/null; then
-    echo "  📦 Installing Claude Code..."
+    echo "  📦 Installing Claude Code (native)..."
     curl -fsSL https://claude.ai/install.sh -o /tmp/claude-install.sh && bash /tmp/claude-install.sh && rm -f /tmp/claude-install.sh
 fi
 
+# OpenCode — native installer
 if ! command -v opencode &> /dev/null; then
-    echo "  📦 Installing OpenCode..."
+    echo "  📦 Installing OpenCode (native)..."
     curl -fsSL https://opencode.ai/install -o /tmp/opencode-install.sh && bash /tmp/opencode-install.sh && rm -f /tmp/opencode-install.sh
 fi
 
-# Set up git config from env vars
+# Codex — npm (bundles native Rust binary)
+if ! command -v codex &> /dev/null; then
+    echo "  📦 Installing Codex (npm)..."
+    npm install -g @openai/codex 2>/dev/null
+fi
+
+# OpenClaw — npm (requires Node.js, skip onboarding)
+if ! command -v openclaw &> /dev/null; then
+    echo "  📦 Installing OpenClaw (npm)..."
+    npm install -g openclaw 2>/dev/null
+fi
+
+# ============================================================
+# Configure user environment
+# ============================================================
+
+# Git config from env vars
 if [ -n "$GIT_AUTHOR_NAME" ]; then
     git config --global user.name "$GIT_AUTHOR_NAME"
 fi
@@ -33,7 +56,7 @@ if [ -n "$GIT_AUTHOR_EMAIL" ]; then
     git config --global user.email "$GIT_AUTHOR_EMAIL"
 fi
 
-# Set up SSH key from env var (base64 encoded)
+# SSH key from env var (base64 encoded)
 if [ -n "$SSH_PRIVATE_KEY" ]; then
     mkdir -p "$HOME/.ssh"
     echo "$SSH_PRIVATE_KEY" | base64 -d > "$HOME/.ssh/id_ed25519"
