@@ -10,28 +10,26 @@ ENV DEBIAN_FRONTEND=noninteractive
 # System packages (only what devcontainer features don't cover)
 # ============================================================
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Build essentials
     build-essential \
     pkg-config \
     libssl-dev \
     libffi-dev \
-    # Media & document tools
     ffmpeg \
     poppler-utils \
     qrencode \
-    # Networking & debugging
     dnsutils \
     net-tools \
     iputils-ping \
     traceroute \
     tcpdump \
     nmap \
-    # Utilities not in base image
     bat \
     fd-find \
     neovim \
     htop \
     tree \
+    fzf \
+    tmux \
     file \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -39,11 +37,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ============================================================
 # Standalone tools (no devcontainer features available)
 # ============================================================
+ARG ACTIONLINT_VERSION=1.7.7
+RUN curl -sSfL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_$(dpkg --print-architecture).tar.gz" \
+    | tar -xz -C /usr/local/bin actionlint
 
-# actionlint
-RUN curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash -s -- -b /usr/local/bin
-
-# yt-dlp
 RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
     && chmod +x /usr/local/bin/yt-dlp
 
@@ -71,10 +68,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 USER $USERNAME
 WORKDIR /home/$USERNAME
 
-# Pre-create directories for volumes
 RUN mkdir -p ~/.cache ~/.local/bin ~/.claude
-
-# Seed AI tool config
 RUN echo '{"hasCompletedOnboarding": true}' > ~/.claude.json.default
 
 ENV SHELL=/bin/zsh
