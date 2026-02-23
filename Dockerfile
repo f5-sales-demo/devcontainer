@@ -30,7 +30,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # ============================================================
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates curl gnupg software-properties-common apt-transport-https \
+      ca-certificates curl gnupg software-properties-common apt-transport-https \
     # NodeSource
     && curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
     # deadsnakes (Python)
@@ -38,24 +38,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # HashiCorp
     && curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
-       > /etc/apt/sources.list.d/hashicorp.list \
+      > /etc/apt/sources.list.d/hashicorp.list \
     # GitHub CLI
     && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-       | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+      | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-       > /etc/apt/sources.list.d/github-cli.list \
+      > /etc/apt/sources.list.d/github-cli.list \
     # Docker
     && install -m 0755 -d /etc/apt/keyrings \
     && curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc \
     && chmod a+r /etc/apt/keyrings/docker.asc \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
-       > /etc/apt/sources.list.d/docker.list \
+      > /etc/apt/sources.list.d/docker.list \
     # Microsoft (Azure CLI + PowerShell)
     && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" \
-       > /etc/apt/sources.list.d/azure-cli.list \
+      > /etc/apt/sources.list.d/azure-cli.list \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/ubuntu/24.04/prod $(lsb_release -cs) main" \
-       > /etc/apt/sources.list.d/microsoft-prod.list \
+      > /etc/apt/sources.list.d/microsoft-prod.list \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
@@ -116,10 +116,12 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
 # ============================================================
 # 6. Maven + Gradle
 # ============================================================
+# hadolint ignore=DL3059
 RUN curl -fsSL "https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
     | tar -xz -C /opt \
     && ln -s "/opt/apache-maven-${MAVEN_VERSION}/bin/mvn" /usr/local/bin/mvn
 
+# hadolint ignore=DL3059
 RUN curl -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -o /tmp/gradle.zip \
     && unzip -q /tmp/gradle.zip -d /opt \
     && ln -s "/opt/gradle-${GRADLE_VERSION}/bin/gradle" /usr/local/bin/gradle \
@@ -128,6 +130,7 @@ RUN curl -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSIO
 # ============================================================
 # 7. AWS CLI v2
 # ============================================================
+# hadolint ignore=DL3059
 RUN ARCH=$(uname -m) \
     && curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip" -o /tmp/awscli.zip \
     && unzip -q /tmp/awscli.zip -d /tmp \
@@ -138,44 +141,46 @@ RUN ARCH=$(uname -m) \
 # 8. Binary tools (kubectl, helm, tflint, terraform-docs,
 #    act, actionlint, yt-dlp, uv, opencode)
 # ============================================================
+# hadolint ignore=DL3059
 RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # kubectl
     && curl -fsSLo /usr/local/bin/kubectl \
-       "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${DPKG_ARCH}/kubectl" \
+      "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${DPKG_ARCH}/kubectl" \
     && chmod +x /usr/local/bin/kubectl \
     # helm
     && curl -fsSL "https://get.helm.sh/helm-v${HELM_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
-       | tar -xz --strip-components=1 -C /usr/local/bin "linux-${DPKG_ARCH}/helm" \
+      | tar -xz --strip-components=1 -C /usr/local/bin "linux-${DPKG_ARCH}/helm" \
     # tflint
     && curl -fsSL "https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_${DPKG_ARCH}.zip" \
-       -o /tmp/tflint.zip \
+      -o /tmp/tflint.zip \
     && unzip -q /tmp/tflint.zip -d /usr/local/bin && rm /tmp/tflint.zip \
     # terraform-docs
     && curl -fsSL "https://github.com/terraform-docs/terraform-docs/releases/download/v${TERRAFORM_DOCS_VERSION}/terraform-docs-v${TERRAFORM_DOCS_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
-       | tar -xz -C /usr/local/bin terraform-docs \
+      | tar -xz -C /usr/local/bin terraform-docs \
     # act
     && if [ "$UNAME_ARCH" = "x86_64" ]; then ACT_ARCH="x86_64"; else ACT_ARCH="arm64"; fi \
     && curl -fsSL "https://github.com/nektos/act/releases/download/v${ACT_VERSION}/act_Linux_${ACT_ARCH}.tar.gz" \
-       | tar -xz -C /usr/local/bin act \
+      | tar -xz -C /usr/local/bin act \
     # actionlint
     && curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-       | tar -xz -C /usr/local/bin actionlint \
+      | tar -xz -C /usr/local/bin actionlint \
     # yt-dlp
     && curl -fsSLo /usr/local/bin/yt-dlp \
-       "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" \
+      "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" \
     && chmod +x /usr/local/bin/yt-dlp \
     # uv
-    && curl -fsSL https://astral.sh/uv/${UV_VERSION}/install.sh | sh \
+    && curl -fsSL "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh \
     && mv "$HOME/.local/bin/uv" /usr/local/bin/uv \
     && mv "$HOME/.local/bin/uvx" /usr/local/bin/uvx 2>/dev/null || true \
     # opencode
     && if [ "$UNAME_ARCH" = "x86_64" ]; then OC_ARCH="x64"; else OC_ARCH="arm64"; fi \
     && curl -fsSL "https://github.com/anomalyco/opencode/releases/latest/download/opencode-linux-${OC_ARCH}.tar.gz" \
-       | tar -xz -C /usr/local/bin opencode
+      | tar -xz -C /usr/local/bin opencode
 
 # ============================================================
 # 9. npm global tools
 # ============================================================
+# hadolint ignore=DL3016,DL3059
 RUN npm install -g \
     @anthropic-ai/claude-code \
     @openai/codex \
@@ -187,6 +192,7 @@ RUN npm install -g \
 # ============================================================
 # 10. pip tools
 # ============================================================
+# hadolint ignore=DL3013,DL3059
 RUN pip install --no-cache-dir --break-system-packages \
     pre-commit \
     ansible \
@@ -198,18 +204,18 @@ RUN pip install --no-cache-dir --break-system-packages \
 # User setup
 # ============================================================
 RUN if [ "$USERNAME" != "vscode" ]; then \
-        usermod -l $USERNAME -d /home/$USERNAME -m vscode && \
-        groupmod -n $USERNAME vscode && \
-        sed -i "s/vscode/$USERNAME/g" /etc/sudoers.d/vscode 2>/dev/null || true && \
-        mv /etc/sudoers.d/vscode /etc/sudoers.d/$USERNAME 2>/dev/null || true; \
+      usermod -l $USERNAME -d /home/$USERNAME -m vscode && \
+      groupmod -n $USERNAME vscode && \
+      sed -i "s/vscode/$USERNAME/g" /etc/sudoers.d/vscode 2>/dev/null || true && \
+      mv /etc/sudoers.d/vscode /etc/sudoers.d/$USERNAME 2>/dev/null || true; \
     fi
 
 RUN if [ "$USER_GID" != "1000" ]; then \
-        groupmod --non-unique --gid $USER_GID $USERNAME 2>/dev/null || true; \
+      groupmod --non-unique --gid $USER_GID $USERNAME 2>/dev/null || true; \
     fi && \
     if [ "$USER_UID" != "1000" ]; then \
-        usermod --non-unique --uid $USER_UID --gid $USER_GID $USERNAME && \
-        chown -R $USER_UID:$USER_GID /home/$USERNAME; \
+      usermod --non-unique --uid $USER_UID --gid $USER_GID $USERNAME && \
+      chown -R $USER_UID:$USER_GID /home/$USERNAME; \
     fi
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
