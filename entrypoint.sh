@@ -11,6 +11,13 @@ if [ ! -O "$HOME" ]; then
     sudo chown -R "$(id -u):$(id -g)" "$HOME" 2>/dev/null || true
 fi
 
+# Install/update Claude Code on first boot (persists in home volume)
+if ! command -v claude &> /dev/null; then
+    echo "  📦 Installing Claude Code..."
+    curl -fsSL https://claude.ai/install.sh | bash
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+
 # Set up git config from env vars
 if [ -n "$GIT_AUTHOR_NAME" ]; then
     git config --global user.name "$GIT_AUTHOR_NAME"
@@ -25,9 +32,7 @@ if [ -n "$SSH_PRIVATE_KEY" ]; then
     echo "$SSH_PRIVATE_KEY" | base64 -d > "$HOME/.ssh/id_ed25519"
     chmod 700 "$HOME/.ssh"
     chmod 600 "$HOME/.ssh/id_ed25519"
-    # Generate public key from private
     ssh-keygen -y -f "$HOME/.ssh/id_ed25519" > "$HOME/.ssh/id_ed25519.pub" 2>/dev/null
-    # Default SSH config
     if [ ! -f "$HOME/.ssh/config" ]; then
         cat > "$HOME/.ssh/config" << 'SSHCONF'
 Host github.com
@@ -38,12 +43,14 @@ Host *
 SSHCONF
         chmod 600 "$HOME/.ssh/config"
     fi
-    echo "  ✅ SSH key configured"
 fi
 
 # Seed AI tool config if missing
 if [ ! -f "$HOME/.claude.json" ] || [ ! -s "$HOME/.claude.json" ]; then
     echo '{"hasCompletedOnboarding": true}' > "$HOME/.claude.json"
 fi
+
+# Ensure PATH includes local bin
+export PATH="$HOME/.local/bin:$PATH"
 
 exec "$@"
