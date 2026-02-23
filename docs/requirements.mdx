@@ -1,0 +1,81 @@
+---
+title: Requirements
+description: What you need before setting up the dev container.
+---
+
+# Requirements
+
+## Required
+
+### Docker Desktop
+
+You need Docker running on your machine. Any recent version will work.
+
+| Platform | Install |
+|----------|---------|
+| macOS | [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) |
+| Windows | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) (WSL2 backend) |
+| Linux | [Docker Engine](https://docs.docker.com/engine/install/) or [Docker Desktop for Linux](https://docs.docker.com/desktop/install/linux/) |
+
+Verify it's working:
+
+```bash
+docker --version
+docker compose version
+```
+
+### Git
+
+You need Git to clone the repository.
+
+```bash
+git --version
+```
+
+### An API Key
+
+The AI coding tools need an API endpoint. You'll need:
+
+- An **API key** (or access token) for your AI provider
+- The **base URL** of your API endpoint
+
+This could be OpenAI, Anthropic (via proxy), Azure OpenAI, or any OpenAI-compatible API.
+
+## Optional
+
+### VS Code
+
+For the best experience, install [Visual Studio Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
+
+This lets you open the project in VS Code and have it automatically build and connect to the container, with full IDE support (extensions, debugging, IntelliSense).
+
+You can also use the container from a plain terminal without VS Code.
+
+### SSH Key
+
+If you need to clone private repositories over SSH from inside the container, you'll need an SSH private key (Ed25519 recommended).
+
+```bash
+# Generate one if you don't have it
+ssh-keygen -t ed25519 -C "your-email@example.com"
+```
+
+### GitHub CLI Authentication
+
+If you plan to use `gh` (GitHub CLI) inside the container, authenticate after starting:
+
+```bash
+gh auth login
+```
+
+## System Resources
+
+The container uses approximately:
+
+| Resource | Minimum | Recommended |
+|----------|---------|-------------|
+| Disk | 5 GB (images + tools) | 10 GB+ |
+| RAM | 4 GB allocated to Docker | 8 GB+ |
+| CPU | 2 cores | 4+ cores |
+
+These are Docker resource limits, not host requirements. Adjust in Docker Desktop → Settings → Resources if needed.

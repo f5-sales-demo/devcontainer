@@ -1,0 +1,149 @@
+---
+title: Configuration
+description: Customize the dev container for your environment.
+---
+
+# Configuration
+
+All configuration lives in the `.env` file at the project root. This file is gitignored — it never gets committed.
+
+## Environment Variables
+
+### Required
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `OPENAI_API_KEY` | API key for your AI provider | `sk-abc123...` |
+| `OPENAI_BASE_URL` | Base URL of your API endpoint | `https://api.openai.com/v1` |
+
+### User Identity
+
+These ensure files you create inside the container have the correct ownership:
+
+| Variable | Description | How to Set |
+|----------|-------------|------------|
+| `USER_UID` | Your host user ID | `id -u` |
+| `USER_GID` | Your host group ID | `id -g` |
+| `USERNAME` | Your host username | `whoami` |
+
+### Git
+
+| Variable | Description | How to Set |
+|----------|-------------|------------|
+| `GIT_AUTHOR_NAME` | Name for git commits | `git config user.name` |
+| `GIT_AUTHOR_EMAIL` | Email for git commits | `git config user.email` |
+
+### SSH
+
+| Variable | Description | How to Set |
+|----------|-------------|------------|
+| `SSH_PRIVATE_KEY` | Base64-encoded private key | `base64 < ~/.ssh/id_ed25519` |
+
+### Model Mapping
+
+The proxy maps generic model names to your backend's model identifiers:
+
+| Variable | Default | Used For |
+|----------|---------|----------|
+| `BIG_MODEL` | `gpt-4o` | Primary model for complex tasks |
+| `MIDDLE_MODEL` | `gpt-4o` | General-purpose model |
+| `SMALL_MODEL` | `gpt-4o-mini` | Fast model for simple tasks |
+
+### Proxy Tuning
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOG_LEVEL` | `WARNING` | Proxy log verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `MAX_TOKENS_LIMIT` | `64000` | Maximum tokens per request |
+| `REQUEST_TIMEOUT` | `120` | Request timeout in seconds |
+| `ANTHROPIC_API_KEY` | `changeme` | Key passed from dev container to proxy |
+
+## Adding Devcontainer Features
+
+To add more tools, edit `.devcontainer/devcontainer.json` and add entries to the `features` object:
+
+```json
+{
+  "features": {
+    "ghcr.io/devcontainers/features/ruby": {},
+    "ghcr.io/dhoeric/features/google-cloud-cli": {}
+  }
+}
+```
+
+Browse available features at [containers.dev/features](https://containers.dev/features).
+
+After adding features, rebuild:
+
+```bash
+docker compose up -d --build
+```
+
+Or in VS Code: **Dev Containers → Rebuild Container**.
+
+## Adding System Packages
+
+To install additional apt packages, edit the `Dockerfile`:
+
+```dockerfile
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    your-package-here \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+Then rebuild:
+
+```bash
+docker compose up -d --build
+```
+
+## Adding Python or npm Tools
+
+Edit `.devcontainer/scripts/post-create.sh`:
+
+```bash
+# Python tools
+pip install --user your-python-tool
+
+# npm tools
+npm install -g your-npm-tool
+```
+
+These run after the container is created, when devcontainer features (including Python and Node.js) are already installed.
+
+## VS Code Extensions
+
+Extensions are configured in `.devcontainer/devcontainer.json` under `customizations.vscode.extensions`:
+
+```json
+{
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "hashicorp.terraform"
+      ]
+    }
+  }
+}
+```
+
+Extensions are installed automatically when you open the project in VS Code with the Dev Containers extension.
+
+## Data Persistence
+
+| Volume | Mount Point | Contents |
+|--------|-------------|----------|
+| `workspace` | `/workspace` | Your cloned repositories and project files |
+| `home` | `/home/<username>` | Shell history, tool configs, caches, SSH keys |
+
+Both persist across container restarts and rebuilds. Only `docker compose down -v` deletes them.
+
+## Port Mapping
+
+| Host | Container | Service |
+|------|-----------|---------|
+| `127.0.0.1:18082` | `8082` | API proxy (localhost only) |
+
+The proxy is bound to `127.0.0.1` so it's only accessible from your machine, not the network.

@@ -1,0 +1,72 @@
+---
+title: Dev Container
+description: An isolated, batteries-included development environment with AI coding tools.
+---
+
+# Dev Container
+
+A portable development environment that runs inside Docker. It comes pre-loaded with programming languages, cloud CLIs, DevOps tooling, and AI-powered coding assistants — all isolated from your host machine.
+
+## Why Use This?
+
+- **Consistency** — Every team member gets the same tools, versions, and configuration.
+- **Security** — AI coding tools run inside an isolated container, not on your corporate endpoint. No access to your host filesystem, keychain, or clipboard.
+- **Speed** — One command to go from zero to a fully configured dev environment.
+- **Portability** — Works on macOS, Linux, and Windows (via WSL2). Works with VS Code, JetBrains, or plain terminal.
+
+## How It Works
+
+The environment is two containers working together:
+
+```
+┌─────────────────────────────────────────────┐
+│  Your Machine                               │
+│                                             │
+│  ┌───────────────────────────────────────┐  │
+│  │  dev container                        │  │
+│  │  Languages, tools, AI assistants      │  │
+│  │  Your code lives in /workspace        │  │
+│  └──────────────┬────────────────────────┘  │
+│                 │                            │
+│  ┌──────────────▼────────────────────────┐  │
+│  │  proxy container                      │  │
+│  │  Translates API requests              │  │
+│  │  Routes to your AI backend            │  │
+│  └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+```
+
+The **dev container** is where you work. It has your shell, your tools, and your code.
+
+The **proxy container** sits between the AI tools and your API provider. It translates requests so that tools expecting one API format can talk to a different backend.
+
+## What's Inside
+
+### Languages & Runtimes
+
+Node.js, Python, Go, Rust, and Java — installed via [devcontainer features](https://containers.dev/features) so they stay up to date.
+
+### AI Coding Tools
+
+| Tool | Description |
+|------|-------------|
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Anthropic's CLI coding assistant |
+| [OpenCode](https://opencode.ai) | Open-source AI coding assistant |
+| [Codex](https://github.com/openai/codex) | OpenAI's CLI coding agent |
+
+### Cloud & DevOps
+
+AWS CLI, Azure CLI, PowerShell, Docker, kubectl, Helm, Terraform, and GitHub CLI.
+
+### Developer Utilities
+
+prettier, pre-commit, ansible, black, pylint, yamllint, markdownlint, actionlint, act, terraform-docs, ffmpeg, yt-dlp, nmap, and more.
+
+## Next Steps
+
+- **[Getting Started](./getting-started)** — Set up the container in five minutes.
+- **[Requirements](./requirements)** — What you need before you begin.
+- **[Security](./security)** — How the isolation model works and why it matters.
+- **[Configuration](./configuration)** — Customize tools, models, and environment variables.
+- **[Architecture](./architecture)** — How the pieces fit together under the hood.
+- **[Troubleshooting](./troubleshooting)** — Common issues and how to fix them.

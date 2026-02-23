@@ -1,0 +1,167 @@
+---
+title: Getting Started
+description: Set up the dev container in five minutes.
+---
+
+# Getting Started
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+cd devcontainer
+```
+
+## 2. Create Your Configuration
+
+Copy the example environment file and fill in your details:
+
+```bash
+cp .env.example .env
+```
+
+Append your system-specific values:
+
+```bash
+cat >> .env << EOF
+USER_UID=$(id -u)
+USER_GID=$(id -g)
+USERNAME=$(whoami)
+GIT_AUTHOR_NAME=$(git config user.name)
+GIT_AUTHOR_EMAIL=$(git config user.email)
+EOF
+```
+
+## 3. Set Your API Keys
+
+Open `.env` in your editor and set the two required fields at the top:
+
+```bash
+nano .env
+```
+
+```ini
+OPENAI_API_KEY=sk-your-api-key-here
+OPENAI_BASE_URL=https://your-api-endpoint.example.com/v1
+```
+
+These tell the proxy container where to route AI requests.
+
+## 4. (Optional) Add Your SSH Key
+
+If you need to `git clone` private repos over SSH from inside the container:
+
+```bash
+echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
+```
+
+## 5. Build and Start
+
+```bash
+docker compose up -d --build
+```
+
+This builds two containers:
+
+- **devcontainer** — your development environment
+- **devcontainer-proxy** — the API proxy
+
+The first build takes a few minutes to download base images and install tools. Subsequent starts are fast.
+
+## 6. Connect
+
+### Option A: Terminal
+
+```bash
+docker compose exec dev zsh
+```
+
+You're now inside the container with all tools available.
+
+### Option B: VS Code
+
+Open the project folder in VS Code. It will detect the `.devcontainer/devcontainer.json` and prompt you to "Reopen in Container." Click it.
+
+VS Code will build the container (if needed), install extensions, and connect your editor to the container environment.
+
+### Option C: Devcontainer CLI
+
+```bash
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . zsh
+```
+
+## Verify Everything Works
+
+Once inside the container, check that tools are available:
+
+```bash
+# AI tools
+claude --version
+opencode --version
+codex --version
+
+# Languages
+node --version
+python3 --version
+go version
+rustc --version
+
+# Cloud CLIs
+aws --version
+az --version
+terraform --version
+```
+
+Test the AI proxy connection:
+
+```bash
+claude -p "Say hello"
+```
+
+If you see a response, everything is working.
+
+## Your First Project
+
+Clone a repo into the `/workspace` directory:
+
+```bash
+cd /workspace
+git clone https://github.com/your-org/your-project.git
+cd your-project
+```
+
+Then start an AI coding session:
+
+```bash
+claude
+```
+
+## What Happens at Startup
+
+When the container starts, the `entrypoint.sh` script:
+
+1. Fixes ownership on volume-mounted directories
+2. Configures Git with your name and email
+3. Installs your SSH key (if provided)
+4. Seeds Claude Code configuration to skip the onboarding wizard
+
+When opened via VS Code or the devcontainer CLI, the `postCreateCommand` additionally:
+
+1. Installs Python linting tools (black, pylint, yamllint, pre-commit, ansible)
+2. Installs npm tools (markdownlint-cli2, openclaw)
+
+## Stopping and Restarting
+
+```bash
+# Stop (preserves data)
+docker compose down
+
+# Start again (instant, no rebuild)
+docker compose up -d
+
+# Rebuild after config changes
+docker compose up -d --build
+```
+
+Your code in `/workspace` and home directory persist in Docker volumes across restarts.
