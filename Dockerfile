@@ -68,6 +68,9 @@ RUN npm install -g opencode-ai \
 # pre-commit
 RUN pip install --break-system-packages pre-commit
 
+# Claude Code (native installer to /usr/local/bin)
+RUN curl -fsSL https://claude.ai/install.sh | bash && cp /root/.local/bin/claude /usr/local/bin/claude
+
 # ============================================================
 # User setup — rename vscode to match host username
 # ============================================================
@@ -97,8 +100,7 @@ WORKDIR /home/$USERNAME
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install Claude Code (native installer)
-RUN curl -fsSL https://cli.anthropic.com/install.sh | sh
+
 
 # Pre-create directories for volumes
 RUN mkdir -p ~/.cache/opencode ~/.cache/pre-commit ~/.local/bin ~/.claude
