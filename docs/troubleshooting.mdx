@@ -50,6 +50,30 @@ The entrypoint seeds `~/.claude.json` with onboarding flags. If missing:
 echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
 ```
 
+### Claude shows "Invalid API key"
+
+Check which value is actually set:
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+Common causes:
+
+- **Placeholder not replaced** — `.env` still has `sk-ant-your-api-key-here`. Replace it with your real key from [console.anthropic.com](https://console.anthropic.com/).
+- **Proxy token without proxy enabled** — If you set a non-Anthropic value (e.g. a custom token for an OpenAI-compatible provider) but did not enable the proxy, Claude sends it directly to Anthropic's API which rejects it. Enable the proxy in `.env`:
+
+  ```text
+  COMPOSE_PROFILES=proxy
+  ANTHROPIC_BASE_URL=http://proxy:8082
+  OPENAI_API_KEY=<your-provider-key>
+  OPENAI_BASE_URL=<your-provider-url>
+  ```
+
+  Then rebuild: `docker compose up -d`.
+
+- **Key doesn't start with `sk-ant-`** — Anthropic API keys always start with `sk-ant-`. If yours doesn't, it may be for a different provider. Use the proxy mode above, or get a direct key from [console.anthropic.com](https://console.anthropic.com/).
+
 ### API requests fail with 401
 
 **Direct mode** — Check that your API key is set correctly:

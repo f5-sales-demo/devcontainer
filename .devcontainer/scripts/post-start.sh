@@ -13,10 +13,28 @@ if [ -n "$ANTHROPIC_BASE_URL" ]; then
   fi
 else
   echo "  Mode: direct API (no proxy)"
-  if [ -n "$ANTHROPIC_API_KEY" ]; then
-    echo "  ANTHROPIC_API_KEY is set"
+  if [ -z "$ANTHROPIC_API_KEY" ]; then
+    echo "  WARNING: ANTHROPIC_API_KEY is not set — AI tools will not work"
+    echo "           Set your key in .env: ANTHROPIC_API_KEY=sk-ant-..."
+    echo "           Get a key at https://console.anthropic.com/"
+  elif [[ "$ANTHROPIC_API_KEY" == *"your-api-key"* ]] || \
+       [[ "$ANTHROPIC_API_KEY" == *"placeholder"* ]] || \
+       [[ "$ANTHROPIC_API_KEY" == *"change-me"* ]]; then
+    echo "  WARNING: ANTHROPIC_API_KEY appears to be a placeholder"
+    echo "           Replace the value in .env with your real API key"
+    echo "           Get a key at https://console.anthropic.com/"
+  elif [[ "$ANTHROPIC_API_KEY" != sk-ant-* ]]; then
+    echo "  WARNING: ANTHROPIC_API_KEY does not look like an Anthropic key"
+    if [ -n "$OPENAI_API_KEY" ] || [ -n "$OPENAI_BASE_URL" ]; then
+      echo "           It looks like you have proxy settings (OPENAI_API_KEY/OPENAI_BASE_URL)"
+      echo "           but the proxy profile is not enabled. Add these to .env:"
+      echo "             COMPOSE_PROFILES=proxy"
+      echo "             ANTHROPIC_BASE_URL=http://proxy:8082"
+    else
+      echo "           Anthropic API keys start with 'sk-ant-'. Check your .env file."
+    fi
   else
-    echo "  ANTHROPIC_API_KEY is not set — AI tools will not work"
+    echo "  ANTHROPIC_API_KEY is set"
   fi
 fi
 
