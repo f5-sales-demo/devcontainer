@@ -24,6 +24,11 @@ ARG PWSH_VERSION=7.5.4
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Retry flags for all curl downloads — handles transient network
+# errors (connection timeouts, DNS failures) with exponential backoff.
+# shellcheck disable=SC2140
+ENV CURL_RETRY="--connect-timeout 30 --retry 3 --retry-connrefused --retry-delay 10"
+
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # ============================================================
@@ -33,26 +38,26 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl gnupg software-properties-common apt-transport-https \
     # NodeSource
-    && curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
+    && curl ${CURL_RETRY} -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
     # deadsnakes (Python)
     && add-apt-repository -y ppa:deadsnakes/ppa \
     # HashiCorp
-    && curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg \
+    && curl ${CURL_RETRY} -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
       > /etc/apt/sources.list.d/hashicorp.list \
     # GitHub CLI
-    && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+    && curl ${CURL_RETRY} -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
       | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
       > /etc/apt/sources.list.d/github-cli.list \
     # Docker
     && install -m 0755 -d /etc/apt/keyrings \
-    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc \
+    && curl ${CURL_RETRY} -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc \
     && chmod a+r /etc/apt/keyrings/docker.asc \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
       > /etc/apt/sources.list.d/docker.list \
     # Microsoft (Azure CLI + PowerShell)
-    && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-archive-keyring.gpg \
+    && curl ${CURL_RETRY} -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" \
       > /etc/apt/sources.list.d/azure-cli.list \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/ubuntu/24.04/prod $(lsb_release -cs) main" \
@@ -105,7 +110,7 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
       && apt-get clean && rm -rf /var/lib/apt/lists/*; \
     else \
       mkdir -p /opt/microsoft/powershell/7 \
-      && curl -fsSL "https://github.com/PowerShell/PowerShell/releases/download/v${PWSH_VERSION}/powershell-${PWSH_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
+      && curl ${CURL_RETRY} -fsSL "https://github.com/PowerShell/PowerShell/releases/download/v${PWSH_VERSION}/powershell-${PWSH_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
         | tar -xz -C /opt/microsoft/powershell/7 \
       && chmod 755 /opt/microsoft/powershell/7/pwsh \
       && ln -sf /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh \
@@ -117,13 +122,13 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
 # ============================================================
 RUN update-alternatives --install /usr/bin/python3 python3 "/usr/bin/python${PYTHON_VERSION}" 1 \
     && update-alternatives --install /usr/bin/python  python  "/usr/bin/python${PYTHON_VERSION}" 1 \
-    && curl -fsSL https://bootstrap.pypa.io/get-pip.py | "python${PYTHON_VERSION}"
+    && curl ${CURL_RETRY} -fsSL https://bootstrap.pypa.io/get-pip.py | "python${PYTHON_VERSION}"
 
 # ============================================================
 # 4. Go
 # ============================================================
 RUN ARCH=$(dpkg --print-architecture) \
-    && curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" | tar -xz -C /usr/local
+    && curl ${CURL_RETRY} -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" | tar -xz -C /usr/local
 ENV PATH="/usr/local/go/bin:${PATH}"
 
 # ============================================================
@@ -132,7 +137,7 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH="/usr/local/cargo/bin:${PATH}"
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+RUN curl ${CURL_RETRY} --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     | sh -s -- -y --default-toolchain stable --no-modify-path \
     && chmod -R a+rX /usr/local/rustup /usr/local/cargo
 
@@ -140,12 +145,12 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
 # 6. Maven + Gradle
 # ============================================================
 # hadolint ignore=DL3059
-RUN curl -fsSL "https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
+RUN curl ${CURL_RETRY} -fsSL "https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
     | tar -xz -C /opt \
     && ln -s "/opt/apache-maven-${MAVEN_VERSION}/bin/mvn" /usr/local/bin/mvn
 
 # hadolint ignore=DL3059
-RUN curl -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -o /tmp/gradle.zip \
+RUN curl ${CURL_RETRY} -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -o /tmp/gradle.zip \
     && unzip -q /tmp/gradle.zip -d /opt \
     && ln -s "/opt/gradle-${GRADLE_VERSION}/bin/gradle" /usr/local/bin/gradle \
     && rm /tmp/gradle.zip
@@ -155,7 +160,7 @@ RUN curl -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSIO
 # ============================================================
 # hadolint ignore=DL3059
 RUN ARCH=$(uname -m) \
-    && curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip" -o /tmp/awscli.zip \
+    && curl ${CURL_RETRY} -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip" -o /tmp/awscli.zip \
     && unzip -q /tmp/awscli.zip -d /tmp \
     && /tmp/aws/install \
     && rm -rf /tmp/aws /tmp/awscli.zip
@@ -167,37 +172,37 @@ RUN ARCH=$(uname -m) \
 # hadolint ignore=DL3059
 RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # kubectl
-    && curl -fsSLo /usr/local/bin/kubectl \
+    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/kubectl \
       "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${DPKG_ARCH}/kubectl" \
     && chmod +x /usr/local/bin/kubectl \
     # helm
-    && curl -fsSL "https://get.helm.sh/helm-v${HELM_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://get.helm.sh/helm-v${HELM_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
       | tar -xz --strip-components=1 -C /usr/local/bin "linux-${DPKG_ARCH}/helm" \
     # tflint
-    && curl -fsSL "https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_${DPKG_ARCH}.zip" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_${DPKG_ARCH}.zip" \
       -o /tmp/tflint.zip \
     && unzip -q /tmp/tflint.zip -d /usr/local/bin && rm /tmp/tflint.zip \
     # terraform-docs
-    && curl -fsSL "https://github.com/terraform-docs/terraform-docs/releases/download/v${TERRAFORM_DOCS_VERSION}/terraform-docs-v${TERRAFORM_DOCS_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/terraform-docs/terraform-docs/releases/download/v${TERRAFORM_DOCS_VERSION}/terraform-docs-v${TERRAFORM_DOCS_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin terraform-docs \
     # act
     && if [ "$UNAME_ARCH" = "x86_64" ]; then ACT_ARCH="x86_64"; else ACT_ARCH="arm64"; fi \
-    && curl -fsSL "https://github.com/nektos/act/releases/download/v${ACT_VERSION}/act_Linux_${ACT_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/nektos/act/releases/download/v${ACT_VERSION}/act_Linux_${ACT_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin act \
     # actionlint
-    && curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin actionlint \
     # yt-dlp
-    && curl -fsSLo /usr/local/bin/yt-dlp \
+    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/yt-dlp \
       "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" \
     && chmod +x /usr/local/bin/yt-dlp \
     # uv
-    && curl -fsSL "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh \
+    && curl ${CURL_RETRY} -fsSL "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh \
     && mv "$HOME/.local/bin/uv" /usr/local/bin/uv \
     && mv "$HOME/.local/bin/uvx" /usr/local/bin/uvx 2>/dev/null || true \
     # opencode
     && if [ "$UNAME_ARCH" = "x86_64" ]; then OC_ARCH="x64"; else OC_ARCH="arm64"; fi \
-    && curl -fsSL "https://github.com/anomalyco/opencode/releases/latest/download/opencode-linux-${OC_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/anomalyco/opencode/releases/latest/download/opencode-linux-${OC_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin opencode
 
 # ============================================================
@@ -265,7 +270,7 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude \
 # ============================================================
 # 12. Homebrew (needed by openclaw configure)
 # ============================================================
-RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+RUN NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 ENV HOMEBREW_NO_AUTO_UPDATE=1
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
