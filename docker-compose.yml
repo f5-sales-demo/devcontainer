@@ -1,17 +1,15 @@
 services:
   dev:
+    image: ghcr.io/f5xc-salesdemos/devcontainer:latest
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        USER_UID: ${USER_UID:-1000}
-        USER_GID: ${USER_GID:-1000}
-        USERNAME: ${USERNAME:-vscode}
+    pull_policy: missing
     container_name: devcontainer
     hostname: devcontainer
     volumes:
       - workspace:/workspace
-      - home:/home/${USERNAME:-vscode}
+      - home:/home/vscode
       # Uncomment to use Docker from inside the container:
       # - /var/run/docker.sock:/var/run/docker.sock
     environment:
@@ -33,9 +31,11 @@ services:
     restart: unless-stopped
 
   proxy:
+    image: ghcr.io/f5xc-salesdemos/devcontainer-proxy:latest
     build:
       context: .
       dockerfile: Dockerfile.proxy
+    pull_policy: missing
     container_name: devcontainer-proxy
     hostname: proxy
     profiles:

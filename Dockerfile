@@ -1,7 +1,5 @@
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
 
-ARG USER_UID=1000
-ARG USER_GID=1000
 ARG USERNAME=vscode
 
 # ============================================================
@@ -239,21 +237,6 @@ RUN npx playwright install --with-deps chromium
 # ============================================================
 # User setup
 # ============================================================
-RUN if [ "$USERNAME" != "vscode" ]; then \
-      usermod -l $USERNAME -d /home/$USERNAME -m vscode && \
-      groupmod -n $USERNAME vscode && \
-      sed -i "s/vscode/$USERNAME/g" /etc/sudoers.d/vscode 2>/dev/null || true && \
-      mv /etc/sudoers.d/vscode /etc/sudoers.d/$USERNAME 2>/dev/null || true; \
-    fi
-
-RUN if [ "$USER_GID" != "1000" ]; then \
-      groupmod --non-unique --gid $USER_GID $USERNAME 2>/dev/null || true; \
-    fi && \
-    if [ "$USER_UID" != "1000" ]; then \
-      usermod --non-unique --uid $USER_UID --gid $USER_GID $USERNAME && \
-      chown -R $USER_UID:$USER_GID /home/$USERNAME; \
-    fi
-
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
