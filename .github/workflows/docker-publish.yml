@@ -2,16 +2,15 @@
 name: Docker Publish
 
 on:
-  # TODO: re-enable push trigger once builds are stable
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - Dockerfile
-  #     - Dockerfile.proxy
-  #     - entrypoint.sh
-  #     - docker-compose.yml
-  #     - .devcontainer/**
-  #     - .github/workflows/docker-publish.yml
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - Dockerfile.proxy
+      - entrypoint.sh
+      - docker-compose.yml
+      - .devcontainer/**
+      - .github/workflows/docker-publish.yml
   workflow_dispatch:
 
 permissions:
