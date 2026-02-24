@@ -161,6 +161,51 @@ ports:
   - "127.0.0.1:28082:8082"
 ```
 
+## Remote Display (noVNC)
+
+### Black screen in noVNC
+
+Xvfb may not have started. Check inside the container:
+
+```bash
+ps aux | grep Xvfb
+```
+
+If not running, check that `ENABLE_VNC` is not set to `false` and restart the container.
+
+### "Cannot open display" or "No display" error
+
+The `DISPLAY` environment variable may not be set. Verify:
+
+```bash
+echo "$DISPLAY"
+```
+
+It should be `:99`. If empty, add `DISPLAY=:99` to your `.env` or `devcontainer.json` and restart.
+
+### Port 6080 connection refused
+
+noVNC may not be running. Check inside the container:
+
+```bash
+ps aux | grep -E 'novnc|websockify'
+```
+
+If not running, verify `ENABLE_VNC` is `true` (the default) and check container logs:
+
+```bash
+docker compose logs dev | grep -i vnc
+```
+
+### Port 6080 already in use
+
+Change the host port in `docker-compose.yml`:
+
+```yaml
+ports:
+  - "127.0.0.1:16080:6080"
+```
+
 ## Reset Everything
 
 ```bash

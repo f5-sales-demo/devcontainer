@@ -173,6 +173,29 @@ cd your-project
 claude
 ```
 
+## Remote Display (noVNC)
+
+The container runs a virtual display so you can watch AI agents control a browser and intervene when needed (e.g., for login or MFA prompts).
+
+1. Open `http://localhost:6080/vnc.html` in your browser and click **Connect**
+2. You'll see a lightweight fluxbox desktop — this is the container's virtual display
+
+AI agents using `@playwright/mcp` in headed mode render Chromium into this display. You can click and type directly in the noVNC window to intervene at any time — no pause/resume needed.
+
+To launch a browser manually:
+
+```bash
+chromium --no-sandbox &
+```
+
+To run Playwright tests in headed mode:
+
+```bash
+npx playwright test --headed
+```
+
+To disable the VNC stack (headless-only operation), set `ENABLE_VNC=false` in `.env` or `devcontainer.json` and restart the container. See [Configuration — Remote Display](./configuration#remote-display-novnc) for all options.
+
 ## Stopping and Restarting
 
 ```bash
