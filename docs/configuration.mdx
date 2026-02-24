@@ -56,16 +56,6 @@ The container runs a virtual display stack so you can watch and interact with he
 | `VNC_RESOLUTION` | `1280x1024x24` | Virtual display resolution (WxHxDepth) |
 | `DISPLAY` | `:99` | X11 display number |
 
-### User Identity
-
-These ensure files created inside the container have correct ownership:
-
-| Variable | Description | How to Set |
-|----------|-------------|------------|
-| `USER_UID` | Your host user ID | `id -u` |
-| `USER_GID` | Your host group ID | `id -g` |
-| `USERNAME` | Your host username | `whoami` |
-
 ### Git
 
 | Variable | Description | How to Set |
@@ -81,9 +71,9 @@ These ensure files created inside the container have correct ownership:
 
 ## How Tools Are Installed
 
-Every language runtime, CLI, and tool is installed directly in the `Dockerfile` at image build time. The image is fully self-contained — no devcontainer features or post-create scripts are needed.
+Every language runtime, CLI, and tool is installed directly in the `Dockerfile` at image build time. The pre-built image is published to `ghcr.io/f5xc-salesdemos/devcontainer:latest` on every push to `main`, so most users never need to build locally.
 
-This means tools are available regardless of how you start the container: `docker compose`, VS Code, or the `devcontainer` CLI.
+Running `docker compose up -d` pulls the pre-built image automatically. Use `docker compose up -d --build` to force a local build if you've customized the Dockerfile.
 
 The Dockerfile is organized into numbered sections for Docker layer caching:
 
@@ -163,9 +153,9 @@ All data lives in Docker named volumes — no host directories are mounted:
 | Volume | Mount Point | Contents |
 |--------|-------------|----------|
 | `workspace` | `/workspace` | Your cloned repositories and project files |
-| `home` | `/home/<username>` | Shell history, tool configs, caches, SSH keys |
+| `home` | `/home/vscode` | Shell history, tool configs, caches, SSH keys |
 
-Both persist across container restarts and rebuilds.
+Both persist across container restarts and rebuilds. Run `docker compose pull` to fetch the latest pre-built image before restarting.
 
 | Action | Data |
 |--------|------|
