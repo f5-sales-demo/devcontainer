@@ -202,7 +202,8 @@ RUN npm install -g \
     prettier \
     markdownlint-cli2 \
     openclaw \
-    @devcontainers/cli
+    @devcontainers/cli \
+    playwright
 
 # ============================================================
 # 10. pip tools
@@ -213,7 +214,14 @@ RUN pip install --no-cache-dir --break-system-packages \
     ansible \
     black \
     pylint \
-    yamllint
+    yamllint \
+    playwright
+
+# ============================================================
+# 11. Playwright browsers (Chromium + system deps)
+# ============================================================
+# hadolint ignore=DL3059
+RUN npx playwright install --with-deps chromium
 
 # ============================================================
 # User setup
@@ -241,6 +249,14 @@ WORKDIR /home/$USERNAME
 
 RUN mkdir -p ~/.cache ~/.local/bin ~/.claude \
     && echo '{"hasCompletedOnboarding": true}' > ~/.claude.json.default
+
+# ============================================================
+# 12. Homebrew (needed by openclaw configure)
+# ============================================================
+RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+ENV HOMEBREW_NO_AUTO_UPDATE=1
+ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
 ENV SHELL=/bin/zsh
 WORKDIR /workspace
