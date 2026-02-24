@@ -252,6 +252,10 @@ RUN if [ "$USER_GID" != "1000" ]; then \
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# Pre-create Homebrew prefix so the installer skips the sudo check
+RUN mkdir -p /home/linuxbrew/.linuxbrew \
+    && chown -R $USERNAME:$USERNAME /home/linuxbrew/.linuxbrew
+
 USER $USERNAME
 WORKDIR /home/$USERNAME
 
