@@ -74,7 +74,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Network tools
     dnsutils net-tools iputils-ping traceroute tcpdump nmap \
     # Shell tools
-    bat fd-find neovim htop tree fzf tmux file \
+    bat fd-find ripgrep neovim htop tree fzf tmux file \
     # Node.js
     nodejs \
     # Python
@@ -94,6 +94,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Create expected binary names for tools Ubuntu renames
+RUN ln -sf /usr/bin/fdfind /usr/local/bin/fd \
+    && ln -sf /usr/bin/batcat /usr/local/bin/bat
 
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
