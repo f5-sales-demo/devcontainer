@@ -17,9 +17,9 @@ else
     echo "  WARNING: ANTHROPIC_API_KEY is not set — AI tools will not work"
     echo "           Set your key in .env: ANTHROPIC_API_KEY=sk-ant-..."
     echo "           Get a key at https://console.anthropic.com/"
-  elif [[ "$ANTHROPIC_API_KEY" == *"your-api-key"* ]] || \
-       [[ "$ANTHROPIC_API_KEY" == *"placeholder"* ]] || \
-       [[ "$ANTHROPIC_API_KEY" == *"change-me"* ]]; then
+  elif [[ "$ANTHROPIC_API_KEY" == *"your-api-key"* ]] ||
+    [[ "$ANTHROPIC_API_KEY" == *"placeholder"* ]] ||
+    [[ "$ANTHROPIC_API_KEY" == *"change-me"* ]]; then
     echo "  WARNING: ANTHROPIC_API_KEY appears to be a placeholder"
     echo "           Replace the value in .env with your real API key"
     echo "           Get a key at https://console.anthropic.com/"
