@@ -46,4 +46,46 @@ if [ ! -f "$HOME/.claude.json" ] || [ ! -s "$HOME/.claude.json" ]; then
   echo '{"hasCompletedOnboarding": true}' >"$HOME/.claude.json"
 fi
 
+# ============================================================
+# VNC stack (Xvfb + fluxbox + x11vnc + noVNC)
+# ============================================================
+if [ "${ENABLE_VNC:-true}" = "true" ]; then
+  VNC_RESOLUTION="${VNC_RESOLUTION:-1280x1024x24}"
+  VNC_PORT="${VNC_PORT:-5900}"
+  NOVNC_PORT="${NOVNC_PORT:-6080}"
+  export DISPLAY="${DISPLAY:-:99}"
+
+  Xvfb "${DISPLAY}" -screen 0 "${VNC_RESOLUTION}" -ac +extension GLX +render -noreset &
+
+  retries=0
+  while [ $retries -lt 50 ]; do
+    xdpyinfo -display "${DISPLAY}" >/dev/null 2>&1 && break
+    sleep 0.1
+    retries=$((retries + 1))
+  done
+
+  fluxbox &
+  x11vnc -display "${DISPLAY}" -forever -shared -rfbport "${VNC_PORT}" \
+    -nopw -xkb -noxrecord -noxfixes -noxdamage &
+
+  NOVNC_LAUNCHER=""
+  for candidate in \
+    /usr/share/novnc/utils/novnc_proxy \
+    /usr/share/novnc/utils/launch.sh \
+    /usr/share/novnc/utils/websockify/run; do
+    if [ -x "$candidate" ]; then
+      NOVNC_LAUNCHER="$candidate"
+      break
+    fi
+  done
+
+  if [ -n "$NOVNC_LAUNCHER" ]; then
+    "$NOVNC_LAUNCHER" --vnc localhost:"${VNC_PORT}" --listen "${NOVNC_PORT}" &
+  else
+    websockify --web /usr/share/novnc "${NOVNC_PORT}" localhost:"${VNC_PORT}" &
+  fi
+
+  echo "noVNC: http://localhost:${NOVNC_PORT}/vnc.html"
+fi
+
 exec "$@"

@@ -48,6 +48,16 @@ The proxy maps generic model names to your backend's model identifiers:
 | `MAX_TOKENS_LIMIT` | `64000` | Maximum tokens per request |
 | `REQUEST_TIMEOUT` | `120` | Request timeout in seconds |
 
+### Remote Display (noVNC)
+
+The container runs a virtual display stack so you can watch and interact with headed browsers (e.g., Chromium controlled by `@playwright/mcp`).
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_VNC` | `true` | Set to `false` to disable the VNC stack |
+| `VNC_RESOLUTION` | `1280x1024x24` | Virtual display resolution (WxHxDepth) |
+| `DISPLAY` | `:99` | X11 display number |
+
 ### User Identity
 
 These ensure files created inside the container have correct ownership:
@@ -93,6 +103,7 @@ The Dockerfile is organized into numbered sections for Docker layer caching:
 | 10. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
 | 11. Playwright browsers | Chromium + system deps via `playwright install --with-deps` |
 | 12. Homebrew | Linuxbrew (needed by openclaw configure) |
+| 13. VNC stack | Xvfb, x11vnc, noVNC, fluxbox — remote display via browser |
 
 ## Adding Tools
 
@@ -166,10 +177,9 @@ Both persist across container restarts and rebuilds.
 
 ## Port Mapping
 
-When running in proxy mode (`COMPOSE_PROFILES=proxy`):
-
 | Host | Container | Service |
 |------|-----------|---------|
-| `127.0.0.1:18082` | `8082` | API proxy (localhost only) |
+| `127.0.0.1:6080` | `6080` | noVNC remote display (localhost only) |
+| `127.0.0.1:18082` | `8082` | API proxy (localhost only, proxy mode) |
 
-The proxy is bound to `127.0.0.1` so it's only accessible from your machine, not the network. In direct mode, no ports are published.
+Both ports are bound to `127.0.0.1` so they are only accessible from your machine, not the network. The proxy port is only active when running in proxy mode (`COMPOSE_PROFILES=proxy`).

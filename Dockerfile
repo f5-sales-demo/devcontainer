@@ -270,6 +270,20 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
 ENV HOMEBREW_NO_AUTO_UPDATE=1
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
+# ============================================================
+# 13. VNC stack (Xvfb + x11vnc + noVNC + fluxbox)
+# ============================================================
+# hadolint ignore=DL3008,DL3059
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb \
+    x11vnc \
+    novnc \
+    fluxbox \
+    x11-utils \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+USER $USERNAME
+
 ENV SHELL=/bin/zsh
 WORKDIR /workspace
 
