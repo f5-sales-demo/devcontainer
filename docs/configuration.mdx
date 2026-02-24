@@ -13,9 +13,9 @@ All configuration lives in the `.env` file at the project root. This file is git
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `ANTHROPIC_API_KEY` | API key for your AI provider | `sk-ant-abc123...` |
+| `ANTHROPIC_API_KEY` | API key passed to Claude Code | `sk-ant-abc123...` |
 
-This is the only variable required for AI tools to work. The dev container connects directly to your provider by default.
+In **direct mode** (default), set this to your Anthropic API key (`sk-ant-...`). In **proxy mode**, this can be any non-empty value — the proxy authenticates upstream with `OPENAI_API_KEY` instead.
 
 ### AI Proxy (Optional)
 
