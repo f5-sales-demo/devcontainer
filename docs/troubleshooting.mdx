@@ -107,11 +107,12 @@ sudo chown -R $(id -u):$(id -g) /workspace ~
 
 ### npm install fails with EACCES
 
+The entrypoint automatically configures a user-writable npm global prefix at `~/.npm-global`, so runtime `npm install -g` commands should work without `sudo`. If you still see EACCES errors, re-apply the fix manually:
+
 ```bash
 mkdir -p ~/.npm-global
 npm config set prefix ~/.npm-global
-echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
+export PATH="$HOME/.npm-global/bin:$PATH"
 ```
 
 ## Build Issues
