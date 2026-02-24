@@ -89,8 +89,10 @@ The Dockerfile is organized into numbered sections for Docker layer caching:
 | 6. Maven + Gradle | Binary downloads to `/opt` |
 | 7. AWS CLI v2 | Official installer |
 | 8. Binary tools | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv, opencode |
-| 9. npm global tools | claude-code, codex, prettier, markdownlint-cli2, openclaw, devcontainers-cli |
-| 10. pip tools | pre-commit, ansible, black, pylint, yamllint |
+| 9. npm global tools | claude-code, codex, prettier, markdownlint-cli2, openclaw, devcontainers-cli, playwright |
+| 10. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
+| 11. Playwright browsers | Chromium + system deps via `playwright install --with-deps` |
+| 12. Homebrew | Linuxbrew (needed by openclaw configure) |
 
 ## Adding Tools
 
