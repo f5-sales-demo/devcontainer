@@ -80,7 +80,7 @@ That's it — the dev container will connect directly to your AI provider.
 If you need to route traffic through the built-in proxy sidecar (for example, to remap model names or target an OpenAI-compatible endpoint), uncomment the proxy block in `.env`:
 
 ```ini
-ANTHROPIC_API_KEY=not-used
+ANTHROPIC_API_KEY=proxyconfig
 COMPOSE_PROFILES=proxy
 ANTHROPIC_BASE_URL=http://proxy:8082
 OPENAI_API_KEY=sk-your-api-key-here
