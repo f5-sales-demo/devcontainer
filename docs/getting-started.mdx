@@ -30,10 +30,6 @@ docker compose version
 git --version
 ```
 
-### An API Key
-
-You need an **API key** from your AI provider (Anthropic, OpenAI, or any compatible API). By default the devcontainer connects directly to your provider — no proxy required.
-
 ### System Resources
 
 | Resource | Minimum | Recommended |
@@ -51,33 +47,40 @@ git clone https://github.com/f5xc-salesdemos/devcontainer.git
 cd devcontainer
 ```
 
-## 2. Create Your Configuration
+## 2. Create Your Configuration (Optional)
 
-Copy the example environment file and append your system-specific values:
+The devcontainer works without any `.env` file. Creating one is optional but useful for pre-configuring environment variables that improve your workflow:
 
 ```bash
 cp .env.example .env
-cat >> .env << EOF
-GIT_AUTHOR_NAME=$(git config user.name)
-GIT_AUTHOR_EMAIL=$(git config user.email)
-EOF
 ```
 
-## 3. Set Your API Key
+Edit `.env` to set any of the following:
+
+- **Git identity** — pre-fill `GIT_AUTHOR_NAME` and `GIT_AUTHOR_EMAIL` so commits use the right name and email
+- **SSH key** — add `SSH_PRIVATE_KEY` (base64-encoded) to clone private repos over SSH inside the container
+- **AI CLI tools** — configure `ANTHROPIC_API_KEY` and optionally the proxy sidecar if you want to use Claude Code (see Step 3)
+- **Authentication tokens** — any other tokens or credentials your workflow needs
+
+You can also set these variables interactively inside the container after it starts.
+
+## 3. Set Up Claude Code (Optional)
+
+Skip this step if you don't plan to use Claude Code. The devcontainer includes Claude Code, but it requires an API key to function.
 
 ### Direct mode (default)
 
-Open `.env` and set your API key:
+If you have an Anthropic API key, set it in `.env`:
 
 ```ini
 ANTHROPIC_API_KEY=sk-ant-your-api-key-here
 ```
 
-That's it — the dev container will connect directly to your AI provider.
+That's it — Claude Code will connect directly to the Anthropic API.
 
-### Proxy mode (optional)
+### Proxy mode
 
-If you need to route traffic through the built-in proxy sidecar (for example, to remap model names or target an OpenAI-compatible endpoint), uncomment the proxy block in `.env`:
+If you need to route Claude Code traffic through the built-in proxy sidecar (for example, to remap model names or target an OpenAI-compatible endpoint), uncomment the proxy block in `.env`:
 
 ```ini
 ANTHROPIC_API_KEY=proxyconfig
@@ -91,21 +94,7 @@ In proxy mode, `ANTHROPIC_API_KEY` can be any non-empty value — Claude Code re
 
 See [Configuration — AI Proxy](./configuration#ai-proxy-optional) for model mapping and tuning options.
 
-## 4. (Optional) Add Your SSH Key
-
-If you need to clone private repos over SSH from inside the container:
-
-```bash
-echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
-```
-
-Don't have an SSH key? Generate one:
-
-```bash
-ssh-keygen -t ed25519 -C "your-email@example.com"
-```
-
-## 5. Start the Container
+## 4. Start the Container
 
 ```bash
 docker compose up -d
@@ -119,7 +108,7 @@ To force a local build instead (e.g., if you've customized the Dockerfile):
 docker compose up -d --build
 ```
 
-## 6. Connect
+## 5. Connect
 
 ### Option A: Terminal
 
