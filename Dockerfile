@@ -273,8 +273,8 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}
 # ============================================================
 # 13. VNC stack (Xvfb + x11vnc + noVNC + fluxbox)
 # ============================================================
-# hadolint ignore=DL3008,DL3059
 USER root
+# hadolint ignore=DL3008,DL3059
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb \
     x11vnc \
