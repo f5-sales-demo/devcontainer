@@ -86,7 +86,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     docker-ce-cli docker-buildx-plugin docker-compose-plugin \
     # Azure CLI
     azure-cli \
+    # Locale
+    locales \
+    && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen en_US.UTF-8 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV TERM=xterm-256color
 
 # PowerShell — Microsoft only publishes amd64 .deb packages;
 # arm64 uses the official tar.gz from GitHub releases.
