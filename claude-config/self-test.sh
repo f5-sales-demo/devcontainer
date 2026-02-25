@@ -35,45 +35,22 @@ check ".claude directory exists" test -d "$HOME/.claude"
 check "settings.json exists" test -f "$HOME/.claude/settings.json"
 
 echo ""
-echo "3. Project Memory (Tool Awareness)"
-MEMORY_FOUND=false
-for SUFFIX in "-workspace-devcontainer" "-workspace"; do
-  MP="$HOME/.claude/projects/${SUFFIX}/memory/MEMORY.md"
-  if [ -f "$MP" ]; then
-    MEMORY_FOUND=true
-    check "MEMORY.md at $SUFFIX" test -f "$MP"
-    check "contains PascalCase reference" grep -q "PascalCase" "$MP"
-    check "contains Read tool entry" grep -q '`Read`' "$MP"
-    check "contains Task subagent types" grep -q "Explore" "$MP"
-    check "warns against snake_case" grep -q "snake_case" "$MP"
-    break
-  fi
-done
-if [ "$MEMORY_FOUND" = false ]; then
-  echo "  FAIL: No MEMORY.md found in any project path"
+echo "3. Tool Awareness (User-level CLAUDE.md)"
+USER_CLAUDE="$HOME/.claude/CLAUDE.md"
+if [ -f "$USER_CLAUDE" ]; then
+  check "~/.claude/CLAUDE.md exists" test -f "$USER_CLAUDE"
+  check "contains PascalCase reference" grep -q "PascalCase" "$USER_CLAUDE"
+  check "contains Read tool entry" grep -q '`Read`' "$USER_CLAUDE"
+  check "contains Task tool requirements" grep -q "description" "$USER_CLAUDE"
+  check "warns against snake_case" grep -q "snake_case" "$USER_CLAUDE"
+  check "mentions self-test" grep -q "claude-self-test" "$USER_CLAUDE"
+else
+  echo "  FAIL: ~/.claude/CLAUDE.md not found"
   ((FAIL++))
 fi
 
 echo ""
-echo "4. Project Rules"
-RULES_DIR=""
-for DIR in /workspace/devcontainer /workspace; do
-  if [ -d "$DIR/.claude/rules" ]; then
-    RULES_DIR="$DIR/.claude/rules"
-    break
-  fi
-done
-if [ -n "$RULES_DIR" ]; then
-  check "rules directory exists" test -d "$RULES_DIR"
-  check "tool-awareness rule present" test -f "$RULES_DIR/tool-awareness.md"
-  check "session-startup rule present" test -f "$RULES_DIR/session-startup.md"
-else
-  echo "  WARN: No .claude/rules/ directory found (optional)"
-  ((WARN++))
-fi
-
-echo ""
-echo "5. Container Environment"
+echo "4. Container Environment"
 check "workspace directory exists" test -d /workspace
 check "home directory writable" test -w "$HOME"
 check "TERM is set" test -n "${TERM:-}"
