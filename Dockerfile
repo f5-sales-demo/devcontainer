@@ -217,6 +217,9 @@ RUN mkdir -p /usr/local/share/fonts/nerd-fonts \
 # ╚════════════════════════════════════════════════════════════╝
 FROM deps AS final
 
+# SHELL doesn't cross FROM boundaries — redeclare for pipefail
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 # ARGs don't cross FROM boundaries — redeclare what final needs
 ARG USERNAME=vscode
 ARG TERRAFORM_DOCS_VERSION=0.19.0

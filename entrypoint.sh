@@ -62,7 +62,7 @@ fi
 if [ "${ENABLE_DOCKER:-true}" = "true" ] && command -v dockerd >/dev/null 2>&1; then
   # Only start if we're in a privileged container (cgroup access required)
   if [ -d /sys/fs/cgroup ]; then
-    sudo dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375 >/var/log/dockerd.log 2>&1 &
+    sudo sh -c "dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375 >/var/log/dockerd.log 2>&1" &
     # Wait for Docker daemon to be ready
     retries=0
     while [ $retries -lt 30 ]; do
