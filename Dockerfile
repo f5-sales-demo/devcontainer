@@ -23,6 +23,7 @@ ARG OC_VERSION=4.18.4
 ARG YQ_VERSION=4.52.4
 ARG TERRAGRUNT_VERSION=0.71.2
 ARG IBMCLOUD_VERSION=2.31.0
+ARG NERD_FONTS_VERSION=3.3.0
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -105,6 +106,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     dos2unix \
     eza \
     fontconfig \
+    fonts-noto-color-emoji \
     fonts-powerline \
     google-cloud-cli \
     graphviz \
@@ -114,6 +116,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mtr-tiny \
     shellcheck \
     unzip \
+    xz-utils \
     yelp-tools \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
@@ -340,6 +343,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fluxbox \
     x11-utils \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ============================================================
+# 14. Nerd Fonts (JetBrainsMono, Hack, FiraCode)
+# ============================================================
+# hadolint ignore=DL3059
+RUN mkdir -p /usr/local/share/fonts/nerd-fonts \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONTS_VERSION}/JetBrainsMono.tar.xz" \
+      | tar -xJ -C /usr/local/share/fonts/nerd-fonts \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONTS_VERSION}/Hack.tar.xz" \
+      | tar -xJ -C /usr/local/share/fonts/nerd-fonts \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONTS_VERSION}/FiraCode.tar.xz" \
+      | tar -xJ -C /usr/local/share/fonts/nerd-fonts \
+    && fc-cache -fv
+
 USER $USERNAME
 
 # ============================================================
@@ -361,7 +381,16 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && git clone --depth=1 https://github.com/yuhonas/zsh-aliases-lsd.git \
       "${ZSH_CUSTOM}/plugins/zsh-aliases-lsd" \
     && sed -i 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd ubuntu jsontools gh common-aliases zsh-aliases-lsd zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl iterm2 kube-ps1 kubectl sudo vscode aws fzf)/' \
-      "$HOME/.zshrc"
+      "$HOME/.zshrc" \
+    && echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> "$HOME/.zshrc"
+
+# ============================================================
+# 16. User shell bootstrap (baked in — eliminates runtime setup)
+# ============================================================
+# hadolint ignore=DL3059
+RUN mkdir -p "$HOME/.npm-global" \
+    && npm config set prefix "$HOME/.npm-global" \
+    && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 ENV SHELL=/bin/zsh
 WORKDIR /workspace
