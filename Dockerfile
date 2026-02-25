@@ -372,11 +372,13 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
 # ============================================================
 # Runs as a background process in entrypoint.sh when OPENAI_API_KEY is set.
 # Build tools are needed for C extensions (httptools, uvloop) on Python 3.13.
-# hadolint ignore=DL3008,DL3013,DL3059
+# hadolint ignore=DL3008,DL3059
+RUN git clone --depth=1 https://github.com/fuergaosi233/claude-code-proxy.git /opt/claude-code-proxy
+
+WORKDIR /opt/claude-code-proxy
+# hadolint ignore=DL3008,DL3059
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
-    && git clone --depth=1 https://github.com/fuergaosi233/claude-code-proxy.git /opt/claude-code-proxy \
-    && cd /opt/claude-code-proxy \
     && uv sync \
     && apt-get purge -y build-essential \
     && apt-get autoremove -y \
