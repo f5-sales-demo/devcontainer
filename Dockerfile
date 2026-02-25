@@ -352,9 +352,14 @@ RUN npm install -g \
 # ============================================================
 # 12. pip tools
 # ============================================================
+# Remove Debian typing_extensions (installed by python3-typing-extensions without
+# a RECORD file, causing pip uninstall-no-record-file errors on upgrade).
+# hadolint ignore=DL3059
+RUN rm -rf /usr/lib/python3/dist-packages/typing_extensions* \
+    && apt-get -y purge python3-typing-extensions 2>/dev/null || true
+
 # hadolint ignore=DL3013,DL3059
-RUN pip install --no-cache-dir --break-system-packages --force-reinstall typing_extensions \
-    && pip install --no-cache-dir --break-system-packages \
+RUN pip install --no-cache-dir --break-system-packages \
     pre-commit \
     ansible \
     black \
