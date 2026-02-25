@@ -50,6 +50,13 @@ else
 fi
 
 echo ""
+echo "3b. Tool Awareness (Managed policy)"
+MANAGED_CLAUDE="/etc/claude-code/CLAUDE.md"
+check "$MANAGED_CLAUDE exists" test -f "$MANAGED_CLAUDE"
+check "Managed policy contains PascalCase reference" grep -q "PascalCase" "$MANAGED_CLAUDE"
+check "Managed policy contains tool table" grep -q "Read file contents" "$MANAGED_CLAUDE"
+
+echo ""
 echo "4. Container Environment"
 check "workspace directory exists" test -d /workspace
 check "home directory writable" test -w "$HOME"
