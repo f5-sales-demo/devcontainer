@@ -5,7 +5,7 @@ Claude Code tools use PascalCase. NEVER use snake_case variants.
 ### Core Tools
 
 | Correct | WRONG (never use) | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `Read` | `read_file`, `read`, `cat` | Read file contents |
 | `Write` | `write_file`, `write`, `create_file` | Create/overwrite files |
 | `Edit` | `edit_file`, `edit`, `sed` | Edit existing files |
