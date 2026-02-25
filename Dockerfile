@@ -345,6 +345,7 @@ USER $USERNAME
 # 15. ZSH plugins (oh-my-zsh is pre-installed by devcontainers base)
 # ============================================================
 # hadolint ignore=DL3059
+# checkov:skip=CKV2_DOCKER_1:sudo here is a zsh plugin name in a sed argument, not a system call
 RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git \
       "${ZSH_CUSTOM}/plugins/zsh-autosuggestions" \
