@@ -38,14 +38,14 @@ echo ""
 echo "3. Tool Awareness (User-level CLAUDE.md)"
 USER_CLAUDE="$HOME/.claude/CLAUDE.md"
 if [ -f "$USER_CLAUDE" ]; then
-  check "~/.claude/CLAUDE.md exists" test -f "$USER_CLAUDE"
+  check "$HOME/.claude/CLAUDE.md exists" test -f "$USER_CLAUDE"
   check "contains PascalCase reference" grep -q "PascalCase" "$USER_CLAUDE"
   check "contains Read tool entry" grep -q '`Read`' "$USER_CLAUDE"
   check "contains Task tool requirements" grep -q "description" "$USER_CLAUDE"
   check "warns against snake_case" grep -q "snake_case" "$USER_CLAUDE"
   check "mentions self-test" grep -q "claude-self-test" "$USER_CLAUDE"
 else
-  echo "  FAIL: ~/.claude/CLAUDE.md not found"
+  echo "  FAIL: $HOME/.claude/CLAUDE.md not found"
   ((FAIL++))
 fi
 
