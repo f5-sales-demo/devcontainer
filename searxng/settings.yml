@@ -1,0 +1,19 @@
+# SearXNG settings for devcontainer sidecar
+# This is an internal-only service — not exposed to the public internet.
+# JSON API access and limiter are configured for automated tool usage.
+
+use_default_settings: true
+
+server:
+  # Disable rate limiter — this instance is private, accessed only by
+  # Claude Code inside the Docker network.
+  limiter: false
+  # Disable public instance features not needed for private use
+  public_instance: false
+
+search:
+  # Enable JSON format so Claude Code can query via:
+  #   curl -s "http://searxng:8080/search?q=...&format=json"
+  formats:
+    - html
+    - json
