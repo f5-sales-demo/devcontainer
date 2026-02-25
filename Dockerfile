@@ -1,29 +1,22 @@
-FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
+# ╔════════════════════════════════════════════════════════════╗
+# ║  Stage 1: deps  (stable foundations, ~4.5 GB)            ║
+# ║  Rebuilds only on version ARG bumps or APT changes.      ║
+# ╚════════════════════════════════════════════════════════════╝
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04 AS deps
 
 ARG USERNAME=vscode
 
 # ============================================================
-# Version pins
+# Version pins — deps stage
 # ============================================================
 ARG NODE_MAJOR=24
 ARG PYTHON_VERSION=3.13
 ARG GO_VERSION=1.24.1
+ARG RUST_VERSION=1.93.1
 ARG JAVA_VERSION=21
 ARG MAVEN_VERSION=3.9.9
 ARG GRADLE_VERSION=8.12.1
-ARG TERRAFORM_DOCS_VERSION=0.19.0
-ARG TFLINT_VERSION=0.55.1
-ARG KUBECTL_VERSION=1.32.2
-ARG HELM_VERSION=3.17.1
-ARG ACT_VERSION=0.2.74
-ARG FZF_VERSION=0.68.0
-ARG UV_VERSION=0.6.2
-ARG ACTIONLINT_VERSION=1.7.7
 ARG PWSH_VERSION=7.5.4
-ARG OC_VERSION=4.18.4
-ARG YQ_VERSION=4.52.4
-ARG TERRAGRUNT_VERSION=0.71.2
-ARG IBMCLOUD_VERSION=2.31.0
 ARG NERD_FONTS_VERSION=3.3.0
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -96,8 +89,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     terraform \
     # GitHub CLI
     gh \
-    # Docker CLI
-    docker-ce-cli docker-buildx-plugin docker-compose-plugin \
+    # Docker (full engine for Docker-in-Docker)
+    docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
     # Azure CLI
     azure-cli \
     # Locale
@@ -123,9 +116,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && locale-gen en_US.UTF-8 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Create expected binary names for tools Ubuntu renames
+# Create expected binary names for tools Ubuntu renames;
+# add vscode user to docker group for Docker-in-Docker access
 RUN ln -sf /usr/bin/fdfind /usr/local/bin/fd \
-    && ln -sf /usr/bin/batcat /usr/local/bin/bat
+    && ln -sf /usr/bin/batcat /usr/local/bin/bat \
+    && usermod -aG docker ${USERNAME}
 
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
@@ -162,13 +157,13 @@ RUN ARCH=$(dpkg --print-architecture) \
 ENV PATH="/usr/local/go/bin:${PATH}"
 
 # ============================================================
-# 5. Rust (system-wide)
+# 5. Rust (system-wide, pinned version)
 # ============================================================
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH="/usr/local/cargo/bin:${PATH}"
 RUN curl ${CURL_RETRY} --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-    | sh -s -- -y --default-toolchain stable --no-modify-path \
+    | sh -s -- -y --default-toolchain "${RUST_VERSION}" --no-modify-path \
     && chmod -R a+rX /usr/local/rustup /usr/local/cargo
 
 # ============================================================
@@ -186,7 +181,60 @@ RUN curl ${CURL_RETRY} -fsSL "https://services.gradle.org/distributions/gradle-$
     && rm /tmp/gradle.zip
 
 # ============================================================
-# 7. AWS CLI v2
+# 7. VNC stack (Xvfb + x11vnc + noVNC + fluxbox)
+#    Moved to deps — stable APT packages, rarely changes.
+# ============================================================
+# hadolint ignore=DL3008,DL3059
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb \
+    x11vnc \
+    novnc \
+    fluxbox \
+    x11-utils \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ============================================================
+# 8. Nerd Fonts (JetBrainsMono, Hack, FiraCode)
+#    Moved to deps — version-pinned, ~350 MB, rarely changes.
+# ============================================================
+# hadolint ignore=DL3059
+RUN mkdir -p /usr/local/share/fonts/nerd-fonts \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONTS_VERSION}/JetBrainsMono.tar.xz" \
+      | tar -xJ -C /usr/local/share/fonts/nerd-fonts \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONTS_VERSION}/Hack.tar.xz" \
+      | tar -xJ -C /usr/local/share/fonts/nerd-fonts \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONTS_VERSION}/FiraCode.tar.xz" \
+      | tar -xJ -C /usr/local/share/fonts/nerd-fonts \
+    && fc-cache -fv
+
+
+# ╔════════════════════════════════════════════════════════════╗
+# ║  Stage 2: final  (volatile tools + user setup, ~1.5 GB)  ║
+# ║  Changes to tools here don't rebuild the deps stage.      ║
+# ╚════════════════════════════════════════════════════════════╝
+FROM deps AS final
+
+# ARGs don't cross FROM boundaries — redeclare what final needs
+ARG USERNAME=vscode
+ARG TERRAFORM_DOCS_VERSION=0.19.0
+ARG TFLINT_VERSION=0.55.1
+ARG KUBECTL_VERSION=1.32.2
+ARG HELM_VERSION=3.17.1
+ARG ACT_VERSION=0.2.74
+ARG FZF_VERSION=0.68.0
+ARG UV_VERSION=0.6.2
+ARG ACTIONLINT_VERSION=1.7.7
+ARG OC_VERSION=4.18.4
+ARG YQ_VERSION=4.52.4
+ARG TERRAGRUNT_VERSION=0.71.2
+ARG IBMCLOUD_VERSION=2.31.0
+ARG HADOLINT_VERSION=2.14.0
+
+# ============================================================
+# 9. AWS CLI v2
 # ============================================================
 # hadolint ignore=DL3059
 RUN ARCH=$(uname -m) \
@@ -196,8 +244,8 @@ RUN ARCH=$(uname -m) \
     && rm -rf /tmp/aws /tmp/awscli.zip
 
 # ============================================================
-# 8. Binary tools (kubectl, helm, tflint, terraform-docs,
-#    act, actionlint, yt-dlp, uv, opencode)
+# 10. Binary tools (kubectl, helm, tflint, terraform-docs,
+#     act, actionlint, yt-dlp, uv, opencode)
 # ============================================================
 # hadolint ignore=DL3059
 RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
@@ -236,7 +284,8 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
       | tar -xz -C /usr/local/bin opencode
 
 # ============================================================
-# 8b. Additional binary tools (code CLI, oc, yq, terragrunt, ibmcloud)
+# 10b. Additional binary tools (code CLI, oc, yq, terragrunt,
+#      ibmcloud, fzf)
 # ============================================================
 # hadolint ignore=DL3059
 RUN DPKG_ARCH=$(dpkg --print-architecture) \
@@ -277,10 +326,15 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
     # /usr/share/doc so Debian fallback path also unavailable)
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin fzf
+      | tar -xz -C /usr/local/bin fzf \
+    # hadolint (Dockerfile linter)
+    && if [ "$DPKG_ARCH" = "amd64" ]; then HL_ARCH="x86_64"; else HL_ARCH="aarch64"; fi \
+    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/hadolint \
+      "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-Linux-${HL_ARCH}" \
+    && chmod +x /usr/local/bin/hadolint
 
 # ============================================================
-# 9. npm global tools
+# 11. npm global tools
 # ============================================================
 # hadolint ignore=DL3016,DL3059
 RUN npm install -g \
@@ -293,7 +347,7 @@ RUN npm install -g \
     playwright
 
 # ============================================================
-# 10. pip tools
+# 12. pip tools
 # ============================================================
 # hadolint ignore=DL3013,DL3059
 RUN pip install --no-cache-dir --break-system-packages \
@@ -308,24 +362,7 @@ RUN pip install --no-cache-dir --break-system-packages \
     checkov
 
 # ============================================================
-# 10b. Claude Code configuration (tool awareness + self-test)
-# ============================================================
-COPY claude-config/ /opt/claude-config/
-RUN chmod +x /opt/claude-config/self-test.sh \
-    && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test
-
-# ============================================================
-# 10c. Managed policy — tool awareness at highest priority tier
-# ============================================================
-# The Managed policy tier (/etc/claude-code/) is the highest priority in
-# Claude Code's memory hierarchy and is always loaded, even when a project
-# CLAUDE.md exists in the working directory. This prevents tool awareness
-# from being deprioritized by large project-level instructions.
-RUN mkdir -p /etc/claude-code/.claude/rules \
-    && cp /opt/claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
-
-# ============================================================
-# 11. Playwright browsers (Chromium + system deps)
+# 13. Playwright browsers (Chromium + system deps)
 # ============================================================
 # hadolint ignore=DL3059
 RUN npx playwright install --with-deps chromium
@@ -333,9 +370,6 @@ RUN npx playwright install --with-deps chromium
 # ============================================================
 # User setup
 # ============================================================
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
 # Pre-create Homebrew prefix so the installer skips the sudo check
 RUN mkdir -p /home/linuxbrew/.linuxbrew \
     && chown -R $USERNAME:$USERNAME /home/linuxbrew/.linuxbrew
@@ -347,43 +381,12 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude \
     && echo '{"hasCompletedOnboarding": true}' > ~/.claude.json.default
 
 # ============================================================
-# 12. Homebrew (needed by openclaw configure)
+# 14. Homebrew (needed by openclaw configure)
 # ============================================================
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 ENV HOMEBREW_NO_AUTO_UPDATE=1
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
-
-# ============================================================
-# 13. VNC stack (Xvfb + x11vnc + noVNC + fluxbox)
-# ============================================================
-USER root
-# hadolint ignore=DL3008,DL3059
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    xvfb \
-    x11vnc \
-    novnc \
-    fluxbox \
-    x11-utils \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# ============================================================
-# 14. Nerd Fonts (JetBrainsMono, Hack, FiraCode)
-# ============================================================
-# hadolint ignore=DL3059
-RUN mkdir -p /usr/local/share/fonts/nerd-fonts \
-    && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONTS_VERSION}/JetBrainsMono.tar.xz" \
-      | tar -xJ -C /usr/local/share/fonts/nerd-fonts \
-    && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONTS_VERSION}/Hack.tar.xz" \
-      | tar -xJ -C /usr/local/share/fonts/nerd-fonts \
-    && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONTS_VERSION}/FiraCode.tar.xz" \
-      | tar -xJ -C /usr/local/share/fonts/nerd-fonts \
-    && fc-cache -fv
-
-USER $USERNAME
 
 # ============================================================
 # 15. ZSH plugins (oh-my-zsh is pre-installed by devcontainers base)
@@ -416,6 +419,33 @@ RUN mkdir -p "$HOME/.npm-global" \
     && git clone --depth=1 https://github.com/tfutils/tfenv.git "$HOME/.tfenv" \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
+# ============================================================
+# 17. Claude Code configuration (tool awareness + self-test)
+#     COPY moved to end of file — config changes rebuild only
+#     this thin layer, not Playwright/Homebrew/ZSH (~1 GB).
+# ============================================================
+USER root
+COPY claude-config/ /opt/claude-config/
+RUN chmod +x /opt/claude-config/self-test.sh \
+    && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test
+
+# ============================================================
+# 17b. Managed policy — tool awareness at highest priority tier
+# ============================================================
+# The Managed policy tier (/etc/claude-code/) is the highest priority in
+# Claude Code's memory hierarchy and is always loaded, even when a project
+# CLAUDE.md exists in the working directory. This prevents tool awareness
+# from being deprioritized by large project-level instructions.
+RUN mkdir -p /etc/claude-code/.claude/rules \
+    && cp /opt/claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
+
+# ============================================================
+# 18. Entrypoint (absolute last COPY — most volatile file)
+# ============================================================
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+USER $USERNAME
 ENV SHELL=/bin/zsh
 WORKDIR /workspace
 

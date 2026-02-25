@@ -57,6 +57,28 @@ if [ ! -f "$HOME/.claude/CLAUDE.md" ]; then
 fi
 
 # ============================================================
+# Docker-in-Docker (start dockerd if running in privileged mode)
+# ============================================================
+if [ "${ENABLE_DOCKER:-true}" = "true" ] && command -v dockerd >/dev/null 2>&1; then
+  # Only start if we're in a privileged container (cgroup access required)
+  if [ -d /sys/fs/cgroup ]; then
+    sudo dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375 >/var/log/dockerd.log 2>&1 &
+    # Wait for Docker daemon to be ready
+    retries=0
+    while [ $retries -lt 30 ]; do
+      docker info >/dev/null 2>&1 && break
+      sleep 1
+      retries=$((retries + 1))
+    done
+    if docker info >/dev/null 2>&1; then
+      echo "Docker daemon started successfully"
+    else
+      echo "Warning: Docker daemon failed to start (not running in privileged mode?)" >&2
+    fi
+  fi
+fi
+
+# ============================================================
 # VNC stack (Xvfb + fluxbox + x11vnc + noVNC)
 # ============================================================
 if [ "${ENABLE_VNC:-true}" = "true" ]; then

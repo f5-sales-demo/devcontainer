@@ -8,6 +8,7 @@ on:
       - Dockerfile
       - Dockerfile.proxy
       - entrypoint.sh
+      - claude-config/**
       - docker-compose.yml
       - .devcontainer/**
       - .github/workflows/docker-publish.yml
@@ -62,8 +63,8 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ env.MAIN_IMAGE }}
-          cache-from: type=gha,scope=${{ matrix.cache-scope }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope }}
+          cache-from: type=registry,ref=${{ env.MAIN_IMAGE }}:cache-${{ matrix.cache-scope }}
+          cache-to: type=registry,ref=${{ env.MAIN_IMAGE }}:cache-${{ matrix.cache-scope }},mode=max
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
@@ -159,5 +160,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=proxy
-          cache-to: type=gha,mode=max,scope=proxy
+          cache-from: type=registry,ref=${{ env.PROXY_IMAGE }}:cache
+          cache-to: type=registry,ref=${{ env.PROXY_IMAGE }}:cache,mode=max
