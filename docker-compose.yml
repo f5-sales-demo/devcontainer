@@ -24,7 +24,7 @@ services:
       - LANG=en_US.UTF-8
       - LC_ALL=en_US.UTF-8
     ports:
-      - "127.0.0.1:6080:6080"
+      - "127.0.0.1:${NOVNC_HOST_PORT:-6080}:6080"
     stdin_open: true
     tty: true
     init: true
