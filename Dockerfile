@@ -423,24 +423,20 @@ RUN mkdir -p "$HOME/.npm-global" \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 # ============================================================
-# 17. Claude Code configuration (tool awareness + self-test)
+# 17. Claude Code configuration (self-test + managed policy)
 #     COPY moved to end of file — config changes rebuild only
 #     this thin layer, not Playwright/Homebrew/ZSH (~1 GB).
-# ============================================================
-USER root
-COPY claude-config/ /opt/claude-config/
-RUN chmod +x /opt/claude-config/self-test.sh \
-    && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test
-
-# ============================================================
-# 17b. Managed policy — tool awareness at highest priority tier
 # ============================================================
 # The Managed policy tier (/etc/claude-code/) is the highest priority in
 # Claude Code's memory hierarchy and is always loaded, even when a project
 # CLAUDE.md exists in the working directory. This prevents tool awareness
 # from being deprioritized by large project-level instructions.
-RUN mkdir -p /etc/claude-code/.claude/rules \
-    && cp /opt/claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
+USER root
+COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
+COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
+RUN chmod +x /opt/claude-config/self-test.sh \
+    && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
+    && mkdir -p /etc/claude-code/.claude/rules
 
 # ============================================================
 # 18. Entrypoint (absolute last COPY — most volatile file)

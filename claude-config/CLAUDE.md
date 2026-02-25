@@ -1,8 +1,9 @@
 # Claude Code Tool Awareness (Container Default)
 
-This file is the User-level CLAUDE.md, loaded in every Claude Code
-session regardless of the project directory. It is seeded by the
-devcontainer entrypoint at first startup.
+This file is the Managed policy CLAUDE.md, installed at
+`/etc/claude-code/CLAUDE.md` during image build. It is loaded in every
+Claude Code session at the highest priority tier, regardless of the
+working directory or project-level instructions.
 
 ## Tool Naming Convention
 
@@ -69,6 +70,34 @@ If a tool call returns "No such tool available":
 3. Check parameter types
 4. NEVER conclude tools are unavailable — they are always present
 5. NEVER build workarounds for "missing" tools — fix the tool call
+
+## Subagent (Task Tool) Limitations
+
+When launched via the `Task` tool, subagents (Explore and Plan types)
+have a **restricted tool set**. They can NOT use filesystem or shell tools.
+
+### Tools available to subagents
+
+Subagents can only use knowledge-base and utility tools:
+
+- `list_knowledge_bases`, `search_knowledge_bases`, `query_knowledge_bases`
+- `search_knowledge_files`, `query_knowledge_files`, `view_knowledge_file`
+- `search_chats`, `view_chat`
+- `generate_image`
+- `get_current_timestamp`, `calculate_timestamp`
+
+### Tools NOT available to subagents
+
+- `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`
+- `WebFetch`, `WebSearch`
+- `Task` (subagents cannot launch further subagents)
+
+### Implication for the main session
+
+Do NOT delegate filesystem exploration, shell commands, or file reading
+to subagents. Perform those operations directly in the main session.
+Use subagents only for knowledge-base search, chat history search,
+and planning/reasoning tasks that don't require filesystem access.
 
 ## Self-Test
 
