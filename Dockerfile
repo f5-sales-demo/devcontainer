@@ -352,10 +352,10 @@ RUN npm install -g \
 # ============================================================
 # 12. pip tools
 # ============================================================
-# hadolint ignore=DL3013,DL3059
 # --ignore-installed: VNC deps (novnc, x11vnc) pull in Debian python3
 # packages without pip RECORD files (typing_extensions, packaging, etc.).
 # pip cannot upgrade these normally, so we skip the uninstall check.
+# hadolint ignore=DL3013,DL3059
 RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     pre-commit \
     ansible \
