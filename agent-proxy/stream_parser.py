@@ -12,7 +12,9 @@ def generate_id() -> str:
     return f"chatcmpl-{uuid.uuid4().hex[:24]}"
 
 
-def make_chunk(chunk_id: str, content: str, finish_reason: str | None = None) -> str:
+def make_chunk(
+    chunk_id: str, content: str, finish_reason: str | None = None
+) -> str:
     """Create an OpenAI-compatible SSE chunk."""
     data = {
         "id": chunk_id,
@@ -56,7 +58,7 @@ def _format_tool_use(tool_name: str, tool_input: dict) -> str:
     return f"\n🔧 **{tool_name}**{detail}\n\n"
 
 
-def _format_tool_result(tool_name: str, content: str) -> str:
+def _format_tool_result(content: str) -> str:
     """Format a tool result for display."""
     verbosity = config.CLAUDE_STREAM_VERBOSITY
 
@@ -73,7 +75,11 @@ def _format_tool_result(tool_name: str, content: str) -> str:
     lines = content.split("\n")
     if len(lines) > 15:
         preview = "\n".join(lines[:12])
-        return f"> **Result** ({len(lines)} lines):\n```\n{preview}\n... ({len(lines) - 12} more lines)\n```\n\n"
+        remaining = len(lines) - 12
+        return (
+            f"> **Result** ({len(lines)} lines):\n"
+            f"```\n{preview}\n... ({remaining} more lines)\n```\n\n"
+        )
     if len(content) > 800:
         return f"> **Result:**\n```\n{content[:800]}...\n```\n\n"
 
@@ -116,8 +122,7 @@ def parse_stream_event(line: str, chunk_id: str) -> str | None:
                     text_parts.append(block.get("text", ""))
             content = "\n".join(text_parts)
 
-        tool_name = event.get("tool_name", "")
-        formatted = _format_tool_result(tool_name, content)
+        formatted = _format_tool_result(content)
         if formatted:
             return make_chunk(chunk_id, formatted)
         return None

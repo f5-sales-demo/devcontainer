@@ -4,12 +4,11 @@ import asyncio
 import json
 import time
 
+from claude_runner import run_claude_stream, run_claude_sync
+from config import config
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
-
-from claude_runner import run_claude_stream, run_claude_sync
-from config import config
 from stream_parser import (
     generate_id,
     make_done_event,
@@ -26,13 +25,16 @@ app = FastAPI(title="Claude Agent Proxy", version="1.0.0")
 # ---------------------------------------------------------------------------
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
+    """Check Bearer token if AGENT_PROXY_AUTH_TOKEN is set."""
     if config.AGENT_PROXY_AUTH_TOKEN:
         if request.url.path in ("/health", "/docs", "/openapi.json"):
             return await call_next(request)
         auth = request.headers.get("Authorization", "")
         token = auth.removeprefix("Bearer ").strip()
         if token != config.AGENT_PROXY_AUTH_TOKEN:
-            return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+            return JSONResponse(
+                status_code=401, content={"error": "Unauthorized"}
+            )
     return await call_next(request)
 
 
@@ -40,11 +42,15 @@ async def auth_middleware(request: Request, call_next):
 # Request models
 # ---------------------------------------------------------------------------
 class Message(BaseModel):
+    """A single chat message with role and content."""
+
     role: str
     content: str
 
 
 class ChatCompletionRequest(BaseModel):
+    """OpenAI-compatible chat completion request body."""
+
     model: str = "claude-code"
     messages: list[Message]
     stream: bool = False
@@ -93,11 +99,13 @@ def _build_prompt(messages: list[Message]) -> str:
 # ---------------------------------------------------------------------------
 @app.get("/health")
 async def health():
+    """Health check endpoint."""
     return {"status": "ok"}
 
 
 @app.get("/v1/models")
 async def list_models():
+    """Return available models in OpenAI format."""
     return {
         "object": "list",
         "data": [
@@ -113,6 +121,7 @@ async def list_models():
 
 @app.post("/v1/chat/completions")
 async def chat_completions(request: Request, body: ChatCompletionRequest):
+    """Handle chat completion requests (streaming and non-streaming)."""
     prompt = _build_prompt(body.messages)
 
     if body.stream:

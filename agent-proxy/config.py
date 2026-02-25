@@ -4,6 +4,8 @@ import os
 
 
 class Config:
+    """Agent proxy configuration loaded from environment."""
+
     # Anthropic API settings (passed through to claude CLI)
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
     ANTHROPIC_BASE_URL: str = os.getenv("ANTHROPIC_BASE_URL", "")

@@ -64,6 +64,7 @@ async def run_claude_stream(prompt: str) -> AsyncIterator[str]:
     )
 
     try:
+        assert process.stdout is not None
         async for line in process.stdout:
             decoded = line.decode("utf-8", errors="replace").strip()
             if decoded:
@@ -89,7 +90,7 @@ async def run_claude_sync(prompt: str) -> str:
         env=env,
     )
 
-    stdout, stderr = await asyncio.wait_for(
+    stdout, _stderr = await asyncio.wait_for(
         process.communicate(),
         timeout=300,  # 5 minute timeout for non-streaming
     )
