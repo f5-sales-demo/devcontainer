@@ -47,16 +47,6 @@ if [ ! -f "$HOME/.claude.json" ] || [ ! -s "$HOME/.claude.json" ]; then
 fi
 
 # ============================================================
-# Claude Code tool awareness (global User-level CLAUDE.md)
-# ============================================================
-# ~/.claude/CLAUDE.md is loaded in every Claude Code session regardless
-# of the working directory. Seed it once; never overwrite user edits.
-if [ ! -f "$HOME/.claude/CLAUDE.md" ]; then
-  mkdir -p "$HOME/.claude"
-  cp /opt/claude-config/CLAUDE.md "$HOME/.claude/CLAUDE.md"
-fi
-
-# ============================================================
 # VNC stack (Xvfb + fluxbox + x11vnc + noVNC)
 # ============================================================
 if [ "${ENABLE_VNC:-true}" = "true" ]; then

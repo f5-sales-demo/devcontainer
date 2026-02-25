@@ -308,21 +308,17 @@ RUN pip install --no-cache-dir --break-system-packages \
     checkov
 
 # ============================================================
-# 10b. Claude Code configuration (tool awareness + self-test)
-# ============================================================
-COPY claude-config/ /opt/claude-config/
-RUN chmod +x /opt/claude-config/self-test.sh \
-    && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test
-
-# ============================================================
-# 10c. Managed policy — tool awareness at highest priority tier
+# 10b. Claude Code configuration (self-test + managed policy)
 # ============================================================
 # The Managed policy tier (/etc/claude-code/) is the highest priority in
 # Claude Code's memory hierarchy and is always loaded, even when a project
 # CLAUDE.md exists in the working directory. This prevents tool awareness
 # from being deprioritized by large project-level instructions.
-RUN mkdir -p /etc/claude-code/.claude/rules \
-    && cp /opt/claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
+COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
+COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
+RUN chmod +x /opt/claude-config/self-test.sh \
+    && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
+    && mkdir -p /etc/claude-code/.claude/rules
 
 # ============================================================
 # 11. Playwright browsers (Chromium + system deps)
