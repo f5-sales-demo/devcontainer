@@ -20,10 +20,33 @@ All Claude Code tools use PascalCase. NEVER use snake_case.
 | `WebFetch` | `web_fetch`, `fetch`, `curl` | Fetch a URL and return its contents |
 | `WebSearch` | `web_search`, `search_web` | Search the web and return results |
 
-**Note:** `WebSearch` may not return results when running through a
-proxy. Use `WebFetch` or `Bash` with `curl` as alternatives.
+**Note:** `WebSearch` requires a direct Anthropic API connection — it is
+a server-side tool executed by the Anthropic backend. Through a proxy, the
+tool is silently dropped and returns 0 results. Use the SearXNG fallback
+below or `WebFetch` for direct URL retrieval.
 `MultiEdit` is not available through all proxy configurations — use
 sequential `Edit` calls instead.
+
+## Web Search
+
+The built-in `WebSearch` tool only works with a direct Anthropic API
+connection. When running through a proxy, use these alternatives:
+
+### SearXNG (self-hosted, no API key needed)
+
+If the search profile is enabled (`COMPOSE_PROFILES=proxy,search`),
+a SearXNG metasearch engine is available inside the Docker network:
+
+```bash
+curl -s "http://searxng:8080/search?q=your+query&format=json" | jq '.results[:5]'
+```
+
+Use `Bash` with `curl` to query SearXNG and parse the JSON results.
+
+### WebFetch (built-in, works through proxy)
+
+Use `WebFetch` to retrieve content from a specific URL when you already
+know where to look.
 
 ## Task Tool Requirements
 
