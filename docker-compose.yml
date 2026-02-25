@@ -23,8 +23,17 @@ services:
       - TERM=xterm-256color
       - LANG=en_US.UTF-8
       - LC_ALL=en_US.UTF-8
+      - CLAUDE_AGENT_PROXY=${CLAUDE_AGENT_PROXY:-false}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-}
+      - CLAUDE_MAX_TURNS=${CLAUDE_MAX_TURNS:-25}
+      - CLAUDE_STREAM_VERBOSITY=${CLAUDE_STREAM_VERBOSITY:-normal}
+      - AGENT_PROXY_PORT=${AGENT_PROXY_PORT:-8082}
+      - AGENT_PROXY_AUTH_TOKEN=${AGENT_PROXY_AUTH_TOKEN:-}
+      - CLAUDE_WORKSPACE_DIR=${CLAUDE_WORKSPACE_DIR:-/workspace}
+      - CLAUDE_ALLOWED_TOOLS=${CLAUDE_ALLOWED_TOOLS:-}
     ports:
       - "127.0.0.1:6080:6080"
+      - "127.0.0.1:${AGENT_PROXY_HOST_PORT:-18083}:${AGENT_PROXY_PORT:-8082}"
     stdin_open: true
     tty: true
     init: true

@@ -308,6 +308,13 @@ RUN pip install --no-cache-dir --break-system-packages \
     checkov
 
 # ============================================================
+# 10b. Agent proxy (OpenAI-compatible API wrapping Claude Code CLI)
+# ============================================================
+COPY agent-proxy/ /opt/agent-proxy/
+RUN pip install --no-cache-dir --break-system-packages \
+    -r /opt/agent-proxy/requirements.txt
+
+# ============================================================
 # 11. Playwright browsers (Chromium + system deps)
 # ============================================================
 # hadolint ignore=DL3059
