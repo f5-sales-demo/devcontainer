@@ -18,6 +18,8 @@ All Claude Code tools use PascalCase. NEVER use snake_case.
 | `Glob` | `glob`, `find_files`, `list_files` | Find files by pattern |
 | `Grep` | `grep`, `search`, `search_files` | Search file contents |
 | `Task` | `task`, `run_task`, `agent` | Launch subagent tasks |
+| `WebFetch` | `web_fetch`, `fetch`, `curl` | Fetch a URL and return its contents |
+| `WebSearch` | `web_search`, `search_web` | Search the web and return results |
 
 ## Task Tool Requirements
 
