@@ -11,14 +11,6 @@ if [ ! -O "$HOME" ]; then
 fi
 
 # ============================================================
-# npm global prefix (user-writable for runtime installs)
-# ============================================================
-NPM_GLOBAL="$HOME/.npm-global"
-mkdir -p "$NPM_GLOBAL"
-npm config set prefix "$NPM_GLOBAL"
-export PATH="$NPM_GLOBAL/bin:$PATH"
-
-# ============================================================
 # Configure user environment
 # ============================================================
 
