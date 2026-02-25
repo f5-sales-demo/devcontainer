@@ -47,13 +47,25 @@ if [ ! -f "$HOME/.claude.json" ] || [ ! -s "$HOME/.claude.json" ]; then
 fi
 
 # ============================================================
-# Claude Code tool awareness (global User-level CLAUDE.md)
+# Docker-in-Docker (start dockerd if running in privileged mode)
 # ============================================================
-# ~/.claude/CLAUDE.md is loaded in every Claude Code session regardless
-# of the working directory. Seed it once; never overwrite user edits.
-if [ ! -f "$HOME/.claude/CLAUDE.md" ]; then
-  mkdir -p "$HOME/.claude"
-  cp /opt/claude-config/CLAUDE.md "$HOME/.claude/CLAUDE.md"
+if [ "${ENABLE_DOCKER:-true}" = "true" ] && command -v dockerd >/dev/null 2>&1; then
+  # Only start if we're in a privileged container (cgroup access required)
+  if [ -d /sys/fs/cgroup ]; then
+    sudo sh -c "dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375 >/var/log/dockerd.log 2>&1" &
+    # Wait for Docker daemon to be ready
+    retries=0
+    while [ $retries -lt 30 ]; do
+      docker info >/dev/null 2>&1 && break
+      sleep 1
+      retries=$((retries + 1))
+    done
+    if docker info >/dev/null 2>&1; then
+      echo "Docker daemon started successfully"
+    else
+      echo "Warning: Docker daemon failed to start (not running in privileged mode?)" >&2
+    fi
+  fi
 fi
 
 # ============================================================
