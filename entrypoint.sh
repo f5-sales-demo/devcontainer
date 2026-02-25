@@ -88,17 +88,4 @@ if [ "${ENABLE_VNC:-true}" = "true" ]; then
   echo "noVNC: http://localhost:${NOVNC_PORT}/vnc.html"
 fi
 
-# ============================================================
-# Claude Agent Proxy (OpenAI-compatible API for web UIs)
-# ============================================================
-if [ "${CLAUDE_AGENT_PROXY:-false}" = "true" ]; then
-  echo "Starting Claude Agent Proxy on port ${AGENT_PROXY_PORT:-8082}..."
-  python -m uvicorn server:app \
-    --host 0.0.0.0 \
-    --port "${AGENT_PROXY_PORT:-8082}" \
-    --log-level info \
-    --app-dir /opt/agent-proxy &
-  echo "Claude Agent Proxy started (PID: $!)"
-fi
-
 exec "$@"

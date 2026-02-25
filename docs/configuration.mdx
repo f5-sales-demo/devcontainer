@@ -46,36 +46,6 @@ The proxy maps generic model names to your backend's model identifiers:
 | `MAX_TOKENS_LIMIT` | `64000` | Maximum tokens per request |
 | `REQUEST_TIMEOUT` | `120` | Request timeout in seconds |
 
-### Claude Agent Proxy (Optional)
-
-The agent proxy wraps the Claude Code CLI behind an OpenAI-compatible API, giving web UIs like Open WebUI access to Claude Code's full agentic capabilities — file read/write, shell commands, git operations, and more.
-
-To enable the agent proxy, add these to `.env`:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CLAUDE_AGENT_PROXY` | `false` | Set to `true` to start the agent proxy |
-| `CLAUDE_MODEL` | *(empty)* | Model override (uses Claude Code's default if empty) |
-| `CLAUDE_MAX_TURNS` | `25` | Maximum agentic turns per request |
-| `CLAUDE_STREAM_VERBOSITY` | `normal` | Tool output detail: `minimal`, `normal`, or `verbose` |
-| `AGENT_PROXY_AUTH_TOKEN` | *(empty)* | Optional Bearer token for API authentication |
-| `CLAUDE_WORKSPACE_DIR` | `/workspace` | Working directory for CLI operations |
-| `CLAUDE_ALLOWED_TOOLS` | *(empty)* | Comma-separated tool allowlist (empty = all tools) |
-
-:::caution
-The agent proxy and the chat-only AI proxy are alternatives — **do not enable both at the same time**. Set either `COMPOSE_PROFILES=proxy` or `CLAUDE_AGENT_PROXY=true`, not both.
-:::
-
-Connect any OpenAI-compatible client to `http://localhost:18083/v1` with model name `claude-code`. For example, in Open WebUI set the API Base URL to `http://localhost:18083/v1`.
-
-**Endpoints:**
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/health` | Health check |
-| `GET` | `/v1/models` | List available models |
-| `POST` | `/v1/chat/completions` | Chat completions (streaming and non-streaming) |
-
 ### Remote Display (noVNC)
 
 The container runs a virtual display stack so you can watch and interact with headed browsers (e.g., Chromium controlled by `@playwright/mcp`).
@@ -119,7 +89,6 @@ The Dockerfile is organized into numbered sections for Docker layer caching:
 | 8. Binary tools | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv, opencode |
 | 9. npm global tools | claude-code, codex, prettier, markdownlint-cli2, openclaw, devcontainers-cli, playwright |
 | 10. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
-| 10b. Agent proxy | FastAPI server wrapping Claude Code CLI for OpenAI-compatible API |
 | 11. Playwright browsers | Chromium + system deps via `playwright install --with-deps` |
 | 12. Homebrew | Linuxbrew (needed by openclaw configure) |
 | 13. VNC stack | Xvfb, x11vnc, noVNC, fluxbox — remote display via browser |
@@ -199,7 +168,6 @@ Both persist across container restarts and rebuilds. Run `docker compose pull` t
 | Host | Container | Service |
 |------|-----------|---------|
 | `127.0.0.1:6080` | `6080` | noVNC remote display (localhost only) |
-| `127.0.0.1:18082` | `8082` | Chat-only AI proxy (localhost only, `COMPOSE_PROFILES=proxy`) |
-| `127.0.0.1:18083` | `8082` | Claude Agent Proxy (localhost only, `CLAUDE_AGENT_PROXY=true`) |
+| `127.0.0.1:18082` | `8082` | API proxy (localhost only, proxy mode) |
 
-All ports are bound to `127.0.0.1` so they are only accessible from your machine, not the network. The chat-only proxy port (18082) is only active when running in proxy mode. The agent proxy port (18083) is always mapped but only serves traffic when `CLAUDE_AGENT_PROXY=true`.
+Both ports are bound to `127.0.0.1` so they are only accessible from your machine, not the network. The proxy port is only active when running in proxy mode (`COMPOSE_PROFILES=proxy`).
