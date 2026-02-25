@@ -308,6 +308,13 @@ RUN pip install --no-cache-dir --break-system-packages \
     checkov
 
 # ============================================================
+# 10b. Claude Code configuration (tool awareness + self-test)
+# ============================================================
+COPY claude-config/ /opt/claude-config/
+RUN chmod +x /opt/claude-config/self-test.sh \
+    && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test
+
+# ============================================================
 # 11. Playwright browsers (Chromium + system deps)
 # ============================================================
 # hadolint ignore=DL3059

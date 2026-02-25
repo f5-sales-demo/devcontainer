@@ -55,6 +55,7 @@ The container runs a virtual display stack so you can watch and interact with he
 | `ENABLE_VNC` | `true` | Set to `false` to disable the VNC stack |
 | `VNC_RESOLUTION` | `1280x1024x24` | Virtual display resolution (WxHxDepth) |
 | `DISPLAY` | `:99` | X11 display number |
+| `NOVNC_HOST_PORT` | `6080` | Host-side port for noVNC (override to avoid conflicts with other containers) |
 
 ### Git
 
@@ -89,9 +90,27 @@ The Dockerfile is organized into numbered sections for Docker layer caching:
 | 8. Binary tools | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv, opencode |
 | 9. npm global tools | claude-code, codex, prettier, markdownlint-cli2, openclaw, devcontainers-cli, playwright |
 | 10. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
+| 10b. Claude Code config | Tool awareness memory, project rules, self-test script |
 | 11. Playwright browsers | Chromium + system deps via `playwright install --with-deps` |
 | 12. Homebrew | Linuxbrew (needed by openclaw configure) |
 | 13. VNC stack | Xvfb, x11vnc, noVNC, fluxbox — remote display via browser |
+
+## Claude Code Tool Awareness
+
+The container includes baked-in configuration that prevents Claude Code from confusing tool names. On first startup, the entrypoint seeds:
+
+- **Auto memory** (`~/.claude/projects/*/memory/MEMORY.md`) — a tool name reference table loaded into every conversation context
+- **Project rules** (`.claude/rules/`) — instructions loaded alongside `CLAUDE.md` every session
+
+### Self-Test
+
+Run the built-in self-test to verify the configuration:
+
+```bash
+claude-self-test
+```
+
+This checks that all configuration files are in place and contain the expected tool references.
 
 ## Adding Tools
 
@@ -167,7 +186,7 @@ Both persist across container restarts and rebuilds. Run `docker compose pull` t
 
 | Host | Container | Service |
 |------|-----------|---------|
-| `127.0.0.1:6080` | `6080` | noVNC remote display (localhost only) |
+| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNC remote display (localhost only, override with `NOVNC_HOST_PORT`) |
 | `127.0.0.1:18082` | `8082` | API proxy (localhost only, proxy mode) |
 
 Both ports are bound to `127.0.0.1` so they are only accessible from your machine, not the network. The proxy port is only active when running in proxy mode (`COMPOSE_PROFILES=proxy`).

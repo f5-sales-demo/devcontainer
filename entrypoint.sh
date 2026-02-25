@@ -47,6 +47,26 @@ if [ ! -f "$HOME/.claude.json" ] || [ ! -s "$HOME/.claude.json" ]; then
 fi
 
 # ============================================================
+# Claude Code project memory + rules (tool awareness)
+# ============================================================
+for PROJECT_SUFFIX in "-workspace-devcontainer" "-workspace"; do
+  MEMORY_DIR="$HOME/.claude/projects/${PROJECT_SUFFIX}/memory"
+  if [ ! -f "$MEMORY_DIR/MEMORY.md" ]; then
+    mkdir -p "$MEMORY_DIR"
+    cp /opt/claude-config/MEMORY.md "$MEMORY_DIR/MEMORY.md"
+  fi
+done
+
+# Seed .claude/rules/ into repos with CLAUDE.md.
+# .claude/ is gitignored so this won't pollute the working tree.
+for REPO_DIR in /workspace/devcontainer /workspace; do
+  if [ -f "$REPO_DIR/CLAUDE.md" ] && [ ! -d "$REPO_DIR/.claude/rules" ]; then
+    mkdir -p "$REPO_DIR/.claude/rules"
+    cp /opt/claude-config/rules/*.md "$REPO_DIR/.claude/rules/" 2>/dev/null || true
+  fi
+done
+
+# ============================================================
 # VNC stack (Xvfb + fluxbox + x11vnc + noVNC)
 # ============================================================
 if [ "${ENABLE_VNC:-true}" = "true" ]; then
