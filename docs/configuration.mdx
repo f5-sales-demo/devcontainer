@@ -68,7 +68,12 @@ curl -s "http://searxng:8080/search?q=your+query&format=json" | jq '.results[:5]
 |----------|---------|-------------|
 | `SEARXNG_BASE_URL` | `http://searxng:8080` | Base URL used by SearXNG internally |
 
-SearXNG configuration is persisted in the `searxng-data` volume. Customize settings by editing `/etc/searxng/settings.yml` inside the container.
+A custom `searxng/settings.yml` is bind-mounted into the container. It extends the SearXNG defaults with two changes required for API access:
+
+- **`search.formats`** includes `json` (the default only allows `html`, which causes `format=json` requests to return 403)
+- **`server.limiter`** is set to `false` (the default rate limiter blocks automated requests from Claude Code)
+
+To customize SearXNG further, edit `searxng/settings.yml` in the project root.
 
 ### Remote Display (noVNC)
 
@@ -196,7 +201,6 @@ All data lives in Docker named volumes — no host directories are mounted:
 |--------|-------------|----------|
 | `workspace` | `/workspace` | Your cloned repositories and project files |
 | `home` | `/home/vscode` | Shell history, tool configs, caches, SSH keys |
-| `searxng-data` | `/etc/searxng` | SearXNG configuration and settings (search profile only) |
 
 Both persist across container restarts and rebuilds. Run `docker compose pull` to fetch the latest pre-built image before restarting.
 
