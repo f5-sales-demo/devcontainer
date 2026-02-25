@@ -4,12 +4,20 @@ set -e
 echo "Running post-start checks..."
 
 # Check AI provider mode
-if [ -n "$ANTHROPIC_BASE_URL" ]; then
-  echo -n "  Checking AI proxy ($ANTHROPIC_BASE_URL)... "
-  if curl -sf --connect-timeout 5 "$ANTHROPIC_BASE_URL/" >/dev/null 2>&1; then
+if [ -n "$OPENAI_API_KEY" ]; then
+  echo "  Mode: proxy (OpenAI-compatible)"
+  echo -n "  Checking proxy (http://localhost:8082)... "
+  if curl -sf --connect-timeout 5 "http://localhost:8082/" >/dev/null 2>&1; then
     echo "reachable"
   else
-    echo "not reachable (check proxy logs: docker compose logs proxy)"
+    echo "not reachable (check /tmp/claude-proxy.log)"
+  fi
+  echo -n "  Checking upstream ($OPENAI_BASE_URL)... "
+  if curl -sf --connect-timeout 5 -o /dev/null "$OPENAI_BASE_URL/models" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" 2>/dev/null; then
+    echo "reachable"
+  else
+    echo "not reachable (check VPN / network connectivity)"
   fi
 else
   echo "  Mode: direct API (no proxy)"
@@ -25,14 +33,8 @@ else
     echo "           Get a key at https://console.anthropic.com/"
   elif [[ "$ANTHROPIC_API_KEY" != sk-ant-* ]]; then
     echo "  WARNING: ANTHROPIC_API_KEY does not look like an Anthropic key"
-    if [ -n "$OPENAI_API_KEY" ] || [ -n "$OPENAI_BASE_URL" ]; then
-      echo "           It looks like you have proxy settings (OPENAI_API_KEY/OPENAI_BASE_URL)"
-      echo "           but the proxy profile is not enabled. Add these to .env:"
-      echo "             COMPOSE_PROFILES=proxy"
-      echo "             ANTHROPIC_BASE_URL=http://proxy:8082"
-    else
-      echo "           Anthropic API keys start with 'sk-ant-'. Check your .env file."
-    fi
+    echo "           If using an OpenAI-compatible provider, set OPENAI_API_KEY"
+    echo "           and OPENAI_BASE_URL in .env to enable the built-in proxy."
   else
     echo "  ANTHROPIC_API_KEY is set"
   fi

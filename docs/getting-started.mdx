@@ -59,7 +59,7 @@ Edit `.env` to set any of the following:
 
 - **Git identity** — pre-fill `GIT_AUTHOR_NAME` and `GIT_AUTHOR_EMAIL` so commits use the right name and email
 - **SSH key** — add `SSH_PRIVATE_KEY` (base64-encoded) to clone private repos over SSH inside the container
-- **AI CLI tools** — configure `ANTHROPIC_API_KEY` and optionally the proxy sidecar if you want to use Claude Code (see Step 3)
+- **AI CLI tools** — configure `ANTHROPIC_API_KEY` and optionally the proxy if you want to use Claude Code (see Step 3)
 - **Authentication tokens** — any other tokens or credentials your workflow needs
 
 You can also set these variables interactively inside the container after it starts.
@@ -78,21 +78,19 @@ ANTHROPIC_API_KEY=sk-ant-your-api-key-here
 
 That's it — Claude Code will connect directly to the Anthropic API.
 
-### Proxy mode
+### Proxy mode (OpenAI-compatible providers)
 
-If you need to route Claude Code traffic through the built-in proxy sidecar (for example, to remap model names or target an OpenAI-compatible endpoint), uncomment the proxy block in `.env`:
+If you need to route Claude Code traffic through an OpenAI-compatible endpoint (for example, Open WebUI, Ollama, or any provider that speaks the OpenAI Chat Completions API), set the proxy variables in `.env`:
 
 ```ini
-ANTHROPIC_API_KEY=proxyconfig
-COMPOSE_PROFILES=proxy
-ANTHROPIC_BASE_URL=http://proxy:8082
+ANTHROPIC_API_KEY=placeholder
 OPENAI_API_KEY=sk-your-api-key-here
 OPENAI_BASE_URL=https://your-api-endpoint.example.com/v1
 ```
 
-In proxy mode, `ANTHROPIC_API_KEY` can be any non-empty value — Claude Code requires it to be set, but the proxy authenticates upstream with `OPENAI_API_KEY`.
+When `OPENAI_API_KEY` is set, the container automatically starts a built-in proxy process that translates Claude Code's native Anthropic API calls to OpenAI format. `ANTHROPIC_API_KEY` can be any non-empty value — Claude Code requires it to be set, but the proxy authenticates upstream with `OPENAI_API_KEY`.
 
-See [Configuration — AI Proxy](./configuration#ai-proxy-optional) for model mapping and tuning options.
+See [Configuration — AI Proxy](./configuration#ai-proxy-openai-compatible-providers) for model mapping and tuning options.
 
 ## 4. Start the Container
 
@@ -149,11 +147,11 @@ terraform --version
 Test the AI connection:
 
 ```bash
-# Direct mode — connects to your provider
+# Direct mode — connects to Anthropic directly
 claude -p "Say hello"
 
-# Proxy mode — verify proxy is reachable first
-curl http://proxy:8082/
+# Proxy mode — verify proxy is running
+curl http://localhost:8082/
 claude -p "Say hello"
 ```
 

@@ -35,7 +35,7 @@ connection. When running through a proxy, use these alternatives:
 
 ### SearXNG (self-hosted, no API key needed)
 
-If the search profile is enabled (`COMPOSE_PROFILES=proxy,search`),
+If the search profile is enabled (`COMPOSE_PROFILES=search`),
 a SearXNG metasearch engine is available inside the Docker network:
 
 ```bash

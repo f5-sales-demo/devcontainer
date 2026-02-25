@@ -17,20 +17,18 @@ All configuration lives in the `.env` file at the project root. This file is git
 
 In **direct mode** (default), set this to your Anthropic API key (`sk-ant-...`). In **proxy mode**, this can be any non-empty value — the proxy authenticates upstream with `OPENAI_API_KEY` instead.
 
-### AI Proxy (Optional)
+### AI Proxy (OpenAI-compatible providers)
 
-To route AI traffic through the built-in proxy sidecar, add these to `.env`:
+When `OPENAI_API_KEY` is set, the container automatically starts a built-in proxy process on `localhost:8082` that translates Claude Code's native Anthropic Messages API calls to OpenAI Chat Completions format. No separate container or compose profile is needed.
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `COMPOSE_PROFILES` | Set to `proxy` to enable the sidecar | `proxy` |
-| `ANTHROPIC_BASE_URL` | Proxy URL seen by AI tools | `http://proxy:8082` |
 | `OPENAI_API_KEY` | API key for the upstream provider | `sk-abc123...` |
-| `OPENAI_BASE_URL` | Upstream API endpoint | `https://api.openai.com/v1` |
+| `OPENAI_BASE_URL` | Upstream API endpoint | `https://your-provider.example.com/v1` |
 
 #### Model Mapping (proxy mode only)
 
-The proxy maps generic model names to your backend's model identifiers:
+The proxy maps Claude Code's model requests to your backend's model identifiers:
 
 | Variable | Default | Used For |
 |----------|---------|----------|
@@ -46,6 +44,15 @@ The proxy maps generic model names to your backend's model identifiers:
 | `MAX_TOKENS_LIMIT` | `64000` | Maximum tokens per request |
 | `REQUEST_TIMEOUT` | `120` | Request timeout in seconds |
 
+#### Proxy Logs
+
+The proxy logs to `/tmp/claude-proxy.log` inside the container. To check proxy status:
+
+```bash
+curl http://localhost:8082/
+cat /tmp/claude-proxy.log
+```
+
 ### Web Search (SearXNG)
 
 The built-in `WebSearch` tool is a server-side tool executed by the Anthropic backend. It only works with a direct Anthropic API connection — through a proxy, it is silently dropped and returns no results.
@@ -55,7 +62,7 @@ To restore web search capability in proxy mode, enable the **search** profile to
 Add `search` to your `COMPOSE_PROFILES`:
 
 ```ini
-COMPOSE_PROFILES=proxy,search
+COMPOSE_PROFILES=search
 ```
 
 SearXNG is available inside the Docker network at `http://searxng:8080`. Claude Code can query it via `Bash` + `curl`:
@@ -267,7 +274,6 @@ Both persist across container restarts and rebuilds. Run `docker compose pull` t
 | Host | Container | Service |
 |------|-----------|---------|
 | `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNC remote display (localhost only, override with `NOVNC_HOST_PORT`) |
-| `127.0.0.1:18082` | `8082` | API proxy (localhost only, proxy mode) |
 | `127.0.0.1:8888` | `8080` | SearXNG search engine (localhost only, search profile) |
 
-Both ports are bound to `127.0.0.1` so they are only accessible from your machine, not the network. The proxy port is only active when running in proxy mode (`COMPOSE_PROFILES=proxy`). The SearXNG port is only active when the search profile is enabled.
+Ports are bound to `127.0.0.1` so they are only accessible from your machine, not the network. The SearXNG port is only active when the search profile is enabled (`COMPOSE_PROFILES=search`). The AI proxy runs inside the container on `localhost:8082` and is not exposed to the host.

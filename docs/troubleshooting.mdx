@@ -10,25 +10,9 @@ sidebar:
 ### "Conflict. The container name is already in use"
 
 ```bash
-docker rm -f devcontainer devcontainer-proxy
+docker rm -f devcontainer
 docker compose up -d
 ```
-
-### Proxy fails health check
-
-This only applies if you are running in **proxy mode** (`COMPOSE_PROFILES=proxy` in `.env`). If you are using direct mode, the proxy is not running and health check messages can be ignored.
-
-Check proxy logs:
-
-```bash
-docker compose --profile proxy logs proxy
-```
-
-Common causes:
-
-- **Missing `.env`** — See [Getting Started](./getting-started#2-create-your-configuration).
-- **Invalid API key** — Verify your key: `curl -H "Authorization: Bearer $OPENAI_API_KEY" $OPENAI_BASE_URL/models`
-- **Network issue** — The proxy needs outbound HTTPS access to your API provider.
 
 ## AI Tools Not Working
 
@@ -59,18 +43,35 @@ echo "$ANTHROPIC_API_KEY"
 Common causes:
 
 - **Placeholder not replaced** — `.env` still has `sk-ant-your-api-key-here`. Replace it with your real key from [console.anthropic.com](https://console.anthropic.com/).
-- **Proxy token without proxy enabled** — If you set a non-Anthropic value (e.g. a custom token for an OpenAI-compatible provider) but did not enable the proxy, Claude sends it directly to Anthropic's API which rejects it. Enable the proxy in `.env`:
+- **Using an OpenAI-compatible provider without proxy vars** — If your key is not an Anthropic key, you need to set `OPENAI_API_KEY` and `OPENAI_BASE_URL` in `.env` so the built-in proxy activates. Set `ANTHROPIC_API_KEY` to any non-empty value.
 
   ```text
-  COMPOSE_PROFILES=proxy
-  ANTHROPIC_BASE_URL=http://proxy:8082
+  ANTHROPIC_API_KEY=placeholder
   OPENAI_API_KEY=<your-provider-key>
   OPENAI_BASE_URL=<your-provider-url>
   ```
 
-  Then rebuild: `docker compose up -d`.
+  Then restart: `docker compose up -d`.
 
 - **Key doesn't start with `sk-ant-`** — Anthropic API keys always start with `sk-ant-`. If yours doesn't, it may be for a different provider. Use the proxy mode above, or get a direct key from [console.anthropic.com](https://console.anthropic.com/).
+
+### Claude shows "Connection error"
+
+The built-in proxy may not be running. Check:
+
+```bash
+# Is the proxy process alive?
+curl http://localhost:8082/
+
+# Check proxy logs
+cat /tmp/claude-proxy.log
+
+# Verify environment variables are set
+echo "OPENAI_API_KEY=$OPENAI_API_KEY"
+echo "OPENAI_BASE_URL=$OPENAI_BASE_URL"
+```
+
+The proxy only starts when `OPENAI_API_KEY` is set. If it's empty, add it to `.env` and restart the container.
 
 ### API requests fail with 401
 
@@ -85,8 +86,9 @@ Verify it works by making a direct call to your provider.
 **Proxy mode** — Check that the proxy is running and configured:
 
 ```bash
-curl http://proxy:8082/
-docker compose --profile proxy exec proxy env | grep -E 'OPENAI|MODEL'
+curl http://localhost:8082/
+echo "$OPENAI_API_KEY"
+echo "$OPENAI_BASE_URL"
 ```
 
 ### Claude says "model not found"
@@ -151,15 +153,6 @@ If DNS fails, add to `/etc/docker/daemon.json` on the host:
 
 Then restart Docker.
 
-### Port 18082 already in use
-
-This only applies in proxy mode. Change the port in `docker-compose.yml`:
-
-```yaml
-ports:
-  - "127.0.0.1:28082:8082"
-```
-
 ## Remote Display (noVNC)
 
 ### Black screen in noVNC
@@ -208,8 +201,8 @@ ports:
 ## Reset Everything
 
 ```bash
-docker compose --profile proxy down -v
-docker rm -f devcontainer devcontainer-proxy 2>/dev/null
+docker compose down -v
+docker rm -f devcontainer 2>/dev/null
 docker compose up -d --build
 ```
 
