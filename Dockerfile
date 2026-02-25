@@ -16,6 +16,7 @@ ARG TFLINT_VERSION=0.55.1
 ARG KUBECTL_VERSION=1.32.2
 ARG HELM_VERSION=3.17.1
 ARG ACT_VERSION=0.2.74
+ARG FZF_VERSION=0.68.0
 ARG UV_VERSION=0.6.2
 ARG ACTIONLINT_VERSION=1.7.7
 ARG PWSH_VERSION=7.5.4
@@ -84,7 +85,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Network tools
     dnsutils net-tools iputils-ping traceroute tcpdump nmap \
     # Shell tools
-    bat fd-find ripgrep neovim htop tree fzf tmux file \
+    bat fd-find ripgrep neovim htop tree tmux file \
     # Node.js
     nodejs \
     # Python
@@ -271,7 +272,12 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
       -o /tmp/ibmcloud.tar.gz \
     && tar -xzf /tmp/ibmcloud.tar.gz -C /tmp \
     && install -m 755 /tmp/Bluemix_CLI/bin/ibmcloud /usr/local/bin/ibmcloud \
-    && rm -rf /tmp/ibmcloud.tar.gz /tmp/Bluemix_CLI
+    && rm -rf /tmp/ibmcloud.tar.gz /tmp/Bluemix_CLI \
+    # fzf (APT version 0.44.1 predates --zsh flag; base image strips
+    # /usr/share/doc so Debian fallback path also unavailable)
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-linux_${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin fzf
 
 # ============================================================
 # 9. npm global tools
@@ -390,6 +396,7 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
 # hadolint ignore=DL3059
 RUN mkdir -p "$HOME/.npm-global" \
     && npm config set prefix "$HOME/.npm-global" \
+    && git clone --depth=1 https://github.com/tfutils/tfenv.git "$HOME/.tfenv" \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 ENV SHELL=/bin/zsh
