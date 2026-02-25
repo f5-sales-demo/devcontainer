@@ -331,9 +331,9 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
       "https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin fzf \
     # hadolint (Dockerfile linter)
-    && if [ "$DPKG_ARCH" = "amd64" ]; then HL_ARCH="x86_64"; else HL_ARCH="aarch64"; fi \
+    && if [ "$DPKG_ARCH" = "amd64" ]; then HL_ARCH="x86_64"; else HL_ARCH="arm64"; fi \
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/hadolint \
-      "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-Linux-${HL_ARCH}" \
+      "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-${HL_ARCH}" \
     && chmod +x /usr/local/bin/hadolint
 
 # ============================================================
@@ -353,7 +353,8 @@ RUN npm install -g \
 # 12. pip tools
 # ============================================================
 # hadolint ignore=DL3013,DL3059
-RUN pip install --no-cache-dir --break-system-packages \
+RUN pip install --no-cache-dir --break-system-packages --force-reinstall typing_extensions \
+    && pip install --no-cache-dir --break-system-packages \
     pre-commit \
     ansible \
     black \
