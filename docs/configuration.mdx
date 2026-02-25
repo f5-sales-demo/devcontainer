@@ -99,8 +99,7 @@ The Dockerfile is organized into numbered sections for Docker layer caching:
 
 The container includes baked-in configuration that prevents Claude Code from confusing tool names. On first startup, the entrypoint seeds:
 
-- **Auto memory** (`~/.claude/projects/*/memory/MEMORY.md`) — a tool name reference table loaded into every conversation context
-- **Project rules** (`.claude/rules/`) — instructions loaded alongside `CLAUDE.md` every session
+- **User-level CLAUDE.md** (`~/.claude/CLAUDE.md`) — a tool name reference loaded in every Claude Code session, regardless of which project directory you're working in
 
 ### Self-Test
 
