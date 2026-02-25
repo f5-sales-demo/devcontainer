@@ -12,8 +12,15 @@ services:
       - workspace:/workspace
       - home:/home/vscode
     environment:
-      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
+      - BIG_MODEL=${BIG_MODEL:-}
+      - MIDDLE_MODEL=${MIDDLE_MODEL:-}
+      - SMALL_MODEL=${SMALL_MODEL:-}
+      - LOG_LEVEL=${LOG_LEVEL:-WARNING}
+      - MAX_TOKENS_LIMIT=${MAX_TOKENS_LIMIT:-64000}
+      - REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-120}
       - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME:-}
       - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL:-}
       - GIT_COMMITTER_NAME=${GIT_AUTHOR_NAME:-}
@@ -28,37 +35,6 @@ services:
     stdin_open: true
     tty: true
     init: true
-    restart: unless-stopped
-
-  proxy:
-    image: ghcr.io/f5xc-salesdemos/devcontainer-proxy:latest
-    build:
-      context: .
-      dockerfile: Dockerfile.proxy
-    pull_policy: missing
-    container_name: devcontainer-proxy
-    hostname: proxy
-    profiles:
-      - proxy
-    environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
-      - BIG_MODEL=${BIG_MODEL:-gpt-4o}
-      - MIDDLE_MODEL=${MIDDLE_MODEL:-gpt-4o}
-      - SMALL_MODEL=${SMALL_MODEL:-gpt-4o-mini}
-      - HOST=0.0.0.0
-      - PORT=8082
-      - LOG_LEVEL=${LOG_LEVEL:-WARNING}
-      - MAX_TOKENS_LIMIT=${MAX_TOKENS_LIMIT:-64000}
-      - REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-120}
-    ports:
-      - "127.0.0.1:18082:8082"
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8082/')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
     restart: unless-stopped
 
   searxng:

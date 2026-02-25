@@ -1,4 +1,4 @@
-# SearXNG settings for devcontainer sidecar
+# SearXNG settings for devcontainer search service
 # This is an internal-only service — not exposed to the public internet.
 # JSON API access and limiter are configured for automated tool usage.
 

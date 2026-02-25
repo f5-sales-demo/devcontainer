@@ -368,6 +368,21 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     checkov
 
 # ============================================================
+# 12b. Claude Code Proxy (Anthropic Messages API -> OpenAI)
+# ============================================================
+# Runs as a background process in entrypoint.sh when OPENAI_API_KEY is set.
+# Build tools are needed for C extensions (httptools, uvloop) on Python 3.13.
+# hadolint ignore=DL3008,DL3013,DL3059
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+    && git clone --depth=1 https://github.com/fuergaosi233/claude-code-proxy.git /opt/claude-code-proxy \
+    && cd /opt/claude-code-proxy \
+    && uv sync \
+    && apt-get purge -y build-essential \
+    && apt-get autoremove -y \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ============================================================
 # 13. Playwright browsers (Chromium + system deps)
 # ============================================================
 # hadolint ignore=DL3059

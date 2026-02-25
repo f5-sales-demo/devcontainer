@@ -59,8 +59,8 @@ Docker containers do not share clipboard state with the host. Data cannot leak t
 
 The container communicates with the outside world in one of two modes:
 
-- **Direct mode (default)** — outbound HTTPS to your AI provider through Docker's NAT. No sidecar proxy is involved.
-- **Proxy mode (optional)** — traffic routes through an in-container proxy sidecar on the internal Docker network, which then connects outbound to your API endpoint.
+- **Direct mode (default)** — outbound HTTPS to your AI provider through Docker's NAT.
+- **Proxy mode (optional)** — traffic routes through a built-in proxy process on `localhost:8082` inside the container, which translates Anthropic API calls to OpenAI format and connects outbound to your API endpoint. The proxy port is not exposed to the host.
 
 In both modes, the container has no access to VPN tunnels, corporate network interfaces, or other services on the host.
 
@@ -92,7 +92,7 @@ This environment runs AI tools as **command-line interfaces only**. No desktop a
 3. **Rotate SSH keys** used inside the container periodically.
 4. **Review `.env` before sharing.** It contains API keys and may contain SSH private keys.
 5. **Rebuild periodically** to pick up security patches: `docker compose up -d --build`
-6. **Do not expose the proxy port** to anything other than localhost. The default binds to `127.0.0.1:18082` only (proxy mode).
+6. **The proxy runs inside the container** on `localhost:8082` and is not exposed to the host network.
 
 ## References
 
