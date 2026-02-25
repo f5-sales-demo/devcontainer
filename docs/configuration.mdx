@@ -46,6 +46,30 @@ The proxy maps generic model names to your backend's model identifiers:
 | `MAX_TOKENS_LIMIT` | `64000` | Maximum tokens per request |
 | `REQUEST_TIMEOUT` | `120` | Request timeout in seconds |
 
+### Web Search (SearXNG)
+
+The built-in `WebSearch` tool is a server-side tool executed by the Anthropic backend. It only works with a direct Anthropic API connection — through a proxy, it is silently dropped and returns no results.
+
+To restore web search capability in proxy mode, enable the **search** profile to add a [SearXNG](https://docs.searxng.org/) sidecar — a self-hosted metasearch engine that aggregates results from Google, Bing, DuckDuckGo, and others with no API key required.
+
+Add `search` to your `COMPOSE_PROFILES`:
+
+```ini
+COMPOSE_PROFILES=proxy,search
+```
+
+SearXNG is available inside the Docker network at `http://searxng:8080`. Claude Code can query it via `Bash` + `curl`:
+
+```bash
+curl -s "http://searxng:8080/search?q=your+query&format=json" | jq '.results[:5]'
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SEARXNG_BASE_URL` | `http://searxng:8080` | Base URL used by SearXNG internally |
+
+SearXNG configuration is persisted in the `searxng-data` volume. Customize settings by editing `/etc/searxng/settings.yml` inside the container.
+
 ### Remote Display (noVNC)
 
 The container runs a virtual display stack so you can watch and interact with headed browsers (e.g., Chromium controlled by `@playwright/mcp`).
@@ -172,6 +196,7 @@ All data lives in Docker named volumes — no host directories are mounted:
 |--------|-------------|----------|
 | `workspace` | `/workspace` | Your cloned repositories and project files |
 | `home` | `/home/vscode` | Shell history, tool configs, caches, SSH keys |
+| `searxng-data` | `/etc/searxng` | SearXNG configuration and settings (search profile only) |
 
 Both persist across container restarts and rebuilds. Run `docker compose pull` to fetch the latest pre-built image before restarting.
 
@@ -187,5 +212,6 @@ Both persist across container restarts and rebuilds. Run `docker compose pull` t
 |------|-----------|---------|
 | `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNC remote display (localhost only, override with `NOVNC_HOST_PORT`) |
 | `127.0.0.1:18082` | `8082` | API proxy (localhost only, proxy mode) |
+| `127.0.0.1:8888` | `8080` | SearXNG search engine (localhost only, search profile) |
 
-Both ports are bound to `127.0.0.1` so they are only accessible from your machine, not the network. The proxy port is only active when running in proxy mode (`COMPOSE_PROFILES=proxy`).
+Both ports are bound to `127.0.0.1` so they are only accessible from your machine, not the network. The proxy port is only active when running in proxy mode (`COMPOSE_PROFILES=proxy`). The SearXNG port is only active when the search profile is enabled.
