@@ -19,6 +19,10 @@ ARG ACT_VERSION=0.2.74
 ARG UV_VERSION=0.6.2
 ARG ACTIONLINT_VERSION=1.7.7
 ARG PWSH_VERSION=7.5.4
+ARG OC_VERSION=4.18.4
+ARG YQ_VERSION=4.52.4
+ARG TERRAGRUNT_VERSION=0.71.2
+ARG IBMCLOUD_VERSION=2.31.0
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -60,6 +64,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       > /etc/apt/sources.list.d/azure-cli.list \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/ubuntu/24.04/prod $(lsb_release -cs) main" \
       > /etc/apt/sources.list.d/microsoft-prod.list \
+    # Google Cloud CLI
+    && curl ${CURL_RETRY} -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+      | gpg --dearmor -o /usr/share/keyrings/cloud-google-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/cloud-google-archive-keyring.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
+      > /etc/apt/sources.list.d/google-cloud-sdk.list \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
@@ -91,6 +100,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     azure-cli \
     # Locale
     locales \
+    locales-all \
+    # Additional tools
+    dos2unix \
+    eza \
+    fontconfig \
+    fonts-powerline \
+    google-cloud-cli \
+    graphviz \
+    imagemagick \
+    jq \
+    lsd \
+    mtr-tiny \
+    shellcheck \
+    unzip \
+    yelp-tools \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -208,6 +232,44 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
       | tar -xz -C /usr/local/bin opencode
 
 # ============================================================
+# 8b. Additional binary tools (code CLI, oc, yq, terragrunt, ibmcloud)
+# ============================================================
+# hadolint ignore=DL3059
+RUN DPKG_ARCH=$(dpkg --print-architecture) \
+    # VS Code CLI (code tunnel / code serve-web for remote dev connectivity)
+    && if [ "$DPKG_ARCH" = "amd64" ]; then VSCODE_ARCH="x64"; else VSCODE_ARCH="arm64"; fi \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://code.visualstudio.com/sha/download?build=stable&os=cli-linux-${VSCODE_ARCH}" \
+      -o /tmp/vscode_cli.tar.gz \
+    && tar -xzf /tmp/vscode_cli.tar.gz -C /usr/local/bin \
+    && rm /tmp/vscode_cli.tar.gz \
+    # oc (OpenShift CLI) — extract only oc binary
+    && curl ${CURL_RETRY} -fsSL \
+      "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_VERSION}/openshift-client-linux-${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin oc \
+    # yq v4 — installed as yq; yq4 is a symlink
+    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/yq \
+      "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_${DPKG_ARCH}" \
+    && chmod +x /usr/local/bin/yq \
+    && ln -sf /usr/local/bin/yq /usr/local/bin/yq4 \
+    # yq v3 (EOL, last release 3.4.1) — installed as yq3
+    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/yq3 \
+      "https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_${DPKG_ARCH}" \
+    && chmod +x /usr/local/bin/yq3 \
+    # terragrunt
+    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/terragrunt \
+      "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_${DPKG_ARCH}" \
+    && chmod +x /usr/local/bin/terragrunt \
+    # IBM Cloud CLI
+    && if [ "$DPKG_ARCH" = "amd64" ]; then IBM_ARCH="amd64"; else IBM_ARCH="arm64"; fi \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/IBM-Cloud/ibm-cloud-cli-release/releases/download/v${IBMCLOUD_VERSION}/IBM_Cloud_CLI_${IBMCLOUD_VERSION}_linux_${IBM_ARCH}.tar.gz" \
+      -o /tmp/ibmcloud.tar.gz \
+    && tar -xzf /tmp/ibmcloud.tar.gz -C /tmp \
+    && install -m 755 /tmp/IBM_Cloud_CLI/ibmcloud /usr/local/bin/ibmcloud \
+    && rm -rf /tmp/ibmcloud.tar.gz /tmp/IBM_Cloud_CLI
+
+# ============================================================
 # 9. npm global tools
 # ============================================================
 # hadolint ignore=DL3016,DL3059
@@ -230,7 +292,10 @@ RUN pip install --no-cache-dir --break-system-packages \
     black \
     pylint \
     yamllint \
-    playwright
+    playwright \
+    "markitdown[all]" \
+    progressbar2 \
+    checkov
 
 # ============================================================
 # 11. Playwright browsers (Chromium + system deps)
@@ -275,6 +340,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     x11-utils \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 USER $USERNAME
+
+# ============================================================
+# 15. ZSH plugins (oh-my-zsh is pre-installed by devcontainers base)
+# ============================================================
+# hadolint ignore=DL3059
+RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
+    && git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git \
+      "${ZSH_CUSTOM}/plugins/zsh-autosuggestions" \
+    && git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git \
+      "${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting" \
+    && git clone --depth=1 https://github.com/conda-incubator/conda-zsh-completion.git \
+      "${ZSH_CUSTOM}/plugins/conda-zsh-completion" \
+    && git clone --depth=1 https://github.com/z-shell/zsh-eza.git \
+      "${ZSH_CUSTOM}/plugins/zsh-eza" \
+    && git clone --depth=1 https://github.com/cda0/zsh-tfenv.git \
+      "${ZSH_CUSTOM}/plugins/zsh-tfenv" \
+    && git clone --depth=1 https://github.com/yuhonas/zsh-aliases-lsd.git \
+      "${ZSH_CUSTOM}/plugins/zsh-aliases-lsd" \
+    && sed -i 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd ubuntu jsontools gh common-aliases zsh-aliases-lsd zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl iterm2 kube-ps1 kubectl sudo vscode aws fzf)/' \
+      "$HOME/.zshrc"
 
 ENV SHELL=/bin/zsh
 WORKDIR /workspace
