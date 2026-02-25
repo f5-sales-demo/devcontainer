@@ -239,13 +239,14 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
     # VS Code CLI (code tunnel / code serve-web for remote dev connectivity)
     && if [ "$DPKG_ARCH" = "amd64" ]; then VSCODE_ARCH="x64"; else VSCODE_ARCH="arm64"; fi \
     && curl ${CURL_RETRY} -fsSL \
-      "https://code.visualstudio.com/sha/download?build=stable&os=cli-linux-${VSCODE_ARCH}" \
+      "https://update.code.visualstudio.com/latest/cli-linux-${VSCODE_ARCH}/stable" \
       -o /tmp/vscode_cli.tar.gz \
     && tar -xzf /tmp/vscode_cli.tar.gz -C /usr/local/bin \
     && rm /tmp/vscode_cli.tar.gz \
-    # oc (OpenShift CLI) — extract only oc binary
+    # oc (OpenShift CLI) — amd64 uses the unarchived default; arm64 uses arch-specific archive
+    && if [ "$DPKG_ARCH" = "amd64" ]; then OC_ARCHIVE="openshift-client-linux-${OC_VERSION}.tar.gz"; else OC_ARCHIVE="openshift-client-linux-${DPKG_ARCH}-${OC_VERSION}.tar.gz"; fi \
     && curl ${CURL_RETRY} -fsSL \
-      "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_VERSION}/openshift-client-linux-${DPKG_ARCH}.tar.gz" \
+      "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_VERSION}/${OC_ARCHIVE}" \
       | tar -xz -C /usr/local/bin oc \
     # yq v4 — installed as yq; yq4 is a symlink
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/yq \
@@ -263,11 +264,11 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
     # IBM Cloud CLI
     && if [ "$DPKG_ARCH" = "amd64" ]; then IBM_ARCH="amd64"; else IBM_ARCH="arm64"; fi \
     && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/IBM-Cloud/ibm-cloud-cli-release/releases/download/v${IBMCLOUD_VERSION}/IBM_Cloud_CLI_${IBMCLOUD_VERSION}_linux_${IBM_ARCH}.tar.gz" \
+      "https://download.clis.cloud.ibm.com/ibm-cloud-cli/${IBMCLOUD_VERSION}/IBM_Cloud_CLI_${IBMCLOUD_VERSION}_${IBM_ARCH}.tar.gz" \
       -o /tmp/ibmcloud.tar.gz \
     && tar -xzf /tmp/ibmcloud.tar.gz -C /tmp \
-    && install -m 755 /tmp/IBM_Cloud_CLI/ibmcloud /usr/local/bin/ibmcloud \
-    && rm -rf /tmp/ibmcloud.tar.gz /tmp/IBM_Cloud_CLI
+    && install -m 755 /tmp/Bluemix_CLI/bin/ibmcloud /usr/local/bin/ibmcloud \
+    && rm -rf /tmp/ibmcloud.tar.gz /tmp/Bluemix_CLI
 
 # ============================================================
 # 9. npm global tools
