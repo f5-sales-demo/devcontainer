@@ -13,13 +13,17 @@ All Claude Code tools use PascalCase. NEVER use snake_case.
 | `Read` | `read_file`, `read`, `cat` | Read file contents |
 | `Write` | `write_file`, `write`, `create_file` | Create/overwrite files |
 | `Edit` | `edit_file`, `edit`, `sed` | Edit existing files |
-| `MultiEdit` | `multi_edit`, `multiedit` | Multiple edits in one call |
 | `Bash` | `bash`, `run_command`, `shell`, `execute` | Run shell commands |
 | `Glob` | `glob`, `find_files`, `list_files` | Find files by pattern |
 | `Grep` | `grep`, `search`, `search_files` | Search file contents |
 | `Task` | `task`, `run_task`, `agent` | Launch subagent tasks |
 | `WebFetch` | `web_fetch`, `fetch`, `curl` | Fetch a URL and return its contents |
 | `WebSearch` | `web_search`, `search_web` | Search the web and return results |
+
+**Note:** `WebSearch` may not return results when running through a
+proxy. Use `WebFetch` or `Bash` with `curl` as alternatives.
+`MultiEdit` is not available through all proxy configurations — use
+sequential `Edit` calls instead.
 
 ## Task Tool Requirements
 
