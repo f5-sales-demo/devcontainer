@@ -120,15 +120,28 @@ The Dockerfile is organized into numbered sections for Docker layer caching:
 | 9. npm global tools | claude-code, codex, prettier, markdownlint-cli2, openclaw, devcontainers-cli, playwright |
 | 10. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
 | 10b. Claude Code config | Tool awareness memory, project rules, self-test script |
+| 10c. Managed policy | Tool awareness installed to `/etc/claude-code/` (highest priority tier) |
 | 11. Playwright browsers | Chromium + system deps via `playwright install --with-deps` |
 | 12. Homebrew | Linuxbrew (needed by openclaw configure) |
 | 13. VNC stack | Xvfb, x11vnc, noVNC, fluxbox — remote display via browser |
 
 ## Claude Code Tool Awareness
 
-The container includes baked-in configuration that prevents Claude Code from confusing tool names. On first startup, the entrypoint seeds:
+The container includes baked-in configuration that prevents Claude Code from confusing tool names. Tool awareness is installed at **two** memory tiers for defense-in-depth:
 
-- **User-level CLAUDE.md** (`~/.claude/CLAUDE.md`) — a tool name reference loaded in every Claude Code session, regardless of which project directory you're working in
+- **Managed policy** (`/etc/claude-code/CLAUDE.md`) — installed at Docker build time. This is the highest-priority tier in Claude Code's memory hierarchy and is always loaded, even when a large project `CLAUDE.md` exists in the working directory.
+- **User memory** (`~/.claude/CLAUDE.md`) — seeded by the entrypoint on first startup. Provides a backup layer and a visible, customizable copy for users.
+
+### Memory Tier Priority
+
+Claude Code loads instructions from multiple memory tiers (highest to lowest priority):
+
+1. **Managed policy** (`/etc/claude-code/`) — Always loaded, cannot be excluded
+2. **Project memory** (`./CLAUDE.md`) — Loaded per project directory
+3. **User memory** (`~/.claude/CLAUDE.md`) — Loaded globally for all sessions
+4. **Local memory** (`./CLAUDE.local.md`) — Personal per-project overrides
+
+Without the Managed policy tier, tool awareness in User memory can be deprioritized when competing with a large project-level `CLAUDE.md`, causing Claude to lose awareness of its PascalCase tool names. The Managed tier guarantees tool awareness is always loaded at the highest priority.
 
 ### Self-Test
 

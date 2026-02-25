@@ -315,6 +315,16 @@ RUN chmod +x /opt/claude-config/self-test.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test
 
 # ============================================================
+# 10c. Managed policy — tool awareness at highest priority tier
+# ============================================================
+# The Managed policy tier (/etc/claude-code/) is the highest priority in
+# Claude Code's memory hierarchy and is always loaded, even when a project
+# CLAUDE.md exists in the working directory. This prevents tool awareness
+# from being deprioritized by large project-level instructions.
+RUN mkdir -p /etc/claude-code/.claude/rules \
+    && cp /opt/claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
+
+# ============================================================
 # 11. Playwright browsers (Chromium + system deps)
 # ============================================================
 # hadolint ignore=DL3059
