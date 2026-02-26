@@ -24,27 +24,6 @@ All Claude Code tools use PascalCase. NEVER use snake_case.
 **Note:** `MultiEdit` is not available through all proxy configurations —
 use sequential `Edit` calls instead.
 
-## Web Search
-
-When SearXNG is running (`COMPOSE_PROFILES=search`), the built-in
-`WebSearch` tool works transparently through the proxy. The proxy
-intercepts WebSearch calls and fulfills them via SearXNG — no special
-configuration needed.
-
-If SearXNG is not running, WebSearch is silently unavailable. The model
-will proceed without search results.
-
-### Manual SearXNG queries (fallback)
-
-```bash
-curl -s "http://searxng:8080/search?q=your+query&format=json" | jq '.results[:5]'
-```
-
-### WebFetch (built-in, works through proxy)
-
-Use `WebFetch` to retrieve content from a specific URL when you already
-know where to look.
-
 ## Task Tool Requirements
 
 - Always include `description` (string) — it is REQUIRED
