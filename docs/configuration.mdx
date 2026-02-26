@@ -53,6 +53,23 @@ curl http://localhost:8082/
 cat /tmp/claude-proxy.log
 ```
 
+### OpenCode
+
+When `OPENAI_API_KEY` and `OPENAI_BASE_URL` are set, the container automatically seeds an [OpenCode](https://opencode.ai/) configuration at `~/.config/opencode/opencode.json`. This configures a custom provider called **OpenAI Proxy** that points at the same upstream endpoint used by the Claude Code proxy.
+
+The config uses OpenCode's `{env:VAR_NAME}` syntax, so credentials are resolved from environment variables at runtime — no secrets are baked into the file.
+
+Available models:
+
+| Model ID | Description |
+|----------|-------------|
+| `claude-sonnet-4-5` | Claude Sonnet 4.5 |
+| `claude-sonnet-4-6` | Claude Sonnet 4.6 |
+| `claude-opus-4-6` | Claude Opus 4.6 |
+| `claude-haiku-4-5` | Claude Haiku 4.5 |
+
+The config is only seeded when the file doesn't already exist, so you can customize it without it being overwritten on restart. To reset to defaults, delete `~/.config/opencode/opencode.json` and restart the container.
+
 ### Web Search (SearXNG)
 
 The built-in `WebSearch` tool is a server-side tool executed by the Anthropic backend. It only works with a direct Anthropic API connection — through a proxy, it is silently dropped and returns no results.
@@ -158,7 +175,7 @@ These layers change more frequently (npm/pip updates, config changes) but rebuil
 | 14. Homebrew | Linuxbrew (needed by openclaw configure) |
 | 15. ZSH plugins | oh-my-zsh custom plugins |
 | 16. Shell bootstrap | npm-global, tfenv, compinit |
-| 17. Claude Code config | Tool awareness memory, managed policy, self-test script |
+| 17. Claude Code + OpenCode config | Tool awareness memory, managed policy, self-test script, OpenCode provider template |
 | 18. Entrypoint | Container startup script (absolute last COPY) |
 
 ### Build Cache
