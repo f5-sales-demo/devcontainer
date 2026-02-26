@@ -65,7 +65,9 @@ start_claude_proxy() {
       uv run python start_proxy.py >>/tmp/claude-proxy.log 2>&1
   ) &
 
-  # Wait for the proxy to become ready (up to 30 s)
+  # Wait for the proxy to become ready (up to ~30 s)
+  # Poll every 0.2s for the first 5 attempts (proxy typically starts in ~300ms),
+  # then fall back to 1s intervals for the remaining attempts.
   local retries=0
   while [ "$retries" -lt 30 ]; do
     if curl -sf --connect-timeout 1 "${proxy_url}/" >/dev/null 2>&1; then
@@ -73,7 +75,11 @@ start_claude_proxy() {
       export OPENAI_BASE_URL="$proxy_url"
       return 0
     fi
-    sleep 1
+    if [ "$retries" -lt 5 ]; then
+      sleep 0.2
+    else
+      sleep 1
+    fi
     retries=$((retries + 1))
   done
 

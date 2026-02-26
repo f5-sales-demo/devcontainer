@@ -108,18 +108,20 @@ if [ "${ENABLE_DOCKER:-true}" = "true" ] && command -v dockerd >/dev/null 2>&1; 
   # Only start if we're in a privileged container (cgroup access required)
   if [ -d /sys/fs/cgroup ]; then
     sudo sh -c "dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375 >/var/log/dockerd.log 2>&1" &
-    # Wait for Docker daemon to be ready
-    retries=0
-    while [ $retries -lt 30 ]; do
-      docker info >/dev/null 2>&1 && break
-      sleep 1
-      retries=$((retries + 1))
-    done
-    if docker info >/dev/null 2>&1; then
-      echo "Docker daemon started successfully"
-    else
-      echo "Warning: Docker daemon failed to start (not running in privileged mode?)" >&2
-    fi
+    # Background readiness check — does NOT block entrypoint
+    (
+      retries=0
+      while [ $retries -lt 30 ]; do
+        docker info >/dev/null 2>&1 && break
+        sleep 1
+        retries=$((retries + 1))
+      done
+      if docker info >/dev/null 2>&1; then
+        echo "Docker daemon started successfully"
+      else
+        echo "Warning: Docker daemon failed to start (not running in privileged mode?)" >&2
+      fi
+    ) &
   fi
 fi
 
@@ -134,35 +136,38 @@ if [ "${ENABLE_VNC:-true}" = "true" ]; then
 
   Xvfb "${DISPLAY}" -screen 0 "${VNC_RESOLUTION}" -ac +extension GLX +render -noreset &
 
-  retries=0
-  while [ $retries -lt 50 ]; do
-    xdpyinfo -display "${DISPLAY}" >/dev/null 2>&1 && break
-    sleep 0.1
-    retries=$((retries + 1))
-  done
+  # Background readiness check + dependent daemons — does NOT block entrypoint
+  (
+    retries=0
+    while [ $retries -lt 50 ]; do
+      xdpyinfo -display "${DISPLAY}" >/dev/null 2>&1 && break
+      sleep 0.1
+      retries=$((retries + 1))
+    done
 
-  fluxbox &
-  x11vnc -display "${DISPLAY}" -forever -shared -rfbport "${VNC_PORT}" \
-    -nopw -xkb -noxrecord -noxfixes -noxdamage &
+    fluxbox &
+    x11vnc -display "${DISPLAY}" -forever -shared -rfbport "${VNC_PORT}" \
+      -nopw -xkb -noxrecord -noxfixes -noxdamage &
 
-  NOVNC_LAUNCHER=""
-  for candidate in \
-    /usr/share/novnc/utils/novnc_proxy \
-    /usr/share/novnc/utils/launch.sh \
-    /usr/share/novnc/utils/websockify/run; do
-    if [ -x "$candidate" ]; then
-      NOVNC_LAUNCHER="$candidate"
-      break
+    NOVNC_LAUNCHER=""
+    for candidate in \
+      /usr/share/novnc/utils/novnc_proxy \
+      /usr/share/novnc/utils/launch.sh \
+      /usr/share/novnc/utils/websockify/run; do
+      if [ -x "$candidate" ]; then
+        NOVNC_LAUNCHER="$candidate"
+        break
+      fi
+    done
+
+    if [ -n "$NOVNC_LAUNCHER" ]; then
+      "$NOVNC_LAUNCHER" --vnc localhost:"${VNC_PORT}" --listen "${NOVNC_PORT}" &
+    else
+      websockify --web /usr/share/novnc "${NOVNC_PORT}" localhost:"${VNC_PORT}" &
     fi
-  done
 
-  if [ -n "$NOVNC_LAUNCHER" ]; then
-    "$NOVNC_LAUNCHER" --vnc localhost:"${VNC_PORT}" --listen "${NOVNC_PORT}" &
-  else
-    websockify --web /usr/share/novnc "${NOVNC_PORT}" localhost:"${VNC_PORT}" &
-  fi
-
-  echo "noVNC: http://localhost:${NOVNC_PORT}/vnc.html"
+    echo "noVNC: http://localhost:${NOVNC_PORT}/vnc.html"
+  ) &
 fi
 
 exec "$@"
