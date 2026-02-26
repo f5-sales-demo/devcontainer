@@ -28,6 +28,13 @@ if [ -n "$OPENAI_API_KEY" ]; then
   else
     echo "not reachable (check VPN / network connectivity)"
   fi
+  SEARXNG_URL="${SEARXNG_URL:-http://searxng:8080}"
+  echo -n "  Checking SearXNG ($SEARXNG_URL)... "
+  if curl -sf --connect-timeout 3 "${SEARXNG_URL}/" >/dev/null 2>&1; then
+    echo "reachable (WebSearch enabled)"
+  else
+    echo "not reachable (WebSearch unavailable — enable with COMPOSE_PROFILES=search)"
+  fi
 else
   echo "  Mode: direct API (no proxy)"
   if [ -z "$ANTHROPIC_API_KEY" ]; then
