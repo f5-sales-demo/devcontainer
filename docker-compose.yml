@@ -11,21 +11,12 @@ services:
     volumes:
       - workspace:/workspace
       - home:/home/vscode
+    env_file:
+      - path: .env
+        required: false
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
-      - BIG_MODEL=${BIG_MODEL:-}
-      - MIDDLE_MODEL=${MIDDLE_MODEL:-}
-      - SMALL_MODEL=${SMALL_MODEL:-}
-      - LOG_LEVEL=${LOG_LEVEL:-WARNING}
-      - MAX_TOKENS_LIMIT=${MAX_TOKENS_LIMIT:-64000}
-      - REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-120}
-      - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME:-}
-      - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL:-}
       - GIT_COMMITTER_NAME=${GIT_AUTHOR_NAME:-}
       - GIT_COMMITTER_EMAIL=${GIT_AUTHOR_EMAIL:-}
-      - SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY:-}
       - NODE_TLS_REJECT_UNAUTHORIZED=0
       - TERM=xterm-256color
       - LANG=en_US.UTF-8

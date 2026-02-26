@@ -382,7 +382,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && uv sync \
     && apt-get purge -y build-essential \
     && apt-get autoremove -y \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && chown -R $USERNAME:$USERNAME /opt/claude-code-proxy
 
 # ============================================================
 # 13. Playwright browsers (Chromium + system deps)
@@ -454,9 +455,23 @@ RUN mkdir -p "$HOME/.npm-global" \
 USER root
 COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
 COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
-RUN chmod +x /opt/claude-config/self-test.sh \
+COPY claude-config/claude-proxy.sh /usr/local/lib/claude-proxy.sh
+RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
     && mkdir -p /etc/claude-code/.claude/rules
+
+# Shell hooks: source the proxy function in every interactive shell.
+# If the user exports OPENAI_API_KEY after container start (or the
+# entrypoint missed it), the next shell session starts the proxy
+# automatically and sets ANTHROPIC_BASE_URL.
+# - /etc/profile.d/ covers bash login shells
+# - /etc/zsh/zshrc.d/ (sourced by oh-my-zsh base image) covers zsh
+# hadolint ignore=SC1091
+RUN printf '#!/bin/bash\n. /usr/local/lib/claude-proxy.sh\nstart_claude_proxy\n' \
+      > /etc/profile.d/claude-proxy.sh \
+    && chmod +x /etc/profile.d/claude-proxy.sh \
+    && printf '. /usr/local/lib/claude-proxy.sh\nstart_claude_proxy\n' \
+      >> /etc/zsh/zshenv
 
 # ============================================================
 # 18. Entrypoint (absolute last COPY — most volatile file)

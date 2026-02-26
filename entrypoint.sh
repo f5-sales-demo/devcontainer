@@ -49,30 +49,12 @@ fi
 # ============================================================
 # Claude Code Proxy (Anthropic Messages API -> OpenAI)
 # ============================================================
-if [ -n "$OPENAI_API_KEY" ] && [ -d /opt/claude-code-proxy ]; then
-  PROXY_PORT="${PROXY_PORT:-8082}"
-  export ANTHROPIC_BASE_URL="http://localhost:${PROXY_PORT}"
-
-  (
-    cd /opt/claude-code-proxy || exit 1
-    HOST=0.0.0.0 PORT="$PROXY_PORT" \
-      uv run python start_proxy.py >>/tmp/claude-proxy.log 2>&1
-  ) &
-
-  # Wait for the proxy to be ready
-  retries=0
-  while [ $retries -lt 30 ]; do
-    if curl -sf --connect-timeout 1 "http://localhost:${PROXY_PORT}/" >/dev/null 2>&1; then
-      echo "Claude Code proxy started on port ${PROXY_PORT}"
-      break
-    fi
-    sleep 1
-    retries=$((retries + 1))
-  done
-  if [ $retries -eq 30 ]; then
-    echo "Warning: Claude Code proxy failed to start (check /tmp/claude-proxy.log)" >&2
-  fi
-fi
+# Source the shared proxy startup function, then invoke it.
+# The same function is sourced by interactive shells so the proxy
+# auto-recovers even if it was not running at container start.
+# shellcheck source=/dev/null
+. /usr/local/lib/claude-proxy.sh
+start_claude_proxy
 
 # ============================================================
 # Docker-in-Docker (start dockerd if running in privileged mode)
