@@ -125,6 +125,7 @@ RUN ln -sf /usr/bin/fdfind /usr/local/bin/fd \
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 ENV TERM=xterm-256color
+ENV COLORTERM=truecolor
 
 # PowerShell — Microsoft only publishes amd64 .deb packages;
 # arm64 uses the official tar.gz from GitHub releases.
