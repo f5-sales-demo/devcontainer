@@ -46,6 +46,15 @@ if [ ! -f "$HOME/.claude.json" ] || [ ! -s "$HOME/.claude.json" ]; then
   echo '{"hasCompletedOnboarding": true}' >"$HOME/.claude.json"
 fi
 
+# Seed opencode config if missing
+OPENCODE_CONFIG_DIR="$HOME/.config/opencode"
+if [ ! -f "$OPENCODE_CONFIG_DIR/opencode.json" ] || [ ! -s "$OPENCODE_CONFIG_DIR/opencode.json" ]; then
+  if [ -n "$OPENAI_API_KEY" ] && [ -f /opt/opencode-config/opencode.json ]; then
+    mkdir -p "$OPENCODE_CONFIG_DIR"
+    cp /opt/opencode-config/opencode.json "$OPENCODE_CONFIG_DIR/opencode.json"
+  fi
+fi
+
 # ============================================================
 # Claude Code Proxy (Anthropic Messages API -> OpenAI)
 # ============================================================
