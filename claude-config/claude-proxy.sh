@@ -36,8 +36,8 @@ start_claude_proxy() {
   # Suppress output in non-interactive shells (e.g. zshenv in scripts)
   local quiet=false
   case "$-" in
-    *i*) ;;        # interactive — print status
-    *)   quiet=true ;;
+  *i*) ;; # interactive — print status
+  *) quiet=true ;;
   esac
 
   $quiet || echo "Starting Claude Code proxy on port ${proxy_port}..."

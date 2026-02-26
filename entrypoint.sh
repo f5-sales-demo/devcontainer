@@ -52,7 +52,7 @@ fi
 # Source the shared proxy startup function, then invoke it.
 # The same function is sourced by interactive shells so the proxy
 # auto-recovers even if it was not running at container start.
-# shellcheck source=/usr/local/lib/claude-proxy.sh
+# shellcheck source=/dev/null
 . /usr/local/lib/claude-proxy.sh
 start_claude_proxy
 
