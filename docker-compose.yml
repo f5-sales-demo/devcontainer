@@ -1,10 +1,6 @@
 services:
   dev:
     image: ghcr.io/f5xc-salesdemos/devcontainer:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    pull_policy: missing
     container_name: devcontainer
     hostname: devcontainer
     privileged: true
@@ -39,10 +35,23 @@ services:
       - "127.0.0.1:8888:8080"
     environment:
       - SEARXNG_BASE_URL=http://searxng:8080
-    volumes:
-      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+    configs:
+      - source: searxng-settings
+        target: /etc/searxng/settings.yml
     restart: unless-stopped
 
 volumes:
   workspace:
   home:
+
+configs:
+  searxng-settings:
+    content: |
+      use_default_settings: true
+      server:
+        limiter: false
+        public_instance: false
+      search:
+        formats:
+          - html
+          - json

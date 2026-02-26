@@ -1,0 +1,9 @@
+# Local build override — auto-merged by Docker Compose when present.
+# This file is only used by clone users; standalone docker-compose.yml
+# pulls the pre-built image without needing this override.
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: missing

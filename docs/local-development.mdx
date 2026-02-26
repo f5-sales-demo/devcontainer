@@ -1,0 +1,149 @@
+---
+title: Local Development
+description: Clone the repository, build locally, and customize the Docker image.
+sidebar:
+  order: 5
+---
+
+This page is for developers who want to clone the repository, build the image locally, or customize the Dockerfile. If you just want to use the pre-built container, see [Getting Started](./getting-started).
+
+## Clone the Repository
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+cd devcontainer
+```
+
+## Project Structure
+
+```text
+.
+├── Dockerfile                  # Multi-stage image build
+├── docker-compose.yml          # Base compose — pulls pre-built image
+├── docker-compose.override.yml # Build override — auto-merged when present
+├── .devcontainer/              # VS Code Dev Container config
+│   └── devcontainer.json
+├── entrypoint.sh               # Container startup script
+├── .env.example                # Example environment variables
+├── docs/                       # Documentation site (Starlight)
+└── claude-config/              # Claude Code configuration files
+```
+
+## How the Override File Works
+
+Docker Compose automatically merges `docker-compose.override.yml` when it exists in the same directory as `docker-compose.yml`. This means:
+
+- **Clone users** (have both files): `docker compose up -d` uses the local `Dockerfile` with `pull_policy: missing` — it builds locally if no image is cached, otherwise uses the cache.
+- **Standalone users** (only `docker-compose.yml`): `docker compose up -d` pulls the pre-built image from ghcr.io.
+
+You can verify the merged configuration:
+
+```bash
+docker compose config
+```
+
+## Building Locally
+
+```bash
+docker compose up -d --build
+```
+
+This builds the image from the local `Dockerfile` and starts the container. The `--build` flag forces a rebuild even if a cached image exists.
+
+## Two-Stage Build Architecture
+
+The Dockerfile uses a two-stage build optimized for Docker layer caching:
+
+### Stage 1: `deps` (stable foundations, ~4.5 GB)
+
+These layers only rebuild when a version ARG is bumped or APT packages change. On typical tool-only changes, BuildKit skips this entire stage.
+
+| Section | Contents |
+|---------|----------|
+| 1. APT repos | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft |
+| 2. APT packages | System tools, Node.js, Python, Java, Terraform, GitHub CLI, Docker engine, Azure CLI, PowerShell, locales |
+| 3. Python bootstrap | Symlinks + pip via get-pip.py |
+| 4. Go | Official tarball (pinned version) |
+| 5. Rust | rustup (system-wide, pinned version) |
+| 6. Maven + Gradle | Binary downloads to `/opt` |
+| 7. VNC stack | Xvfb, x11vnc, noVNC, fluxbox — remote display via browser |
+| 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (version-pinned) |
+
+### Stage 2: `final` (volatile tools + user setup, ~1.5 GB)
+
+These layers change more frequently (npm/pip updates, config changes) but rebuild quickly because the heavy `deps` stage is cached.
+
+| Section | Contents |
+|---------|----------|
+| 9. AWS CLI v2 | Official installer |
+| 10. Binary tools | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv, opencode |
+| 10b. Additional binaries | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint |
+| 11. npm global tools | claude-code, codex, prettier, markdownlint-cli2, openclaw, devcontainers-cli, playwright |
+| 12. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
+| 12b. Claude Code Proxy | OpenAI-compatible translation proxy |
+| 12c. SearXNG MCP server | stdio MCP server for web search |
+| 13. Playwright browsers | Chromium + system deps via `playwright install --with-deps` |
+| 14. Homebrew | Linuxbrew (needed by openclaw configure) |
+| 15. ZSH plugins | oh-my-zsh custom plugins |
+| 16. Shell bootstrap | npm-global, tfenv, compinit |
+| 17. Claude Code + OpenCode config | Tool awareness memory, managed policy, self-test script, OpenCode provider template |
+| 18. Entrypoint | Container startup script (absolute last COPY) |
+
+## Adding Tools
+
+Edit the `Dockerfile` and add your tool to the appropriate section. Rebuild after adding:
+
+```bash
+docker compose up -d --build
+```
+
+Or in VS Code: **Dev Containers &rarr; Rebuild Container**.
+
+### APT packages
+
+Add to the section 2 `apt-get install` block:
+
+```dockerfile
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    your-package-here \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+### npm tools
+
+Add to the section 11 `npm install -g` block:
+
+```dockerfile
+RUN npm install -g \
+    your-npm-tool
+```
+
+### pip tools
+
+Add to the section 12 `pip install` block:
+
+```dockerfile
+RUN pip install --no-cache-dir --break-system-packages \
+    your-python-tool
+```
+
+### Binary downloads
+
+Add to section 10 or create a new `RUN` layer with architecture detection:
+
+```dockerfile
+RUN ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL "https://example.com/tool-linux-${ARCH}.tar.gz" \
+       | tar -xz -C /usr/local/bin tool
+```
+
+## Build Cache
+
+CI uses **registry-based caching** — build layers are stored in GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) instead of the GitHub Actions cache. This avoids the 10 GB GHA cache limit that caused frequent full rebuilds for this ~6 GB multi-architecture image.
+
+The two-stage architecture works with the registry cache so that:
+
+- **Tool version bumps** (npm, pip, binary tools) — rebuild only the `final` stage (~5 min)
+- **Config file changes** (`claude-config/`, `entrypoint.sh`) — rebuild only the last few layers (~1 min)
+- **Foundation changes** (APT packages, Go/Rust/Java versions) — full rebuild of both stages (~30 min)

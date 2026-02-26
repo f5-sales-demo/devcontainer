@@ -86,12 +86,12 @@ COMPOSE_PROFILES=search
 |----------|---------|-------------|
 | `SEARXNG_BASE_URL` | `http://searxng:8080` | SearXNG backend URL passed to the MCP server |
 
-SearXNG is a self-hosted metasearch engine that aggregates results from Google, Bing, DuckDuckGo, and others with no API key required. A custom `searxng/settings.yml` is bind-mounted into the SearXNG container with two changes required for API access:
+SearXNG is a self-hosted metasearch engine that aggregates results from Google, Bing, DuckDuckGo, and others with no API key required. The SearXNG configuration is defined inline in `docker-compose.yml` using the Docker Compose `configs` block, with two changes from the SearXNG defaults required for API access:
 
 - **`search.formats`** includes `json` (the default only allows `html`, which causes `format=json` requests to return 403)
 - **`server.limiter`** is set to `false` (the default rate limiter blocks automated requests)
 
-To customize SearXNG further, edit `searxng/settings.yml` in the project root.
+To customize SearXNG further, edit the `configs.searxng-settings.content` block in `docker-compose.yml`.
 
 ### Remote Display (noVNC)
 
@@ -135,54 +135,9 @@ Docker-in-Docker requires the container to run in **privileged mode** (`privileg
 
 Every language runtime, CLI, and tool is installed directly in the `Dockerfile` at image build time. The pre-built image is published to `ghcr.io/f5xc-salesdemos/devcontainer:latest` on every push to `main`, so most users never need to build locally.
 
-Running `docker compose up -d` pulls the pre-built image automatically. Use `docker compose up -d --build` to force a local build if you've customized the Dockerfile.
+Running `docker compose up -d` pulls the pre-built image automatically. If you've cloned the repository, the `docker-compose.override.yml` file adds local build support — use `docker compose up -d --build` to force a local build after customizing the Dockerfile. See [Local Development](./local-development) for details.
 
-The Dockerfile uses a **two-stage build** optimized for Docker layer caching:
-
-### Stage 1: `deps` (stable foundations, ~4.5 GB)
-
-These layers only rebuild when a version ARG is bumped or APT packages change. On typical tool-only changes, BuildKit skips this entire stage.
-
-| Section | Contents |
-|---------|----------|
-| 1. APT repos | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft |
-| 2. APT packages | System tools, Node.js, Python, Java, Terraform, GitHub CLI, Docker engine, Azure CLI, PowerShell, locales |
-| 3. Python bootstrap | Symlinks + pip via get-pip.py |
-| 4. Go | Official tarball (pinned version) |
-| 5. Rust | rustup (system-wide, pinned version) |
-| 6. Maven + Gradle | Binary downloads to `/opt` |
-| 7. VNC stack | Xvfb, x11vnc, noVNC, fluxbox — remote display via browser |
-| 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (version-pinned) |
-
-### Stage 2: `final` (volatile tools + user setup, ~1.5 GB)
-
-These layers change more frequently (npm/pip updates, config changes) but rebuild quickly because the heavy `deps` stage is cached.
-
-| Section | Contents |
-|---------|----------|
-| 9. AWS CLI v2 | Official installer |
-| 10. Binary tools | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv, opencode |
-| 10b. Additional binaries | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint |
-| 11. npm global tools | claude-code, codex, prettier, markdownlint-cli2, openclaw, devcontainers-cli, playwright |
-| 12. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
-| 12b. Claude Code Proxy | OpenAI-compatible translation proxy |
-| 12c. SearXNG MCP server | stdio MCP server for web search |
-| 13. Playwright browsers | Chromium + system deps via `playwright install --with-deps` |
-| 14. Homebrew | Linuxbrew (needed by openclaw configure) |
-| 15. ZSH plugins | oh-my-zsh custom plugins |
-| 16. Shell bootstrap | npm-global, tfenv, compinit |
-| 17. Claude Code + OpenCode config | Tool awareness memory, managed policy, self-test script, OpenCode provider template |
-| 18. Entrypoint | Container startup script (absolute last COPY) |
-
-### Build Cache
-
-CI uses **registry-based caching** — build layers are stored in GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) instead of the GitHub Actions cache. This avoids the 10 GB GHA cache limit that caused frequent full rebuilds for this ~6 GB multi-architecture image.
-
-The two-stage architecture works with the registry cache so that:
-
-- **Tool version bumps** (npm, pip, binary tools) — rebuild only the `final` stage (~5 min)
-- **Config file changes** (`claude-config/`, `entrypoint.sh`) — rebuild only the last few layers (~1 min)
-- **Foundation changes** (APT packages, Go/Rust/Java versions) — full rebuild of both stages (~30 min)
+The Dockerfile uses a two-stage build optimized for Docker layer caching. See [Local Development — Two-Stage Build Architecture](./local-development#two-stage-build-architecture) for the full layer breakdown and build cache details.
 
 ## Claude Code Tool Awareness
 
@@ -214,52 +169,7 @@ This checks that all configuration files are in place and contain the expected t
 
 ## Adding Tools
 
-Edit the `Dockerfile` and add your tool to the appropriate section. Rebuild after adding:
-
-```bash
-docker compose up -d --build
-```
-
-Or in VS Code: **Dev Containers &rarr; Rebuild Container**.
-
-### APT packages
-
-Add to the section 2 `apt-get install` block:
-
-```dockerfile
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    your-package-here \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-```
-
-### npm tools
-
-Add to the section 9 `npm install -g` block:
-
-```dockerfile
-RUN npm install -g \
-    your-npm-tool
-```
-
-### pip tools
-
-Add to the section 10 `pip install` block:
-
-```dockerfile
-RUN pip install --no-cache-dir --break-system-packages \
-    your-python-tool
-```
-
-### Binary downloads
-
-Add to section 8 or create a new `RUN` layer with architecture detection:
-
-```dockerfile
-RUN ARCH=$(dpkg --print-architecture) \
-    && curl -fsSL "https://example.com/tool-linux-${ARCH}.tar.gz" \
-       | tar -xz -C /usr/local/bin tool
-```
+To add tools to the image, edit the `Dockerfile` and rebuild locally. See [Local Development — Adding Tools](./local-development#adding-tools) for instructions on adding APT packages, npm tools, pip tools, and binary downloads.
 
 ## VS Code Extensions
 
@@ -279,7 +189,6 @@ Both persist across container restarts and rebuilds. Run `docker compose pull` t
 | Action | Data |
 |--------|------|
 | `docker compose down` | Preserved |
-| `docker compose up -d --build` | Preserved |
 | `docker compose down -v` | **Deleted** |
 
 ## Port Mapping
