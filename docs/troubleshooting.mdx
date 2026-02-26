@@ -46,7 +46,7 @@ Common causes:
 - **Using an OpenAI-compatible provider without proxy vars** — If your key is not an Anthropic key, you need to set `OPENAI_API_KEY` and `OPENAI_BASE_URL` in `.env` so the built-in proxy activates. Set `ANTHROPIC_API_KEY` to any non-empty value.
 
   ```text
-  ANTHROPIC_API_KEY=placeholder
+  ANTHROPIC_API_KEY=openai-proxy
   OPENAI_API_KEY=<your-provider-key>
   OPENAI_BASE_URL=<your-provider-url>
   ```
