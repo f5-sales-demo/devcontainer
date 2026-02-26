@@ -392,9 +392,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # stdio MCP server — Claude Code discovers this via settings.json,
 # so it always appears in the tool schema regardless of provider type.
 # hadolint ignore=DL3059
-RUN git clone --depth=1 https://github.com/The-AI-Workshops/searxng-mcp-server.git /opt/searxng-mcp \
-    && cd /opt/searxng-mcp \
-    && uv venv .venv \
+RUN git clone --depth=1 https://github.com/The-AI-Workshops/searxng-mcp-server.git /opt/searxng-mcp
+
+WORKDIR /opt/searxng-mcp
+RUN uv venv .venv \
     && uv pip install --python .venv/bin/python -r requirements.txt \
     && chown -R $USERNAME:$USERNAME /opt/searxng-mcp
 

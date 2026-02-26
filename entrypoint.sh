@@ -75,7 +75,7 @@ if [ -d /opt/searxng-mcp ]; then
   SEARXNG_MCP_URL="${SEARXNG_BASE_URL:-http://searxng:8080}"
   mkdir -p "$HOME/.claude"
   if [ ! -f "$SETTINGS" ] || [ ! -s "$SETTINGS" ]; then
-    echo '{}' > "$SETTINGS"
+    echo '{}' >"$SETTINGS"
   fi
   if command -v jq >/dev/null 2>&1; then
     jq --arg url "$SEARXNG_MCP_URL" '
@@ -87,7 +87,7 @@ if [ -d /opt/searxng-mcp ]; then
           "TRANSPORT": "stdio"
         }
       }
-    ' "$SETTINGS" > "${SETTINGS}.tmp" && mv "${SETTINGS}.tmp" "$SETTINGS"
+    ' "$SETTINGS" >"${SETTINGS}.tmp" && mv "${SETTINGS}.tmp" "$SETTINGS"
   fi
 fi
 
