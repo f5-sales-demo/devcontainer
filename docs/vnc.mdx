@@ -1,0 +1,53 @@
+---
+title: Remote Display (noVNC)
+description: Watch and interact with headed browsers through a virtual display in your browser.
+sidebar:
+  order: 3
+---
+
+The container runs a virtual display stack (Xvfb + x11vnc + noVNC + fluxbox) so you can watch AI agents control a browser and intervene when needed — for example, to handle login or MFA prompts.
+
+## Connecting
+
+1. Open `http://localhost:6080/vnc.html` in your browser and click **Connect**
+2. You'll see a lightweight fluxbox desktop — this is the container's virtual display
+
+AI agents using `@playwright/mcp` in headed mode render Chromium into this display. You can click and type directly in the noVNC window to intervene at any time — no pause/resume needed.
+
+## Manual Browser Launch
+
+To open a browser manually inside the container:
+
+```bash
+chromium --no-sandbox &
+```
+
+To run Playwright tests in headed mode:
+
+```bash
+npx playwright test --headed
+```
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_VNC` | `true` | Set to `false` to disable the VNC stack |
+| `VNC_RESOLUTION` | `1280x1024x24` | Virtual display resolution (WxHxDepth) |
+| `DISPLAY` | `:99` | X11 display number |
+| `NOVNC_HOST_PORT` | `6080` | Host-side port for noVNC (override to avoid conflicts with other containers) |
+
+Set these in your `.env` file or in `.devcontainer/devcontainer.json` under `containerEnv`.
+
+## Disabling the VNC Stack
+
+For headless-only operation, set `ENABLE_VNC=false` in `.env` and restart the container:
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+## Troubleshooting
+
+See [Troubleshooting — Remote Display](./troubleshooting#remote-display-novnc) for solutions to black screens, connection refused errors, and port conflicts.
