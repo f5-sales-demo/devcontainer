@@ -28,12 +28,16 @@ if [ -n "$OPENAI_API_KEY" ]; then
   else
     echo "not reachable (check VPN / network connectivity)"
   fi
-  SEARXNG_URL="${SEARXNG_URL:-http://searxng:8080}"
-  echo -n "  Checking SearXNG ($SEARXNG_URL)... "
-  if curl -sf --connect-timeout 3 "${SEARXNG_URL}/" >/dev/null 2>&1; then
-    echo "reachable (WebSearch enabled)"
+  SEARXNG_URL="${SEARXNG_BASE_URL:-http://searxng:8080}"
+  echo -n "  Checking SearXNG MCP ($SEARXNG_URL)... "
+  if [ -f /opt/searxng-mcp/server.py ]; then
+    if curl -sf --connect-timeout 3 "${SEARXNG_URL}/" >/dev/null 2>&1; then
+      echo "MCP installed, backend reachable"
+    else
+      echo "MCP installed, backend not reachable (enable with COMPOSE_PROFILES=search)"
+    fi
   else
-    echo "not reachable (WebSearch unavailable — enable with COMPOSE_PROFILES=search)"
+    echo "MCP server not installed"
   fi
 else
   echo "  Mode: direct API (no proxy)"

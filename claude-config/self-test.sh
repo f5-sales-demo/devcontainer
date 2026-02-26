@@ -49,18 +49,18 @@ check "home directory writable" test -w "$HOME"
 check "TERM is set" test -n "${TERM:-}"
 
 echo ""
-echo "5. Web Search (SearXNG)"
-SEARXNG_URL="${SEARXNG_URL:-http://searxng:8080}"
-if curl -sf --connect-timeout 3 "${SEARXNG_URL}/" >/dev/null 2>&1; then
-  check "SearXNG reachable" true
-  if curl -sf --connect-timeout 5 "${SEARXNG_URL}/search?q=test&format=json" | python3 -c "import sys,json; json.load(sys.stdin)" >/dev/null 2>&1; then
-    check "SearXNG JSON API working" true
+echo "5. Web Search (SearXNG MCP)"
+if [ -f /opt/searxng-mcp/server.py ]; then
+  check "SearXNG MCP server installed" true
+  SEARXNG_URL="${SEARXNG_BASE_URL:-http://searxng:8080}"
+  if curl -sf --connect-timeout 3 "${SEARXNG_URL}/" >/dev/null 2>&1; then
+    check "SearXNG backend reachable" true
   else
-    echo "  WARN: SearXNG reachable but JSON API failed"
-    ((WARN++))
+    echo "  SKIP: SearXNG not reachable (enable with COMPOSE_PROFILES=search)"
   fi
 else
-  echo "  SKIP: SearXNG not reachable (optional — enable with COMPOSE_PROFILES=search)"
+  echo "  FAIL: SearXNG MCP server not installed at /opt/searxng-mcp"
+  ((FAIL++))
 fi
 
 echo ""

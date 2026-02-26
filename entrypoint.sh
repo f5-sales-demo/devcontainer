@@ -65,6 +65,33 @@ if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] || [ ! -s "$CODEX_CONFIG_DIR/config.
 fi
 
 # ============================================================
+# SearXNG MCP server (web search via MCP)
+# ============================================================
+# Seed the MCP server config into Claude Code settings so the
+# searxng tool always appears in the tool schema. This works
+# regardless of provider type (direct API or proxy).
+if [ -d /opt/searxng-mcp ]; then
+  SETTINGS="$HOME/.claude/settings.json"
+  SEARXNG_MCP_URL="${SEARXNG_BASE_URL:-http://searxng:8080}"
+  mkdir -p "$HOME/.claude"
+  if [ ! -f "$SETTINGS" ] || [ ! -s "$SETTINGS" ]; then
+    echo '{}' >"$SETTINGS"
+  fi
+  if command -v jq >/dev/null 2>&1; then
+    jq --arg url "$SEARXNG_MCP_URL" '
+      .mcpServers.searxng = {
+        "command": "/opt/searxng-mcp/.venv/bin/python",
+        "args": ["/opt/searxng-mcp/server.py"],
+        "env": {
+          "SEARXNG_BASE_URL": $url,
+          "TRANSPORT": "stdio"
+        }
+      }
+    ' "$SETTINGS" >"${SETTINGS}.tmp" && mv "${SETTINGS}.tmp" "$SETTINGS"
+  fi
+fi
+
+# ============================================================
 # Claude Code Proxy (Anthropic Messages API -> OpenAI)
 # ============================================================
 # Source the shared proxy startup function, then invoke it.
