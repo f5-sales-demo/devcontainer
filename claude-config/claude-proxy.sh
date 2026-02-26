@@ -56,7 +56,6 @@ start_claude_proxy() {
       OPENAI_API_KEY="$OPENAI_API_KEY" \
       OPENAI_BASE_URL="${_UPSTREAM_OPENAI_BASE_URL:-}" \
       ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
-      SEARXNG_URL="${SEARXNG_URL:-http://searxng:8080}" \
       BIG_MODEL="${BIG_MODEL:-}" \
       MIDDLE_MODEL="${MIDDLE_MODEL:-}" \
       SMALL_MODEL="${SMALL_MODEL:-}" \

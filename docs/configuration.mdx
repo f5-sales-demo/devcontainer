@@ -70,32 +70,26 @@ Available models:
 
 The config is only seeded when the file doesn't already exist, so you can customize it without it being overwritten on restart. To reset to defaults, delete `~/.config/opencode/opencode.json` and restart the container.
 
-### Web Search (SearXNG)
+### Web Search (SearXNG MCP)
 
-The built-in `WebSearch` tool is a server-side tool executed by the Anthropic backend. It only works with a direct Anthropic API connection — through a proxy, it is silently dropped and returns no results.
+Web search is provided by a [SearXNG MCP server](https://github.com/The-AI-Workshops/searxng-mcp-server) that runs as a stdio process managed by Claude Code. Because MCP tools always appear in the tool schema regardless of provider type, this works with both direct Anthropic API connections and OpenAI-compatible proxy mode.
 
-To restore web search capability in proxy mode, enable the **search** profile to add a [SearXNG](https://docs.searxng.org/) sidecar — a self-hosted metasearch engine that aggregates results from Google, Bing, DuckDuckGo, and others with no API key required.
+The MCP server is pre-installed at `/opt/searxng-mcp` in the container image. The entrypoint automatically seeds the server configuration into `~/.claude/settings.json` at startup.
 
-Add `search` to your `COMPOSE_PROFILES`:
+To enable web search, start the SearXNG backend by adding `search` to your `COMPOSE_PROFILES`:
 
 ```ini
 COMPOSE_PROFILES=search
 ```
 
-SearXNG is available inside the Docker network at `http://searxng:8080`. Claude Code can query it via `Bash` + `curl`:
-
-```bash
-curl -s "http://searxng:8080/search?q=your+query&format=json" | jq '.results[:5]'
-```
-
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SEARXNG_BASE_URL` | `http://searxng:8080` | Base URL used by SearXNG internally |
+| `SEARXNG_BASE_URL` | `http://searxng:8080` | SearXNG backend URL passed to the MCP server |
 
-A custom `searxng/settings.yml` is bind-mounted into the container. It extends the SearXNG defaults with two changes required for API access:
+SearXNG is a self-hosted metasearch engine that aggregates results from Google, Bing, DuckDuckGo, and others with no API key required. A custom `searxng/settings.yml` is bind-mounted into the SearXNG container with two changes required for API access:
 
 - **`search.formats`** includes `json` (the default only allows `html`, which causes `format=json` requests to return 403)
-- **`server.limiter`** is set to `false` (the default rate limiter blocks automated requests from Claude Code)
+- **`server.limiter`** is set to `false` (the default rate limiter blocks automated requests)
 
 To customize SearXNG further, edit `searxng/settings.yml` in the project root.
 
@@ -171,6 +165,8 @@ These layers change more frequently (npm/pip updates, config changes) but rebuil
 | 10b. Additional binaries | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint |
 | 11. npm global tools | claude-code, codex, prettier, markdownlint-cli2, openclaw, devcontainers-cli, playwright |
 | 12. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
+| 12b. Claude Code Proxy | OpenAI-compatible translation proxy |
+| 12c. SearXNG MCP server | stdio MCP server for web search |
 | 13. Playwright browsers | Chromium + system deps via `playwright install --with-deps` |
 | 14. Homebrew | Linuxbrew (needed by openclaw configure) |
 | 15. ZSH plugins | oh-my-zsh custom plugins |
