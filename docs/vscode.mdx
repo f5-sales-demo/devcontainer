@@ -1,0 +1,80 @@
+---
+title: VS Code
+description: Use the Dev Container with VS Code's "Reopen in Container" workflow.
+sidebar:
+  order: 6
+---
+
+## Prerequisites
+
+1. [VS Code](https://code.visualstudio.com/)
+2. [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
+3. Docker running on your machine (see [Getting Started](./getting-started#docker))
+
+## Quick Start
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+code devcontainer
+```
+
+VS Code detects `.devcontainer/devcontainer.json` and shows a notification: **"Reopen in Container"**. Click it, or use the command palette:
+
+> **Dev Containers: Reopen in Container**
+
+VS Code builds (or pulls) the image, starts the container, installs extensions, and opens a terminal inside the container.
+
+## How It Works
+
+The `.devcontainer/devcontainer.json` file tells VS Code to use Docker Compose:
+
+```json
+"dockerComposeFile": ["../docker-compose.yml", "../docker-compose.override.yml"],
+"service": "dev",
+"workspaceFolder": "/workspace"
+```
+
+Because you cloned the repo, both compose files are present. Docker Compose merges them automatically — the override adds `build:` support so VS Code can build the image locally if needed.
+
+## Extensions
+
+Extensions are installed automatically inside the container:
+
+| Extension | Description |
+|-----------|-------------|
+| Python | Python language support |
+| ESLint | JavaScript/TypeScript linting |
+| Prettier | Code formatting |
+| Docker | Dockerfile and compose support |
+| Terraform | HCL language support |
+| Go | Go language support |
+| Rust Analyzer | Rust language support |
+| YAML | YAML language support |
+| Kubernetes | Kubernetes manifest support |
+
+To add extensions, edit the `customizations.vscode.extensions` array in `.devcontainer/devcontainer.json`.
+
+## Port Forwarding
+
+VS Code automatically forwards ports defined in the compose file. The noVNC display is available at `http://localhost:6080/vnc.html` — VS Code will notify you when the port is ready.
+
+Additional ports can be forwarded on-demand from the **Ports** panel in VS Code.
+
+## Devcontainer CLI Alternative
+
+If you prefer the command line over the VS Code UI:
+
+```bash
+npm install -g @devcontainers/cli
+
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . zsh
+```
+
+## Rebuilding
+
+After changing the `Dockerfile` or compose files:
+
+> **Dev Containers: Rebuild Container**
+
+This rebuilds the image and restarts the container. Named volumes (`workspace`, `home`) persist across rebuilds.

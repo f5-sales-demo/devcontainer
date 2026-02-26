@@ -6,18 +6,16 @@
 
 Isolated development environment with AI coding tools
 
-## Documentation
-
-Full documentation is available at **[https://f5xc-salesdemos.github.io/devcontainer/](https://f5xc-salesdemos.github.io/devcontainer/)**.
-
 ## Getting Started
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/devcontainer.git
+mkdir devcontainer && cd devcontainer
+curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/docker-compose.yml
+docker compose up -d
+docker compose exec dev zsh
 ```
 
-See the [documentation](https://f5xc-salesdemos.github.io/devcontainer/) for detailed setup
-and usage guides.
+See the [documentation](https://f5xc-salesdemos.github.io/devcontainer/) for configuration, local development, and Visual Studio Code setup.
 
 ## Contributing
 
