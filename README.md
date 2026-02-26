@@ -15,7 +15,7 @@ docker compose up -d
 docker compose exec dev zsh
 ```
 
-See the [documentation](https://f5xc-salesdemos.github.io/devcontainer/) for configuration, local development, and VS Code setup.
+See the [documentation](https://f5xc-salesdemos.github.io/devcontainer/) for configuration, local development, and Visual Studio Code setup.
 
 ## Contributing
 
