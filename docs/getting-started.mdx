@@ -100,12 +100,6 @@ docker compose up -d
 
 The first run pulls the pre-built image from ghcr.io (~1 min depending on your connection). Subsequent starts use the cached image and take seconds.
 
-To force a local build instead (e.g., if you've customized the Dockerfile):
-
-```bash
-docker compose up -d --build
-```
-
 ## 5. Connect
 
 ### Option A: Terminal
@@ -196,12 +190,9 @@ docker compose down
 # Start again
 docker compose up -d
 
-# Rebuild after config changes
-docker compose up -d --build
-
 # Destroy everything and start fresh
 docker compose down -v
-docker compose up -d --build
+docker compose up -d
 ```
 
 Your code in `/workspace` and home directory persist across restarts. See [Configuration — Data Persistence](./configuration#data-persistence) for details.
