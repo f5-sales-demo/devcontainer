@@ -55,6 +55,15 @@ if [ ! -f "$OPENCODE_CONFIG_DIR/opencode.json" ] || [ ! -s "$OPENCODE_CONFIG_DIR
   fi
 fi
 
+# Seed codex config if missing
+CODEX_CONFIG_DIR="$HOME/.codex"
+if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] || [ ! -s "$CODEX_CONFIG_DIR/config.toml" ]; then
+  if [ -n "$OPENAI_API_KEY" ] && [ -f /opt/codex-config/config.toml ]; then
+    mkdir -p "$CODEX_CONFIG_DIR"
+    cp /opt/codex-config/config.toml "$CODEX_CONFIG_DIR/config.toml"
+  fi
+fi
+
 # ============================================================
 # Claude Code Proxy (Anthropic Messages API -> OpenAI)
 # ============================================================

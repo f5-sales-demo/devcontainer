@@ -12,8 +12,17 @@ if [ -n "$OPENAI_API_KEY" ]; then
   else
     echo "not reachable (check /tmp/claude-proxy.log)"
   fi
-  echo -n "  Checking upstream ($OPENAI_BASE_URL)... "
-  if curl -sf --connect-timeout 5 -o /dev/null "$OPENAI_BASE_URL/models" \
+  echo -n "  Checking Responses API (Codex)... "
+  if curl -sf --connect-timeout 5 -o /dev/null -w "%{http_code}" \
+    -X POST "http://localhost:8082/responses" \
+    -H "Content-Type: application/json" \
+    -d '{"model":"test","input":"ping","stream":false}' 2>/dev/null | grep -qE '^(200|4[0-9]{2}|500)$'; then
+    echo "available"
+  else
+    echo "not available (proxy may need Responses API endpoints)"
+  fi
+  echo -n "  Checking upstream ($_UPSTREAM_OPENAI_BASE_URL)... "
+  if curl -sf --connect-timeout 5 -o /dev/null "${_UPSTREAM_OPENAI_BASE_URL:-${OPENAI_BASE_URL}}/models" \
     -H "Authorization: Bearer $OPENAI_API_KEY" 2>/dev/null; then
     echo "reachable"
   else

@@ -76,7 +76,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Media / utilities
     ffmpeg poppler-utils qrencode \
     # Network tools
-    dnsutils net-tools iputils-ping traceroute tcpdump nmap \
+    dnsutils net-tools iputils-ping traceroute tcpdump nmap netcat-openbsd \
     # Shell tools
     bat fd-find ripgrep neovim htop tree tmux file \
     # Node.js
@@ -457,6 +457,7 @@ COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
 COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
 COPY claude-config/claude-proxy.sh /usr/local/lib/claude-proxy.sh
 COPY opencode-config/opencode.json /opt/opencode-config/opencode.json
+COPY codex-config/config.toml /opt/codex-config/config.toml
 RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
     && mkdir -p /etc/claude-code/.claude/rules

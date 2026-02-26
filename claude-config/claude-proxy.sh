@@ -14,7 +14,8 @@
 # The function is idempotent — safe to call from multiple places.
 # It checks whether proxy mode is requested (OPENAI_API_KEY set),
 # whether the proxy is already running, starts it if needed, and
-# exports ANTHROPIC_BASE_URL so Claude Code routes through it.
+# exports ANTHROPIC_BASE_URL and OPENAI_BASE_URL so Claude Code,
+# Codex, and OpenCode all route through it.
 # ============================================================
 
 start_claude_proxy() {
@@ -24,12 +25,20 @@ start_claude_proxy() {
   fi
 
   local proxy_port="${PROXY_PORT:-8082}"
+  local proxy_url="http://localhost:${proxy_port}"
+
+  # Save the original (upstream) OPENAI_BASE_URL before we overwrite it.
+  # Guard against re-source: only save if not already redirected to the proxy.
+  if [ -z "$_UPSTREAM_OPENAI_BASE_URL" ] && [ "${OPENAI_BASE_URL:-}" != "$proxy_url" ]; then
+    export _UPSTREAM_OPENAI_BASE_URL="${OPENAI_BASE_URL:-}"
+  fi
 
   # Always point Claude Code at the local proxy
-  export ANTHROPIC_BASE_URL="http://localhost:${proxy_port}"
+  export ANTHROPIC_BASE_URL="$proxy_url"
 
-  # If the proxy is already reachable, nothing more to do
-  if curl -sf --connect-timeout 1 "http://localhost:${proxy_port}/" >/dev/null 2>&1; then
+  # If the proxy is already reachable, redirect OPENAI_BASE_URL and return
+  if curl -sf --connect-timeout 1 "${proxy_url}/" >/dev/null 2>&1; then
+    export OPENAI_BASE_URL="$proxy_url"
     return 0
   fi
 
@@ -45,7 +54,7 @@ start_claude_proxy() {
     cd /opt/claude-code-proxy || exit 1
     HOST=0.0.0.0 PORT="$proxy_port" \
       OPENAI_API_KEY="$OPENAI_API_KEY" \
-      OPENAI_BASE_URL="${OPENAI_BASE_URL:-}" \
+      OPENAI_BASE_URL="${_UPSTREAM_OPENAI_BASE_URL:-}" \
       ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
       BIG_MODEL="${BIG_MODEL:-}" \
       MIDDLE_MODEL="${MIDDLE_MODEL:-}" \
@@ -59,8 +68,9 @@ start_claude_proxy() {
   # Wait for the proxy to become ready (up to 30 s)
   local retries=0
   while [ "$retries" -lt 30 ]; do
-    if curl -sf --connect-timeout 1 "http://localhost:${proxy_port}/" >/dev/null 2>&1; then
+    if curl -sf --connect-timeout 1 "${proxy_url}/" >/dev/null 2>&1; then
       $quiet || echo "Claude Code proxy ready on port ${proxy_port}"
+      export OPENAI_BASE_URL="$proxy_url"
       return 0
     fi
     sleep 1
