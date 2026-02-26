@@ -95,14 +95,7 @@ To customize SearXNG further, edit the `configs.searxng-settings.content` block 
 
 ### Remote Display (noVNC)
 
-The container runs a virtual display stack so you can watch and interact with headed browsers (e.g., Chromium controlled by `@playwright/mcp`).
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENABLE_VNC` | `true` | Set to `false` to disable the VNC stack |
-| `VNC_RESOLUTION` | `1280x1024x24` | Virtual display resolution (WxHxDepth) |
-| `DISPLAY` | `:99` | X11 display number |
-| `NOVNC_HOST_PORT` | `6080` | Host-side port for noVNC (override to avoid conflicts with other containers) |
+The container runs a virtual display stack for watching and interacting with headed browsers. See [Remote Display (noVNC)](./vnc) for connection instructions and environment variables (`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`).
 
 ### Docker-in-Docker
 

@@ -103,12 +103,7 @@ claude
 
 ## 7. Remote Display (noVNC)
 
-The container runs a virtual display so you can watch AI agents control a browser and intervene when needed (e.g., for login or MFA prompts).
-
-1. Open `http://localhost:6080/vnc.html` in your browser and click **Connect**
-2. You'll see a lightweight fluxbox desktop — this is the container's virtual display
-
-AI agents using `@playwright/mcp` in headed mode render Chromium into this display. You can click and type directly in the noVNC window to intervene at any time.
+The container includes a virtual display for watching AI agents control a browser. Open `http://localhost:6080/vnc.html` to connect. See [Remote Display (noVNC)](./vnc) for details.
 
 ## 8. Stopping and Restarting
 
@@ -128,4 +123,4 @@ Your code in `/workspace` and home directory persist across restarts. See [Confi
 
 ---
 
-For local builds and Dockerfile customization, see [Local Development](./local-development). For VS Code integration, see [VS Code](./vscode).
+For local builds and Dockerfile customization, see [Local Development](./local-development). For VS Code integration, see [VS Code](./vscode). For remote display options, see [Remote Display (noVNC)](./vnc).
