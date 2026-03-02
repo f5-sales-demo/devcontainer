@@ -7,17 +7,12 @@ FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04 AS deps
 ARG USERNAME=vscode
 
 # ============================================================
-# Version pins — deps stage
+# Version pins — deps stage (only tools without a "latest" API)
 # ============================================================
 ARG NODE_MAJOR=24
 ARG PYTHON_VERSION=3.13
-ARG GO_VERSION=1.24.1
-ARG RUST_VERSION=1.93.1
 ARG JAVA_VERSION=21
 ARG MAVEN_VERSION=3.9.9
-ARG GRADLE_VERSION=8.12.1
-ARG PWSH_VERSION=7.5.4
-ARG NERD_FONTS_VERSION=3.3.0
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -118,14 +113,15 @@ ENV TERM=xterm-256color
 ENV COLORTERM=truecolor
 
 # PowerShell — Microsoft only publishes amd64 .deb packages;
-# arm64 uses the official tar.gz from GitHub releases.
+# arm64 resolves latest version from GitHub and uses the tar.gz.
 # hadolint ignore=DL3008,DL3059
 RUN DPKG_ARCH=$(dpkg --print-architecture) \
     && if [ "$DPKG_ARCH" = "amd64" ]; then \
       apt-get update && apt-get install -y --no-install-recommends powershell \
       && apt-get clean && rm -rf /var/lib/apt/lists/*; \
     else \
-      mkdir -p /opt/microsoft/powershell/7 \
+      PWSH_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/PowerShell/PowerShell/releases/latest" | sed 's|.*/||;s|^v||') \
+      && mkdir -p /opt/microsoft/powershell/7 \
       && curl ${CURL_RETRY} -fsSL "https://github.com/PowerShell/PowerShell/releases/download/v${PWSH_VERSION}/powershell-${PWSH_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
         | tar -xz -C /opt/microsoft/powershell/7 \
       && chmod 755 /opt/microsoft/powershell/7/pwsh \
@@ -141,20 +137,21 @@ RUN update-alternatives --install /usr/bin/python3 python3 "/usr/bin/python${PYT
     && curl ${CURL_RETRY} -fsSL https://bootstrap.pypa.io/get-pip.py | "python${PYTHON_VERSION}"
 
 # ============================================================
-# 4. Go
+# 4. Go (latest stable — resolved at build time)
 # ============================================================
-RUN ARCH=$(dpkg --print-architecture) \
+RUN GO_VERSION=$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -1 | sed 's/^go//') \
+    && ARCH=$(dpkg --print-architecture) \
     && curl ${CURL_RETRY} -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" | tar -xz -C /usr/local
 ENV PATH="/usr/local/go/bin:${PATH}"
 
 # ============================================================
-# 5. Rust (system-wide, pinned version)
+# 5. Rust (system-wide, latest stable — resolved by rustup)
 # ============================================================
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH="/usr/local/cargo/bin:${PATH}"
 RUN curl ${CURL_RETRY} --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-    | sh -s -- -y --default-toolchain "${RUST_VERSION}" --no-modify-path \
+    | sh -s -- -y --default-toolchain stable --no-modify-path \
     && chmod -R a+rX /usr/local/rustup /usr/local/cargo
 
 # ============================================================
@@ -166,7 +163,8 @@ RUN curl ${CURL_RETRY} -fsSL "https://archive.apache.org/dist/maven/maven-3/${MA
     && ln -s "/opt/apache-maven-${MAVEN_VERSION}/bin/mvn" /usr/local/bin/mvn
 
 # hadolint ignore=DL3059
-RUN curl ${CURL_RETRY} -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -o /tmp/gradle.zip \
+RUN GRADLE_VERSION=$(curl -fsSL https://services.gradle.org/versions/current | jq -r .version) \
+    && curl ${CURL_RETRY} -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -o /tmp/gradle.zip \
     && unzip -q /tmp/gradle.zip -d /opt \
     && ln -s "/opt/gradle-${GRADLE_VERSION}/bin/gradle" /usr/local/bin/gradle \
     && rm /tmp/gradle.zip
@@ -186,18 +184,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # ============================================================
 # 8. Nerd Fonts (JetBrainsMono, Hack, FiraCode)
-#    Moved to deps — version-pinned, ~350 MB, rarely changes.
+#    Asset names are version-free — /releases/latest/download/ works directly.
 # ============================================================
 # hadolint ignore=DL3059
 RUN mkdir -p /usr/local/share/fonts/nerd-fonts \
     && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONTS_VERSION}/JetBrainsMono.tar.xz" \
+      "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz" \
       | tar -xJ -C /usr/local/share/fonts/nerd-fonts \
     && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONTS_VERSION}/Hack.tar.xz" \
+      "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hack.tar.xz" \
       | tar -xJ -C /usr/local/share/fonts/nerd-fonts \
     && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONTS_VERSION}/FiraCode.tar.xz" \
+      "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.tar.xz" \
       | tar -xJ -C /usr/local/share/fonts/nerd-fonts \
     && fc-cache -fv
 
@@ -213,19 +211,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # ARGs don't cross FROM boundaries — redeclare what final needs
 ARG USERNAME=vscode
-ARG TERRAFORM_DOCS_VERSION=0.19.0
-ARG TFLINT_VERSION=0.55.1
-ARG KUBECTL_VERSION=1.32.2
-ARG HELM_VERSION=3.17.1
-ARG ACT_VERSION=0.2.74
-ARG FZF_VERSION=0.68.0
-ARG UV_VERSION=0.6.2
-ARG ACTIONLINT_VERSION=1.7.7
-ARG OC_VERSION=4.18.4
-ARG YQ_VERSION=4.52.4
-ARG TERRAGRUNT_VERSION=0.71.2
 ARG IBMCLOUD_VERSION=2.31.0
-ARG HADOLINT_VERSION=2.14.0
 
 # ============================================================
 # 9. AWS CLI v2
@@ -240,75 +226,83 @@ RUN ARCH=$(uname -m) \
 # ============================================================
 # 10. Binary tools (kubectl, helm, tflint, terraform-docs,
 #     act, actionlint, yt-dlp, uv, opencode)
+#     All resolve latest versions at build time.
 # ============================================================
 # hadolint ignore=DL3059
-RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
-    # kubectl
+RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
+    && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
+    # kubectl (latest stable)
+    && KUBECTL_VERSION=$(curl -fsSL https://dl.k8s.io/release/stable.txt) \
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/kubectl \
-      "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${DPKG_ARCH}/kubectl" \
+      "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${DPKG_ARCH}/kubectl" \
     && chmod +x /usr/local/bin/kubectl \
-    # helm
+    # helm (resolve version via GitHub redirect)
+    && HELM_VERSION=$(ghlatest helm/helm) \
     && curl ${CURL_RETRY} -fsSL "https://get.helm.sh/helm-v${HELM_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
       | tar -xz --strip-components=1 -C /usr/local/bin "linux-${DPKG_ARCH}/helm" \
-    # tflint
-    && curl ${CURL_RETRY} -fsSL "https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_${DPKG_ARCH}.zip" \
+    # tflint (latest — version-free asset name)
+    && curl ${CURL_RETRY} -fsSL "https://github.com/terraform-linters/tflint/releases/latest/download/tflint_linux_${DPKG_ARCH}.zip" \
       -o /tmp/tflint.zip \
     && unzip -q /tmp/tflint.zip -d /usr/local/bin && rm /tmp/tflint.zip \
-    # terraform-docs
-    && curl ${CURL_RETRY} -fsSL "https://github.com/terraform-docs/terraform-docs/releases/download/v${TERRAFORM_DOCS_VERSION}/terraform-docs-v${TERRAFORM_DOCS_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
+    # terraform-docs (resolve version — asset name contains version)
+    && TERRAFORM_DOCS_VERSION=$(ghlatest terraform-docs/terraform-docs) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/terraform-docs/terraform-docs/releases/latest/download/terraform-docs-v${TERRAFORM_DOCS_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin terraform-docs \
-    # act
+    # act (latest — version-free asset name)
     && if [ "$UNAME_ARCH" = "x86_64" ]; then ACT_ARCH="x86_64"; else ACT_ARCH="arm64"; fi \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/nektos/act/releases/download/v${ACT_VERSION}/act_Linux_${ACT_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/nektos/act/releases/latest/download/act_Linux_${ACT_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin act \
-    # actionlint
-    && curl ${CURL_RETRY} -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+    # actionlint (resolve version — asset name contains version)
+    && ACTIONLINT_VERSION=$(ghlatest rhysd/actionlint) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/rhysd/actionlint/releases/latest/download/actionlint_${ACTIONLINT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin actionlint \
-    # yt-dlp
+    # yt-dlp (already latest)
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/yt-dlp \
       "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" \
     && chmod +x /usr/local/bin/yt-dlp \
-    # uv
-    && curl ${CURL_RETRY} -fsSL "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh \
+    # uv (latest — omit version from installer URL)
+    && curl ${CURL_RETRY} -fsSL "https://astral.sh/uv/install.sh" | sh \
     && mv "$HOME/.local/bin/uv" /usr/local/bin/uv \
     && mv "$HOME/.local/bin/uvx" /usr/local/bin/uvx 2>/dev/null || true \
-    # opencode
+    # opencode (already latest)
     && if [ "$UNAME_ARCH" = "x86_64" ]; then OC_ARCH="x64"; else OC_ARCH="arm64"; fi \
     && curl ${CURL_RETRY} -fsSL "https://github.com/anomalyco/opencode/releases/latest/download/opencode-linux-${OC_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin opencode
 
 # ============================================================
 # 10b. Additional binary tools (code CLI, oc, yq, terragrunt,
-#      ibmcloud, fzf)
+#      ibmcloud, fzf, hadolint, codex)
+#      All resolve latest versions at build time except IBM Cloud CLI.
 # ============================================================
 # hadolint ignore=DL3059
-RUN DPKG_ARCH=$(dpkg --print-architecture) \
-    # VS Code CLI (code tunnel / code serve-web for remote dev connectivity)
+RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
+    && DPKG_ARCH=$(dpkg --print-architecture) \
+    # VS Code CLI (already latest)
     && if [ "$DPKG_ARCH" = "amd64" ]; then VSCODE_ARCH="x64"; else VSCODE_ARCH="arm64"; fi \
     && curl ${CURL_RETRY} -fsSL \
       "https://update.code.visualstudio.com/latest/cli-linux-${VSCODE_ARCH}/stable" \
       -o /tmp/vscode_cli.tar.gz \
     && tar -xzf /tmp/vscode_cli.tar.gz -C /usr/local/bin \
     && rm /tmp/vscode_cli.tar.gz \
-    # oc (OpenShift CLI) — amd64 uses the unarchived default; arm64 uses arch-specific archive
-    && if [ "$DPKG_ARCH" = "amd64" ]; then OC_ARCHIVE="openshift-client-linux-${OC_VERSION}.tar.gz"; else OC_ARCHIVE="openshift-client-linux-${DPKG_ARCH}-${OC_VERSION}.tar.gz"; fi \
+    # oc (OpenShift CLI) — stable channel uses version-free filenames
+    && if [ "$DPKG_ARCH" = "amd64" ]; then OC_ARCHIVE="openshift-client-linux.tar.gz"; else OC_ARCHIVE="openshift-client-linux-arm64.tar.gz"; fi \
     && curl ${CURL_RETRY} -fsSL \
-      "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_VERSION}/${OC_ARCHIVE}" \
+      "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/${OC_ARCHIVE}" \
       | tar -xz -C /usr/local/bin oc \
-    # yq v4 — installed as yq; yq4 is a symlink
+    # yq v4 (latest — version-free asset name)
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/yq \
-      "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_${DPKG_ARCH}" \
+      "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${DPKG_ARCH}" \
     && chmod +x /usr/local/bin/yq \
     && ln -sf /usr/local/bin/yq /usr/local/bin/yq4 \
-    # yq v3 (EOL, last release 3.4.1) — installed as yq3
+    # yq v3 (EOL, last release 3.4.1) — stays pinned
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/yq3 \
       "https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_${DPKG_ARCH}" \
     && chmod +x /usr/local/bin/yq3 \
-    # terragrunt
+    # terragrunt (latest — version-free asset name)
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/terragrunt \
-      "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_${DPKG_ARCH}" \
+      "https://github.com/gruntwork-io/terragrunt/releases/latest/download/terragrunt_linux_${DPKG_ARCH}" \
     && chmod +x /usr/local/bin/terragrunt \
-    # IBM Cloud CLI
+    # IBM Cloud CLI — stays pinned (no "latest" URL)
     && if [ "$DPKG_ARCH" = "amd64" ]; then IBM_ARCH="amd64"; else IBM_ARCH="arm64"; fi \
     && curl ${CURL_RETRY} -fsSL \
       "https://download.clis.cloud.ibm.com/ibm-cloud-cli/${IBMCLOUD_VERSION}/IBM_Cloud_CLI_${IBMCLOUD_VERSION}_${IBM_ARCH}.tar.gz" \
@@ -316,16 +310,24 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
     && tar -xzf /tmp/ibmcloud.tar.gz -C /tmp \
     && install -m 755 /tmp/Bluemix_CLI/bin/ibmcloud /usr/local/bin/ibmcloud \
     && rm -rf /tmp/ibmcloud.tar.gz /tmp/Bluemix_CLI \
-    # fzf (APT version 0.44.1 predates --zsh flag; base image strips
-    # /usr/share/doc so Debian fallback path also unavailable)
+    # fzf (resolve version — asset name contains version)
+    && FZF_VERSION=$(ghlatest junegunn/fzf) \
     && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-linux_${DPKG_ARCH}.tar.gz" \
+      "https://github.com/junegunn/fzf/releases/latest/download/fzf-${FZF_VERSION}-linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin fzf \
-    # hadolint (Dockerfile linter)
+    # hadolint (latest — version-free asset name)
     && if [ "$DPKG_ARCH" = "amd64" ]; then HL_ARCH="x86_64"; else HL_ARCH="arm64"; fi \
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/hadolint \
-      "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-${HL_ARCH}" \
-    && chmod +x /usr/local/bin/hadolint
+      "https://github.com/hadolint/hadolint/releases/latest/download/hadolint-linux-${HL_ARCH}" \
+    && chmod +x /usr/local/bin/hadolint \
+    # codex (latest — version-free asset name, self-updates at runtime)
+    && if [ "$DPKG_ARCH" = "amd64" ]; then CODEX_ARCH="x86_64"; else CODEX_ARCH="aarch64"; fi \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/openai/codex/releases/latest/download/codex-${CODEX_ARCH}-unknown-linux-gnu.tar.gz" \
+      | tar -xz -C /usr/local/bin \
+    && mv /usr/local/bin/codex-${CODEX_ARCH}-unknown-linux-gnu /usr/local/bin/codex \
+    && chmod +x /usr/local/bin/codex \
+    && chown ${USERNAME}:${USERNAME} /usr/local/bin/codex
 
 # ============================================================
 # 11. npm global tools
@@ -333,7 +335,6 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
 # hadolint ignore=DL3016,DL3059
 RUN npm install -g \
     @anthropic-ai/claude-code \
-    @openai/codex \
     prettier \
     markdownlint-cli2 \
     openclaw \
