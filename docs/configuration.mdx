@@ -129,12 +129,24 @@ Every language runtime, CLI, and tool is installed directly in the `Dockerfile` 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-Running `docker compose up -d` pulls the pre-built image automatically. If you've cloned the repository, the `docker-compose.override.yml` file adds local build support — use `docker compose up -d --build` to force a local build after customizing the Dockerfile. See [Local Development](./local-development) for details.
+Running `docker compose up -d` pulls the pre-built image automatically. To build locally after customizing the Dockerfile, pass the build file explicitly:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+See [Local Development](./local-development) for details.
 
 </TabItem>
 <TabItem label="Podman">
 
-Running `podman compose up -d` pulls the pre-built image automatically. If you've cloned the repository, the `docker-compose.override.yml` file adds local build support — use `podman compose up -d --build` to force a local build after customizing the Dockerfile. See [Local Development](./local-development) for details.
+Running `podman compose up -d` pulls the pre-built image automatically. To build locally after customizing the Dockerfile, pass the build file explicitly:
+
+```bash
+podman compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+See [Local Development](./local-development) for details.
 
 </TabItem>
 </Tabs>

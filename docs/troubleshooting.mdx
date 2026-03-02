@@ -34,20 +34,22 @@ podman compose up -d
 
 ### "claude: command not found"
 
-The image may be outdated. Rebuild it:
+The image may be outdated. Pull the latest and restart:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
 ```bash
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 </TabItem>
 <TabItem label="Podman">
 
 ```bash
-podman compose up -d --build
+podman compose pull
+podman compose up -d
 ```
 
 </TabItem>
@@ -311,7 +313,8 @@ ports:
 ```bash
 docker compose down -v
 docker rm -f devcontainer 2>/dev/null
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 </TabItem>
@@ -320,7 +323,8 @@ docker compose up -d --build
 ```bash
 podman compose down -v
 podman rm -f devcontainer 2>/dev/null
-podman compose up -d --build
+podman compose pull
+podman compose up -d
 ```
 
 </TabItem>
