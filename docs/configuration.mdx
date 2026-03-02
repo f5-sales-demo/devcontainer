@@ -48,12 +48,22 @@ The proxy maps Claude Code's model requests to your backend's model identifiers:
 
 #### Proxy Logs
 
-The proxy logs to `/tmp/claude-proxy.log` inside the container. To check proxy status:
+The proxy logs to `~/.local/share/claude-proxy/proxy.log` inside the container. To check proxy status:
 
 ```bash
 curl http://localhost:8082/
-cat /tmp/claude-proxy.log
+cat ~/.local/share/claude-proxy/proxy.log
 ```
+
+### TLS Certificate Validation
+
+By default, Node.js validates TLS certificates for all HTTPS connections. If your upstream API provider uses a self-signed certificate (common with internal Open WebUI or LiteLLM proxies), you can disable validation by adding this to your `.env` file:
+
+```ini
+NODE_TLS_REJECT_UNAUTHORIZED=0
+```
+
+This is **not recommended** for production use. Only set this when you trust the network path between the container and your API endpoint.
 
 ### OpenCode
 
@@ -98,20 +108,6 @@ To customize SearXNG further, edit the `configs.searxng-settings.content` block 
 ### Remote Display (noVNC)
 
 The container runs a virtual display stack for watching and interacting with headed browsers. See [Remote Display (noVNC)](./vnc) for connection instructions and environment variables (`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`).
-
-### Docker-in-Docker
-
-The container includes the full Docker engine (`docker-ce`, `containerd.io`) and runs `dockerd` at startup in privileged mode. This lets you build and run Docker images from inside the container without mounting the host Docker socket.
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENABLE_DOCKER` | `true` | Set to `false` to skip starting the Docker daemon |
-
-The `vscode` user is a member of the `docker` group, so `docker` commands work without `sudo`.
-
-:::note
-Docker-in-Docker requires the container to run in **privileged mode** (`privileged: true` in `docker-compose.yml`). This is set by default. If you see "Docker daemon failed to start", check that your container runtime allows privileged containers. This applies regardless of whether you use Docker or Podman on the host.
-:::
 
 ### Git
 

@@ -45,12 +45,11 @@ podman --version
 podman compose version
 ```
 
-:::note
-The container runs in **privileged mode** (`privileged: true` in `docker-compose.yml`). If you're using rootless Podman, you may need to enable rootful mode:
+:::note[Linux only]
+Podman on Linux runs containers directly (no VM). Ensure the Podman socket is active so `podman compose` can connect:
 
 ```bash
-podman machine set --rootful
-podman machine stop && podman machine start
+systemctl --user enable --now podman.socket
 ```
 :::
 
@@ -73,12 +72,14 @@ Adjust resource limits in Docker Desktop &rarr; Settings &rarr; Resources.
 </TabItem>
 <TabItem label="Podman">
 
-Adjust resource limits in Podman Desktop &rarr; Settings &rarr; Resources, or via the CLI:
+On **macOS/Windows**, adjust resource limits in Podman Desktop &rarr; Settings &rarr; Resources, or via the CLI:
 
 ```bash
 podman machine set --cpus 4 --memory 8192
 podman machine stop && podman machine start
 ```
+
+On **Linux**, containers share host resources directly — no resource configuration is needed.
 
 </TabItem>
 </Tabs>

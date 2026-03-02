@@ -3,7 +3,6 @@ services:
     image: ghcr.io/f5xc-salesdemos/devcontainer:latest
     container_name: devcontainer
     hostname: devcontainer
-    privileged: true
     volumes:
       - workspace:/workspace
       - home:/home/vscode
@@ -13,13 +12,29 @@ services:
     environment:
       - GIT_COMMITTER_NAME=${GIT_AUTHOR_NAME:-}
       - GIT_COMMITTER_EMAIL=${GIT_AUTHOR_EMAIL:-}
-      - NODE_TLS_REJECT_UNAUTHORIZED=0
       - TERM=xterm-256color
       - COLORTERM=truecolor
       - LANG=en_US.UTF-8
       - LC_ALL=en_US.UTF-8
     ports:
       - "127.0.0.1:${NOVNC_HOST_PORT:-6080}:6080"
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETUID
+      - SETGID
+      - NET_RAW
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8g
+          pids: 4096
+    tmpfs:
+      - /tmp:size=256m
     stdin_open: true
     tty: true
     init: true
