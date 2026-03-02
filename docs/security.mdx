@@ -5,6 +5,8 @@ sidebar:
   order: 7
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 ## Background
 
 In February 2025, LayerX Security Research disclosed a critical zero-click remote code execution vulnerability in Anthropic's Claude Desktop Extensions (DXT) framework. Extensions run unsandboxed with full system privileges, acting as execution bridges between the language model and the local operating system.
@@ -66,7 +68,26 @@ In both modes, the container has no access to VPN tunnels, corporate network int
 
 ### Ephemeral by Design
 
-The entire environment can be destroyed and recreated with `docker compose down -v` followed by `docker compose pull && docker compose up -d`. Treat the container as disposable.
+The entire environment can be destroyed and recreated in seconds. Treat the container as disposable.
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down -v
+docker compose pull && docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman compose down -v
+podman compose pull && podman compose up -d
+```
+
+</TabItem>
+</Tabs>
 
 ### CLI-Only Tools
 
@@ -107,7 +128,24 @@ The `docker-compose.yml` applies several defense-in-depth measures:
 2. **Do not add bind mounts** to `docker-compose.yml`. The named-volume configuration is intentional.
 3. **Rotate SSH keys** used inside the container periodically.
 4. **Review `.env` before sharing.** It contains API keys and may contain SSH private keys.
-5. **Update periodically** to pick up security patches: `docker compose pull && docker compose up -d`
+5. **Update periodically** to pick up security patches:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+</TabItem>
+<TabItem label="Podman">
+
+   ```bash
+   podman compose pull && podman compose up -d
+   ```
+
+</TabItem>
+</Tabs>
 6. **The proxy runs inside the container** on `localhost:8082` and is not exposed to the host network.
 
 ## References
