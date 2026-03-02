@@ -22,7 +22,7 @@ cd devcontainer
 .
 ├── Dockerfile                  # Multi-stage image build
 ├── docker-compose.yml          # Base compose — pulls pre-built image
-├── docker-compose.override.yml # Build override — auto-merged when present
+├── docker-compose.build.yml    # Build override — use explicitly with -f
 ├── .devcontainer/              # VS Code Dev Container config
 │   └── devcontainer.json
 ├── entrypoint.sh               # Container startup script
@@ -31,32 +31,38 @@ cd devcontainer
 └── claude-config/              # Claude Code configuration files
 ```
 
-## How the Override File Works
+## Build File
 
-Docker Compose automatically merges `docker-compose.override.yml` when it exists in the same directory as `docker-compose.yml`. This means:
+The `docker-compose.build.yml` file adds local build support. It is **not** auto-merged — you must pass it explicitly with `-f` flags. This means `docker compose up -d` (or `podman compose up -d`) always pulls the pre-built image from GHCR, whether you cloned the repo or not.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-- **Clone users** (have both files): `docker compose up -d` uses the local `Dockerfile` with `pull_policy: missing` — it builds locally if no image is cached, otherwise uses the cache.
-- **Standalone users** (only `docker-compose.yml`): `docker compose up -d` pulls the pre-built image from ghcr.io.
-
-You can verify the merged configuration:
+You can verify that a plain `docker compose up` uses only the pre-built image (no `build:` context):
 
 ```bash
 docker compose config
 ```
 
+Compare with the explicit build configuration:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
 </TabItem>
 <TabItem label="Podman">
 
-- **Clone users** (have both files): `podman compose up -d` uses the local `Dockerfile` with `pull_policy: missing` — it builds locally if no image is cached, otherwise uses the cache.
-- **Standalone users** (only `docker-compose.yml`): `podman compose up -d` pulls the pre-built image from ghcr.io.
-
-You can verify the merged configuration:
+You can verify that a plain `podman compose up` uses only the pre-built image (no `build:` context):
 
 ```bash
 podman compose config
+```
+
+Compare with the explicit build configuration:
+
+```bash
+podman compose -f docker-compose.yml -f docker-compose.build.yml config
 ```
 
 </TabItem>
@@ -68,20 +74,20 @@ podman compose config
 <TabItem label="Docker">
 
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
 </TabItem>
 <TabItem label="Podman">
 
 ```bash
-podman compose up -d --build
+podman compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
 </TabItem>
 </Tabs>
 
-This builds the image from the local `Dockerfile` and starts the container. The `--build` flag forces a rebuild even if a cached image exists.
+This merges the build file with the base compose file, builds the image from the local `Dockerfile`, and starts the container. The `--build` flag forces a rebuild even if a cached image exists.
 
 ## Two-Stage Build Architecture
 
@@ -130,14 +136,14 @@ Edit the `Dockerfile` and add your tool to the appropriate section. Rebuild afte
 <TabItem label="Docker">
 
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
 </TabItem>
 <TabItem label="Podman">
 
 ```bash
-podman compose up -d --build
+podman compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
 </TabItem>

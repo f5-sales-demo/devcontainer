@@ -29,12 +29,12 @@ VS Code builds (or pulls) the image, starts the container, installs extensions, 
 The `.devcontainer/devcontainer.json` file tells VS Code to use Docker Compose:
 
 ```json
-"dockerComposeFile": ["../docker-compose.yml", "../docker-compose.override.yml"],
+"dockerComposeFile": ["../docker-compose.yml", "../docker-compose.build.yml"],
 "service": "dev",
 "workspaceFolder": "/workspace"
 ```
 
-Because you cloned the repo, both compose files are present. Docker Compose merges them automatically — the override adds `build:` support so VS Code can build the image locally if needed.
+The devcontainer config explicitly includes the build file, so VS Code can build the image locally when you use "Reopen in Container" or "Rebuild Container".
 
 ## Extensions
 
