@@ -5,11 +5,16 @@ sidebar:
   order: 1
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 ## Prerequisites
 
-### Docker
+### Container Runtime
 
-You need Docker running on your machine. Any recent version will work.
+You need a container runtime on your machine. Either Docker or Podman will work.
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
 
 | Platform | Install |
 |----------|---------|
@@ -24,15 +29,59 @@ docker --version
 docker compose version
 ```
 
+</TabItem>
+<TabItem label="Podman">
+
+| Platform | Install |
+|----------|---------|
+| macOS | [Podman Desktop for Mac](https://podman-desktop.io/docs/installation/macos-install) |
+| Windows | [Podman Desktop for Windows](https://podman-desktop.io/docs/installation/windows-install) |
+| Linux | [Podman](https://podman.io/docs/installation#installing-on-linux) + [Podman Compose](https://github.com/containers/podman-compose#installation) |
+
+Verify it's working:
+
+```bash
+podman --version
+podman compose version
+```
+
+:::note
+The container runs in **privileged mode** (`privileged: true` in `docker-compose.yml`). If you're using rootless Podman, you may need to enable rootful mode:
+
+```bash
+podman machine set --rootful
+podman machine stop && podman machine start
+```
+:::
+
+</TabItem>
+</Tabs>
+
 ### System Resources
 
 | Resource | Minimum | Recommended |
 |----------|---------|-------------|
 | Disk | 5 GB | 10 GB+ |
-| RAM | 4 GB allocated to Docker | 8 GB+ |
+| RAM | 4 GB allocated to container runtime | 8 GB+ |
 | CPU | 2 cores | 4+ cores |
 
-Adjust Docker resource limits in Docker Desktop &rarr; Settings &rarr; Resources.
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+Adjust resource limits in Docker Desktop &rarr; Settings &rarr; Resources.
+
+</TabItem>
+<TabItem label="Podman">
+
+Adjust resource limits in Podman Desktop &rarr; Settings &rarr; Resources, or via the CLI:
+
+```bash
+podman machine set --cpus 4 --memory 8192
+podman machine stop && podman machine start
+```
+
+</TabItem>
+</Tabs>
 
 ## 1. Set Up
 
@@ -55,17 +104,43 @@ If you use an OpenAI-compatible provider instead, see [Configuration](./configur
 
 ## 3. Start
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
 ```bash
 docker compose up -d
 ```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman compose up -d
+```
+
+</TabItem>
+</Tabs>
 
 The first run pulls the pre-built image from ghcr.io (~1 min depending on your connection). Subsequent starts use the cached image and take seconds.
 
 ## 4. Connect
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
 ```bash
 docker compose exec dev zsh
 ```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman compose exec dev zsh
+```
+
+</TabItem>
+</Tabs>
 
 ## 5. Verify
 
@@ -107,6 +182,9 @@ The container includes a virtual display for watching AI agents control a browse
 
 ## 8. Stopping and Restarting
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
 ```bash
 # Stop (preserves data)
 docker compose down
@@ -118,6 +196,24 @@ docker compose up -d
 docker compose down -v
 docker compose up -d
 ```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+# Stop (preserves data)
+podman compose down
+
+# Start again
+podman compose up -d
+
+# Destroy everything and start fresh
+podman compose down -v
+podman compose up -d
+```
+
+</TabItem>
+</Tabs>
 
 Your code in `/workspace` and home directory persist across restarts. See [Configuration — Data Persistence](./configuration#data-persistence) for details.
 

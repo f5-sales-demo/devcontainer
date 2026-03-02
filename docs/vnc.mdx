@@ -5,6 +5,8 @@ sidebar:
   order: 3
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 The container runs a virtual display stack (Xvfb + x11vnc + noVNC + fluxbox) so you can watch AI agents control a browser and intervene when needed — for example, to handle login or MFA prompts.
 
 ## Connecting
@@ -43,10 +45,24 @@ Set these in your `.env` file or in `.devcontainer/devcontainer.json` under `con
 
 For headless-only operation, set `ENABLE_VNC=false` in `.env` and restart the container:
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
 ```bash
 docker compose down
 docker compose up -d
 ```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman compose down
+podman compose up -d
+```
+
+</TabItem>
+</Tabs>
 
 ## Troubleshooting
 
