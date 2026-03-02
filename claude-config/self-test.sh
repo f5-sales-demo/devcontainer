@@ -11,10 +11,10 @@ check() {
   shift
   if "$@" >/dev/null 2>&1; then
     echo "  PASS: $desc"
-    ((PASS++))
+    PASS=$((PASS + 1))
   else
     echo "  FAIL: $desc"
-    ((FAIL++))
+    FAIL=$((FAIL + 1))
   fi
 }
 
@@ -60,7 +60,7 @@ if [ -f /opt/searxng-mcp/server.py ]; then
   fi
 else
   echo "  FAIL: SearXNG MCP server not installed at /opt/searxng-mcp"
-  ((FAIL++))
+  FAIL=$((FAIL + 1))
 fi
 
 echo ""
