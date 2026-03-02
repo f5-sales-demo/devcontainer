@@ -5,6 +5,8 @@ sidebar:
   order: 5
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 This page is for developers who want to clone the repository, build the image locally, or customize the Dockerfile. If you just want to use the pre-built container, see [Getting Started](./getting-started).
 
 ## Clone the Repository
@@ -33,6 +35,9 @@ cd devcontainer
 
 Docker Compose automatically merges `docker-compose.override.yml` when it exists in the same directory as `docker-compose.yml`. This means:
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
 - **Clone users** (have both files): `docker compose up -d` uses the local `Dockerfile` with `pull_policy: missing` — it builds locally if no image is cached, otherwise uses the cache.
 - **Standalone users** (only `docker-compose.yml`): `docker compose up -d` pulls the pre-built image from ghcr.io.
 
@@ -42,11 +47,39 @@ You can verify the merged configuration:
 docker compose config
 ```
 
+</TabItem>
+<TabItem label="Podman">
+
+- **Clone users** (have both files): `podman compose up -d` uses the local `Dockerfile` with `pull_policy: missing` — it builds locally if no image is cached, otherwise uses the cache.
+- **Standalone users** (only `docker-compose.yml`): `podman compose up -d` pulls the pre-built image from ghcr.io.
+
+You can verify the merged configuration:
+
+```bash
+podman compose config
+```
+
+</TabItem>
+</Tabs>
+
 ## Building Locally
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
 
 ```bash
 docker compose up -d --build
 ```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman compose up -d --build
+```
+
+</TabItem>
+</Tabs>
 
 This builds the image from the local `Dockerfile` and starts the container. The `--build` flag forces a rebuild even if a cached image exists.
 
@@ -93,9 +126,22 @@ These layers change more frequently (npm/pip updates, config changes) but rebuil
 
 Edit the `Dockerfile` and add your tool to the appropriate section. Rebuild after adding:
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
 ```bash
 docker compose up -d --build
 ```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman compose up -d --build
+```
+
+</TabItem>
+</Tabs>
 
 Or in VS Code: **Dev Containers &rarr; Rebuild Container**.
 

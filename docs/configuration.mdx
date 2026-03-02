@@ -5,6 +5,8 @@ sidebar:
   order: 2
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 All configuration lives in the `.env` file at the project root. This file is gitignored — it never gets committed.
 
 ## Environment Variables
@@ -108,7 +110,7 @@ The container includes the full Docker engine (`docker-ce`, `containerd.io`) and
 The `vscode` user is a member of the `docker` group, so `docker` commands work without `sudo`.
 
 :::note
-Docker-in-Docker requires the container to run in **privileged mode** (`privileged: true` in `docker-compose.yml`). This is set by default. If you see "Docker daemon failed to start", check that your container runtime allows privileged containers.
+Docker-in-Docker requires the container to run in **privileged mode** (`privileged: true` in `docker-compose.yml`). This is set by default. If you see "Docker daemon failed to start", check that your container runtime allows privileged containers. This applies regardless of whether you use Docker or Podman on the host.
 :::
 
 ### Git
@@ -128,7 +130,18 @@ Docker-in-Docker requires the container to run in **privileged mode** (`privileg
 
 Every language runtime, CLI, and tool is installed directly in the `Dockerfile` at image build time. The pre-built image is published to `ghcr.io/f5xc-salesdemos/devcontainer:latest` on every push to `main`, so most users never need to build locally.
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
 Running `docker compose up -d` pulls the pre-built image automatically. If you've cloned the repository, the `docker-compose.override.yml` file adds local build support — use `docker compose up -d --build` to force a local build after customizing the Dockerfile. See [Local Development](./local-development) for details.
+
+</TabItem>
+<TabItem label="Podman">
+
+Running `podman compose up -d` pulls the pre-built image automatically. If you've cloned the repository, the `docker-compose.override.yml` file adds local build support — use `podman compose up -d --build` to force a local build after customizing the Dockerfile. See [Local Development](./local-development) for details.
+
+</TabItem>
+</Tabs>
 
 The Dockerfile uses a two-stage build optimized for Docker layer caching. See [Local Development — Two-Stage Build Architecture](./local-development#two-stage-build-architecture) for the full layer breakdown and build cache details.
 
@@ -170,12 +183,15 @@ Extensions are configured in `.devcontainer/devcontainer.json` under `customizat
 
 ## Data Persistence
 
-All data lives in Docker named volumes — no host directories are mounted:
+All data lives in named volumes — no host directories are mounted:
 
 | Volume | Mount Point | Contents |
 |--------|-------------|----------|
 | `workspace` | `/workspace` | Your cloned repositories and project files |
 | `home` | `/home/vscode` | Shell history, tool configs, caches, SSH keys |
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
 
 Both persist across container restarts and rebuilds. Run `docker compose pull` to fetch the latest pre-built image before restarting.
 
@@ -183,6 +199,19 @@ Both persist across container restarts and rebuilds. Run `docker compose pull` t
 |--------|------|
 | `docker compose down` | Preserved |
 | `docker compose down -v` | **Deleted** |
+
+</TabItem>
+<TabItem label="Podman">
+
+Both persist across container restarts and rebuilds. Run `podman compose pull` to fetch the latest pre-built image before restarting.
+
+| Action | Data |
+|--------|------|
+| `podman compose down` | Preserved |
+| `podman compose down -v` | **Deleted** |
+
+</TabItem>
+</Tabs>
 
 ## Port Mapping
 

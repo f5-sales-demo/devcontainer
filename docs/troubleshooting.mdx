@@ -5,14 +5,30 @@ sidebar:
   order: 8
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 ## Container Won't Start
 
 ### "Conflict. The container name is already in use"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
 
 ```bash
 docker rm -f devcontainer
 docker compose up -d
 ```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman rm -f devcontainer
+podman compose up -d
+```
+
+</TabItem>
+</Tabs>
 
 ## AI Tools Not Working
 
@@ -20,9 +36,22 @@ docker compose up -d
 
 The image may be outdated. Rebuild it:
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
 ```bash
 docker compose up -d --build
 ```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman compose up -d --build
+```
+
+</TabItem>
+</Tabs>
 
 ### Claude shows "Not logged in"
 
@@ -51,7 +80,18 @@ Common causes:
   OPENAI_BASE_URL=<your-provider-url>
   ```
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
   Then restart: `docker compose up -d`.
+
+</TabItem>
+<TabItem label="Podman">
+
+  Then restart: `podman compose up -d`.
+
+</TabItem>
+</Tabs>
 
 - **Key doesn't start with `sk-ant-`** — Anthropic API keys always start with `sk-ant-`. If yours doesn't, it may be for a different provider. Use the proxy mode above, or get a direct key from [console.anthropic.com](https://console.anthropic.com/).
 
@@ -121,15 +161,41 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 
 The first build downloads the base image (~1 GB). Subsequent builds use cache. If slow every time:
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
 ```bash
 docker builder prune
 ```
 
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman builder prune
+```
+
+</TabItem>
+</Tabs>
+
 ### "No space left on device"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
 
 ```bash
 docker system prune -a --volumes
 ```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman system prune -a --volumes
+```
+
+</TabItem>
+</Tabs>
 
 **Warning:** This removes all unused containers, images, and volumes — not just this project's.
 
@@ -143,6 +209,9 @@ nslookup google.com
 curl -I https://github.com
 ```
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
 If DNS fails, add to `/etc/docker/daemon.json` on the host:
 
 ```json
@@ -152,6 +221,29 @@ If DNS fails, add to `/etc/docker/daemon.json` on the host:
 ```
 
 Then restart Docker.
+
+</TabItem>
+<TabItem label="Podman">
+
+If DNS fails, configure DNS inside the Podman machine:
+
+```bash
+podman machine ssh
+sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+exit
+```
+
+Or add DNS settings to `~/.config/containers/containers.conf` on the host:
+
+```ini
+[containers]
+dns_servers = ["8.8.8.8", "8.8.4.4"]
+```
+
+Then restart Podman: `podman machine stop && podman machine start`.
+
+</TabItem>
+</Tabs>
 
 ## Remote Display (noVNC)
 
@@ -185,9 +277,22 @@ ps aux | grep -E 'novnc|websockify'
 
 If not running, verify `ENABLE_VNC` is `true` (the default) and check container logs:
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
 ```bash
 docker compose logs dev | grep -i vnc
 ```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman compose logs dev | grep -i vnc
+```
+
+</TabItem>
+</Tabs>
 
 ### Port 6080 already in use
 
@@ -200,10 +305,25 @@ ports:
 
 ## Reset Everything
 
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
 ```bash
 docker compose down -v
 docker rm -f devcontainer 2>/dev/null
 docker compose up -d --build
 ```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman compose down -v
+podman rm -f devcontainer 2>/dev/null
+podman compose up -d --build
+```
+
+</TabItem>
+</Tabs>
 
 This destroys all data in volumes. You'll need to re-clone repos and reconfigure tools.
