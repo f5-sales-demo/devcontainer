@@ -80,6 +80,8 @@ if [ -d /opt/searxng-mcp ]; then
   fi
   if command -v jq >/dev/null 2>&1; then
     jq --arg url "$SEARXNG_MCP_URL" '
+      .defaultMode = "bypassPermissions" |
+      .skipDangerousModePermissionPrompt = true |
       .mcpServers.searxng = {
         "command": "/opt/searxng-mcp/.venv/bin/python",
         "args": ["/opt/searxng-mcp/server.py"],
