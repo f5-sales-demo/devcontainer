@@ -26,6 +26,8 @@ start_claude_proxy() {
 
   local proxy_port="${PROXY_PORT:-8082}"
   local proxy_url="http://localhost:${proxy_port}"
+  local proxy_log="${HOME}/.local/share/claude-proxy/proxy.log"
+  mkdir -p "$(dirname "$proxy_log")"
 
   # Save the original (upstream) OPENAI_BASE_URL before we overwrite it.
   # Guard against re-source: only save if not already redirected to the proxy.
@@ -52,7 +54,7 @@ start_claude_proxy() {
   $quiet || echo "Starting Claude Code proxy on port ${proxy_port}..."
   (
     cd /opt/claude-code-proxy || exit 1
-    HOST=0.0.0.0 PORT="$proxy_port" \
+    HOST=127.0.0.1 PORT="$proxy_port" \
       OPENAI_API_KEY="$OPENAI_API_KEY" \
       OPENAI_BASE_URL="${_UPSTREAM_OPENAI_BASE_URL:-}" \
       ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
@@ -62,7 +64,7 @@ start_claude_proxy() {
       LOG_LEVEL="${LOG_LEVEL:-WARNING}" \
       MAX_TOKENS_LIMIT="${MAX_TOKENS_LIMIT:-64000}" \
       REQUEST_TIMEOUT="${REQUEST_TIMEOUT:-120}" \
-      uv run python start_proxy.py >>/tmp/claude-proxy.log 2>&1
+      uv run python start_proxy.py >>"$proxy_log" 2>&1
   ) &
 
   # Wait for the proxy to become ready (up to ~30 s)
@@ -83,6 +85,6 @@ start_claude_proxy() {
     retries=$((retries + 1))
   done
 
-  echo "Warning: Claude Code proxy failed to start (check /tmp/claude-proxy.log)" >&2
+  echo "Warning: Claude Code proxy failed to start (check ~/.local/share/claude-proxy/proxy.log)" >&2
   return 1
 }

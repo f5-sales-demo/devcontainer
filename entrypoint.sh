@@ -24,10 +24,11 @@ fi
 
 # SSH key from env var (base64 encoded)
 if [ -n "$SSH_PRIVATE_KEY" ]; then
+  _old_umask=$(umask)
+  umask 077
   mkdir -p "$HOME/.ssh"
   echo "$SSH_PRIVATE_KEY" | base64 -d >"$HOME/.ssh/id_ed25519"
-  chmod 700 "$HOME/.ssh"
-  chmod 600 "$HOME/.ssh/id_ed25519"
+  umask "$_old_umask"
   ssh-keygen -y -f "$HOME/.ssh/id_ed25519" >"$HOME/.ssh/id_ed25519.pub" 2>/dev/null
   if [ ! -f "$HOME/.ssh/config" ]; then
     cat >"$HOME/.ssh/config" <<'SSHCONF'
@@ -100,30 +101,6 @@ fi
 # shellcheck source=/dev/null
 . /usr/local/lib/claude-proxy.sh
 start_claude_proxy
-
-# ============================================================
-# Docker-in-Docker (start dockerd if running in privileged mode)
-# ============================================================
-if [ "${ENABLE_DOCKER:-true}" = "true" ] && command -v dockerd >/dev/null 2>&1; then
-  # Only start if we're in a privileged container (cgroup access required)
-  if [ -d /sys/fs/cgroup ]; then
-    sudo sh -c "dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375 >/var/log/dockerd.log 2>&1" &
-    # Background readiness check — does NOT block entrypoint
-    (
-      retries=0
-      while [ $retries -lt 30 ]; do
-        docker info >/dev/null 2>&1 && break
-        sleep 1
-        retries=$((retries + 1))
-      done
-      if docker info >/dev/null 2>&1; then
-        echo "Docker daemon started successfully"
-      else
-        echo "Warning: Docker daemon failed to start (not running in privileged mode?)" >&2
-      fi
-    ) &
-  fi
-fi
 
 # ============================================================
 # VNC stack (Xvfb + fluxbox + x11vnc + noVNC)

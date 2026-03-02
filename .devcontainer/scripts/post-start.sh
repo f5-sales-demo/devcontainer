@@ -10,7 +10,7 @@ if [ -n "$OPENAI_API_KEY" ]; then
   if curl -sf --connect-timeout 5 "http://localhost:8082/" >/dev/null 2>&1; then
     echo "reachable"
   else
-    echo "not reachable (check /tmp/claude-proxy.log)"
+    echo "not reachable (check ~/.local/share/claude-proxy/proxy.log)"
   fi
   echo -n "  Checking Responses API (Codex)... "
   if curl -sf --connect-timeout 5 -o /dev/null -w "%{http_code}" \
@@ -62,7 +62,7 @@ fi
 
 # Check installed tools
 echo "  Installed tools:"
-for cmd in node python3 go rustc javac git gh docker kubectl helm terraform \
+for cmd in node python3 go rustc javac git gh kubectl helm terraform \
   pre-commit uv claude opencode codex openclaw prettier markdownlint-cli2 \
   actionlint act terraform-docs ansible black pylint yamllint yt-dlp \
   aws az pwsh devcontainer brew playwright; do

@@ -47,12 +47,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
       > /etc/apt/sources.list.d/github-cli.list \
-    # Docker
-    && install -m 0755 -d /etc/apt/keyrings \
-    && curl ${CURL_RETRY} -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc \
-    && chmod a+r /etc/apt/keyrings/docker.asc \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
-      > /etc/apt/sources.list.d/docker.list \
     # Microsoft (Azure CLI + PowerShell)
     && curl ${CURL_RETRY} -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" \
@@ -89,8 +83,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     terraform \
     # GitHub CLI
     gh \
-    # Docker (full engine for Docker-in-Docker)
-    docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
     # Azure CLI
     azure-cli \
     # Locale
@@ -116,11 +108,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && locale-gen en_US.UTF-8 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Create expected binary names for tools Ubuntu renames;
-# add vscode user to docker group for Docker-in-Docker access
+# Create expected binary names for tools Ubuntu renames
 RUN ln -sf /usr/bin/fdfind /usr/local/bin/fd \
-    && ln -sf /usr/bin/batcat /usr/local/bin/bat \
-    && usermod -aG docker ${USERNAME}
+    && ln -sf /usr/bin/batcat /usr/local/bin/bat
 
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
