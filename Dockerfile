@@ -515,15 +515,15 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && NUCLEI_VERSION=$(ghlatest projectdiscovery/nuclei) \
     && curl ${CURL_RETRY} -fsSL "https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_${NUCLEI_VERSION}_linux_${DPKG_ARCH}.zip" \
       -o /tmp/nuclei.zip \
-    && unzip -q /tmp/nuclei.zip -d /usr/local/bin && rm /tmp/nuclei.zip \
+    && unzip -oq /tmp/nuclei.zip -d /usr/local/bin && rm /tmp/nuclei.zip \
     && SUBFINDER_VERSION=$(ghlatest projectdiscovery/subfinder) \
     && curl ${CURL_RETRY} -fsSL "https://github.com/projectdiscovery/subfinder/releases/latest/download/subfinder_${SUBFINDER_VERSION}_linux_${DPKG_ARCH}.zip" \
       -o /tmp/subfinder.zip \
-    && unzip -q /tmp/subfinder.zip -d /usr/local/bin && rm /tmp/subfinder.zip \
+    && unzip -oq /tmp/subfinder.zip -d /usr/local/bin && rm /tmp/subfinder.zip \
     && HTTPX_VERSION=$(ghlatest projectdiscovery/httpx) \
     && curl ${CURL_RETRY} -fsSL "https://github.com/projectdiscovery/httpx/releases/latest/download/httpx_${HTTPX_VERSION}_linux_${DPKG_ARCH}.zip" \
       -o /tmp/httpx.zip \
-    && unzip -q /tmp/httpx.zip -d /usr/local/bin && rm /tmp/httpx.zip \
+    && unzip -oq /tmp/httpx.zip -d /usr/local/bin && rm /tmp/httpx.zip \
     # --- Web fuzzing ---
     && FFUF_VERSION=$(ghlatest ffuf/ffuf) \
     && curl ${CURL_RETRY} -fsSL "https://github.com/ffuf/ffuf/releases/latest/download/ffuf_${FFUF_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
@@ -537,7 +537,7 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     else \
       curl ${CURL_RETRY} -fsSL "https://github.com/epi052/feroxbuster/releases/latest/download/aarch64-linux-feroxbuster.zip" \
         -o /tmp/feroxbuster.zip \
-      && unzip -q /tmp/feroxbuster.zip -d /usr/local/bin && rm /tmp/feroxbuster.zip; \
+      && unzip -oq /tmp/feroxbuster.zip -d /usr/local/bin && rm /tmp/feroxbuster.zip; \
     fi \
     && chmod +x /usr/local/bin/feroxbuster \
     # --- XSS scanner ---
@@ -572,9 +572,10 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && if [ "$DPKG_ARCH" = "amd64" ]; then \
       curl ${CURL_RETRY} -fsSL "https://github.com/bettercap/bettercap/releases/latest/download/bettercap_linux_amd64.zip" \
         -o /tmp/bettercap.zip \
-      && unzip -q /tmp/bettercap.zip -d /usr/local/bin && rm /tmp/bettercap.zip \
+      && unzip -oq /tmp/bettercap.zip -d /usr/local/bin && rm /tmp/bettercap.zip \
       && chmod +x /usr/local/bin/bettercap; \
-    fi
+    fi \
+    && rm -f /usr/local/bin/LICENSE* /usr/local/bin/README*
 
 # ============================================================
 # 10h. OWASP ZAP (web app scanner — replaces Burp Suite)
