@@ -680,7 +680,17 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     codespell \
     zizmor \
     nbqa \
-    # Security & pentest
+    # Recon (recon-ng, spiderfoot installed via git clone below)
+    theHarvester \
+    fierce
+
+# Security & pentest pip packages are installed separately because
+# mitmproxy, sslyze, impacket, and prowler have conflicting transitive
+# deps on cryptography/pyOpenSSL.  A single pip install causes the
+# resolver to backtrack and downgrade zstandard (needed by pwntools)
+# to 0.22.0, which cannot build from source on Python 3.13.
+# hadolint ignore=DL3013,DL3059
+RUN pip install --no-cache-dir --break-system-packages \
     scapy \
     impacket \
     pwntools \
@@ -691,10 +701,7 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     mitmproxy \
     # Cloud security
     prowler \
-    kube-hunter \
-    # Recon (recon-ng, spiderfoot installed via git clone below)
-    theHarvester \
-    fierce
+    kube-hunter
 
 # ============================================================
 # 12b. Claude Code Proxy (Anthropic Messages API -> OpenAI)
