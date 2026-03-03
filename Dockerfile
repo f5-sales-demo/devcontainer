@@ -715,10 +715,10 @@ WORKDIR /opt/claude-code-proxy
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
     && uv sync \
-    && apt-get purge -y build-essential \
-    && apt-get autoremove -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && chown -R $USERNAME:$USERNAME /opt/claude-code-proxy
+# NOTE: build-essential is purged after Ruby gem installs (Section 12h)
+# because rubocop's prism dep requires a C compiler.
 
 # ============================================================
 # 12c. SearXNG MCP server (web search for Claude Code)
@@ -777,6 +777,15 @@ RUN Rscript -e 'install.packages(c("lintr", "purrr"), repos="https://cloud.r-pro
 RUN gem install --no-document \
     wpscan \
     evil-winrm
+
+# Purge build-essential now that all gem installs are done.
+# It was installed in Section 12b for claude-code-proxy C extensions
+# and kept for rubocop's prism dependency (Section 12d) and wpscan
+# (Section 12h).
+# hadolint ignore=DL3059
+RUN apt-get purge -y build-essential \
+    && apt-get autoremove -y \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
 # 12i. Git-cloned security tools (testssl.sh, exploitdb,
