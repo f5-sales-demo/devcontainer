@@ -792,8 +792,8 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
     && pip install --no-cache-dir --break-system-packages -r /opt/spiderfoot/requirements.txt \
     && printf '#!/bin/sh\nexec python3 /opt/spiderfoot/sf.py "$@"\n' > /usr/local/bin/spiderfoot \
     && chmod +x /usr/local/bin/spiderfoot \
-    && rm -rf /opt/testssl.sh/.git /opt/exploitdb/.git /opt/seclists/.git /opt/docker-bench-security/.git \
-       /opt/recon-ng/.git /opt/spiderfoot/.git
+    && rm -rf /opt/testssl.sh/.git /opt/exploitdb/.git /opt/seclists/.git \
+        /opt/docker-bench-security/.git /opt/recon-ng/.git /opt/spiderfoot/.git
 
 # ============================================================
 # 13. Playwright browsers (Chromium + system deps)
