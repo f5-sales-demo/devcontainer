@@ -442,8 +442,7 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && mv kustomize /usr/local/bin/ \
     # protolint (version in asset name)
     && PROTOLINT_VERSION=$(ghlatest yoheimuta/protolint) \
-    && if [ "$UNAME_ARCH" = "x86_64" ]; then PL_ARCH="x86_64"; else PL_ARCH="arm64"; fi \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/yoheimuta/protolint/releases/latest/download/protolint_${PROTOLINT_VERSION}_Linux_${PL_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/yoheimuta/protolint/releases/latest/download/protolint_${PROTOLINT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin protolint \
     # scalafmt (native binary — different asset names per arch)
     && if [ "$DPKG_ARCH" = "amd64" ]; then \
@@ -466,8 +465,8 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
 # ============================================================
 # hadolint ignore=DL3059
 RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
-    # checkstyle
-    && CHECKSTYLE_VERSION=$(ghlatest checkstyle/checkstyle) \
+    # checkstyle (tag is "checkstyle-X.Y.Z" — strip the prefix)
+    && CHECKSTYLE_VERSION=$(ghlatest checkstyle/checkstyle | sed 's/^checkstyle-//') \
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/checkstyle/checkstyle/releases/latest/download/checkstyle-${CHECKSTYLE_VERSION}-all.jar" \
       -o /opt/checkstyle.jar \
