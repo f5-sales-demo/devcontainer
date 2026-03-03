@@ -540,12 +540,13 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
       && unzip -oq /tmp/feroxbuster.zip -d /usr/local/bin && rm /tmp/feroxbuster.zip; \
     fi \
     && chmod +x /usr/local/bin/feroxbuster \
-    # --- XSS scanner ---
+    # --- XSS scanner (binary is named dalfox-linux-ARCH inside archive) ---
     && curl ${CURL_RETRY} -fsSL "https://github.com/hahwul/dalfox/releases/latest/download/dalfox-linux-${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin dalfox \
-    # --- Domain & URL enumeration ---
+      | tar -xz -C /usr/local/bin \
+    && mv /usr/local/bin/dalfox-linux-${DPKG_ARCH} /usr/local/bin/dalfox \
+    # --- Domain & URL enumeration (extract only the binary) ---
     && curl ${CURL_RETRY} -fsSL "https://github.com/owasp-amass/amass/releases/latest/download/amass_linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz --strip-components=1 -C /usr/local/bin \
+      | tar -xz --strip-components=1 -C /usr/local/bin "amass_linux_${DPKG_ARCH}/amass" \
     && GAU_VERSION=$(ghlatest lc/gau) \
     && curl ${CURL_RETRY} -fsSL "https://github.com/lc/gau/releases/latest/download/gau_${GAU_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin gau \
