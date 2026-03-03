@@ -799,6 +799,10 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
     && pip install --no-cache-dir --break-system-packages -r /opt/recon-ng/REQUIREMENTS \
     && ln -s /opt/recon-ng/recon-ng /usr/local/bin/recon-ng \
     && git clone --depth=1 https://github.com/smicallef/spiderfoot.git /opt/spiderfoot \
+    # Pre-install lxml with cp313 wheel — spiderfoot pins an old version
+    # whose Cython-generated C code is incompatible with Python 3.13
+    # (_PyObject_NextNotImplemented removed, _PyLong_AsByteArray changed).
+    && pip install --no-cache-dir --break-system-packages "lxml>=5.1.0" \
     && pip install --no-cache-dir --break-system-packages -r /opt/spiderfoot/requirements.txt \
     && printf '#!/bin/sh\nexec python3 /opt/spiderfoot/sf.py "$@"\n' > /usr/local/bin/spiderfoot \
     && chmod +x /usr/local/bin/spiderfoot \
@@ -807,7 +811,7 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
 
 # Purge build-essential now that all C-extension installs are done.
 # Kept through: Section 12b (claude-code-proxy), 12d (rubocop/prism),
-# 12h (wpscan gem), and 12i (lxml for spiderfoot).
+# 12h (wpscan gem), and 12i (recon-ng/spiderfoot pip deps).
 # hadolint ignore=DL3059
 RUN apt-get purge -y build-essential \
     && apt-get autoremove -y \
