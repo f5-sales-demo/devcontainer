@@ -691,6 +691,7 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
 # to 0.22.0, which cannot build from source on Python 3.13.
 # hadolint ignore=DL3013,DL3059
 RUN pip install --no-cache-dir --break-system-packages \
+    "zstandard>=0.23.0" \
     scapy \
     impacket \
     pwntools \
