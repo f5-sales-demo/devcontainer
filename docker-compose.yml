@@ -27,6 +27,7 @@ services:
       - SETUID
       - SETGID
       - NET_RAW
+      - NET_ADMIN
     deploy:
       resources:
         limits:

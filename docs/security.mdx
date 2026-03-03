@@ -97,7 +97,7 @@ This environment runs AI tools as **command-line interfaces only**. No desktop a
 
 The `docker-compose.yml` applies several defense-in-depth measures:
 
-- **Capability dropping** — All Linux capabilities are dropped (`cap_drop: ALL`), then only the minimum set is re-added: `CHOWN`, `DAC_OVERRIDE`, `FOWNER` (for volume permission fixes in the entrypoint), `SETUID`/`SETGID` (for sudo), and `NET_RAW` (for ping/tcpdump).
+- **Capability dropping** — All Linux capabilities are dropped (`cap_drop: ALL`), then only the minimum set is re-added: `CHOWN`, `DAC_OVERRIDE`, `FOWNER` (for volume permission fixes in the entrypoint), `SETUID`/`SETGID` (for sudo), `NET_RAW` (for ping/tcpdump), and `NET_ADMIN` (for packet capture tools like Wireshark and bettercap).
 - **Resource limits** — CPU (4 cores), memory (8 GB), and PID count (4096) are capped via `deploy.resources.limits` to prevent resource exhaustion attacks.
 - **tmpfs for `/tmp`** — The `/tmp` directory is mounted as a 256 MB tmpfs, keeping temporary files in memory and preventing them from persisting to the container's writable layer.
 - **TLS validation on by default** — `NODE_TLS_REJECT_UNAUTHORIZED` is not set, so Node.js validates TLS certificates by default. Users who need to accept self-signed certificates (e.g. for an internal proxy) can opt in by adding `NODE_TLS_REJECT_UNAUTHORIZED=0` to their `.env` file.
