@@ -411,14 +411,15 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/shfmt \
       "https://github.com/mvdan/sh/releases/latest/download/shfmt_v${SHFMT_VERSION}_linux_${DPKG_ARCH}" \
     && chmod +x /usr/local/bin/shfmt \
-    # gitleaks (version in asset name)
+    # gitleaks (assets use x64/arm64, not amd64/arm64)
     && GITLEAKS_VERSION=$(ghlatest gitleaks/gitleaks) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_${GITLEAKS_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+    && if [ "$DPKG_ARCH" = "amd64" ]; then GL_ARCH="x64"; else GL_ARCH="arm64"; fi \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_${GITLEAKS_VERSION}_linux_${GL_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin gitleaks \
-    # editorconfig-checker (version-free asset)
+    # editorconfig-checker (version-free asset; binary is bin/ec-linux-<arch>)
     && curl ${CURL_RETRY} -fsSL "https://github.com/editorconfig-checker/editorconfig-checker/releases/latest/download/ec-linux-${DPKG_ARCH}.tar.gz" \
-      | tar -xz --strip-components=1 -C /usr/local/bin \
-    && mv /usr/local/bin/ec-linux-${DPKG_ARCH} /usr/local/bin/editorconfig-checker 2>/dev/null || true \
+      | tar -xz --strip-components=1 -C /usr/local/bin "bin/ec-linux-${DPKG_ARCH}" \
+    && mv /usr/local/bin/ec-linux-${DPKG_ARCH} /usr/local/bin/editorconfig-checker \
     # trivy (install script auto-detects arch)
     && curl ${CURL_RETRY} -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin \
     # clj-kondo
