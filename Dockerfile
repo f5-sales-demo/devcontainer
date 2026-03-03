@@ -684,27 +684,23 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     theHarvester \
     fierce
 
-# Security & pentest pip packages are installed separately because
-# mitmproxy, sslyze, impacket, and prowler have conflicting transitive
-# deps on cryptography/pyOpenSSL.  A single pip install causes the
-# resolver to backtrack and downgrade zstandard (needed by pwntools)
-# to 0.22.0, which cannot build from source on Python 3.13.
-# --ignore-installed: same as Section 12 — Debian system packages
-# (blinker, etc.) lack pip RECORD files and block uninstall.
+# Security & pentest pip packages.
+# Installed in isolated groups because mitmproxy, sslyze, impacket,
+# and prowler pull conflicting cryptography/pyOpenSSL versions.
+# A single pip install triggers massive resolver backtracking that
+# downgrades zstandard (Python 3.13 cffi issue) or mitmproxy (ancient
+# urwid with use_2to3).  Separate installs let each resolve cleanly.
+# --ignore-installed: Debian system packages (blinker, etc.) lack
+# pip RECORD files and block uninstall.
 # hadolint ignore=DL3013,DL3059
 RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
-    "zstandard>=0.23.0" \
-    scapy \
-    impacket \
-    pwntools \
-    volatility3 \
-    sslyze \
-    arjun \
-    hashid \
+    scapy impacket sslyze arjun hashid \
+    && pip install --no-cache-dir --break-system-packages --ignore-installed \
+    pwntools volatility3 \
+    && pip install --no-cache-dir --break-system-packages --ignore-installed \
     mitmproxy \
-    # Cloud security
-    prowler \
-    kube-hunter
+    && pip install --no-cache-dir --break-system-packages --ignore-installed \
+    prowler kube-hunter
 
 # ============================================================
 # 12b. Claude Code Proxy (Anthropic Messages API -> OpenAI)
