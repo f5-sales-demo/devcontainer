@@ -799,11 +799,11 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
     && pip install --no-cache-dir --break-system-packages -r /opt/recon-ng/REQUIREMENTS \
     && ln -s /opt/recon-ng/recon-ng /usr/local/bin/recon-ng \
     && git clone --depth=1 https://github.com/smicallef/spiderfoot.git /opt/spiderfoot \
-    # Spiderfoot pins lxml<5,>=4.9.2 but lxml 4.x Cython C code is
+    # Spiderfoot pins lxml>=4.9.2,<5 but lxml 4.x Cython C code is
     # incompatible with Python 3.13 (removed _PyObject_NextNotImplemented,
-    # changed _PyLong_AsByteArray).  Relax to >=4.9.2 so pip uses the
-    # already-installed lxml 6.x cp313 wheel.
-    && sed -i 's/lxml<5,>=4\.9\.2/lxml>=4.9.2/' /opt/spiderfoot/requirements.txt \
+    # changed _PyLong_AsByteArray).  Strip the <5 upper bound so pip uses
+    # the already-installed lxml 6.x cp313 wheel.
+    && sed -i 's/lxml>=4\.9\.2,<5/lxml>=4.9.2/' /opt/spiderfoot/requirements.txt \
     && pip install --no-cache-dir --break-system-packages -r /opt/spiderfoot/requirements.txt \
     && printf '#!/bin/sh\nexec python3 /opt/spiderfoot/sf.py "$@"\n' > /usr/local/bin/spiderfoot \
     && chmod +x /usr/local/bin/spiderfoot \
