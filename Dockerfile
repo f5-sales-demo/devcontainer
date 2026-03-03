@@ -692,10 +692,8 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     # Cloud security
     prowler \
     kube-hunter \
-    # Recon
+    # Recon (recon-ng, spiderfoot installed via git clone below)
     theHarvester \
-    recon-ng \
-    spiderfoot \
     fierce
 
 # ============================================================
@@ -776,7 +774,7 @@ RUN gem install --no-document \
 
 # ============================================================
 # 12i. Git-cloned security tools (testssl.sh, exploitdb,
-#      SecLists, docker-bench-security)
+#      SecLists, docker-bench-security, recon-ng, spiderfoot)
 # ============================================================
 # hadolint ignore=DL3059
 RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.sh \
@@ -786,7 +784,16 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
     && git clone --depth=1 https://github.com/danielmiessler/SecLists.git /opt/seclists \
     && git clone --depth=1 https://github.com/docker/docker-bench-security.git /opt/docker-bench-security \
     && ln -s /opt/docker-bench-security/docker-bench-security.sh /usr/local/bin/docker-bench-security \
-    && rm -rf /opt/testssl.sh/.git /opt/exploitdb/.git /opt/seclists/.git /opt/docker-bench-security/.git
+    # recon-ng and spiderfoot are not on PyPI — install from git
+    && git clone --depth=1 https://github.com/lanmaster53/recon-ng.git /opt/recon-ng \
+    && pip install --no-cache-dir --break-system-packages -r /opt/recon-ng/REQUIREMENTS \
+    && ln -s /opt/recon-ng/recon-ng /usr/local/bin/recon-ng \
+    && git clone --depth=1 https://github.com/smicallef/spiderfoot.git /opt/spiderfoot \
+    && pip install --no-cache-dir --break-system-packages -r /opt/spiderfoot/requirements.txt \
+    && printf '#!/bin/sh\nexec python3 /opt/spiderfoot/sf.py "$@"\n' > /usr/local/bin/spiderfoot \
+    && chmod +x /usr/local/bin/spiderfoot \
+    && rm -rf /opt/testssl.sh/.git /opt/exploitdb/.git /opt/seclists/.git \
+        /opt/docker-bench-security/.git /opt/recon-ng/.git /opt/spiderfoot/.git
 
 # ============================================================
 # 13. Playwright browsers (Chromium + system deps)
