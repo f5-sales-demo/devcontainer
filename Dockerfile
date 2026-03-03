@@ -53,6 +53,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       | gpg --dearmor -o /usr/share/keyrings/cloud-google-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/cloud-google-archive-keyring.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
       > /etc/apt/sources.list.d/google-cloud-sdk.list \
+    # Dart SDK
+    && curl ${CURL_RETRY} -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub \
+      | gpg --dearmor -o /usr/share/keyrings/dart-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/dart-archive-keyring.gpg] https://storage.googleapis.com/download.dartlang.org/linux/debian stable main" \
+      > /etc/apt/sources.list.d/dart_stable.list \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
@@ -99,8 +104,69 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     xz-utils \
     yelp-tools \
+    # Super-linter language runtimes
+    clang-format \
+    libxml2-utils \
+    chktex \
+    ruby-full \
+    php-cli php-xml php-mbstring \
+    libperl-critic-perl \
+    lua5.4 liblua5.4-dev luarocks \
+    r-base \
+    dart \
+    dotnet-sdk-8.0 \
+    # Super-linter build deps (for cpanm, luarocks C extensions)
+    cpanminus \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Pre-seed wireshark debconf — allow non-root packet capture via dumpcap
+# hadolint ignore=DL3059
+RUN echo "wireshark-common wireshark-common/install-setuid boolean true" \
+      | debconf-set-selections
+
+# ============================================================
+# 2b. Security & pentest APT packages
+# ============================================================
+# hadolint ignore=DL3008,DL3059
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Network analysis & diagnostics
+    tshark \
+    wireshark \
+    iperf3 \
+    masscan \
+    socat \
+    hping3 \
+    iputils-arping \
+    whois \
+    netdiscover \
+    ngrep \
+    ethtool \
+    # Web & service scanners
+    nikto \
+    sqlmap \
+    dirb \
+    whatweb \
+    sslscan \
+    # Password & authentication
+    hydra \
+    john \
+    hashcat \
+    medusa \
+    ncrack \
+    # Reverse engineering & forensics
+    radare2 \
+    gdb \
+    gdb-multiarch \
+    binwalk \
+    strace \
+    ltrace \
+    foremost \
+    libimage-exiftool-perl \
+    # Runtime libraries (bettercap, scapy)
+    libpcap-dev \
+    libnetfilter-queue-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create expected binary names for tools Ubuntu renames
@@ -152,6 +218,7 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     PATH="/usr/local/cargo/bin:${PATH}"
 RUN curl ${CURL_RETRY} --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     | sh -s -- -y --default-toolchain stable --no-modify-path \
+    && rustup component add clippy rustfmt \
     && chmod -R a+rX /usr/local/rustup /usr/local/cargo
 
 # ============================================================
@@ -330,6 +397,229 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && chown ${USERNAME}:${USERNAME} /usr/local/bin/codex
 
 # ============================================================
+# 10c. Super-linter binary tools (linters + formatters)
+#      All resolve latest versions at build time.
+# ============================================================
+# hadolint ignore=DL3059
+RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
+    && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
+    # shfmt (version in asset name)
+    && SHFMT_VERSION=$(ghlatest mvdan/sh) \
+    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/shfmt \
+      "https://github.com/mvdan/sh/releases/latest/download/shfmt_v${SHFMT_VERSION}_linux_${DPKG_ARCH}" \
+    && chmod +x /usr/local/bin/shfmt \
+    # gitleaks (version in asset name)
+    && GITLEAKS_VERSION=$(ghlatest gitleaks/gitleaks) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_${GITLEAKS_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin gitleaks \
+    # editorconfig-checker (version-free asset)
+    && curl ${CURL_RETRY} -fsSL "https://github.com/editorconfig-checker/editorconfig-checker/releases/latest/download/ec-linux-${DPKG_ARCH}.tar.gz" \
+      | tar -xz --strip-components=1 -C /usr/local/bin \
+    && mv /usr/local/bin/ec-linux-${DPKG_ARCH} /usr/local/bin/editorconfig-checker 2>/dev/null || true \
+    # trivy (install script auto-detects arch)
+    && curl ${CURL_RETRY} -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin \
+    # clj-kondo
+    && CLJ_KONDO_VERSION=$(ghlatest clj-kondo/clj-kondo) \
+    && if [ "$DPKG_ARCH" = "amd64" ]; then CK_ARCH="amd64"; else CK_ARCH="aarch64"; fi \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/clj-kondo/clj-kondo/releases/latest/download/clj-kondo-${CLJ_KONDO_VERSION}-linux-${CK_ARCH}.zip" \
+      -o /tmp/clj-kondo.zip \
+    && unzip -q /tmp/clj-kondo.zip -d /usr/local/bin && rm /tmp/clj-kondo.zip \
+    # dotenv-linter
+    && if [ "$UNAME_ARCH" = "x86_64" ]; then DL_ARCH="x86_64"; else DL_ARCH="aarch64"; fi \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/dotenv-linter/dotenv-linter/releases/latest/download/dotenv-linter-linux-${DL_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin dotenv-linter \
+    # golangci-lint (install script auto-detects arch)
+    && curl ${CURL_RETRY} -sSfL https://golangci-lint.run/install.sh | sh -s -- -b /usr/local/bin \
+    # goreleaser
+    && if [ "$UNAME_ARCH" = "x86_64" ]; then GR_ARCH="x86_64"; else GR_ARCH="arm64"; fi \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/goreleaser/goreleaser/releases/latest/download/goreleaser_Linux_${GR_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin goreleaser \
+    # kubeconform (version-free asset)
+    && curl ${CURL_RETRY} -fsSL "https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin kubeconform \
+    # kustomize (install script handles special tag format)
+    && curl ${CURL_RETRY} -fsSL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash \
+    && mv kustomize /usr/local/bin/ \
+    # protolint (version in asset name)
+    && PROTOLINT_VERSION=$(ghlatest yoheimuta/protolint) \
+    && if [ "$UNAME_ARCH" = "x86_64" ]; then PL_ARCH="x86_64"; else PL_ARCH="arm64"; fi \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/yoheimuta/protolint/releases/latest/download/protolint_${PROTOLINT_VERSION}_Linux_${PL_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin protolint \
+    # scalafmt (native binary — different asset names per arch)
+    && if [ "$DPKG_ARCH" = "amd64" ]; then \
+      curl ${CURL_RETRY} -fsSLo /usr/local/bin/scalafmt \
+        "https://github.com/scalameta/scalafmt/releases/latest/download/scalafmt-linux-glibc"; \
+    else \
+      curl ${CURL_RETRY} -fsSL "https://github.com/scalameta/scalafmt/releases/latest/download/scalafmt-aarch64-pc-linux.zip" \
+        -o /tmp/scalafmt.zip \
+      && unzip -q /tmp/scalafmt.zip -d /usr/local/bin && rm /tmp/scalafmt.zip; \
+    fi \
+    && chmod +x /usr/local/bin/scalafmt \
+    # ktlint (runnable JAR — arch-independent, needs Java)
+    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/ktlint \
+      "https://github.com/pinterest/ktlint/releases/latest/download/ktlint" \
+    && chmod +x /usr/local/bin/ktlint
+
+# ============================================================
+# 10d. Java JAR tools (checkstyle, google-java-format)
+#      Wrapper scripts in /usr/local/bin, JARs in /opt/
+# ============================================================
+# hadolint ignore=DL3059
+RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
+    # checkstyle
+    && CHECKSTYLE_VERSION=$(ghlatest checkstyle/checkstyle) \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/checkstyle/checkstyle/releases/latest/download/checkstyle-${CHECKSTYLE_VERSION}-all.jar" \
+      -o /opt/checkstyle.jar \
+    && printf '#!/bin/sh\nexec java -jar /opt/checkstyle.jar "$@"\n' > /usr/local/bin/checkstyle \
+    && chmod +x /usr/local/bin/checkstyle \
+    # google-java-format
+    && GJF_VERSION=$(ghlatest google/google-java-format) \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/google/google-java-format/releases/latest/download/google-java-format-${GJF_VERSION}-all-deps.jar" \
+      -o /opt/google-java-format.jar \
+    && printf '#!/bin/sh\nexec java -jar /opt/google-java-format.jar "$@"\n' > /usr/local/bin/google-java-format \
+    && chmod +x /usr/local/bin/google-java-format
+
+# ============================================================
+# 10e. PHP linters (PHAR downloads — requires php-cli from APT)
+# ============================================================
+# hadolint ignore=DL3059
+RUN curl ${CURL_RETRY} -fsSLo /usr/local/bin/phpcs \
+      "https://github.com/PHPCSStandards/PHP_CodeSniffer/releases/latest/download/phpcs.phar" \
+    && chmod +x /usr/local/bin/phpcs \
+    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/phpstan \
+      "https://github.com/phpstan/phpstan/releases/latest/download/phpstan.phar" \
+    && chmod +x /usr/local/bin/phpstan \
+    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/psalm \
+      "https://github.com/vimeo/psalm/releases/latest/download/psalm.phar" \
+    && chmod +x /usr/local/bin/psalm
+
+# ============================================================
+# 10f. PowerShell modules (PSScriptAnalyzer + arm-ttk)
+# ============================================================
+# hadolint ignore=DL3059
+RUN pwsh -NoProfile -Command 'Set-PSRepository PSGallery -InstallationPolicy Trusted; Install-Module -Name PSScriptAnalyzer -Scope AllUsers -Force' \
+    && git clone --depth=1 https://github.com/Azure/arm-ttk.git /usr/lib/microsoft/arm-ttk \
+    && rm -rf /usr/lib/microsoft/arm-ttk/.git
+ENV ARM_TTK_PSD1="/usr/lib/microsoft/arm-ttk/arm-ttk/arm-ttk.psd1"
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+
+# ============================================================
+# 10g. Security binary tools (pentest & recon)
+#      All resolve latest versions at build time.
+# ============================================================
+# hadolint ignore=DL3059
+RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
+    && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
+    # --- Recon: ProjectDiscovery suite ---
+    && NUCLEI_VERSION=$(ghlatest projectdiscovery/nuclei) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_${NUCLEI_VERSION}_linux_${DPKG_ARCH}.zip" \
+      -o /tmp/nuclei.zip \
+    && unzip -q /tmp/nuclei.zip -d /usr/local/bin && rm /tmp/nuclei.zip \
+    && SUBFINDER_VERSION=$(ghlatest projectdiscovery/subfinder) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/projectdiscovery/subfinder/releases/latest/download/subfinder_${SUBFINDER_VERSION}_linux_${DPKG_ARCH}.zip" \
+      -o /tmp/subfinder.zip \
+    && unzip -q /tmp/subfinder.zip -d /usr/local/bin && rm /tmp/subfinder.zip \
+    && HTTPX_VERSION=$(ghlatest projectdiscovery/httpx) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/projectdiscovery/httpx/releases/latest/download/httpx_${HTTPX_VERSION}_linux_${DPKG_ARCH}.zip" \
+      -o /tmp/httpx.zip \
+    && unzip -q /tmp/httpx.zip -d /usr/local/bin && rm /tmp/httpx.zip \
+    # --- Web fuzzing ---
+    && FFUF_VERSION=$(ghlatest ffuf/ffuf) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/ffuf/ffuf/releases/latest/download/ffuf_${FFUF_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin ffuf \
+    && if [ "$UNAME_ARCH" = "x86_64" ]; then GB_ARCH="x86_64"; else GB_ARCH="arm64"; fi \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/OJ/gobuster/releases/latest/download/gobuster_Linux_${GB_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin gobuster \
+    && if [ "$DPKG_ARCH" = "amd64" ]; then \
+      curl ${CURL_RETRY} -fsSL "https://github.com/epi052/feroxbuster/releases/latest/download/x86_64-linux-feroxbuster.tar.gz" \
+        | tar -xz -C /usr/local/bin feroxbuster; \
+    else \
+      curl ${CURL_RETRY} -fsSL "https://github.com/epi052/feroxbuster/releases/latest/download/aarch64-linux-feroxbuster.zip" \
+        -o /tmp/feroxbuster.zip \
+      && unzip -q /tmp/feroxbuster.zip -d /usr/local/bin && rm /tmp/feroxbuster.zip; \
+    fi \
+    && chmod +x /usr/local/bin/feroxbuster \
+    # --- XSS scanner ---
+    && curl ${CURL_RETRY} -fsSL "https://github.com/hahwul/dalfox/releases/latest/download/dalfox-linux-${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin dalfox \
+    # --- Domain & URL enumeration ---
+    && curl ${CURL_RETRY} -fsSL "https://github.com/owasp-amass/amass/releases/latest/download/amass_linux_${DPKG_ARCH}.tar.gz" \
+      | tar -xz --strip-components=1 -C /usr/local/bin \
+    && GAU_VERSION=$(ghlatest lc/gau) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/lc/gau/releases/latest/download/gau_${GAU_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin gau \
+    && if [ "$DPKG_ARCH" = "amd64" ]; then \
+      WAYBACK_VERSION=$(ghlatest tomnomnom/waybackurls) \
+      && curl ${CURL_RETRY} -fsSL "https://github.com/tomnomnom/waybackurls/releases/latest/download/waybackurls-linux-amd64-${WAYBACK_VERSION}.tgz" \
+        | tar -xz -C /usr/local/bin waybackurls; \
+    fi \
+    # --- Supply chain & secret scanning ---
+    && TRUFFLEHOG_VERSION=$(ghlatest trufflesecurity/trufflehog) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/trufflesecurity/trufflehog/releases/latest/download/trufflehog_${TRUFFLEHOG_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin trufflehog \
+    && GRYPE_VERSION=$(ghlatest anchore/grype) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/anchore/grype/releases/latest/download/grype_${GRYPE_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin grype \
+    && SYFT_VERSION=$(ghlatest anchore/syft) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/anchore/syft/releases/latest/download/syft_${SYFT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin syft \
+    # --- Kubernetes security ---
+    && KUBEBENCH_VERSION=$(ghlatest aquasecurity/kube-bench) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/aquasecurity/kube-bench/releases/latest/download/kube-bench_${KUBEBENCH_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin kube-bench \
+    # --- Network attack (amd64 only) ---
+    && if [ "$DPKG_ARCH" = "amd64" ]; then \
+      curl ${CURL_RETRY} -fsSL "https://github.com/bettercap/bettercap/releases/latest/download/bettercap_linux_amd64.zip" \
+        -o /tmp/bettercap.zip \
+      && unzip -q /tmp/bettercap.zip -d /usr/local/bin && rm /tmp/bettercap.zip \
+      && chmod +x /usr/local/bin/bettercap; \
+    fi
+
+# ============================================================
+# 10h. OWASP ZAP (web app scanner — replaces Burp Suite)
+#      Java app, arch-independent. Runs headless or via VNC.
+# ============================================================
+# hadolint ignore=DL3059
+RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
+    && ZAP_VERSION=$(ghlatest zaproxy/zaproxy) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/zaproxy/zaproxy/releases/latest/download/ZAP_${ZAP_VERSION}_Linux.tar.gz" \
+      | tar -xz -C /opt \
+    && mv /opt/ZAP_${ZAP_VERSION} /opt/zaproxy \
+    && printf '#!/bin/sh\nexec /opt/zaproxy/zap.sh "$@"\n' > /usr/local/bin/zap \
+    && chmod +x /usr/local/bin/zap
+
+# ============================================================
+# 10i. Ghidra (reverse engineering framework — ~1.3 GB)
+#      Java app, arch-independent. GUI via VNC or headless.
+# ============================================================
+# hadolint ignore=DL3059
+RUN GHIDRA_ASSET=$(curl -fsSL "https://api.github.com/repos/NationalSecurityAgency/ghidra/releases/latest" \
+      | jq -r '.assets[].name | select(endswith(".zip"))') \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/NationalSecurityAgency/ghidra/releases/latest/download/${GHIDRA_ASSET}" \
+      -o /tmp/ghidra.zip \
+    && unzip -q /tmp/ghidra.zip -d /opt \
+    && mv /opt/ghidra_* /opt/ghidra \
+    && rm /tmp/ghidra.zip \
+    && printf '#!/bin/sh\nexec /opt/ghidra/ghidraRun "$@"\n' > /usr/local/bin/ghidra \
+    && chmod +x /usr/local/bin/ghidra
+
+# ============================================================
+# 10j. Metasploit Framework (amd64 only — ~1.2 GB)
+#      ARM64 has known installer issues on Ubuntu 24.04.
+# ============================================================
+# hadolint ignore=DL3059
+RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+      curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb \
+        > /tmp/msfinstall \
+      && chmod +x /tmp/msfinstall \
+      && /tmp/msfinstall \
+      && rm /tmp/msfinstall; \
+    fi
+
+# ============================================================
 # 11. npm global tools
 # ============================================================
 # hadolint ignore=DL3016,DL3059
@@ -339,7 +629,24 @@ RUN npm install -g \
     markdownlint-cli2 \
     openclaw \
     @devcontainers/cli \
-    playwright
+    playwright \
+    eslint \
+    @biomejs/biome \
+    standard \
+    ts-standard \
+    stylelint \
+    htmlhint \
+    textlint \
+    textlint-rule-terminology \
+    jscpd \
+    coffeelint \
+    npm-groovy-lint \
+    @stoplight/spectral-cli \
+    gherkin-lint \
+    tekton-lint \
+    asl-validator \
+    renovate \
+    markdownlint-cli
 
 # ============================================================
 # 12. pip tools
@@ -357,7 +664,38 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     playwright \
     "markitdown[all]" \
     progressbar2 \
-    checkov
+    checkov \
+    ansible-lint \
+    cfn-lint \
+    cpplint \
+    flake8 \
+    isort \
+    mypy \
+    pyink \
+    ruff \
+    snakefmt \
+    snakemake \
+    sqlfluff \
+    codespell \
+    zizmor \
+    nbqa \
+    # Security & pentest
+    scapy \
+    impacket \
+    pwntools \
+    volatility3 \
+    sslyze \
+    arjun \
+    hashid \
+    mitmproxy \
+    # Cloud security
+    prowler \
+    kube-hunter \
+    # Recon
+    theHarvester \
+    recon-ng \
+    spiderfoot \
+    fierce
 
 # ============================================================
 # 12b. Claude Code Proxy (Anthropic Messages API -> OpenAI)
@@ -389,6 +727,65 @@ WORKDIR /opt/searxng-mcp
 RUN uv venv .venv \
     && uv pip install --python .venv/bin/python -r requirements.txt \
     && chown -R $USERNAME:$USERNAME /opt/searxng-mcp
+
+# ============================================================
+# 12d. Ruby linters (rubocop + extensions)
+# ============================================================
+# hadolint ignore=DL3028,DL3059
+RUN gem install --no-document \
+    rubocop \
+    rubocop-performance \
+    rubocop-rails \
+    rubocop-rake \
+    rubocop-rspec \
+    rubocop-minitest
+
+# ============================================================
+# 12e. Perl linter modules (Perl::Critic extensions via cpanm)
+#      Core Perl::Critic is from APT (libperl-critic-perl).
+# ============================================================
+# hadolint ignore=DL3059
+RUN cpanm --notest \
+    Perl::Critic::Bangs \
+    Perl::Critic::Community \
+    Perl::Critic::Lax \
+    Perl::Critic::More \
+    Perl::Critic::StricterSubs \
+    Perl::Critic::Tics
+
+# ============================================================
+# 12f. Lua linter (luacheck via luarocks)
+# ============================================================
+# hadolint ignore=DL3059
+RUN luarocks install luacheck
+
+# ============================================================
+# 12g. R linter (lintr)
+# ============================================================
+# hadolint ignore=DL3059
+RUN Rscript -e 'install.packages(c("lintr", "purrr"), repos="https://cloud.r-project.org")'
+
+# ============================================================
+# 12h. Security Ruby gems (wpscan, evil-winrm)
+# ============================================================
+# hadolint ignore=DL3028,DL3059
+RUN gem install --no-document \
+    wpscan \
+    evil-winrm
+
+# ============================================================
+# 12i. Git-cloned security tools (testssl.sh, exploitdb,
+#      SecLists, docker-bench-security)
+# ============================================================
+# hadolint ignore=DL3059
+RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.sh \
+    && ln -s /opt/testssl.sh/testssl.sh /usr/local/bin/testssl \
+    && git clone --depth=1 https://gitlab.com/exploit-database/exploitdb.git /opt/exploitdb \
+    && ln -s /opt/exploitdb/searchsploit /usr/local/bin/searchsploit \
+    && git clone --depth=1 https://github.com/danielmiessler/SecLists.git /opt/seclists \
+    && git clone --depth=1 https://github.com/docker/docker-bench-security.git /opt/docker-bench-security \
+    && ln -s /opt/docker-bench-security/docker-bench-security.sh /usr/local/bin/docker-bench-security \
+    && rm -rf /opt/testssl.sh/.git /opt/exploitdb/.git /opt/seclists/.git /opt/docker-bench-security/.git
 
 # ============================================================
 # 13. Playwright browsers (Chromium + system deps)
