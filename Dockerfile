@@ -167,6 +167,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Runtime libraries (bettercap, scapy)
     libpcap-dev \
     libnetfilter-queue-dev \
+    # Build deps for lxml (spiderfoot requirement)
+    libxml2-dev \
+    libxslt1-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create expected binary names for tools Ubuntu renames
@@ -717,8 +720,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && uv sync \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && chown -R $USERNAME:$USERNAME /opt/claude-code-proxy
-# NOTE: build-essential is purged after Ruby gem installs (Section 12h)
-# because rubocop's prism dep requires a C compiler.
+# NOTE: build-essential is purged after Section 12i (git-cloned tools)
+# because rubocop/prism (12d), wpscan (12h), and lxml/spiderfoot (12i)
+# all require a C compiler.
 
 # ============================================================
 # 12c. SearXNG MCP server (web search for Claude Code)
@@ -778,15 +782,6 @@ RUN gem install --no-document \
     wpscan \
     evil-winrm
 
-# Purge build-essential now that all gem installs are done.
-# It was installed in Section 12b for claude-code-proxy C extensions
-# and kept for rubocop's prism dependency (Section 12d) and wpscan
-# (Section 12h).
-# hadolint ignore=DL3059
-RUN apt-get purge -y build-essential \
-    && apt-get autoremove -y \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # ============================================================
 # 12i. Git-cloned security tools (testssl.sh, exploitdb,
 #      SecLists, docker-bench-security, recon-ng, spiderfoot)
@@ -809,6 +804,14 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
     && chmod +x /usr/local/bin/spiderfoot \
     && rm -rf /opt/testssl.sh/.git /opt/exploitdb/.git /opt/seclists/.git \
         /opt/docker-bench-security/.git /opt/recon-ng/.git /opt/spiderfoot/.git
+
+# Purge build-essential now that all C-extension installs are done.
+# Kept through: Section 12b (claude-code-proxy), 12d (rubocop/prism),
+# 12h (wpscan gem), and 12i (lxml for spiderfoot).
+# hadolint ignore=DL3059
+RUN apt-get purge -y build-essential \
+    && apt-get autoremove -y \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
 # 13. Playwright browsers (Chromium + system deps)
