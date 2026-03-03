@@ -689,8 +689,10 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
 # deps on cryptography/pyOpenSSL.  A single pip install causes the
 # resolver to backtrack and downgrade zstandard (needed by pwntools)
 # to 0.22.0, which cannot build from source on Python 3.13.
+# --ignore-installed: same as Section 12 — Debian system packages
+# (blinker, etc.) lack pip RECORD files and block uninstall.
 # hadolint ignore=DL3013,DL3059
-RUN pip install --no-cache-dir --break-system-packages \
+RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     "zstandard>=0.23.0" \
     scapy \
     impacket \
