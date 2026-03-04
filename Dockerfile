@@ -630,6 +630,7 @@ RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
 # hadolint ignore=DL3016,DL3059
 RUN npm install -g \
     @anthropic-ai/claude-code \
+    @mariozechner/pi-coding-agent \
     prettier \
     markdownlint-cli2 \
     openclaw \

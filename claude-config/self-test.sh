@@ -23,6 +23,7 @@ echo ""
 
 echo "1. Core Tools"
 check "claude CLI installed" command -v claude
+check "pi CLI installed" command -v pi
 check "node installed" command -v node
 check "python installed" command -v python3
 check "git installed" command -v git
