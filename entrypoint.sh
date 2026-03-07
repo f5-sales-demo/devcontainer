@@ -59,10 +59,10 @@ if [ -n "$CLAUDE_OAUTH_TOKEN" ]; then
   if command -v jq >/dev/null 2>&1; then
     jq -n --arg token "$CLAUDE_OAUTH_TOKEN" \
       '{"claudeAiOauth": {"accessToken": $token}}' \
-      > "$CRED_FILE"
+      >"$CRED_FILE"
   else
     printf '{"claudeAiOauth":{"accessToken":"%s"}}\n' "$CLAUDE_OAUTH_TOKEN" \
-      > "$CRED_FILE"
+      >"$CRED_FILE"
   fi
   chmod 600 "$CRED_FILE"
 fi
