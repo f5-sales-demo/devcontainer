@@ -41,7 +41,15 @@ if [ -n "$OPENAI_API_KEY" ]; then
   fi
 else
   echo "  Mode: direct API (no proxy)"
-  if [ -z "$ANTHROPIC_API_KEY" ]; then
+  if [ -n "$CLAUDE_OAUTH_TOKEN" ]; then
+    echo "  Auth: Claude Max (OAuth)"
+    if [ -f "$HOME/.claude/.credentials.json" ]; then
+      echo "  Credentials file: present (~/.claude/.credentials.json)"
+    else
+      echo "  WARNING: CLAUDE_OAUTH_TOKEN is set but credentials file is missing"
+      echo "           The entrypoint should have created it — check entrypoint.sh"
+    fi
+  elif [ -z "$ANTHROPIC_API_KEY" ]; then
     echo "  WARNING: ANTHROPIC_API_KEY is not set — AI tools will not work"
     echo "           Set your key in .env: ANTHROPIC_API_KEY=sk-ant-..."
     echo "           Get a key at https://console.anthropic.com/"

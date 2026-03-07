@@ -47,6 +47,26 @@ if [ ! -f "$HOME/.claude.json" ] || [ ! -s "$HOME/.claude.json" ]; then
   echo '{"hasCompletedOnboarding": true}' >"$HOME/.claude.json"
 fi
 
+# ============================================================
+# Claude Code OAuth credentials (Claude Max subscription)
+# ============================================================
+# When CLAUDE_OAUTH_TOKEN is set (sk-ant-oat01-... from `claude setup-token`),
+# write it into ~/.claude/.credentials.json so Claude Code finds it
+# via its plaintext credential storage backend (Linux fallback).
+if [ -n "$CLAUDE_OAUTH_TOKEN" ]; then
+  mkdir -p "$HOME/.claude"
+  CRED_FILE="$HOME/.claude/.credentials.json"
+  if command -v jq >/dev/null 2>&1; then
+    jq -n --arg token "$CLAUDE_OAUTH_TOKEN" \
+      '{"claudeAiOauth": {"accessToken": $token}}' \
+      >"$CRED_FILE"
+  else
+    printf '{"claudeAiOauth":{"accessToken":"%s"}}\n' "$CLAUDE_OAUTH_TOKEN" \
+      >"$CRED_FILE"
+  fi
+  chmod 600 "$CRED_FILE"
+fi
+
 # Seed opencode config if missing
 OPENCODE_CONFIG_DIR="$HOME/.config/opencode"
 if [ ! -f "$OPENCODE_CONFIG_DIR/opencode.json" ] || [ ! -s "$OPENCODE_CONFIG_DIR/opencode.json" ]; then
