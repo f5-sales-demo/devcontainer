@@ -1,0 +1,23 @@
+# Minimal testbed — validates MS core fonts installation
+# Usage:
+#   podman build -t test-fonts -f Dockerfile.test-fonts .
+#   podman run --rm test-fonts
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
+
+# Pre-seed MS core fonts EULA — non-interactive acceptance
+RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" \
+      | debconf-set-selections
+
+# Install fonts and rebuild cache
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fontconfig \
+    ttf-mscorefonts-installer \
+    && fc-cache -fv \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Verify fonts are installed — exits non-zero if any are missing
+CMD fc-list | grep -i "arial" \
+    && fc-list | grep -i "times new roman" \
+    && fc-list | grep -i "courier new" \
+    && fc-list | grep -i "verdana" \
+    && echo "ALL FONTS OK"
