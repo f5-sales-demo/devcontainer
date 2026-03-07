@@ -50,18 +50,20 @@ fi
 # ============================================================
 # Claude Code OAuth credentials (Claude Max subscription)
 # ============================================================
-# When CLAUDE_OAUTH_TOKEN is set (sk-ant-oat01-... from `claude setup-token`),
-# write it into ~/.claude/.credentials.json so Claude Code finds it
-# via its plaintext credential storage backend (Linux fallback).
-if [ -n "$CLAUDE_OAUTH_TOKEN" ]; then
+# When CLAUDE_CODE_OAUTH_TOKEN is set (sk-ant-oat01-... from macOS Keychain
+# or `claude setup-token`), also write it into ~/.claude/.credentials.json
+# as a fallback for the plaintext credential storage backend (Linux).
+# Claude Code reads the env var directly, but the file ensures persistence
+# across shell sessions that may not inherit the env var.
+if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
   mkdir -p "$HOME/.claude"
   CRED_FILE="$HOME/.claude/.credentials.json"
   if command -v jq >/dev/null 2>&1; then
-    jq -n --arg token "$CLAUDE_OAUTH_TOKEN" \
+    jq -n --arg token "$CLAUDE_CODE_OAUTH_TOKEN" \
       '{"claudeAiOauth": {"accessToken": $token}}' \
       >"$CRED_FILE"
   else
-    printf '{"claudeAiOauth":{"accessToken":"%s"}}\n' "$CLAUDE_OAUTH_TOKEN" \
+    printf '{"claudeAiOauth":{"accessToken":"%s"}}\n' "$CLAUDE_CODE_OAUTH_TOKEN" \
       >"$CRED_FILE"
   fi
   chmod 600 "$CRED_FILE"
