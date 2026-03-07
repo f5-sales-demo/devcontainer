@@ -709,7 +709,8 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
 
 # Aider AI chat — requires Python <3.13, so install isolated with uv + Python 3.12
 # hadolint ignore=DL3059
-RUN uv tool install --python python3.12 aider-chat@latest \
+RUN UV_TOOL_BIN_DIR=/usr/local/bin \
+    uv tool install --python python3.12 aider-chat@latest \
       --with aider-chat[browser] \
       --with aider-chat[help] \
       --with aider-chat[playwright]
