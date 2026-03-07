@@ -71,6 +71,37 @@ to subagents. Perform those operations directly in the main session.
 Use subagents only for knowledge-base search, chat history search,
 and planning/reasoning tasks that don't require filesystem access.
 
+## Bash Tool Escaping
+
+The Bash tool escapes `!` to `\!` on all platforms. This
+happens in the transport layer before the shell receives
+the command. Avoid `!` in all generated Bash commands.
+
+### jq — use `| not` instead of `!=`
+
+| Avoid | Use Instead |
+| ----- | ----------- |
+| `select(.x != "y")` | `select((.x == "y") \| not)` |
+| `if .x != "y"` | `if ((.x == "y") \| not)` |
+
+### Bash — avoid `!` in conditionals
+
+| Avoid | Use Instead |
+| ----- | ----------- |
+| `if ! cmd; then` | `cmd \|\| { handle; }` |
+| `while ! test; do` | `until test; do` |
+
+### Escape hatch — single-quoted heredoc
+
+When `!` is unavoidable, use `<<'EOF'` (single-quoted
+delimiter prevents transport-layer escaping):
+
+    cat <<'SCRIPT' > /tmp/run.sh
+    #!/bin/bash
+    if ! command -v foo; then echo missing; fi
+    SCRIPT
+    bash /tmp/run.sh
+
 ## Self-Test
 
 Run `claude-self-test` to verify container configuration is correct.
