@@ -50,7 +50,16 @@ fi
 # Seed opencode config if missing
 OPENCODE_CONFIG_DIR="$HOME/.config/opencode"
 if [ ! -f "$OPENCODE_CONFIG_DIR/opencode.json" ] || [ ! -s "$OPENCODE_CONFIG_DIR/opencode.json" ]; then
-  if [ -n "$OPENAI_API_KEY" ] && [ -f /opt/opencode-config/opencode.json ]; then
+  if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -f /opt/opencode-config/opencode-anthropic.json ]; then
+    mkdir -p "$OPENCODE_CONFIG_DIR"
+    cp /opt/opencode-config/opencode-anthropic.json "$OPENCODE_CONFIG_DIR/opencode.json"
+    # Seed OAuth credentials for opencode's Anthropic provider
+    OPENCODE_DATA_DIR="$HOME/.local/share/opencode"
+    mkdir -p "$OPENCODE_DATA_DIR"
+    cat >"$OPENCODE_DATA_DIR/auth.json" <<AUTHEOF
+{"anthropic":{"type":"oauth","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}
+AUTHEOF
+  elif [ -n "$OPENAI_API_KEY" ] && [ -f /opt/opencode-config/opencode.json ]; then
     mkdir -p "$OPENCODE_CONFIG_DIR"
     cp /opt/opencode-config/opencode.json "$OPENCODE_CONFIG_DIR/opencode.json"
   fi
