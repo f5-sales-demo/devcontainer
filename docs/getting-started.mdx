@@ -95,13 +95,25 @@ curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/
 
 ## 2. Add Your API Key (Optional)
 
-Create a `.env` file in the same folder to pre-configure Claude Code:
+Create a `.env` file in the same folder to pre-configure Claude Code. Choose one of the following options:
+
+### Option A: Anthropic API key
 
 ```ini
 ANTHROPIC_API_KEY=sk-ant-your-key-here
 ```
 
-If you use an OpenAI-compatible provider instead, see [Configuration](./configuration) for proxy setup.
+### Option B: Claude Max (OAuth)
+
+If you have a Claude Max subscription, use your OAuth token instead:
+
+```ini
+CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
+```
+
+### Option C: OpenAI-compatible provider
+
+See [Configuration](./configuration) for proxy setup with any OpenAI-compatible endpoint.
 
 ## 3. Start
 
@@ -150,6 +162,8 @@ podman compose exec dev zsh
 claude --version
 opencode --version
 codex --version
+aider --version
+pi --version
 
 # Languages
 node --version
