@@ -43,6 +43,9 @@ else
   echo "  Mode: direct API (no proxy)"
   if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
     echo "  Auth: Claude Max (OAuth via CLAUDE_CODE_OAUTH_TOKEN)"
+    if [ -f "$HOME/.local/share/opencode/auth.json" ]; then
+      echo "  opencode: OAuth credentials seeded"
+    fi
   elif [ -z "$ANTHROPIC_API_KEY" ]; then
     echo "  WARNING: ANTHROPIC_API_KEY is not set — AI tools will not work"
     echo "           Set your key in .env: ANTHROPIC_API_KEY=sk-ant-..."

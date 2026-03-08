@@ -900,6 +900,7 @@ COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
 COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
 COPY claude-config/claude-proxy.sh /usr/local/lib/claude-proxy.sh
 COPY opencode-config/opencode.json /opt/opencode-config/opencode.json
+COPY opencode-config/opencode-anthropic.json /opt/opencode-config/opencode-anthropic.json
 COPY codex-config/config.toml /opt/codex-config/config.toml
 RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
