@@ -116,9 +116,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     dart \
     dotnet-sdk-8.0 \
     # AI assistant tool dependencies
+    libbrotli-dev \
+    libc-ares-dev \
     libfmt-dev \
+    liblz4-dev \
+    libnghttp2-dev \
+    libnghttp3-dev \
+    libngtcp2-dev \
     libpcre2-dev \
+    libreadline-dev \
+    libsimdjson-dev \
+    libsqlite3-dev \
     libuv1-dev \
+    libzstd-dev \
     node-llhttp \
     # Super-linter build deps (for cpanm, luarocks C extensions)
     cpanminus \
@@ -874,7 +884,7 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}
 
 # AI assistant tool dependencies (no APT packages available)
 # hadolint ignore=DL3059
-RUN brew install ada-url hdrhistogram_c \
+RUN brew install ada-url hdrhistogram_c icu4c@78 uvwasi \
     && brew cleanup --prune=all -s
 
 # ============================================================
