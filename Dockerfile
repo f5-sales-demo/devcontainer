@@ -684,6 +684,11 @@ RUN npm install -g \
     renovate \
     markdownlint-cli
 
+# oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
+# hadolint ignore=DL3059
+RUN npx -y oh-my-opencode install --no-tui \
+    --claude=max20 --openai=no --gemini=no --copilot=no
+
 # ============================================================
 # 12. pip tools
 # ============================================================
