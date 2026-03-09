@@ -115,6 +115,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     r-base \
     dart \
     dotnet-sdk-8.0 \
+    # AI assistant tool dependencies
+    libfmt-dev \
+    libpcre2-dev \
+    node-llhttp \
     # Super-linter build deps (for cpanm, luarocks C extensions)
     cpanminus \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
@@ -866,6 +870,11 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.github
 
 ENV HOMEBREW_NO_AUTO_UPDATE=1
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
+
+# AI assistant tool dependencies (no APT packages available)
+# hadolint ignore=DL3059
+RUN brew install ada-url hdrhistogram_c \
+    && brew cleanup --prune=all -s
 
 # ============================================================
 # 15. ZSH plugins (oh-my-zsh is pre-installed by devcontainers base)
