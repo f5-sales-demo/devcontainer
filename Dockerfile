@@ -118,6 +118,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # AI assistant tool dependencies
     libfmt-dev \
     libpcre2-dev \
+    libuv1-dev \
     node-llhttp \
     # Super-linter build deps (for cpanm, luarocks C extensions)
     cpanminus \
