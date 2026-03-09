@@ -128,6 +128,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsimdjson-dev \
     libsqlite3-dev \
     libuv1-dev \
+    libevent-dev \
+    libncurses-dev \
+    libutf8proc-dev \
     libzstd-dev \
     node-llhttp \
     # Super-linter build deps (for cpanm, luarocks C extensions)
