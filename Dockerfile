@@ -126,6 +126,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN echo "wireshark-common wireshark-common/install-setuid boolean true" \
       | debconf-set-selections
 
+# Pre-seed MS core fonts EULA — non-interactive acceptance
+# hadolint ignore=DL3059
+RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" \
+      | debconf-set-selections
+
+# Install Microsoft core fonts (Arial, Times New Roman, Courier New, Verdana, etc.)
+# hadolint ignore=DL3008,DL3059
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ttf-mscorefonts-installer \
+    && fc-cache -fv \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # ============================================================
 # 2b. Security & pentest APT packages
 # ============================================================
