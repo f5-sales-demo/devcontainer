@@ -103,7 +103,7 @@ jobs:
 
       - name: Generate tags
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.MAIN_IMAGE }}
           tags: |
