@@ -28,7 +28,9 @@ cd devcontainer
 ├── entrypoint.sh               # Container startup script
 ├── .env.example                # Example environment variables
 ├── docs/                       # Documentation site (Starlight)
-└── claude-config/              # Claude Code configuration files
+├── claude-config/              # Claude Code configuration files
+├── opencode-config/            # OpenCode provider templates (OAuth + proxy)
+└── codex-config/               # Codex configuration
 ```
 
 ## Build File
@@ -99,14 +101,15 @@ These layers only rebuild when a version ARG is bumped or APT packages change. O
 
 | Section | Contents |
 |---------|----------|
-| 1. APT repos | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft |
+| 1. APT repos | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft, Google Cloud, Dart SDK |
 | 2. APT packages | System tools, Node.js, Python, Java, Terraform, GitHub CLI, Docker engine, Azure CLI, PowerShell, locales |
+| 2b. Security APT packages | Network analysis, web scanners, password tools, reverse engineering, forensics (~80 packages) |
 | 3. Python bootstrap | Symlinks + pip via get-pip.py |
-| 4. Go | Official tarball (pinned version) |
-| 5. Rust | rustup (system-wide, pinned version) |
+| 4. Go | Official tarball (latest stable, resolved at build time) |
+| 5. Rust | rustup (system-wide, latest stable) |
 | 6. Maven + Gradle | Binary downloads to `/opt` |
 | 7. VNC stack | Xvfb, x11vnc, noVNC, fluxbox — remote display via browser |
-| 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (version-pinned) |
+| 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (latest releases) |
 
 ### Stage 2: `final` (volatile tools + user setup, ~1.5 GB)
 
@@ -116,16 +119,31 @@ These layers change more frequently (npm/pip updates, config changes) but rebuil
 |---------|----------|
 | 9. AWS CLI v2 | Official installer |
 | 10. Binary tools | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv, opencode |
-| 10b. Additional binaries | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint |
-| 11. npm global tools | claude-code, codex, prettier, markdownlint-cli2, openclaw, devcontainers-cli, playwright |
+| 10b. Additional binaries | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint, codex |
+| 10c. Super-linter binaries | shfmt, gitleaks, editorconfig-checker, trivy, clj-kondo, dotenv-linter, golangci-lint, goreleaser, kubeconform, protolint, scalafmt, ktlint |
+| 10d. Java JAR tools | checkstyle, google-java-format (wrapper scripts) |
+| 10e. PHP linters | phpcs, phpstan, psalm (PHAR downloads) |
+| 10f. PowerShell modules | PSScriptAnalyzer, arm-ttk |
+| 10g. Security binaries | nuclei, subfinder, httpx, ffuf, gobuster, feroxbuster, dalfox, amass, trufflehog, grype, syft, bettercap (amd64) |
+| 10h. OWASP ZAP | Java-based web application scanner |
+| 10i. Ghidra | Reverse engineering framework |
+| 10j. Metasploit | Exploitation framework (amd64 only) |
+| 11. npm global tools | claude-code, prettier, markdownlint-cli2, openclaw, devcontainers-cli, playwright, pi-coding-agent |
 | 12. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
 | 12b. Claude Code Proxy | OpenAI-compatible translation proxy |
 | 12c. SearXNG MCP server | stdio MCP server for web search |
+| 12d. Ruby linters | rubocop + extensions |
+| 12e. Perl linter modules | Perl::Critic extensions |
+| 12f. Lua linter | luacheck |
+| 12g. R linter | lintr |
+| 12h. Security Ruby gems | wpscan, evil-winrm |
+| 12i. Git-cloned security tools | testssl.sh, exploitdb (searchsploit), SecLists, docker-bench-security, recon-ng, spiderfoot |
 | 13. Playwright browsers | Chromium + system deps via `playwright install --with-deps` |
 | 14. Homebrew | Linuxbrew (needed by openclaw configure) |
+| 14b. Aider | `uv tool install` with Python 3.12 (browser, help, playwright extras) |
 | 15. ZSH plugins | oh-my-zsh custom plugins |
 | 16. Shell bootstrap | npm-global, tfenv, compinit |
-| 17. Claude Code + OpenCode config | Tool awareness memory, managed policy, self-test script, OpenCode provider template |
+| 17. Claude Code + OpenCode + Codex config | Tool awareness memory, managed policy, self-test script, OpenCode provider templates, Codex config |
 | 18. Entrypoint | Container startup script (absolute last COPY) |
 
 ## Adding Tools

@@ -19,6 +19,14 @@ All configuration lives in the `.env` file at the project root. This file is git
 
 In **direct mode** (default), set this to your Anthropic API key (`sk-ant-...`). In **proxy mode**, this can be any non-empty value — the proxy authenticates upstream with `OPENAI_API_KEY` instead.
 
+### Claude Max (OAuth)
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token from a Claude Max subscription | `sk-ant-oat01-...` |
+
+When set, both Claude Code and OpenCode authenticate directly with Anthropic using OAuth — no API key or proxy needed. This takes priority over `OPENAI_API_KEY` for OpenCode configuration. Get your token from Claude Code settings or the [Anthropic console](https://console.anthropic.com/).
+
 ### AI Proxy (OpenAI-compatible providers)
 
 When `OPENAI_API_KEY` is set, the container automatically starts a built-in proxy process on `localhost:8082` that translates Claude Code's native Anthropic Messages API calls to OpenAI Chat Completions format. No separate container or compose profile is needed.
@@ -67,11 +75,24 @@ This is **not recommended** for production use. Only set this when you trust the
 
 ### OpenCode
 
-When `OPENAI_API_KEY` and `OPENAI_BASE_URL` are set, the container automatically seeds an [OpenCode](https://opencode.ai/) configuration at `~/.config/opencode/opencode.json`. This configures a custom provider called **OpenAI Proxy** that points at the same upstream endpoint used by the Claude Code proxy.
+The container automatically configures [OpenCode](https://opencode.ai/) based on which credentials are available. OAuth mode takes priority when both are set.
+
+#### OAuth mode (Claude Max)
+
+When `CLAUDE_CODE_OAUTH_TOKEN` is set, the entrypoint seeds:
+
+- `~/.config/opencode/opencode.json` — Anthropic-native config with `claude-opus-4-6` as the default model
+- `~/.local/share/opencode/auth.json` — OAuth credentials for Anthropic
+
+This connects OpenCode directly to Anthropic with no proxy needed.
+
+#### Proxy mode (OpenAI-compatible)
+
+When `OPENAI_API_KEY` and `OPENAI_BASE_URL` are set (and no OAuth token), the entrypoint seeds `~/.config/opencode/opencode.json` with a custom provider called **OpenAI Proxy** that points at the same upstream endpoint used by the Claude Code proxy.
 
 The config uses OpenCode's `{env:VAR_NAME}` syntax, so credentials are resolved from environment variables at runtime — no secrets are baked into the file.
 
-Available models:
+Available models (proxy mode):
 
 | Model ID | Description |
 |----------|-------------|
@@ -80,7 +101,20 @@ Available models:
 | `claude-opus-4-6` | Claude Opus 4.6 |
 | `claude-haiku-4-5` | Claude Haiku 4.5 |
 
-The config is only seeded when the file doesn't already exist, so you can customize it without it being overwritten on restart. To reset to defaults, delete `~/.config/opencode/opencode.json` and restart the container.
+In both modes, the config is only seeded when the file doesn't already exist, so you can customize it without it being overwritten on restart. To reset to defaults, delete `~/.config/opencode/opencode.json` (and `~/.local/share/opencode/auth.json` for OAuth mode) and restart the container.
+
+### AI Coding Agents
+
+The container includes several AI coding agents in addition to Claude Code:
+
+| Agent | Command | Provider |
+|-------|---------|----------|
+| [OpenCode](https://opencode.ai/) | `opencode` | Anthropic (OAuth) or OpenAI-compatible (proxy) |
+| [Codex](https://github.com/openai/codex) | `codex` | OpenAI-compatible (proxy mode only) |
+| [Aider](https://aider.chat/) | `aider` | Multi-provider (configure at runtime) |
+| [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | Multi-provider (configure at runtime) |
+
+Aider is installed via `uv tool install` with Python 3.12 (it requires Python &lt;3.13) and includes the `browser`, `help`, and `playwright` extras. Pi is installed as a global npm package. Codex is a standalone binary that self-updates at runtime.
 
 ### Web Search (SearXNG MCP)
 

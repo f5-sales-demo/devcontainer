@@ -105,6 +105,25 @@ The `docker-compose.yml` applies several defense-in-depth measures:
 - **Private proxy logs** — Proxy logs are written to `~/.local/share/claude-proxy/proxy.log` under the user's home directory (created with restrictive permissions), not to world-readable `/tmp`.
 - **SSH key umask** — SSH private keys are written under `umask 077`, so the file is never world-readable — even briefly — between creation and the `chmod` call.
 
+### Security and Penetration Testing Tools
+
+The container includes approximately 80 pre-installed security and penetration testing tools for authorized testing scenarios. Tools are organized by category:
+
+| Category | Tools (examples) |
+|----------|-----------------|
+| Network analysis | tshark, wireshark, masscan, hping3, bettercap (amd64), netdiscover |
+| Web scanners | nikto, sqlmap, dirb, whatweb, sslscan, OWASP ZAP, dalfox, feroxbuster |
+| Password and authentication | hydra, john, hashcat, medusa, ncrack |
+| Reverse engineering | radare2, Ghidra, gdb, binwalk, strace, ltrace |
+| Reconnaissance | subfinder, amass, httpx, nuclei, gau, waybackurls, recon-ng, spiderfoot |
+| Fuzzing and enumeration | ffuf, gobuster, SecLists |
+| Supply chain and secrets | trufflehog, grype, syft, gitleaks, trivy |
+| Exploitation frameworks | Metasploit (amd64), searchsploit (ExploitDB) |
+
+Some tools (bettercap, Metasploit) are only available on amd64 due to upstream packaging constraints. Packet capture tools (tshark, bettercap) require the `NET_ADMIN` capability, which is included in the default `docker-compose.yml`.
+
+For the complete list, run `claude-self-test` inside the container (section 7 checks all security tools).
+
 ## Compliance Checklist
 
 | Requirement | Status |

@@ -97,6 +97,18 @@ Common causes:
 
 - **Key doesn't start with `sk-ant-`** — Anthropic API keys always start with `sk-ant-`. If yours doesn't, it may be for a different provider. Use the proxy mode above, or get a direct key from [console.anthropic.com](https://console.anthropic.com/).
 
+### OpenCode shows "Model not found"
+
+If using Claude Max OAuth, check that the auth credentials were seeded:
+
+```bash
+cat ~/.local/share/opencode/auth.json
+```
+
+The file should contain an `"anthropic"` key with your OAuth token. If missing, verify `CLAUDE_CODE_OAUTH_TOKEN` is set in `.env` and restart the container.
+
+To reset OpenCode config: delete `~/.config/opencode/opencode.json` and `~/.local/share/opencode/auth.json`, then restart.
+
 ### Claude shows "Connection error"
 
 The built-in proxy may not be running. Check:
