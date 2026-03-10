@@ -515,8 +515,8 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     # BFG Repo Cleaner (git history rewriting)
     && BFG_VERSION=$(ghlatest rtyley/bfg-repo-cleaner) \
     && curl ${CURL_RETRY} -fsSL \
-         "https://repo1.maven.org/maven2/com/madgag/bfg/${BFG_VERSION}/bfg-${BFG_VERSION}.jar" \
-         -o /opt/bfg.jar \
+      "https://repo1.maven.org/maven2/com/madgag/bfg/${BFG_VERSION}/bfg-${BFG_VERSION}.jar" \
+      -o /opt/bfg.jar \
     && printf '#!/bin/sh\nexec java -jar /opt/bfg.jar "$@"\n' > /usr/local/bin/bfg \
     && chmod +x /usr/local/bin/bfg
 
