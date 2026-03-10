@@ -132,7 +132,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libncurses-dev \
     libutf8proc-dev \
     libzstd-dev \
-    node-llhttp \
     # Super-linter build deps (for cpanm, luarocks C extensions)
     cpanminus \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
@@ -894,7 +893,7 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}
 
 # AI assistant tool dependencies (no APT packages available)
 # hadolint ignore=DL3059
-RUN brew install ada-url hdrhistogram_c icu4c@78 uvwasi \
+RUN brew install ada-url hdrhistogram_c icu4c@78 llhttp uvwasi \
     && brew cleanup --prune=all -s
 
 # ============================================================
