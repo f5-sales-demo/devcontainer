@@ -115,6 +115,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     r-base \
     dart \
     dotnet-sdk-8.0 \
+    # AI assistant tool dependencies
+    libbrotli-dev \
+    libc-ares-dev \
+    libfmt-dev \
+    liblz4-dev \
+    libnghttp2-dev \
+    libnghttp3-dev \
+    libngtcp2-dev \
+    libpcre2-dev \
+    libreadline-dev \
+    libsimdjson-dev \
+    libsqlite3-dev \
+    libuv1-dev \
+    libevent-dev \
+    libncurses-dev \
+    libutf8proc-dev \
+    libzstd-dev \
+    node-llhttp \
     # Super-linter build deps (for cpanm, luarocks C extensions)
     cpanminus \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
@@ -647,6 +665,8 @@ RUN npm install -g \
     markdownlint-cli2 \
     openclaw \
     @devcontainers/cli \
+    @googleworkspace/cli \
+    html2canvas \
     playwright \
     eslint \
     @biomejs/biome \
@@ -665,6 +685,11 @@ RUN npm install -g \
     asl-validator \
     renovate \
     markdownlint-cli
+
+# oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
+# hadolint ignore=DL3059
+RUN npx -y oh-my-opencode install --no-tui \
+    --claude=max20 --openai=no --gemini=no --copilot=no
 
 # ============================================================
 # 12. pip tools
@@ -866,6 +891,11 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.github
 
 ENV HOMEBREW_NO_AUTO_UPDATE=1
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
+
+# AI assistant tool dependencies (no APT packages available)
+# hadolint ignore=DL3059
+RUN brew install ada-url hdrhistogram_c icu4c@78 uvwasi \
+    && brew cleanup --prune=all -s
 
 # ============================================================
 # 15. ZSH plugins (oh-my-zsh is pre-installed by devcontainers base)
