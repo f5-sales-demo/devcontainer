@@ -511,7 +511,14 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
       "https://github.com/google/google-java-format/releases/latest/download/google-java-format-${GJF_VERSION}-all-deps.jar" \
       -o /opt/google-java-format.jar \
     && printf '#!/bin/sh\nexec java -jar /opt/google-java-format.jar "$@"\n' > /usr/local/bin/google-java-format \
-    && chmod +x /usr/local/bin/google-java-format
+    && chmod +x /usr/local/bin/google-java-format \
+    # BFG Repo Cleaner (git history rewriting)
+    && BFG_VERSION=$(ghlatest rtyley/bfg-repo-cleaner) \
+    && curl ${CURL_RETRY} -fsSL \
+         "https://repo1.maven.org/maven2/com/madgag/bfg/${BFG_VERSION}/bfg-${BFG_VERSION}.jar" \
+         -o /opt/bfg.jar \
+    && printf '#!/bin/sh\nexec java -jar /opt/bfg.jar "$@"\n' > /usr/local/bin/bfg \
+    && chmod +x /usr/local/bin/bfg
 
 # ============================================================
 # 10e. PHP linters (PHAR downloads — requires php-cli from APT)
@@ -719,6 +726,7 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     snakemake \
     sqlfluff \
     codespell \
+    git-filter-repo \
     zizmor \
     nbqa \
     # Recon (recon-ng, spiderfoot installed via git clone below)
