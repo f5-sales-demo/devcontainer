@@ -666,6 +666,7 @@ RUN npm install -g \
     openclaw \
     @devcontainers/cli \
     @googleworkspace/cli \
+    html2canvas \
     playwright \
     eslint \
     @biomejs/biome \
