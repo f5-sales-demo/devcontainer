@@ -665,6 +665,7 @@ RUN npm install -g \
     markdownlint-cli2 \
     openclaw \
     @devcontainers/cli \
+    @googleworkspace/cli \
     playwright \
     eslint \
     @biomejs/biome \
