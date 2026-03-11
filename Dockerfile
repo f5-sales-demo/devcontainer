@@ -1018,7 +1018,7 @@ RUN mkdir -p "$HOME/.npm-global" \
     && git clone --depth=1 https://github.com/tfutils/tfenv.git "$HOME/.tfenv" \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
-COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh $HOME/.p10k.zsh
+COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh /home/${USERNAME}/.p10k.zsh
 
 # ============================================================
 # 17. Claude Code configuration (self-test + managed policy)
