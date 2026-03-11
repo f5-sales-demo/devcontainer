@@ -154,7 +154,6 @@ if [ "${ENABLE_VNC:-true}" = "true" ]; then
       websockify --web /usr/share/novnc "${NOVNC_PORT}" localhost:"${VNC_PORT}" >/dev/null 2>&1 &
     fi
 
-    echo "noVNC: http://localhost:${NOVNC_PORT}/vnc.html"
   ) &
 fi
 
