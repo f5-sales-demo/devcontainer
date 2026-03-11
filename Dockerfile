@@ -998,6 +998,7 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
       "${ZSH_CUSTOM}/plugins/zsh-aliases-lsd" \
     && git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
       "${ZSH_CUSTOM}/themes/powerlevel10k" \
+    && "${ZSH_CUSTOM}/themes/powerlevel10k/gitstatus/install" \
     && sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$HOME/.zshrc" \
     && sed -i 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd ubuntu jsontools gh common-aliases zsh-aliases-lsd zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl iterm2 kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found)/' \
       "$HOME/.zshrc" \
