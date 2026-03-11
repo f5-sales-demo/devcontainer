@@ -25,7 +25,7 @@ fi
 # Timezone
 if [ -n "$TZ" ]; then
   sudo ln -snf "/usr/share/zoneinfo/$TZ" /etc/localtime
-  echo "$TZ" | sudo tee /etc/timezone > /dev/null
+  echo "$TZ" | sudo tee /etc/timezone >/dev/null
 fi
 
 # SSH key from env var (base64 encoded)
