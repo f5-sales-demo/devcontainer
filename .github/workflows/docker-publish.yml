@@ -7,6 +7,7 @@ on:
     paths:
       - Dockerfile
       - entrypoint.sh
+      - configs/**
       - claude-config/**
       - docker-compose.yml
       - .devcontainer/**
