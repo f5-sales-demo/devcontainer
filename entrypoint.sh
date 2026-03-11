@@ -157,4 +157,22 @@ if [ "${ENABLE_VNC:-true}" = "true" ]; then
   ) &
 fi
 
+# ============================================================
+# Tailscale (userspace networking)
+# ============================================================
+if [ "${ENABLE_TAILSCALE:-false}" = "true" ]; then
+  sudo tailscaled --tun=userspace-networking --state=/var/lib/tailscale/tailscaled.state >/dev/null 2>&1 &
+  if [ -n "$TAILSCALE_AUTHKEY" ]; then
+    (
+      retries=0
+      while [ $retries -lt 50 ]; do
+        sudo tailscale status >/dev/null 2>&1 && break
+        sleep 0.1
+        retries=$((retries + 1))
+      done
+      sudo tailscale up --authkey="$TAILSCALE_AUTHKEY" --accept-routes >/dev/null 2>&1
+    ) &
+  fi
+fi
+
 exec "$@"

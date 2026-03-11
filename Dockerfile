@@ -58,6 +58,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       | gpg --dearmor -o /usr/share/keyrings/dart-archive-keyring.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/dart-archive-keyring.gpg] https://storage.googleapis.com/download.dartlang.org/linux/debian stable main" \
       > /etc/apt/sources.list.d/dart_stable.list \
+    # Tailscale
+    && curl ${CURL_RETRY} -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg \
+      -o /usr/share/keyrings/tailscale-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu noble main" \
+      > /etc/apt/sources.list.d/tailscale.list \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
@@ -71,6 +76,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg poppler-utils qrencode \
     # Network tools
     dnsutils net-tools iputils-ping traceroute tcpdump nmap netcat-openbsd \
+    # Tailscale VPN
+    tailscale \
     # Shell tools
     bat fd-find ripgrep neovim htop tree tmux file \
     # Node.js
