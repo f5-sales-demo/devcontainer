@@ -870,9 +870,12 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
 #      Angular app — built at image time, served as static files.
 # ============================================================
 # hadolint ignore=DL3059
-RUN git clone --depth=1 https://github.com/mitre-attack/attack-navigator.git /tmp/attack-navigator \
-    && cd /tmp/attack-navigator/nav-app \
-    && npm ci --ignore-scripts \
+RUN git clone --depth=1 https://github.com/mitre-attack/attack-navigator.git /tmp/attack-navigator
+
+WORKDIR /tmp/attack-navigator/nav-app
+
+# hadolint ignore=DL3059
+RUN npm ci --ignore-scripts \
     && npx ng build --configuration production \
     && mkdir -p /opt/attack-navigator \
     && cp -r dist/browser/* /opt/attack-navigator/ \
@@ -880,6 +883,8 @@ RUN git clone --depth=1 https://github.com/mitre-attack/attack-navigator.git /tm
     && printf '#!/bin/sh\necho "ATT&CK Navigator: http://localhost:${1:-4200}"\nexec npx serve /opt/attack-navigator -l ${1:-4200} -s\n' \
       > /usr/local/bin/attack-navigator \
     && chmod +x /usr/local/bin/attack-navigator
+
+WORKDIR /
 
 # ============================================================
 # 12k. CALDERA (MITRE adversary emulation platform)
@@ -899,8 +904,9 @@ RUN uv venv --python python3.12 /opt/caldera/.venv \
 # Build VueJS frontend (magma plugin) if present
 # hadolint ignore=DL3059
 RUN if [ -d /opt/caldera/plugins/magma ]; then \
-      cd /opt/caldera/plugins/magma && npm ci && npm run build \
-      && rm -rf node_modules; \
+      npm --prefix /opt/caldera/plugins/magma ci \
+      && npm --prefix /opt/caldera/plugins/magma run build \
+      && rm -rf /opt/caldera/plugins/magma/node_modules; \
     fi
 
 # hadolint ignore=DL3059
