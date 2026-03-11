@@ -490,7 +490,16 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     # ktlint (runnable JAR — arch-independent, needs Java)
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/ktlint \
       "https://github.com/pinterest/ktlint/releases/latest/download/ktlint" \
-    && chmod +x /usr/local/bin/ktlint
+    && chmod +x /usr/local/bin/ktlint \
+    # cljfmt (GraalVM native binary — Clojure formatter)
+    && CLJFMT_VERSION=$(ghlatest weavejester/cljfmt) \
+    && if [ "$DPKG_ARCH" = "amd64" ]; then CLJFMT_ARCH="amd64-static"; else CLJFMT_ARCH="aarch64"; fi \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/weavejester/cljfmt/releases/latest/download/cljfmt-${CLJFMT_VERSION}-linux-${CLJFMT_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin cljfmt \
+    # gleam (static musl binary — Gleam formatter)
+    && GLEAM_VERSION=$(ghlatest gleam-lang/gleam) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/gleam-lang/gleam/releases/latest/download/gleam-v${GLEAM_VERSION}-${UNAME_ARCH}-unknown-linux-musl.tar.gz" \
+      | tar -xz -C /usr/local/bin gleam
 
 # ============================================================
 # 10d. Java JAR tools (checkstyle, google-java-format)
@@ -532,7 +541,11 @@ RUN curl ${CURL_RETRY} -fsSLo /usr/local/bin/phpcs \
     && chmod +x /usr/local/bin/phpstan \
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/psalm \
       "https://github.com/vimeo/psalm/releases/latest/download/psalm.phar" \
-    && chmod +x /usr/local/bin/psalm
+    && chmod +x /usr/local/bin/psalm \
+    # pint (Laravel PHP formatter — PHAR download, NOT the Homebrew "pint")
+    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/pint \
+      "https://github.com/laravel/pint/releases/latest/download/pint.phar" \
+    && chmod +x /usr/local/bin/pint
 
 # ============================================================
 # 10f. PowerShell modules (PSScriptAnalyzer + arm-ttk)
@@ -802,7 +815,9 @@ RUN gem install --no-document \
     rubocop-rails \
     rubocop-rake \
     rubocop-rspec \
-    rubocop-minitest
+    rubocop-minitest \
+    htmlbeautifier \
+    standardrb
 
 # ============================================================
 # 12e. Perl linter modules (Perl::Critic extensions via cpanm)
@@ -950,9 +965,10 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.github
 ENV HOMEBREW_NO_AUTO_UPDATE=1
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
-# AI assistant tool dependencies (no APT packages available)
+# AI assistant deps + formatters (no APT packages available)
 # hadolint ignore=DL3059
 RUN brew install ada-url hdrhistogram_c icu4c@78 llhttp uvwasi \
+      air dfmt nixfmt ormolu oxfmt \
     && brew cleanup --prune=all -s
 
 # ============================================================

@@ -117,6 +117,17 @@ check "xmllint installed" command -v xmllint
 check "chktex installed" command -v chktex
 check "clippy available" rustup component list --installed
 check "rustfmt available" command -v rustfmt
+# Additional formatters
+check "cljfmt installed" command -v cljfmt
+check "gleam installed" command -v gleam
+check "pint installed" command -v pint
+check "htmlbeautifier installed" command -v htmlbeautifier
+check "standardrb installed" command -v standardrb
+check "air installed" command -v air
+check "dfmt installed" command -v dfmt
+check "nixfmt installed" command -v nixfmt
+check "ormolu installed" command -v ormolu
+check "oxfmt installed" command -v oxfmt
 # PowerShell modules
 check "PSScriptAnalyzer installed" pwsh -NoProfile -Command 'Get-Module -ListAvailable PSScriptAnalyzer'
 check "arm-ttk installed" test -f /usr/lib/microsoft/arm-ttk/arm-ttk/arm-ttk.psd1
