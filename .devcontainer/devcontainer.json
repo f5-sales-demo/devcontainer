@@ -25,11 +25,19 @@
 
   "postStartCommand": "bash /workspace/.devcontainer/scripts/post-start.sh",
 
-  "forwardPorts": [6080],
+  "forwardPorts": [4200, 6080, 8888],
   "portsAttributes": {
+    "4200": {
+      "label": "ATT&CK Navigator",
+      "onAutoForward": "silent"
+    },
     "6080": {
       "label": "noVNC",
       "onAutoForward": "notify"
+    },
+    "8888": {
+      "label": "CALDERA",
+      "onAutoForward": "silent"
     }
   },
 

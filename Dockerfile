@@ -729,6 +729,7 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     git-filter-repo \
     zizmor \
     nbqa \
+    mitreattack-python \
     # Recon (recon-ng, spiderfoot installed via git clone below)
     theHarvester \
     fierce
@@ -864,9 +865,59 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
     && rm -rf /opt/testssl.sh/.git /opt/exploitdb/.git /opt/seclists/.git \
         /opt/docker-bench-security/.git /opt/recon-ng/.git /opt/spiderfoot/.git
 
+# ============================================================
+# 12j. ATT&CK Navigator (MITRE threat matrix visualization)
+#      Angular app — built at image time, served as static files.
+# ============================================================
+# hadolint ignore=DL3059
+RUN git clone --depth=1 https://github.com/mitre-attack/attack-navigator.git /tmp/attack-navigator
+
+WORKDIR /tmp/attack-navigator/nav-app
+
+# hadolint ignore=DL3059
+RUN npm ci --ignore-scripts \
+    && npx ng build --configuration production \
+    && mkdir -p /opt/attack-navigator \
+    && cp -r dist/browser/* /opt/attack-navigator/ \
+    && rm -rf /tmp/attack-navigator \
+    && printf '#!/bin/sh\necho "ATT&CK Navigator: http://localhost:${1:-4200}"\nexec npx serve /opt/attack-navigator -l ${1:-4200} -s\n' \
+      > /usr/local/bin/attack-navigator \
+    && chmod +x /usr/local/bin/attack-navigator
+
+WORKDIR /
+
+# ============================================================
+# 12k. CALDERA (MITRE adversary emulation platform)
+#      Installed in /opt/caldera with isolated Python 3.12 venv.
+#      Runs on port 8888 (HTTP) / 8443 (HTTPS).
+# ============================================================
+# hadolint ignore=DL3059
+RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
+      https://github.com/mitre/caldera.git /opt/caldera \
+    && rm -rf /opt/caldera/.git /opt/caldera/plugins/*/.git
+
+# hadolint ignore=DL3013,DL3059
+RUN uv venv --python python3.12 /opt/caldera/.venv \
+    && uv pip install --python /opt/caldera/.venv/bin/python \
+      -r /opt/caldera/requirements.txt
+
+# Build VueJS frontend (magma plugin) if present
+# hadolint ignore=DL3059
+RUN if [ -d /opt/caldera/plugins/magma ]; then \
+      npm --prefix /opt/caldera/plugins/magma ci \
+      && npm --prefix /opt/caldera/plugins/magma run build \
+      && rm -rf /opt/caldera/plugins/magma/node_modules; \
+    fi
+
+# hadolint ignore=DL3059
+RUN printf '#!/bin/sh\ncd /opt/caldera\nexec .venv/bin/python server.py --insecure "$@"\n' \
+      > /usr/local/bin/caldera \
+    && chmod +x /usr/local/bin/caldera
+
 # Purge build-essential now that all C-extension installs are done.
 # Kept through: Section 12b (claude-code-proxy), 12d (rubocop/prism),
-# 12h (wpscan gem), and 12i (recon-ng/spiderfoot pip deps).
+# 12h (wpscan gem), 12i (recon-ng/spiderfoot pip deps), 12j (Navigator),
+# and 12k (CALDERA).
 # hadolint ignore=DL3059
 RUN apt-get purge -y build-essential \
     && apt-get autoremove -y \
