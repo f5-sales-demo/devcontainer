@@ -116,7 +116,7 @@ start_claude_proxy
 # ============================================================
 # VNC stack (Xvfb + fluxbox + x11vnc + noVNC)
 # ============================================================
-if [ "${ENABLE_VNC:-true}" = "true" ]; then
+if [ "${ENABLE_VNC:-false}" = "true" ]; then
   VNC_RESOLUTION="${VNC_RESOLUTION:-1280x1024x24}"
   VNC_PORT="${VNC_PORT:-5900}"
   NOVNC_PORT="${NOVNC_PORT:-6080}"
