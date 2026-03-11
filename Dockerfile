@@ -1016,6 +1016,8 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
 RUN mkdir -p "$HOME/.npm-global" \
     && npm config set prefix "$HOME/.npm-global" \
     && git clone --depth=1 https://github.com/tfutils/tfenv.git "$HOME/.tfenv" \
+    && "$HOME/.tfenv/bin/tfenv" install latest \
+    && "$HOME/.tfenv/bin/tfenv" use latest \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh /home/${USERNAME}/.p10k.zsh
