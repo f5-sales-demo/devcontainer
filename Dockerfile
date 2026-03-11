@@ -996,8 +996,17 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
       "${ZSH_CUSTOM}/plugins/zsh-tfenv" \
     && git clone --depth=1 https://github.com/yuhonas/zsh-aliases-lsd.git \
       "${ZSH_CUSTOM}/plugins/zsh-aliases-lsd" \
-    && sed -i 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd ubuntu jsontools gh common-aliases zsh-aliases-lsd zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl iterm2 kube-ps1 kubectl sudo vscode aws fzf)/' \
+    && git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
+      "${ZSH_CUSTOM}/themes/powerlevel10k" \
+    && sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$HOME/.zshrc" \
+    && sed -i 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd ubuntu jsontools gh common-aliases zsh-aliases-lsd zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl iterm2 kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found)/' \
       "$HOME/.zshrc" \
+    && sed -i 's/^# HYPHEN_INSENSITIVE=.*/HYPHEN_INSENSITIVE="true"/' "$HOME/.zshrc" \
+    && sed -i 's/^# COMPLETION_WAITING_DOTS=.*/COMPLETION_WAITING_DOTS="true"/' "$HOME/.zshrc" \
+    && sed -i 's/^# HIST_STAMPS=.*/HIST_STAMPS="yyyy-mm-dd"/' "$HOME/.zshrc" \
+    && echo 'export HISTSIZE=50000' >> "$HOME/.zshrc" \
+    && echo 'export SAVEHIST=50000' >> "$HOME/.zshrc" \
+    && echo '[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh' >> "$HOME/.zshrc" \
     && echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> "$HOME/.zshrc"
 
 # ============================================================
@@ -1008,6 +1017,8 @@ RUN mkdir -p "$HOME/.npm-global" \
     && npm config set prefix "$HOME/.npm-global" \
     && git clone --depth=1 https://github.com/tfutils/tfenv.git "$HOME/.tfenv" \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
+
+COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh $HOME/.p10k.zsh
 
 # ============================================================
 # 17. Claude Code configuration (self-test + managed policy)
