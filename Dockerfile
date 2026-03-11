@@ -961,7 +961,7 @@ RUN mkdir -p /home/linuxbrew/.linuxbrew \
 USER $USERNAME
 WORKDIR /home/$USERNAME
 
-RUN mkdir -p ~/.cache ~/.local/bin ~/.claude \
+RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
     && echo '{"hasCompletedOnboarding": true}' > ~/.claude.json.default
 
 # ============================================================
@@ -1008,7 +1008,8 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && echo 'export HISTSIZE=50000' >> "$HOME/.zshrc" \
     && echo 'export SAVEHIST=50000' >> "$HOME/.zshrc" \
     && echo '[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh' >> "$HOME/.zshrc" \
-    && echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> "$HOME/.zshrc"
+    && echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> "$HOME/.zshrc" \
+    && echo 'alias vim=nvim' >> "$HOME/.zshrc"
 
 # ============================================================
 # 16. User shell bootstrap (baked in — eliminates runtime setup)
@@ -1022,6 +1023,7 @@ RUN mkdir -p "$HOME/.npm-global" \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh /home/${USERNAME}/.p10k.zsh
+COPY --chown=${USERNAME}:${USERNAME} configs/init.vim /home/${USERNAME}/.config/nvim/init.vim
 
 # ============================================================
 # 17. Claude Code configuration (self-test + managed policy)
