@@ -22,6 +22,12 @@ if [ -n "$GIT_AUTHOR_EMAIL" ]; then
   git config --global user.email "$GIT_AUTHOR_EMAIL"
 fi
 
+# Timezone
+if [ -n "$TZ" ]; then
+  sudo ln -snf "/usr/share/zoneinfo/$TZ" /etc/localtime
+  echo "$TZ" | sudo tee /etc/timezone > /dev/null
+fi
+
 # SSH key from env var (base64 encoded)
 if [ -n "$SSH_PRIVATE_KEY" ]; then
   _old_umask=$(umask)
