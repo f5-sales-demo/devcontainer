@@ -122,7 +122,7 @@ if [ "${ENABLE_VNC:-true}" = "true" ]; then
   NOVNC_PORT="${NOVNC_PORT:-6080}"
   export DISPLAY="${DISPLAY:-:99}"
 
-  Xvfb "${DISPLAY}" -screen 0 "${VNC_RESOLUTION}" -ac +extension GLX +render -noreset &
+  Xvfb "${DISPLAY}" -screen 0 "${VNC_RESOLUTION}" -ac +extension GLX +render -noreset >/dev/null 2>&1 &
 
   # Background readiness check + dependent daemons — does NOT block entrypoint
   (
@@ -133,9 +133,9 @@ if [ "${ENABLE_VNC:-true}" = "true" ]; then
       retries=$((retries + 1))
     done
 
-    fluxbox &
+    fluxbox >/dev/null 2>&1 &
     x11vnc -display "${DISPLAY}" -forever -shared -rfbport "${VNC_PORT}" \
-      -nopw -xkb -noxrecord -noxfixes -noxdamage &
+      -nopw -xkb -noxrecord -noxfixes -noxdamage >/dev/null 2>&1 &
 
     NOVNC_LAUNCHER=""
     for candidate in \
@@ -149,9 +149,9 @@ if [ "${ENABLE_VNC:-true}" = "true" ]; then
     done
 
     if [ -n "$NOVNC_LAUNCHER" ]; then
-      "$NOVNC_LAUNCHER" --vnc localhost:"${VNC_PORT}" --listen "${NOVNC_PORT}" &
+      "$NOVNC_LAUNCHER" --vnc localhost:"${VNC_PORT}" --listen "${NOVNC_PORT}" >/dev/null 2>&1 &
     else
-      websockify --web /usr/share/novnc "${NOVNC_PORT}" localhost:"${VNC_PORT}" &
+      websockify --web /usr/share/novnc "${NOVNC_PORT}" localhost:"${VNC_PORT}" >/dev/null 2>&1 &
     fi
 
     echo "noVNC: http://localhost:${NOVNC_PORT}/vnc.html"
