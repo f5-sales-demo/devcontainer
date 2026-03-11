@@ -7,8 +7,8 @@
 set termguicolors
 set background=dark
 colorscheme industry
-set number
-set relativenumber
+set nonumber
+set norelativenumber
 set cursorline
 set signcolumn=yes
 set colorcolumn=120
