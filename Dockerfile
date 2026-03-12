@@ -76,6 +76,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg poppler-utils qrencode \
     # Network tools
     dnsutils net-tools iputils-ping traceroute tcpdump nmap netcat-openbsd \
+    # CLI browsers (xdg-open fallback for gh auth login)
+    lynx w3m elinks links2 \
     # Tailscale VPN
     tailscale \
     # Shell tools
@@ -1016,7 +1018,13 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && echo 'export SAVEHIST=50000' >> "$HOME/.zshrc" \
     && echo '[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh' >> "$HOME/.zshrc" \
     && echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> "$HOME/.zshrc" \
-    && echo 'alias vim=nvim' >> "$HOME/.zshrc"
+    && echo 'alias vim=nvim' >> "$HOME/.zshrc" \
+    && echo 'export LESS="-R -F -X -i -J --mouse"' >> "$HOME/.zshrc" \
+    && echo 'export LESSHISTFILE="$HOME/.cache/lesshst"' >> "$HOME/.zshrc" \
+    && echo 'export LESSOPEN="|~/.lessfilter %s"' >> "$HOME/.zshrc" \
+    && echo 'export MANPAGER="sh -c '\''col -bx | bat -l man -p'\''"' >> "$HOME/.zshrc" \
+    && echo 'export BAT_THEME="Coldark-Dark"' >> "$HOME/.zshrc" \
+    && echo 'export BROWSER="lynx"' >> "$HOME/.zshrc"
 
 # ============================================================
 # 16. User shell bootstrap (baked in — eliminates runtime setup)
@@ -1031,6 +1039,12 @@ RUN mkdir -p "$HOME/.npm-global" \
 
 COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh /home/${USERNAME}/.p10k.zsh
 COPY --chown=${USERNAME}:${USERNAME} configs/init.vim /home/${USERNAME}/.config/nvim/init.vim
+COPY --chown=${USERNAME}:${USERNAME} configs/.hushlogin /home/${USERNAME}/.hushlogin
+COPY --chown=${USERNAME}:${USERNAME} configs/.inputrc /home/${USERNAME}/.inputrc
+COPY --chown=${USERNAME}:${USERNAME} configs/.tmux.conf /home/${USERNAME}/.tmux.conf
+COPY --chown=${USERNAME}:${USERNAME} configs/.nanorc /home/${USERNAME}/.nanorc
+COPY --chown=${USERNAME}:${USERNAME} configs/.lessfilter /home/${USERNAME}/.lessfilter
+RUN chmod +x /home/${USERNAME}/.lessfilter
 
 # ============================================================
 # 17. Claude Code configuration (self-test + managed policy)
