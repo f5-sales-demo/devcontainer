@@ -1058,6 +1058,15 @@ RUN printf '#!/bin/bash\n. /usr/local/lib/claude-proxy.sh\nstart_claude_proxy\n'
     && printf '. /usr/local/lib/claude-proxy.sh\nstart_claude_proxy\n' \
       >> /etc/zsh/zshenv
 
+# Map CLAUDE_CODE_OAUTH_TOKEN → ANTHROPIC_OAUTH_TOKEN for tools
+# that read the Anthropic-native env var (e.g. Pi).
+# hadolint ignore=SC2016
+RUN printf '#!/bin/bash\nif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then\n  export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"\nfi\n' \
+      > /etc/profile.d/anthropic-oauth.sh \
+    && chmod +x /etc/profile.d/anthropic-oauth.sh \
+    && printf 'if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then\n  export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"\nfi\n' \
+      >> /etc/zsh/zshenv
+
 # ============================================================
 # 18. Entrypoint (absolute last COPY — most volatile file)
 # ============================================================
