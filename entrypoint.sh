@@ -22,6 +22,9 @@ if [ -n "$GIT_AUTHOR_EMAIL" ]; then
   git config --global user.email "$GIT_AUTHOR_EMAIL"
 fi
 
+# Trust /workspace for git operations (volume ownership may differ)
+git config --global --add safe.directory /workspace
+
 # Timezone
 if [ -n "$TZ" ]; then
   sudo ln -snf "/usr/share/zoneinfo/$TZ" /etc/localtime
@@ -70,6 +73,13 @@ if [ -f "$HOME/.claude.json" ] && [ -s "$HOME/.claude.json" ]; then
     "$HOME/.claude.json" >"$HOME/.claude.json.tmp" && mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
 else
   echo '{"hasCompletedOnboarding": true, "theme": "dark-daltonized"}' >"$HOME/.claude.json"
+fi
+
+# Pre-trust /workspace for Claude Code interactive mode
+WORKSPACE_SETTINGS="$HOME/.claude/projects/-workspace/settings.json"
+if [ ! -f "$WORKSPACE_SETTINGS" ]; then
+  mkdir -p "$(dirname "$WORKSPACE_SETTINGS")"
+  echo '{"hasTrustDialogAccepted": true}' >"$WORKSPACE_SETTINGS"
 fi
 
 # Seed opencode config if missing
