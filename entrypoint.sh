@@ -67,19 +67,13 @@ PIEOF
   fi
 fi
 
-# Ensure Claude Code onboarding + theme are always set
+# Ensure Claude Code onboarding + theme + workspace trust are always set
 if [ -f "$HOME/.claude.json" ] && [ -s "$HOME/.claude.json" ]; then
-  jq '. + {"hasCompletedOnboarding": true, "theme": (.theme // "dark-daltonized")}' \
+  jq '. + {"hasCompletedOnboarding": true, "theme": (.theme // "dark-daltonized")}
+      | .projects["/workspace"].hasTrustDialogAccepted = true' \
     "$HOME/.claude.json" >"$HOME/.claude.json.tmp" && mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
 else
-  echo '{"hasCompletedOnboarding": true, "theme": "dark-daltonized"}' >"$HOME/.claude.json"
-fi
-
-# Pre-trust /workspace for Claude Code interactive mode
-WORKSPACE_SETTINGS="$HOME/.claude/projects/-workspace/settings.json"
-if [ ! -f "$WORKSPACE_SETTINGS" ]; then
-  mkdir -p "$(dirname "$WORKSPACE_SETTINGS")"
-  echo '{"hasTrustDialogAccepted": true}' >"$WORKSPACE_SETTINGS"
+  echo '{"hasCompletedOnboarding":true,"theme":"dark-daltonized","projects":{"/workspace":{"hasTrustDialogAccepted":true}}}' >"$HOME/.claude.json"
 fi
 
 # Seed opencode config if missing
