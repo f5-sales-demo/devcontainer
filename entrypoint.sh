@@ -64,9 +64,12 @@ PIEOF
   fi
 fi
 
-# Seed Claude Code config if missing
-if [ ! -f "$HOME/.claude.json" ] || [ ! -s "$HOME/.claude.json" ]; then
-  echo '{"hasCompletedOnboarding": true}' >"$HOME/.claude.json"
+# Ensure Claude Code onboarding + theme are always set
+if [ -f "$HOME/.claude.json" ] && [ -s "$HOME/.claude.json" ]; then
+  jq '. + {"hasCompletedOnboarding": true, "theme": (.theme // "dark-daltonized")}' \
+    "$HOME/.claude.json" >"$HOME/.claude.json.tmp" && mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
+else
+  echo '{"hasCompletedOnboarding": true, "theme": "dark-daltonized"}' >"$HOME/.claude.json"
 fi
 
 # Seed opencode config if missing
