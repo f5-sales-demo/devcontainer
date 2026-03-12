@@ -324,7 +324,7 @@ ARG IBMCLOUD_VERSION=2.31.0
 # ============================================================
 # 9. AWS CLI v2
 # ============================================================
-# hadolint ignore=DL3059,SC2086
+# hadolint ignore=DL3059
 RUN ARCH=$(uname -m) \
     && curl ${CURL_RETRY} -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip" -o /tmp/awscli.zip \
     && unzip -q /tmp/awscli.zip -d /tmp \
@@ -336,7 +336,7 @@ RUN ARCH=$(uname -m) \
 #     act, actionlint, yt-dlp, uv, opencode)
 #     All resolve latest versions at build time.
 # ============================================================
-# hadolint ignore=DL3059,SC2086
+# hadolint ignore=DL3059
 RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
     && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # kubectl (latest stable)
@@ -382,7 +382,7 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
 #      ibmcloud, fzf, hadolint, codex)
 #      All resolve latest versions at build time except IBM Cloud CLI.
 # ============================================================
-# hadolint ignore=DL3059,SC2086
+# hadolint ignore=DL3059
 RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
     && DPKG_ARCH=$(dpkg --print-architecture) \
     # VS Code CLI (already latest)
@@ -441,7 +441,7 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
 # 10c. Super-linter binary tools (linters + formatters)
 #      All resolve latest versions at build time.
 # ============================================================
-# hadolint ignore=DL3059,SC2086
+# hadolint ignore=DL3059
 RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
     && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # shfmt (version in asset name)
@@ -967,7 +967,6 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
     && echo '{"hasCompletedOnboarding": true}' > ~/.claude.json.default
 
 # Install native Claude Code binary (replaces npm package)
-# trivy:ignore:DS-0010 -- sudo needed to remove root-owned npm global package after USER switch
 # hadolint ignore=DL3059
 RUN claude install --force \
     && sudo npm uninstall -g @anthropic-ai/claude-code \
