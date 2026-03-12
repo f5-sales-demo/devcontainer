@@ -67,7 +67,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Mozilla (Firefox ESR — Browsh backend, amd64 only)
     && if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
       curl ${CURL_RETRY} -fsSL https://packages.mozilla.org/apt/repo-signing-key.gpg \
-        -o /usr/share/keyrings/packages.mozilla.org.gpg \
+        | gpg --dearmor -o /usr/share/keyrings/packages.mozilla.org.gpg \
       && echo "deb [signed-by=/usr/share/keyrings/packages.mozilla.org.gpg] https://packages.mozilla.org/apt mozilla main" \
         > /etc/apt/sources.list.d/mozilla.list \
       && printf 'Package: *\nPin: origin packages.mozilla.org\nPin-Priority: 1000\n' \
