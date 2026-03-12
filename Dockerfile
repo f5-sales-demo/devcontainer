@@ -967,7 +967,7 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
 # Install native Claude Code binary (replaces npm package)
 # hadolint ignore=DL3059
 RUN claude install --force \
-    && npm uninstall -g @anthropic-ai/claude-code
+    && sudo npm uninstall -g @anthropic-ai/claude-code
 
 # ============================================================
 # 14. Homebrew (needed by openclaw configure)
