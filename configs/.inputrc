@@ -1,0 +1,42 @@
+# Readline configuration — applies to bash, python REPL, node REPL, etc.
+# zsh uses its own line editor (zle), so these settings only affect
+# programs that link against GNU Readline.
+
+# Case-insensitive completion (matches zsh behavior)
+set completion-ignore-case on
+
+# Treat hyphens and underscores as equivalent during completion
+set completion-map-case on
+
+# Show all completions on first Tab if ambiguous (no bell)
+set show-all-if-ambiguous on
+set show-all-if-unmodified on
+
+# Color completion candidates by file type (like ls)
+set colored-stats on
+
+# Append a slash to completed directory names
+set mark-directories on
+set mark-symlinked-directories on
+
+# Show common prefix in color before cycling completions
+set colored-completion-prefix on
+
+# Do not bell on ambiguous completion
+set bell-style none
+
+# Keep cursor position when scrolling through history
+set history-preserve-point on
+
+# Enable 8-bit input/output (UTF-8)
+set input-meta on
+set output-meta on
+set convert-meta off
+
+# Up/Down arrows search history based on typed prefix
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+
+# Ctrl-Left / Ctrl-Right move by word
+"\e[1;5C": forward-word
+"\e[1;5D": backward-word
