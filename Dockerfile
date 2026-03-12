@@ -971,7 +971,7 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
 RUN claude install --force \
     && sudo npm uninstall -g @anthropic-ai/claude-code \
     && jq '. + {"hasCompletedOnboarding": true, "theme": "dark-daltonized"}' \
-       ~/.claude.json > /tmp/claude.json && mv /tmp/claude.json ~/.claude.json
+        ~/.claude.json > /tmp/claude.json && mv /tmp/claude.json ~/.claude.json
 
 # ============================================================
 # 14. Homebrew (needed by openclaw configure)
