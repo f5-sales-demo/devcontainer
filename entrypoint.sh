@@ -48,6 +48,22 @@ SSHCONF
   fi
 fi
 
+# Export ANTHROPIC_OAUTH_TOKEN for tools that read it (e.g. Pi)
+if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then
+  export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
+fi
+
+# Seed Pi settings if missing
+PI_AGENT_DIR="$HOME/.pi/agent"
+if [ ! -f "$PI_AGENT_DIR/settings.json" ] || [ ! -s "$PI_AGENT_DIR/settings.json" ]; then
+  if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+    mkdir -p "$PI_AGENT_DIR"
+    cat >"$PI_AGENT_DIR/settings.json" <<'PIEOF'
+{"defaultProvider":"anthropic","defaultModel":"claude-opus-4-6"}
+PIEOF
+  fi
+fi
+
 # Seed Claude Code config if missing
 if [ ! -f "$HOME/.claude.json" ] || [ ! -s "$HOME/.claude.json" ]; then
   echo '{"hasCompletedOnboarding": true}' >"$HOME/.claude.json"
@@ -68,6 +84,17 @@ AUTHEOF
   elif [ -n "$OPENAI_API_KEY" ] && [ -f /opt/opencode-config/opencode.json ]; then
     mkdir -p "$OPENCODE_CONFIG_DIR"
     cp /opt/opencode-config/opencode.json "$OPENCODE_CONFIG_DIR/opencode.json"
+  fi
+fi
+
+# Seed openclaw auth if missing
+OPENCLAW_AUTH_DIR="$HOME/.openclaw/agents/main/agent"
+if [ ! -f "$OPENCLAW_AUTH_DIR/auth-profiles.json" ] || [ ! -s "$OPENCLAW_AUTH_DIR/auth-profiles.json" ]; then
+  if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+    mkdir -p "$OPENCLAW_AUTH_DIR"
+    cat >"$OPENCLAW_AUTH_DIR/auth-profiles.json" <<CLAWEOF
+{"version":1,"profiles":{"anthropic:oauth":{"type":"oauth","provider":"anthropic","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}}
+CLAWEOF
   fi
 fi
 
