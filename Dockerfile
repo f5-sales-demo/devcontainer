@@ -182,8 +182,8 @@ RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
       apt-get update \
       && apt-get install -y --no-install-recommends firefox-esr \
       && curl ${CURL_RETRY} -fsSL \
-           "https://github.com/browsh-org/browsh/releases/download/v${BROWSH_VERSION}/browsh_${BROWSH_VERSION}_linux_amd64.deb" \
-           -o /tmp/browsh.deb \
+          "https://github.com/browsh-org/browsh/releases/download/v${BROWSH_VERSION}/browsh_${BROWSH_VERSION}_linux_amd64.deb" \
+          -o /tmp/browsh.deb \
       && dpkg -i /tmp/browsh.deb \
       && rm /tmp/browsh.deb \
       && apt-get clean && rm -rf /var/lib/apt/lists/*; \
