@@ -13,6 +13,7 @@ ARG NODE_MAJOR=24
 ARG PYTHON_VERSION=3.13
 ARG JAVA_VERSION=21
 ARG MAVEN_VERSION=3.9.9
+ARG BROWSH_VERSION=1.8.0
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -63,6 +64,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       -o /usr/share/keyrings/tailscale-archive-keyring.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu noble main" \
       > /etc/apt/sources.list.d/tailscale.list \
+    # Mozilla (Firefox ESR — Browsh backend, amd64 only)
+    && if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+      curl ${CURL_RETRY} -fsSL https://packages.mozilla.org/apt/repo-signing-key.gpg \
+        -o /usr/share/keyrings/packages.mozilla.org.gpg \
+      && echo "deb [signed-by=/usr/share/keyrings/packages.mozilla.org.gpg] https://packages.mozilla.org/apt mozilla main" \
+        > /etc/apt/sources.list.d/mozilla.list \
+      && printf 'Package: *\nPin: origin packages.mozilla.org\nPin-Priority: 1000\n' \
+        > /etc/apt/preferences.d/mozilla; \
+    fi \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
@@ -163,6 +173,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ttf-mscorefonts-installer \
     && fc-cache -fv \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ============================================================
+# 2c. Firefox ESR + Browsh (amd64 only — Browsh has no arm64 build)
+# ============================================================
+# hadolint ignore=DL3008,DL3059
+RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+      apt-get update \
+      && apt-get install -y --no-install-recommends firefox-esr \
+      && curl ${CURL_RETRY} -fsSL \
+          "https://github.com/browsh-org/browsh/releases/download/v${BROWSH_VERSION}/browsh_${BROWSH_VERSION}_linux_amd64.deb" \
+          -o /tmp/browsh.deb \
+      && dpkg -i /tmp/browsh.deb \
+      && rm /tmp/browsh.deb \
+      && apt-get clean && rm -rf /var/lib/apt/lists/*; \
+    fi
 
 # ============================================================
 # 2b. Security & pentest APT packages
@@ -1024,7 +1049,11 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && echo 'export LESSOPEN="|~/.lessfilter %s"' >> "$HOME/.zshrc" \
     && echo 'export MANPAGER="sh -c '\''col -bx | bat -l man -p'\''"' >> "$HOME/.zshrc" \
     && echo 'export BAT_THEME="Coldark-Dark"' >> "$HOME/.zshrc" \
-    && echo 'export BROWSER="lynx"' >> "$HOME/.zshrc"
+    && if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+      echo 'export BROWSER="browsh"' >> "$HOME/.zshrc"; \
+    else \
+      echo 'export BROWSER="lynx"' >> "$HOME/.zshrc"; \
+    fi
 
 # ============================================================
 # 16. User shell bootstrap (baked in — eliminates runtime setup)

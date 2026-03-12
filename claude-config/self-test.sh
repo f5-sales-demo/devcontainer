@@ -22,6 +22,11 @@ echo "=== Claude Code Container Self-Test ==="
 echo ""
 
 echo "1. Core Tools"
+# Text browser (amd64 only — Browsh requires Firefox ESR)
+if [ "$(dpkg --print-architecture)" = "amd64" ]; then
+  check "browsh installed" command -v browsh
+  check "firefox-esr installed" command -v firefox-esr
+fi
 check "claude CLI installed" command -v claude
 check "pi CLI installed" command -v pi
 check "aider CLI installed" command -v aider
