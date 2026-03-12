@@ -964,13 +964,18 @@ WORKDIR /home/$USERNAME
 RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
     && echo '{"hasCompletedOnboarding": true}' > ~/.claude.json.default
 
+# Install native Claude Code binary (replaces npm package)
+# hadolint ignore=DL3059
+RUN claude install --force \
+    && npm uninstall -g @anthropic-ai/claude-code
+
 # ============================================================
 # 14. Homebrew (needed by openclaw configure)
 # ============================================================
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 ENV HOMEBREW_NO_AUTO_UPDATE=1
-ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
+ENV PATH="/home/vscode/.local/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
 # AI assistant deps + formatters (no APT packages available)
 # hadolint ignore=DL3059
