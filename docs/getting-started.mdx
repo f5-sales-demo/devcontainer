@@ -128,7 +128,7 @@ docker compose up -d
 <TabItem label="Podman">
 
 ```bash
-podman compose up -d
+podman compose pull && podman compose up -d
 ```
 
 </TabItem>
@@ -219,12 +219,12 @@ docker compose up -d
 # Stop (preserves data)
 podman compose down
 
-# Start again
-podman compose up -d
+# Start again (pull ensures latest image)
+podman compose pull && podman compose up -d
 
 # Destroy everything and start fresh
 podman compose down -v
-podman compose up -d
+podman compose pull && podman compose up -d
 ```
 
 </TabItem>
