@@ -1,6 +1,7 @@
 services:
   dev:
     image: ghcr.io/f5xc-salesdemos/devcontainer:latest
+    pull_policy: always
     container_name: devcontainer
     hostname: devcontainer
     volumes:
