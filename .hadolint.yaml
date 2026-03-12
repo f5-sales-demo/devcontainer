@@ -1,0 +1,10 @@
+---
+ignored:
+  # DL3004: sudo needed after USER switch to remove root-owned npm package
+  - DL3004
+  # SC2086: ${CURL_RETRY} intentionally unquoted for word splitting
+  - SC2086
+  # SC2102: ranges in character classes (false positive on shell patterns)
+  - SC2102
+  # SC2016: single-quoted expressions are intentional (zshrc exports)
+  - SC2016

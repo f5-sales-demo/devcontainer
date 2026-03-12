@@ -1,0 +1,30 @@
+# Nano configuration — fallback editor when vim/nvim is overkill
+
+# Display line numbers
+set linenumbers
+
+# Use spaces instead of tabs
+set tabsize 4
+set tabstospaces
+
+# Enable soft line wrapping
+set softwrap
+
+# Smooth scrolling
+set smooth
+
+# Auto-indent new lines
+set autoindent
+
+# Show cursor position in status bar
+set constantshow
+
+# Enable mouse support
+set mouse
+
+# Allow suspending with Ctrl-Z
+set suspend
+
+# Enable syntax highlighting (bundled with nano)
+include "/usr/share/nano/*.nanorc"
+include "/usr/share/nano/extra/*.nanorc"

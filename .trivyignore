@@ -1,0 +1,2 @@
+# DS-0010: sudo needed after USER switch to remove root-owned npm global package
+DS-0010
