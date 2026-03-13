@@ -342,13 +342,13 @@ RUN mkdir -p /usr/local/share/fonts/nerd-fonts \
 #     enough to cause "Waiting for Firefox to connect" hangs.
 #     Running browsh once at build time caches everything.
 # ============================================================
-# hadolint ignore=DL3059
+# hadolint ignore=DL3001,DL3059
 RUN if command -v browsh >/dev/null 2>&1; then \
       Xvfb :99 -screen 0 1280x1024x24 -ac >/dev/null 2>&1 & \
       XVFB_PID=$! \
       && sleep 1 \
       && DISPLAY=:99 TERM=xterm browsh --startup-url https://example.com \
-           --time-limit 15 >/dev/null 2>&1 || true \
+          --time-limit 15 >/dev/null 2>&1 || true \
       && kill $XVFB_PID 2>/dev/null || true; \
     fi
 
