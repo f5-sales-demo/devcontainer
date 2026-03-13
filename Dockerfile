@@ -737,7 +737,8 @@ RUN npm install -g \
     tekton-lint \
     asl-validator \
     renovate \
-    markdownlint-cli
+    markdownlint-cli \
+    asciinema-player
 
 # oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
 # hadolint ignore=DL3059
@@ -779,7 +780,8 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     mitreattack-python \
     # Recon (recon-ng, spiderfoot installed via git clone below)
     theHarvester \
-    fierce
+    fierce \
+    asciinema
 
 # Security & pentest pip packages.
 # Installed in isolated groups because mitmproxy, sslyze, impacket,
