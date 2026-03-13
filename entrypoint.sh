@@ -129,7 +129,8 @@ if [ ! -f "$OPENCLAW_CONFIG" ] || [ ! -s "$OPENCLAW_CONFIG" ]; then
   "auth": {
     "profiles": {
       "anthropic:oauth": {
-        "mode": "oauth"
+        "mode": "oauth",
+        "provider": "anthropic"
       }
     }
   },
