@@ -1,5 +1,5 @@
 {
-  "statusline": { "command": "/opt/claude-config/statusline.sh" },
+  "statusLine": { "type": "command", "command": "/opt/claude-config/statusline.sh" },
   "defaultMode": "bypassPermissions",
   "skipDangerousModePermissionPrompt": true,
   "enabledPlugins": {
