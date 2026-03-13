@@ -14,6 +14,8 @@ ARG PYTHON_VERSION=3.13
 ARG JAVA_VERSION=21
 ARG MAVEN_VERSION=3.9.9
 ARG BROWSH_VERSION=1.8.2
+ARG GHIDRA_VERSION=12.0.4
+ARG GHIDRA_DATE=20260303
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -347,6 +349,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # ARGs don't cross FROM boundaries — redeclare what final needs
 ARG USERNAME=vscode
 ARG IBMCLOUD_VERSION=2.31.0
+ARG GHIDRA_VERSION=12.0.4
+ARG GHIDRA_DATE=20260303
 
 # ============================================================
 # 9. AWS CLI v2
@@ -685,10 +689,8 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
 #      Java app, arch-independent. GUI via VNC or headless.
 # ============================================================
 # hadolint ignore=DL3059
-RUN GHIDRA_ASSET=$(curl -fsSL "https://api.github.com/repos/NationalSecurityAgency/ghidra/releases/latest" \
-      | jq -r '.assets[].name | select(endswith(".zip"))') \
-    && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/NationalSecurityAgency/ghidra/releases/latest/download/${GHIDRA_ASSET}" \
+RUN curl ${CURL_RETRY} -fsSL \
+      "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${GHIDRA_VERSION}_build/ghidra_${GHIDRA_VERSION}_PUBLIC_${GHIDRA_DATE}.zip" \
       -o /tmp/ghidra.zip \
     && unzip -q /tmp/ghidra.zip -d /opt \
     && mv /opt/ghidra_* /opt/ghidra \
@@ -1000,7 +1002,8 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
 RUN claude install --force \
     && sudo npm uninstall -g @anthropic-ai/claude-code \
     && jq '. + {"hasCompletedOnboarding": true, "theme": "dark-daltonized"}' \
-        ~/.claude.json > /tmp/claude.json && mv /tmp/claude.json ~/.claude.json
+        ~/.claude.json > /tmp/claude.json && mv /tmp/claude.json ~/.claude.json \
+    && echo '{"statusline": {"command": "/opt/claude-config/statusline.sh"}}' > ~/.claude/settings.json
 
 # ============================================================
 # 14. Homebrew (needed by openclaw configure)
@@ -1053,11 +1056,7 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && echo 'export LESSOPEN="|~/.lessfilter %s"' >> "$HOME/.zshrc" \
     && echo 'export MANPAGER="sh -c '\''col -bx | bat -l man -p'\''"' >> "$HOME/.zshrc" \
     && echo 'export BAT_THEME="Coldark-Dark"' >> "$HOME/.zshrc" \
-    && if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
-      echo 'export BROWSER="browsh"' >> "$HOME/.zshrc"; \
-    else \
-      echo 'export BROWSER="lynx"' >> "$HOME/.zshrc"; \
-    fi
+    && echo 'export BROWSER="browsh"' >> "$HOME/.zshrc"
 
 # ============================================================
 # 16. User shell bootstrap (baked in — eliminates runtime setup)
@@ -1092,10 +1091,11 @@ USER root
 COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
 COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
 COPY claude-config/claude-proxy.sh /usr/local/lib/claude-proxy.sh
+COPY claude-config/statusline.sh /opt/claude-config/statusline.sh
 COPY opencode-config/opencode.json /opt/opencode-config/opencode.json
 COPY opencode-config/opencode-anthropic.json /opt/opencode-config/opencode-anthropic.json
 COPY codex-config/config.toml /opt/codex-config/config.toml
-RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh \
+RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh /opt/claude-config/statusline.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
     && mkdir -p /etc/claude-code/.claude/rules
 
