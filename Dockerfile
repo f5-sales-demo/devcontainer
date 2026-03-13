@@ -13,7 +13,7 @@ ARG NODE_MAJOR=24
 ARG PYTHON_VERSION=3.13
 ARG JAVA_VERSION=21
 ARG MAVEN_VERSION=3.9.9
-ARG BROWSH_VERSION=1.8.0
+ARG BROWSH_VERSION=1.8.2
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -175,14 +175,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
-# 2c. Firefox ESR + Browsh (amd64 only — Browsh has no arm64 build)
+# 2c. Firefox ESR + Browsh (amd64 + arm64)
 # ============================================================
 # hadolint ignore=DL3008,DL3059
-RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+RUN ARCH="$(dpkg --print-architecture)" \
+    && if [ "$ARCH" = "amd64" ] || [ "$ARCH" = "arm64" ]; then \
       apt-get update \
       && apt-get install -y --no-install-recommends firefox-esr \
       && curl ${CURL_RETRY} -fsSL \
-          "https://github.com/browsh-org/browsh/releases/download/v${BROWSH_VERSION}/browsh_${BROWSH_VERSION}_linux_amd64.deb" \
+          "https://github.com/browsh-org/browsh/releases/download/v${BROWSH_VERSION}/browsh_${BROWSH_VERSION}_linux_${ARCH}.deb" \
           -o /tmp/browsh.deb \
       && dpkg -i /tmp/browsh.deb \
       && rm /tmp/browsh.deb \
