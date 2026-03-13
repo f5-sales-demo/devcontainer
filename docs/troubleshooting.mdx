@@ -24,7 +24,7 @@ docker compose up -d
 
 ```bash
 podman rm -f devcontainer
-podman compose up -d
+podman-compose up -d
 ```
 
 </TabItem>
@@ -48,8 +48,8 @@ docker compose up -d
 <TabItem label="Podman">
 
 ```bash
-podman compose pull
-podman compose up -d
+podman-compose pull
+podman-compose up -d
 ```
 
 </TabItem>
@@ -90,7 +90,7 @@ Common causes:
 </TabItem>
 <TabItem label="Podman">
 
-  Then restart: `podman compose up -d`.
+  Then restart: `podman-compose up -d`.
 
 </TabItem>
 </Tabs>
@@ -302,7 +302,7 @@ docker compose logs dev | grep -i vnc
 <TabItem label="Podman">
 
 ```bash
-podman compose logs dev | grep -i vnc
+podman-compose logs dev | grep -i vnc
 ```
 
 </TabItem>
@@ -333,10 +333,10 @@ docker compose up -d
 <TabItem label="Podman">
 
 ```bash
-podman compose down -v
+podman-compose down -v
 podman rm -f devcontainer 2>/dev/null
-podman compose pull
-podman compose up -d
+podman-compose pull
+podman-compose up -d
 ```
 
 </TabItem>

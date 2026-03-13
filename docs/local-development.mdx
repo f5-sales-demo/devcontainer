@@ -35,7 +35,7 @@ cd devcontainer
 
 ## Build File
 
-The `docker-compose.build.yml` file adds local build support. It is **not** auto-merged — you must pass it explicitly with `-f` flags. This means `docker compose up -d` (or `podman compose up -d`) always pulls the pre-built image from GHCR, whether you cloned the repo or not.
+The `docker-compose.build.yml` file adds local build support. It is **not** auto-merged — you must pass it explicitly with `-f` flags. This means `docker compose up -d` (or `podman-compose up -d`) always pulls the pre-built image from GHCR, whether you cloned the repo or not.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -55,16 +55,16 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml config
 </TabItem>
 <TabItem label="Podman">
 
-You can verify that a plain `podman compose up` uses only the pre-built image (no `build:` context):
+You can verify that a plain `podman-compose up` uses only the pre-built image (no `build:` context):
 
 ```bash
-podman compose config
+podman-compose config
 ```
 
 Compare with the explicit build configuration:
 
 ```bash
-podman compose -f docker-compose.yml -f docker-compose.build.yml config
+podman-compose -f docker-compose.yml -f docker-compose.build.yml config
 ```
 
 </TabItem>
@@ -83,7 +83,7 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 <TabItem label="Podman">
 
 ```bash
-podman compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
 </TabItem>
@@ -161,7 +161,7 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 <TabItem label="Podman">
 
 ```bash
-podman compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
 </TabItem>
