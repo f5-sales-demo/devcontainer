@@ -61,7 +61,7 @@ systemctl --user enable --now podman.socket
 | Resource | Minimum | Recommended |
 |----------|---------|-------------|
 | Disk | 5 GB | 10 GB+ |
-| RAM | 4 GB allocated to container runtime | 8 GB+ |
+| RAM | 8 GB allocated to container runtime | 12 GB+ |
 | CPU | 2 cores | 4+ cores |
 
 <Tabs syncKey="runtime">
@@ -75,7 +75,7 @@ Adjust resource limits in Docker Desktop &rarr; Settings &rarr; Resources.
 On **macOS/Windows**, adjust resource limits in Podman Desktop &rarr; Settings &rarr; Resources, or via the CLI:
 
 ```bash
-podman machine set --cpus 4 --memory 8192
+podman machine set --cpus 4 --memory 12288
 podman machine stop && podman machine start
 ```
 
