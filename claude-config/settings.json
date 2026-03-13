@@ -1,0 +1,15 @@
+{
+  "statusline": { "command": "/opt/claude-config/statusline.sh" },
+  "defaultMode": "bypassPermissions",
+  "skipDangerousModePermissionPrompt": true,
+  "mcpServers": {
+    "searxng": {
+      "command": "/opt/searxng-mcp/.venv/bin/python",
+      "args": ["/opt/searxng-mcp/server.py"],
+      "env": {
+        "SEARXNG_BASE_URL": "__SEARXNG_URL__",
+        "TRANSPORT": "stdio"
+      }
+    }
+  }
+}

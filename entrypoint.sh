@@ -35,7 +35,6 @@ fi
 if [ -n "$SSH_PRIVATE_KEY" ]; then
   _old_umask=$(umask)
   umask 077
-  mkdir -p "$HOME/.ssh"
   echo "$SSH_PRIVATE_KEY" | base64 -d >"$HOME/.ssh/id_ed25519"
   umask "$_old_umask"
   ssh-keygen -y -f "$HOME/.ssh/id_ed25519" >"$HOME/.ssh/id_ed25519.pub" 2>/dev/null
@@ -56,11 +55,10 @@ if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then
   export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
 fi
 
-# Seed Pi settings if missing
+# Seed Pi settings if missing (dirs pre-created in image)
 PI_AGENT_DIR="$HOME/.pi/agent"
 if [ ! -f "$PI_AGENT_DIR/settings.json" ] || [ ! -s "$PI_AGENT_DIR/settings.json" ]; then
   if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-    mkdir -p "$PI_AGENT_DIR"
     cat >"$PI_AGENT_DIR/settings.json" <<'PIEOF'
 {"defaultProvider":"anthropic","defaultModel":"claude-opus-4-6"}
 PIEOF
@@ -68,91 +66,61 @@ PIEOF
 fi
 
 # Ensure Claude Code onboarding + theme + workspace trust are always set
+# The image pre-bakes the full default; only act if volume-mounted with different content
 if [ -f "$HOME/.claude.json" ] && [ -s "$HOME/.claude.json" ]; then
-  jq '. + {"hasCompletedOnboarding": true, "theme": (.theme // "dark-daltonized")}
-      | .projects["/workspace"].hasTrustDialogAccepted = true' \
-    "$HOME/.claude.json" >"$HOME/.claude.json.tmp" && mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
-else
-  echo '{"hasCompletedOnboarding":true,"theme":"dark-daltonized","projects":{"/workspace":{"hasTrustDialogAccepted":true}}}' >"$HOME/.claude.json"
+  if jq -e '.hasCompletedOnboarding and .projects["/workspace"].hasTrustDialogAccepted' \
+    "$HOME/.claude.json" >/dev/null 2>&1; then
+    : # Already correct, skip
+  else
+    jq '. + {"hasCompletedOnboarding": true, "theme": (.theme // "dark-daltonized")}
+        | .projects["/workspace"].hasTrustDialogAccepted = true' \
+      "$HOME/.claude.json" >"$HOME/.claude.json.tmp" && mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
+  fi
 fi
 
-# Seed opencode config if missing
+# Seed opencode config if missing (dirs pre-created in image)
 OPENCODE_CONFIG_DIR="$HOME/.config/opencode"
 if [ ! -f "$OPENCODE_CONFIG_DIR/opencode.json" ] || [ ! -s "$OPENCODE_CONFIG_DIR/opencode.json" ]; then
   if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -f /opt/opencode-config/opencode-anthropic.json ]; then
-    mkdir -p "$OPENCODE_CONFIG_DIR"
     cp /opt/opencode-config/opencode-anthropic.json "$OPENCODE_CONFIG_DIR/opencode.json"
     # Seed OAuth credentials for opencode's Anthropic provider
-    OPENCODE_DATA_DIR="$HOME/.local/share/opencode"
-    mkdir -p "$OPENCODE_DATA_DIR"
-    cat >"$OPENCODE_DATA_DIR/auth.json" <<AUTHEOF
+    cat >"$HOME/.local/share/opencode/auth.json" <<AUTHEOF
 {"anthropic":{"type":"oauth","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}
 AUTHEOF
   elif [ -n "$OPENAI_API_KEY" ] && [ -f /opt/opencode-config/opencode.json ]; then
-    mkdir -p "$OPENCODE_CONFIG_DIR"
     cp /opt/opencode-config/opencode.json "$OPENCODE_CONFIG_DIR/opencode.json"
   fi
 fi
 
-# Seed openclaw auth if missing
+# Seed openclaw auth if missing (dirs pre-created in image)
 OPENCLAW_AUTH_DIR="$HOME/.openclaw/agents/main/agent"
 if [ ! -f "$OPENCLAW_AUTH_DIR/auth-profiles.json" ] || [ ! -s "$OPENCLAW_AUTH_DIR/auth-profiles.json" ]; then
   if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-    mkdir -p "$OPENCLAW_AUTH_DIR"
-    mkdir -p "$HOME/.openclaw/agents/main/sessions"
     cat >"$OPENCLAW_AUTH_DIR/auth-profiles.json" <<CLAWEOF
 {"version":1,"profiles":{"anthropic:oauth":{"type":"oauth","provider":"anthropic","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}}
 CLAWEOF
   fi
 fi
 
-# Seed openclaw gateway config if missing
+# Seed openclaw gateway config if missing (uses pre-baked template)
 OPENCLAW_CONFIG="$HOME/.openclaw/openclaw.json"
 if [ ! -f "$OPENCLAW_CONFIG" ] || [ ! -s "$OPENCLAW_CONFIG" ]; then
   if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-    # Generate a random local IPC token (18 bytes → 24 chars base64url)
-    # This authenticates the TUI client to the local gateway on loopback.
     if [ -z "$OPENCLAW_GATEWAY_TOKEN" ]; then
       OPENCLAW_GATEWAY_TOKEN="$(openssl rand -base64 18)"
     fi
     export OPENCLAW_GATEWAY_TOKEN
-    mkdir -p "$HOME/.openclaw"
-    cat >"$OPENCLAW_CONFIG" <<GWEOF
-{
-  "gateway": {
-    "mode": "local",
-    "auth": {
-      "mode": "token",
-      "token": "${OPENCLAW_GATEWAY_TOKEN}"
-    }
-  },
-  "auth": {
-    "profiles": {
-      "anthropic:oauth": {
-        "mode": "oauth",
-        "provider": "anthropic"
-      }
-    }
-  },
-  "agents": {
-    "defaults": {
-      "model": {
-        "primary": "claude-opus-4-6"
-      }
-    }
-  }
-}
-GWEOF
+    sed "s|__GATEWAY_TOKEN__|${OPENCLAW_GATEWAY_TOKEN}|" \
+      /opt/openclaw-config/openclaw.json.tmpl >"$OPENCLAW_CONFIG"
     chmod 700 "$HOME/.openclaw"
     chmod 600 "$OPENCLAW_CONFIG"
   fi
 fi
 
-# Seed codex config if missing
+# Seed codex config if missing (dir pre-created in image)
 CODEX_CONFIG_DIR="$HOME/.codex"
 if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] || [ ! -s "$CODEX_CONFIG_DIR/config.toml" ]; then
   if [ -n "$OPENAI_API_KEY" ] && [ -f /opt/codex-config/config.toml ]; then
-    mkdir -p "$CODEX_CONFIG_DIR"
     cp /opt/codex-config/config.toml "$CODEX_CONFIG_DIR/config.toml"
   fi
 fi
@@ -160,30 +128,11 @@ fi
 # ============================================================
 # SearXNG MCP server (web search via MCP)
 # ============================================================
-# Seed the MCP server config into Claude Code settings so the
-# searxng tool always appears in the tool schema. This works
-# regardless of provider type (direct API or proxy).
+# The full settings.json is pre-baked in the image with a
+# __SEARXNG_URL__ placeholder. Replace it with the actual URL.
 if [ -d /opt/searxng-mcp ]; then
-  SETTINGS="$HOME/.claude/settings.json"
   SEARXNG_MCP_URL="${SEARXNG_BASE_URL:-http://searxng:8080}"
-  mkdir -p "$HOME/.claude"
-  if [ ! -f "$SETTINGS" ] || [ ! -s "$SETTINGS" ]; then
-    echo '{}' >"$SETTINGS"
-  fi
-  if command -v jq >/dev/null 2>&1; then
-    jq --arg url "$SEARXNG_MCP_URL" '
-      .defaultMode = "bypassPermissions" |
-      .skipDangerousModePermissionPrompt = true |
-      .mcpServers.searxng = {
-        "command": "/opt/searxng-mcp/.venv/bin/python",
-        "args": ["/opt/searxng-mcp/server.py"],
-        "env": {
-          "SEARXNG_BASE_URL": $url,
-          "TRANSPORT": "stdio"
-        }
-      }
-    ' "$SETTINGS" >"${SETTINGS}.tmp" && mv "${SETTINGS}.tmp" "$SETTINGS"
-  fi
+  sed -i "s|__SEARXNG_URL__|${SEARXNG_MCP_URL}|" "$HOME/.claude/settings.json"
 fi
 
 # ============================================================
