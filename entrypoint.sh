@@ -99,6 +99,7 @@ OPENCLAW_AUTH_DIR="$HOME/.openclaw/agents/main/agent"
 if [ ! -f "$OPENCLAW_AUTH_DIR/auth-profiles.json" ] || [ ! -s "$OPENCLAW_AUTH_DIR/auth-profiles.json" ]; then
   if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
     mkdir -p "$OPENCLAW_AUTH_DIR"
+    mkdir -p "$HOME/.openclaw/agents/main/sessions"
     cat >"$OPENCLAW_AUTH_DIR/auth-profiles.json" <<CLAWEOF
 {"version":1,"profiles":{"anthropic:oauth":{"type":"oauth","provider":"anthropic","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}}
 CLAWEOF
@@ -128,11 +129,7 @@ if [ ! -f "$OPENCLAW_CONFIG" ] || [ ! -s "$OPENCLAW_CONFIG" ]; then
   "auth": {
     "profiles": {
       "anthropic:oauth": {
-        "type": "oauth",
-        "provider": "anthropic",
-        "access": "${CLAUDE_CODE_OAUTH_TOKEN}",
-        "refresh": "",
-        "expires": 9999999999999
+        "mode": "oauth"
       }
     }
   },
@@ -145,6 +142,8 @@ if [ ! -f "$OPENCLAW_CONFIG" ] || [ ! -s "$OPENCLAW_CONFIG" ]; then
   }
 }
 GWEOF
+    chmod 700 "$HOME/.openclaw"
+    chmod 600 "$OPENCLAW_CONFIG"
   fi
 fi
 
