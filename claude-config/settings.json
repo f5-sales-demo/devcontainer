@@ -1,6 +1,8 @@
 {
   "statusLine": { "type": "command", "command": "/opt/claude-config/statusline.sh" },
+  "model": "claude-opus-4-6",
   "spinnerTipsEnabled": false,
+  "terminalProgressBarEnabled": true,
   "defaultMode": "bypassPermissions",
   "skipDangerousModePermissionPrompt": true,
   "enabledPlugins": {
