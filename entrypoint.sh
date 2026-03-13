@@ -92,31 +92,6 @@ AUTHEOF
   fi
 fi
 
-# Seed openclaw auth if missing (dirs pre-created in image)
-OPENCLAW_AUTH_DIR="$HOME/.openclaw/agents/main/agent"
-if [ ! -f "$OPENCLAW_AUTH_DIR/auth-profiles.json" ] || [ ! -s "$OPENCLAW_AUTH_DIR/auth-profiles.json" ]; then
-  if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-    cat >"$OPENCLAW_AUTH_DIR/auth-profiles.json" <<CLAWEOF
-{"version":1,"profiles":{"anthropic:oauth":{"type":"oauth","provider":"anthropic","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}}
-CLAWEOF
-  fi
-fi
-
-# Seed openclaw gateway config if missing (uses pre-baked template)
-OPENCLAW_CONFIG="$HOME/.openclaw/openclaw.json"
-if [ ! -f "$OPENCLAW_CONFIG" ] || [ ! -s "$OPENCLAW_CONFIG" ]; then
-  if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-    if [ -z "$OPENCLAW_GATEWAY_TOKEN" ]; then
-      OPENCLAW_GATEWAY_TOKEN="$(openssl rand -base64 18)"
-    fi
-    export OPENCLAW_GATEWAY_TOKEN
-    sed "s|__GATEWAY_TOKEN__|${OPENCLAW_GATEWAY_TOKEN}|" \
-      /opt/openclaw-config/openclaw.json.tmpl >"$OPENCLAW_CONFIG"
-    chmod 700 "$HOME/.openclaw"
-    chmod 600 "$OPENCLAW_CONFIG"
-  fi
-fi
-
 # Seed codex config if missing (dir pre-created in image)
 CODEX_CONFIG_DIR="$HOME/.codex"
 if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] || [ ! -s "$CODEX_CONFIG_DIR/config.toml" ]; then
@@ -144,16 +119,6 @@ fi
 # shellcheck source=/dev/null
 . /usr/local/lib/claude-proxy.sh
 start_claude_proxy
-
-# ============================================================
-# OpenClaw Gateway (local WebSocket gateway for TUI)
-# ============================================================
-# Source the shared gateway startup function, then invoke it.
-# The same function is sourced by interactive shells so the gateway
-# auto-recovers even if it was not running at container start.
-# shellcheck source=/dev/null
-. /usr/local/lib/openclaw-gateway.sh
-start_openclaw_gateway
 
 # ============================================================
 # VNC stack (Xvfb + fluxbox + x11vnc + noVNC)

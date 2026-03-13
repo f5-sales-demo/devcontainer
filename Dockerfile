@@ -736,7 +736,6 @@ RUN npm install -g \
     @mariozechner/pi-coding-agent \
     prettier \
     markdownlint-cli2 \
-    openclaw \
     @devcontainers/cli \
     @googleworkspace/cli \
     html2canvas \
@@ -1040,12 +1039,9 @@ USER $USERNAME
 WORKDIR /home/$USERNAME
 
 RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
-    ~/.openclaw/agents/main/agent \
-    ~/.openclaw/agents/main/sessions \
     ~/.config/opencode \
     ~/.local/share/opencode \
     ~/.local/share/claude-proxy \
-    ~/.local/share/openclaw-gateway \
     ~/.codex \
     ~/.pi/agent \
     ~/.ssh
@@ -1057,14 +1053,11 @@ RUN claude install --force \
     && echo '{"hasCompletedOnboarding":true,"theme":"dark-daltonized","projects":{"/workspace":{"hasTrustDialogAccepted":true}}}' > ~/.claude.json
 
 # ============================================================
-# 14. Homebrew (needed by openclaw configure)
+# 14. Homebrew (AI assistant deps + formatters)
 # ============================================================
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 ENV HOMEBREW_NO_AUTO_UPDATE=1
-ENV NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache
-ENV OPENCLAW_NO_RESPAWN=1
-RUN mkdir -p /var/tmp/openclaw-compile-cache
 ENV PATH="/home/vscode/.local/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
 # AI assistant deps + formatters (no APT packages available)
@@ -1147,15 +1140,13 @@ USER root
 COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
 COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
 COPY claude-config/claude-proxy.sh /usr/local/lib/claude-proxy.sh
-COPY openclaw-config/openclaw-gateway.sh /usr/local/lib/openclaw-gateway.sh
 COPY claude-config/statusline.sh /opt/claude-config/statusline.sh
 COPY claude-config/settings.json /opt/claude-config/settings.json
 COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
-COPY openclaw-config/openclaw.json.tmpl /opt/openclaw-config/openclaw.json.tmpl
 COPY opencode-config/opencode.json /opt/opencode-config/opencode.json
 COPY opencode-config/opencode-anthropic.json /opt/opencode-config/opencode-anthropic.json
 COPY codex-config/config.toml /opt/codex-config/config.toml
-RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh /usr/local/lib/openclaw-gateway.sh /opt/claude-config/statusline.sh /opt/claude-config/install-plugins.sh \
+RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh /opt/claude-config/statusline.sh /opt/claude-config/install-plugins.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
     && mkdir -p /etc/claude-code/.claude/rules \
     && cp /opt/claude-config/settings.json /home/${USERNAME}/.claude/settings.json \
@@ -1172,18 +1163,6 @@ RUN printf '#!/bin/bash\n. /usr/local/lib/claude-proxy.sh\nstart_claude_proxy\n'
       > /etc/profile.d/claude-proxy.sh \
     && chmod +x /etc/profile.d/claude-proxy.sh \
     && printf '. /usr/local/lib/claude-proxy.sh\nstart_claude_proxy\n' \
-      >> /etc/zsh/zshenv
-
-# Shell hooks: source the openclaw gateway function in every interactive shell.
-# If the user configures openclaw after container start, the next shell session
-# starts the gateway automatically.
-# - /etc/profile.d/ covers bash login shells
-# - /etc/zsh/zshenv covers zsh (sourced by oh-my-zsh base image)
-# hadolint ignore=SC1091
-RUN printf '#!/bin/bash\n. /usr/local/lib/openclaw-gateway.sh\nstart_openclaw_gateway\n' \
-      > /etc/profile.d/openclaw-gateway.sh \
-    && chmod +x /etc/profile.d/openclaw-gateway.sh \
-    && printf '. /usr/local/lib/openclaw-gateway.sh\nstart_openclaw_gateway\n' \
       >> /etc/zsh/zshenv
 
 # Map CLAUDE_CODE_OAUTH_TOKEN → ANTHROPIC_OAUTH_TOKEN for tools

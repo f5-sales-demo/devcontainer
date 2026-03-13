@@ -1,7 +1,6 @@
 *
 !entrypoint.sh
 !claude-config/
-!openclaw-config/
 !opencode-config/
 !codex-config/
 !configs/
