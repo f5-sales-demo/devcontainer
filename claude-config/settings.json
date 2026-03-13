@@ -16,9 +16,7 @@
     "pr-review-toolkit@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
-    "greptile@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true,
-    "postman@claude-plugins-official": true
+    "hookify@claude-plugins-official": true
   },
   "mcpServers": {
     "searxng": {

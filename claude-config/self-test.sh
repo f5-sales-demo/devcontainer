@@ -205,8 +205,8 @@ echo ""
 echo "8. Claude Code Plugins"
 check "enabledPlugins in settings.json" \
   jq -e '.enabledPlugins' "$HOME/.claude/settings.json"
-check "16 plugins configured" \
-  test "$(jq '.enabledPlugins | length' "$HOME/.claude/settings.json")" -eq 16
+check "14 plugins configured" \
+  test "$(jq '.enabledPlugins | length' "$HOME/.claude/settings.json")" -eq 14
 check "FORCE_AUTOUPDATE_PLUGINS set" test "$FORCE_AUTOUPDATE_PLUGINS" = "true"
 check "plugin marketplace cached" \
   test -d "$HOME/.claude/plugins/marketplaces/claude-plugins-official"
@@ -214,6 +214,14 @@ check "marketplace.json in cache" \
   test -f "$HOME/.claude/plugins/marketplaces/claude-plugins-official/.claude-plugin/marketplace.json"
 check "known_marketplaces.json exists" \
   test -f "$HOME/.claude/plugins/known_marketplaces.json"
+check "installed_plugins.json exists" \
+  test -f "$HOME/.claude/plugins/installed_plugins.json"
+check "plugin cache populated" \
+  test -d "$HOME/.claude/plugins/cache/claude-plugins-official"
+check "superpowers pre-installed" \
+  test -d "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers"
+check "all enabled plugins cached" \
+  test "$(jq 'length' "$HOME/.claude/plugins/installed_plugins.json")" -eq 14
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $WARN warnings ==="
