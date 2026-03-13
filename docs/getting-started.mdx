@@ -42,11 +42,11 @@ Verify it's working:
 
 ```bash
 podman --version
-podman compose version
+podman-compose version
 ```
 
 :::note[Linux only]
-Podman on Linux runs containers directly (no VM). Ensure the Podman socket is active so `podman compose` can connect:
+Podman on Linux runs containers directly (no VM). Ensure the Podman socket is active so `podman-compose` can connect:
 
 ```bash
 systemctl --user enable --now podman.socket
@@ -128,7 +128,7 @@ docker compose up -d
 <TabItem label="Podman">
 
 ```bash
-podman compose pull && podman compose up -d
+podman-compose pull && podman-compose up -d
 ```
 
 </TabItem>
@@ -149,7 +149,7 @@ docker compose exec dev zsh
 <TabItem label="Podman">
 
 ```bash
-podman compose exec dev zsh
+podman-compose exec dev zsh
 ```
 
 </TabItem>
@@ -217,14 +217,14 @@ docker compose up -d
 
 ```bash
 # Stop (preserves data)
-podman compose down
+podman-compose down
 
 # Start again (pull ensures latest image)
-podman compose pull && podman compose up -d
+podman-compose pull && podman-compose up -d
 
 # Destroy everything and start fresh
-podman compose down -v
-podman compose pull && podman compose up -d
+podman-compose down -v
+podman-compose pull && podman-compose up -d
 ```
 
 </TabItem>

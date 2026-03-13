@@ -174,10 +174,10 @@ See [Local Development](./local-development) for details.
 </TabItem>
 <TabItem label="Podman">
 
-Running `podman compose up -d` pulls the pre-built image automatically. To build locally after customizing the Dockerfile, pass the build file explicitly:
+Running `podman-compose up -d` pulls the pre-built image automatically. To build locally after customizing the Dockerfile, pass the build file explicitly:
 
 ```bash
-podman compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
 See [Local Development](./local-development) for details.
@@ -245,12 +245,12 @@ Both persist across container restarts and rebuilds. Run `docker compose pull` t
 </TabItem>
 <TabItem label="Podman">
 
-Both persist across container restarts and rebuilds. Run `podman compose pull` to fetch the latest pre-built image before restarting.
+Both persist across container restarts and rebuilds. Run `podman-compose pull` to fetch the latest pre-built image before restarting.
 
 | Action | Data |
 |--------|------|
-| `podman compose down` | Preserved |
-| `podman compose down -v` | **Deleted** |
+| `podman-compose down` | Preserved |
+| `podman-compose down -v` | **Deleted** |
 
 </TabItem>
 </Tabs>
