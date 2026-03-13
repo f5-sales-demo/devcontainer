@@ -69,7 +69,7 @@ fi
 # The image pre-bakes the full default; only act if volume-mounted with different content
 if [ -f "$HOME/.claude.json" ] && [ -s "$HOME/.claude.json" ]; then
   if jq -e '.hasCompletedOnboarding and .projects["/workspace"].hasTrustDialogAccepted' \
-       "$HOME/.claude.json" >/dev/null 2>&1; then
+    "$HOME/.claude.json" >/dev/null 2>&1; then
     : # Already correct, skip
   else
     jq '. + {"hasCompletedOnboarding": true, "theme": (.theme // "dark-daltonized")}
@@ -111,7 +111,7 @@ if [ ! -f "$OPENCLAW_CONFIG" ] || [ ! -s "$OPENCLAW_CONFIG" ]; then
     fi
     export OPENCLAW_GATEWAY_TOKEN
     sed "s|__GATEWAY_TOKEN__|${OPENCLAW_GATEWAY_TOKEN}|" \
-      /opt/openclaw-config/openclaw.json.tmpl > "$OPENCLAW_CONFIG"
+      /opt/openclaw-config/openclaw.json.tmpl >"$OPENCLAW_CONFIG"
     chmod 700 "$HOME/.openclaw"
     chmod 600 "$OPENCLAW_CONFIG"
   fi
