@@ -5,6 +5,14 @@
   "terminalProgressBarEnabled": true,
   "defaultMode": "bypassPermissions",
   "skipDangerousModePermissionPrompt": true,
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Edit",
+      "Write",
+      "mcp__*"
+    ]
+  },
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
