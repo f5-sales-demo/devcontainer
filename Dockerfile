@@ -995,6 +995,28 @@ RUN apt-get purge -y build-essential \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
+# 12l. Claude Code plugins (pre-bake marketplace cache)
+#      Clones the official plugin marketplace so Claude Code
+#      skips the initial download on first launch. The .git
+#      directory is kept because FORCE_AUTOUPDATE_PLUGINS
+#      needs it for incremental pulls.
+# ============================================================
+# hadolint ignore=DL3059
+RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
+    && mkdir -p "${PLUGIN_BASE}/marketplaces" \
+    && git clone --depth=1 --single-branch --branch main \
+        https://github.com/anthropics/claude-plugins-official.git \
+        "${PLUGIN_BASE}/marketplaces/claude-plugins-official" \
+    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s"}}' \
+        "${PLUGIN_BASE}/marketplaces/claude-plugins-official" \
+        "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
+        > "${PLUGIN_BASE}/known_marketplaces.json" \
+    && printf '{"fetchedAt":"%s","plugins":[]}' \
+        "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
+        > "${PLUGIN_BASE}/blocklist.json" \
+    && chown -R ${USERNAME}:${USERNAME} "${PLUGIN_BASE}"
+
+# ============================================================
 # 13. Playwright browsers (Chromium + system deps)
 # ============================================================
 # hadolint ignore=DL3059
