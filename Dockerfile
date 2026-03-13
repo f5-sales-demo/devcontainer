@@ -1027,6 +1027,9 @@ RUN claude install --force \
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 ENV HOMEBREW_NO_AUTO_UPDATE=1
+ENV NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache
+ENV OPENCLAW_NO_RESPAWN=1
+RUN mkdir -p /var/tmp/openclaw-compile-cache
 ENV PATH="/home/vscode/.local/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
 # AI assistant deps + formatters (no APT packages available)
@@ -1107,7 +1110,7 @@ USER root
 COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
 COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
 COPY claude-config/claude-proxy.sh /usr/local/lib/claude-proxy.sh
-COPY claude-config/openclaw-gateway.sh /usr/local/lib/openclaw-gateway.sh
+COPY openclaw-config/openclaw-gateway.sh /usr/local/lib/openclaw-gateway.sh
 COPY claude-config/statusline.sh /opt/claude-config/statusline.sh
 COPY opencode-config/opencode.json /opt/opencode-config/opencode.json
 COPY opencode-config/opencode-anthropic.json /opt/opencode-config/opencode-anthropic.json
