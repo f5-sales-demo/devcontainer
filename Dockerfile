@@ -994,12 +994,17 @@ RUN apt-get purge -y build-essential \
     && apt-get autoremove -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Pre-stage plugin install script and settings for section 12l
+COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
+COPY claude-config/settings.json /opt/claude-config/settings.json
+RUN chmod +x /opt/claude-config/install-plugins.sh
+
 # ============================================================
-# 12l. Claude Code plugins (pre-bake marketplace cache)
-#      Clones the official plugin marketplace so Claude Code
-#      skips the initial download on first launch. The .git
-#      directory is kept because FORCE_AUTOUPDATE_PLUGINS
-#      needs it for incremental pulls.
+# 12l. Claude Code plugins (pre-install from marketplace)
+#      Clones the official marketplace, copies each enabled
+#      plugin into the cache, clones superpowers separately,
+#      and generates installed_plugins.json so Claude Code
+#      treats all plugins as fully installed at first launch.
 # ============================================================
 # hadolint ignore=DL3059
 RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
@@ -1014,6 +1019,8 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
     && printf '{"fetchedAt":"%s","plugins":[]}' \
         "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
         > "${PLUGIN_BASE}/blocklist.json" \
+    && /opt/claude-config/install-plugins.sh \
+        "${PLUGIN_BASE}" /opt/claude-config/settings.json \
     && chown -R ${USERNAME}:${USERNAME} "${PLUGIN_BASE}"
 
 # ============================================================
@@ -1141,11 +1148,12 @@ COPY claude-config/claude-proxy.sh /usr/local/lib/claude-proxy.sh
 COPY openclaw-config/openclaw-gateway.sh /usr/local/lib/openclaw-gateway.sh
 COPY claude-config/statusline.sh /opt/claude-config/statusline.sh
 COPY claude-config/settings.json /opt/claude-config/settings.json
+COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
 COPY openclaw-config/openclaw.json.tmpl /opt/openclaw-config/openclaw.json.tmpl
 COPY opencode-config/opencode.json /opt/opencode-config/opencode.json
 COPY opencode-config/opencode-anthropic.json /opt/opencode-config/opencode-anthropic.json
 COPY codex-config/config.toml /opt/codex-config/config.toml
-RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh /usr/local/lib/openclaw-gateway.sh /opt/claude-config/statusline.sh \
+RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh /usr/local/lib/openclaw-gateway.sh /opt/claude-config/statusline.sh /opt/claude-config/install-plugins.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
     && mkdir -p /etc/claude-code/.claude/rules \
     && cp /opt/claude-config/settings.json /home/${USERNAME}/.claude/settings.json \
