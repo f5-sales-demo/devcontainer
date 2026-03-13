@@ -1011,15 +1011,21 @@ USER $USERNAME
 WORKDIR /home/$USERNAME
 
 RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
-    && echo '{"hasCompletedOnboarding": true}' > ~/.claude.json.default
+    ~/.openclaw/agents/main/agent \
+    ~/.openclaw/agents/main/sessions \
+    ~/.config/opencode \
+    ~/.local/share/opencode \
+    ~/.local/share/claude-proxy \
+    ~/.local/share/openclaw-gateway \
+    ~/.codex \
+    ~/.pi/agent \
+    ~/.ssh
 
 # Install native Claude Code binary (replaces npm package)
 # hadolint ignore=DL3059
 RUN claude install --force \
     && sudo npm uninstall -g @anthropic-ai/claude-code \
-    && jq '. + {"hasCompletedOnboarding": true, "theme": "dark-daltonized"}' \
-        ~/.claude.json > /tmp/claude.json && mv /tmp/claude.json ~/.claude.json \
-    && echo '{"statusline": {"command": "/opt/claude-config/statusline.sh"}}' > ~/.claude/settings.json
+    && echo '{"hasCompletedOnboarding":true,"theme":"dark-daltonized","projects":{"/workspace":{"hasTrustDialogAccepted":true}}}' > ~/.claude.json
 
 # ============================================================
 # 14. Homebrew (needed by openclaw configure)
@@ -1112,12 +1118,16 @@ COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
 COPY claude-config/claude-proxy.sh /usr/local/lib/claude-proxy.sh
 COPY openclaw-config/openclaw-gateway.sh /usr/local/lib/openclaw-gateway.sh
 COPY claude-config/statusline.sh /opt/claude-config/statusline.sh
+COPY claude-config/settings.json /opt/claude-config/settings.json
+COPY openclaw-config/openclaw.json.tmpl /opt/openclaw-config/openclaw.json.tmpl
 COPY opencode-config/opencode.json /opt/opencode-config/opencode.json
 COPY opencode-config/opencode-anthropic.json /opt/opencode-config/opencode-anthropic.json
 COPY codex-config/config.toml /opt/codex-config/config.toml
 RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh /usr/local/lib/openclaw-gateway.sh /opt/claude-config/statusline.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
-    && mkdir -p /etc/claude-code/.claude/rules
+    && mkdir -p /etc/claude-code/.claude/rules \
+    && cp /opt/claude-config/settings.json /home/${USERNAME}/.claude/settings.json \
+    && chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.claude/settings.json
 
 # Shell hooks: source the proxy function in every interactive shell.
 # If the user exports OPENAI_API_KEY after container start (or the

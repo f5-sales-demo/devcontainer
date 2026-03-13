@@ -1,0 +1,14 @@
+---
+title: Integration Tests
+description: Automated tests that verify the devcontainer's runtime stacks work end-to-end.
+sidebar:
+  order: 7
+---
+
+These tests validate that the devcontainer's major subsystems work together at runtime. They are not baked into the Docker image — run them inside a running container to verify its capabilities.
+
+## Available Tests
+
+| Test | What it proves |
+| ---- | ---- |
+| [Screen Recording](/devcontainer/tests/screen-recording/) | Xvfb display, headed Chromium (Playwright), and ffmpeg recording produce a valid MP4 |
