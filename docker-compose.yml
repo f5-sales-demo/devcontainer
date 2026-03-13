@@ -30,12 +30,9 @@ services:
       - SETGID
       - NET_RAW
       - NET_ADMIN
-    deploy:
-      resources:
-        limits:
-          cpus: '4'
-          memory: 8g
-          pids: 4096
+    mem_limit: 8g
+    cpus: 4
+    pids_limit: 4096
     tmpfs:
       - /tmp:size=256m
     stdin_open: true
