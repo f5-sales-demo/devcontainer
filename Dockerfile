@@ -64,8 +64,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       -o /usr/share/keyrings/tailscale-archive-keyring.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu noble main" \
       > /etc/apt/sources.list.d/tailscale.list \
-    # Mozilla (Firefox ESR — Browsh backend, amd64 only)
-    && if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+    # Mozilla (Firefox ESR — Browsh backend, amd64 + arm64)
+    && ARCH="$(dpkg --print-architecture)" \
+    && if [ "$ARCH" = "amd64" ] || [ "$ARCH" = "arm64" ]; then \
       curl ${CURL_RETRY} -fsSL https://packages.mozilla.org/apt/repo-signing-key.gpg \
         | gpg --dearmor -o /usr/share/keyrings/packages.mozilla.org.gpg \
       && echo "deb [signed-by=/usr/share/keyrings/packages.mozilla.org.gpg] https://packages.mozilla.org/apt mozilla main" \
