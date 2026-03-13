@@ -208,6 +208,12 @@ check "enabledPlugins in settings.json" \
 check "16 plugins configured" \
   test "$(jq '.enabledPlugins | length' "$HOME/.claude/settings.json")" -eq 16
 check "FORCE_AUTOUPDATE_PLUGINS set" test "$FORCE_AUTOUPDATE_PLUGINS" = "true"
+check "plugin marketplace cached" \
+  test -d "$HOME/.claude/plugins/marketplaces/claude-plugins-official"
+check "marketplace.json in cache" \
+  test -f "$HOME/.claude/plugins/marketplaces/claude-plugins-official/.claude-plugin/marketplace.json"
+check "known_marketplaces.json exists" \
+  test -f "$HOME/.claude/plugins/known_marketplaces.json"
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $WARN warnings ==="
