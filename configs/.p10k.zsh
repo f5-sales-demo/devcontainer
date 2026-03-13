@@ -364,8 +364,8 @@
   # Version control background colors.
   typeset -g POWERLEVEL9K_VCS_CLEAN_BACKGROUND=2
   typeset -g POWERLEVEL9K_VCS_MODIFIED_BACKGROUND=3
-  typeset -g POWERLEVEL9K_VCS_UNTRACKED_BACKGROUND=2
-  typeset -g POWERLEVEL9K_VCS_CONFLICTED_BACKGROUND=3
+  typeset -g POWERLEVEL9K_VCS_UNTRACKED_BACKGROUND=39
+  typeset -g POWERLEVEL9K_VCS_CONFLICTED_BACKGROUND=1
   typeset -g POWERLEVEL9K_VCS_LOADING_BACKGROUND=8
 
   # Branch icon. Set this parameter to '\UE0A0 ' for the popular Powerline branch icon.
@@ -398,7 +398,7 @@
     local      clean='%0F' # black foreground
     local   modified='%0F' # black foreground
     local  untracked='%0F' # black foreground
-    local conflicted='%1F' # red foreground
+    local conflicted='%7F' # white foreground
 
     local res
 
