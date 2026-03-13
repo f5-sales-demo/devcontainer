@@ -105,6 +105,49 @@ CLAWEOF
   fi
 fi
 
+# Seed openclaw gateway config if missing
+OPENCLAW_CONFIG="$HOME/.openclaw/openclaw.json"
+if [ ! -f "$OPENCLAW_CONFIG" ] || [ ! -s "$OPENCLAW_CONFIG" ]; then
+  if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+    # Generate a random local IPC token (18 bytes → 24 chars base64url)
+    # This authenticates the TUI client to the local gateway on loopback.
+    if [ -z "$OPENCLAW_GATEWAY_TOKEN" ]; then
+      OPENCLAW_GATEWAY_TOKEN="$(openssl rand -base64 18)"
+    fi
+    export OPENCLAW_GATEWAY_TOKEN
+    mkdir -p "$HOME/.openclaw"
+    cat >"$OPENCLAW_CONFIG" <<GWEOF
+{
+  "gateway": {
+    "mode": "local",
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+    }
+  },
+  "auth": {
+    "profiles": {
+      "anthropic:oauth": {
+        "type": "oauth",
+        "provider": "anthropic",
+        "access": "${CLAUDE_CODE_OAUTH_TOKEN}",
+        "refresh": "",
+        "expires": 9999999999999
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "claude-opus-4-6"
+      }
+    }
+  }
+}
+GWEOF
+  fi
+fi
+
 # Seed codex config if missing
 CODEX_CONFIG_DIR="$HOME/.codex"
 if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] || [ ! -s "$CODEX_CONFIG_DIR/config.toml" ]; then
@@ -152,6 +195,16 @@ fi
 # shellcheck source=/dev/null
 . /usr/local/lib/claude-proxy.sh
 start_claude_proxy
+
+# ============================================================
+# OpenClaw Gateway (local WebSocket gateway for TUI)
+# ============================================================
+# Source the shared gateway startup function, then invoke it.
+# The same function is sourced by interactive shells so the gateway
+# auto-recovers even if it was not running at container start.
+# shellcheck source=/dev/null
+. /usr/local/lib/openclaw-gateway.sh
+start_openclaw_gateway
 
 # ============================================================
 # VNC stack (Xvfb + fluxbox + x11vnc + noVNC)

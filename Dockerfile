@@ -1107,11 +1107,12 @@ USER root
 COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
 COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
 COPY claude-config/claude-proxy.sh /usr/local/lib/claude-proxy.sh
+COPY claude-config/openclaw-gateway.sh /usr/local/lib/openclaw-gateway.sh
 COPY claude-config/statusline.sh /opt/claude-config/statusline.sh
 COPY opencode-config/opencode.json /opt/opencode-config/opencode.json
 COPY opencode-config/opencode-anthropic.json /opt/opencode-config/opencode-anthropic.json
 COPY codex-config/config.toml /opt/codex-config/config.toml
-RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh /opt/claude-config/statusline.sh \
+RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh /usr/local/lib/openclaw-gateway.sh /opt/claude-config/statusline.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
     && mkdir -p /etc/claude-code/.claude/rules
 
@@ -1126,6 +1127,18 @@ RUN printf '#!/bin/bash\n. /usr/local/lib/claude-proxy.sh\nstart_claude_proxy\n'
       > /etc/profile.d/claude-proxy.sh \
     && chmod +x /etc/profile.d/claude-proxy.sh \
     && printf '. /usr/local/lib/claude-proxy.sh\nstart_claude_proxy\n' \
+      >> /etc/zsh/zshenv
+
+# Shell hooks: source the openclaw gateway function in every interactive shell.
+# If the user configures openclaw after container start, the next shell session
+# starts the gateway automatically.
+# - /etc/profile.d/ covers bash login shells
+# - /etc/zsh/zshenv covers zsh (sourced by oh-my-zsh base image)
+# hadolint ignore=SC1091
+RUN printf '#!/bin/bash\n. /usr/local/lib/openclaw-gateway.sh\nstart_openclaw_gateway\n' \
+      > /etc/profile.d/openclaw-gateway.sh \
+    && chmod +x /etc/profile.d/openclaw-gateway.sh \
+    && printf '. /usr/local/lib/openclaw-gateway.sh\nstart_openclaw_gateway\n' \
       >> /etc/zsh/zshenv
 
 # Map CLAUDE_CODE_OAUTH_TOKEN → ANTHROPIC_OAUTH_TOKEN for tools

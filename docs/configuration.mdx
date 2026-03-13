@@ -113,8 +113,21 @@ The container includes several AI coding agents in addition to Claude Code:
 | [Codex](https://github.com/openai/codex) | `codex` | OpenAI-compatible (proxy mode only) |
 | [Aider](https://aider.chat/) | `aider` | Multi-provider (configure at runtime) |
 | [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | Multi-provider (configure at runtime) |
+| [OpenClaw](https://github.com/anthropics/openclaw) | `openclaw tui` | Anthropic (OAuth) |
 
 Aider is installed via `uv tool install` with Python 3.12 (it requires Python &lt;3.13) and includes the `browser`, `help`, and `playwright` extras. Pi is installed as a global npm package. Codex is a standalone binary that self-updates at runtime.
+
+### OpenClaw
+
+[OpenClaw](https://github.com/anthropics/openclaw) uses a local WebSocket gateway to connect the TUI client to Anthropic's API. The container automatically seeds the gateway configuration and starts the gateway process at startup when `CLAUDE_CODE_OAUTH_TOKEN` is set.
+
+The gateway config is written to `~/.openclaw/openclaw.json`. A random IPC token (`OPENCLAW_GATEWAY_TOKEN`) authenticates the TUI to the local gateway on loopback — this is not a user credential.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OPENCLAW_GATEWAY_TOKEN` | Auto-generated (24 chars base64url) | Override the local IPC token used between TUI and gateway |
+
+The gateway logs to `~/.local/share/openclaw-gateway/gateway.log` inside the container. The config is only seeded when the file doesn't already exist, so you can customize it without it being overwritten on restart.
 
 ### Web Search (SearXNG MCP)
 
