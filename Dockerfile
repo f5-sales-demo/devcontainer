@@ -1071,7 +1071,9 @@ ENV PATH="/home/vscode/.local/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew
 # hadolint ignore=DL3059
 RUN brew install ada-url hdrhistogram_c icu4c@78 llhttp uvwasi \
       air dfmt nixfmt ormolu oxfmt \
-    && brew cleanup --prune=all -s
+    && brew cleanup --prune=all -s \
+    && rm -f /home/linuxbrew/.linuxbrew/bin/python3 \
+             /home/linuxbrew/.linuxbrew/bin/python3.14
 
 # ============================================================
 # 15. ZSH plugins (oh-my-zsh is pre-installed by devcontainers base)
