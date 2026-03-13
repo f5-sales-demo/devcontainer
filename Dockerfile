@@ -1170,6 +1170,7 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER $USERNAME
+ENV FORCE_AUTOUPDATE_PLUGINS=true
 ENV SHELL=/bin/zsh
 WORKDIR /workspace
 

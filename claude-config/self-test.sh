@@ -202,6 +202,14 @@ if [ "$DPKG_ARCH" = "amd64" ]; then
 fi
 
 echo ""
+echo "8. Claude Code Plugins"
+check "enabledPlugins in settings.json" \
+  jq -e '.enabledPlugins' "$HOME/.claude/settings.json"
+check "16 plugins configured" \
+  test "$(jq '.enabledPlugins | length' "$HOME/.claude/settings.json")" -eq 16
+check "FORCE_AUTOUPDATE_PLUGINS set" test "$FORCE_AUTOUPDATE_PLUGINS" = "true"
+
+echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $WARN warnings ==="
 
 if [ "$FAIL" -gt 0 ]; then
