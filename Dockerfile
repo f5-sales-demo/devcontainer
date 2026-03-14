@@ -1144,15 +1144,11 @@ RUN mkdir -p "$HOME/.npm-global" \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh /home/${USERNAME}/.p10k.zsh
-# Neovim plugins (native pack — no plugin manager)
+# Neovim plugins (lazy.nvim plugin manager + avante.nvim AI assistant)
+COPY --chown=${USERNAME}:${USERNAME} configs/init.lua /home/${USERNAME}/.config/nvim/init.lua
+COPY --chown=${USERNAME}:${USERNAME} configs/setup-nvim.sh /tmp/setup-nvim.sh
 # hadolint ignore=DL3059
-RUN mkdir -p ~/.local/share/nvim/site/pack/plugins/start \
-    && git clone --depth=1 https://github.com/Mofiqul/vscode.nvim \
-      ~/.local/share/nvim/site/pack/plugins/start/vscode.nvim \
-    && git clone --depth=1 https://github.com/nvim-lualine/lualine.nvim \
-      ~/.local/share/nvim/site/pack/plugins/start/lualine.nvim
-
-COPY --chown=${USERNAME}:${USERNAME} configs/init.vim /home/${USERNAME}/.config/nvim/init.vim
+RUN bash /tmp/setup-nvim.sh && rm /tmp/setup-nvim.sh
 COPY --chown=${USERNAME}:${USERNAME} configs/.hushlogin /home/${USERNAME}/.hushlogin
 COPY --chown=${USERNAME}:${USERNAME} configs/.inputrc /home/${USERNAME}/.inputrc
 COPY --chown=${USERNAME}:${USERNAME} configs/.tmux.conf /home/${USERNAME}/.tmux.conf
