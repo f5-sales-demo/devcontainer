@@ -1,0 +1,34 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "agents": {
+    "sisyphus": { "model": "openai-proxy/claude-opus-4-6" },
+    "oracle": { "model": "openai-proxy/claude-opus-4-6" },
+    "librarian": { "model": "openai-proxy/claude-opus-4-6" },
+    "explore": { "model": "openai-proxy/grok-code-fast-1" },
+    "multimodal-looker": { "model": "openai-proxy/claude-opus-4-6" },
+    "prometheus": { "model": "openai-proxy/claude-opus-4-6" },
+    "metis": { "model": "openai-proxy/claude-opus-4-6" },
+    "hephaestus": { "model": "openai-proxy/gpt-5.4" },
+    "momus": { "model": "openai-proxy/claude-opus-4-6" },
+    "atlas": { "model": "openai-proxy/claude-sonnet-4-6" },
+    "frontend-ui-ux-engineer": { "model": "openai-proxy/gpt-5.4" },
+    "document-writer": { "model": "openai-proxy/claude-opus-4-6" }
+  },
+  "categories": {
+    "visual-engineering": { "model": "openai-proxy/gpt-5.4" },
+    "business-logic": { "model": "openai-proxy/gpt-5.4" },
+    "ultrabrain": { "model": "openai-proxy/gpt-5.4" },
+    "deep": { "model": "openai-proxy/gpt-5.4" },
+    "artistry": { "model": "openai-proxy/gpt-5.4" },
+    "quick": { "model": "openai-proxy/claude-sonnet-4-6" },
+    "unspecified-low": { "model": "openai-proxy/claude-opus-4-6" },
+    "unspecified-high": { "model": "openai-proxy/claude-opus-4-6" },
+    "writing": { "model": "openai-proxy/claude-opus-4-6" }
+  },
+  "background_task": {
+    "defaultConcurrency": 5,
+    "providerConcurrency": {
+      "openai-proxy": 5
+    }
+  }
+}
