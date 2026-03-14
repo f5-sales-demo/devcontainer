@@ -19,7 +19,7 @@ This test verifies the full VNC/browser stack by recording a headed browser sess
 1. Polls `xdpyinfo -display :99` until the X display is ready (same pattern as the entrypoint)
 2. Starts ffmpeg recording the display at 10 fps
 3. Launches headed Chromium via Playwright's `sync_api`
-4. Navigates to `https://docs.cloud.f5.com` (3 s pause), then `https://www.f5.com` (3 s pause)
+4. Navigates to `https://example.com` (3 s pause), then `https://httpbin.org` (3 s pause)
 5. Sends SIGTERM to ffmpeg for clean MP4 finalization
 6. Reports the output path and file size
 
@@ -51,8 +51,8 @@ RESOLUTION = "1280x1024"
 FRAMERATE = "10"
 XVFB_TIMEOUT = 50  # iterations (~5 s at 0.1 s each)
 SITES = [
-    ("https://docs.cloud.f5.com", 3),
-    ("https://www.f5.com", 3),
+    ("https://example.com", 3),
+    ("https://httpbin.org", 3),
 ]
 
 
@@ -184,8 +184,8 @@ podman run --rm \
 Waiting for Xvfb on :99 ...
   Display ready after 0.3s
 Starting ffmpeg recording -> /tmp/recording.mp4
-  Navigating to https://docs.cloud.f5.com ...
-  Navigating to https://www.f5.com ...
+  Navigating to https://example.com ...
+  Navigating to https://httpbin.org ...
 Stopping ffmpeg ...
 
 SUCCESS: /tmp/recording.mp4 (1,234,567 bytes)
