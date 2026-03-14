@@ -1050,7 +1050,8 @@ RUN claude install --force \
 # oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
 # hadolint ignore=DL3059
 RUN npx -y oh-my-opencode install --no-tui \
-    --claude=max20 --openai=no --gemini=no --copilot=no
+    --claude=max20 --openai=no --gemini=no --copilot=no \
+    && rm -f ~/.config/opencode/*.bak.*
 
 # Preserve oh-my-opencode config as fallback template
 # (entrypoint re-seeds if ~/.config/opencode/ is volume-mounted empty)

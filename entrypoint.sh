@@ -104,8 +104,9 @@ elif [ -f /opt/opencode-config/oh-my-opencode.json ]; then
   cp /opt/opencode-config/oh-my-opencode.json \
     "$OPENCODE_CONFIG_DIR/oh-my-opencode.json"
 fi
-# Remove stale .jsonc if present (old builds used wrong extension)
+# Remove stale files (old .jsonc extension, oh-my-opencode .bak artifacts)
 rm -f "$OPENCODE_CONFIG_DIR/oh-my-opencode.jsonc"
+rm -f "$OPENCODE_CONFIG_DIR"/*.bak.*
 
 # Seed codex config if missing (dir pre-created in image)
 CODEX_CONFIG_DIR="$HOME/.codex"
