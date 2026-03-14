@@ -1179,7 +1179,13 @@ RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh /opt
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
     && mkdir -p /etc/claude-code/.claude/rules \
     && cp /opt/claude-config/settings.json /home/${USERNAME}/.claude/settings.json \
-    && chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.claude/settings.json
+    && chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.claude/settings.json \
+    && mkdir -p /home/${USERNAME}/.claude/skills \
+    && for skill in /home/${USERNAME}/.agents/skills/*/; do \
+         name=$(basename "$skill"); \
+         ln -sf "../../.agents/skills/$name" "/home/${USERNAME}/.claude/skills/$name"; \
+       done \
+    && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.claude/skills
 
 # Shell hooks: source the proxy function in every interactive shell.
 # If the user exports OPENAI_API_KEY after container start (or the
