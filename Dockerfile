@@ -849,13 +849,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # all require a C compiler.
 
 # ============================================================
-# 12c. Tavily web search (skills for Claude Code, MCP for OpenCode)
+# 12c. Tavily web search (MCP for OpenCode)
 # ============================================================
-# Claude Code: Tavily skills plugin installed via npx
-# OpenCode: tavily-mcp package pre-installed for MCP server
+# OpenCode: tavily-mcp package pre-installed globally
+# Claude Code: Tavily skills installed later as vscode user (section 17)
 # hadolint ignore=DL3059
-RUN npx -y skills add tavily-ai/skills \
-    && npm install -g tavily-mcp@0.1.3
+RUN npm install -g tavily-mcp@0.1.3
 
 # ============================================================
 # 12d. Ruby linters (rubocop + extensions)
@@ -1046,6 +1045,10 @@ RUN curl -fsSL https://bun.sh/install | bash \
 RUN claude install --force \
     && sudo npm uninstall -g @anthropic-ai/claude-code \
     && echo '{"hasCompletedOnboarding":true,"theme":"dark-daltonized","projects":{"/workspace":{"hasTrustDialogAccepted":true}}}' > ~/.claude.json
+
+# Tavily skills for Claude Code (must run as vscode user with ~/.claude present)
+# hadolint ignore=DL3059
+RUN npx -y skills add tavily-ai/skills
 
 # oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
 # Build-time install uses upstream oh-my-opencode (needs platform binaries).
