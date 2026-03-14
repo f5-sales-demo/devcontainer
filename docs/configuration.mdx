@@ -150,11 +150,40 @@ The container runs a virtual display stack for watching and interacting with hea
 | `GIT_AUTHOR_NAME` | Name for git commits | `git config user.name` |
 | `GIT_AUTHOR_EMAIL` | Email for git commits | `git config user.email` |
 
+If git is configured on your host, auto-populate both values:
+
+```bash
+echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
+echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
+```
+
 ### SSH
 
 | Variable | Description | How to Set |
 |----------|-------------|------------|
 | `SSH_PRIVATE_KEY` | Base64-encoded private key | `base64 < ~/.ssh/id_ed25519` |
+
+### GitHub CLI
+
+| Variable | Description | How to Set |
+|----------|-------------|------------|
+| `GH_TOKEN` | GitHub personal access token for `gh` CLI and HTTPS git | `gh auth token` (if `gh` is installed locally) |
+
+When `GH_TOKEN` is set in `.env`, the `gh` CLI authenticates automatically — no need to run `gh auth login`. The entrypoint also runs `gh auth setup-git`, which configures the git credential helper so HTTPS `git clone` and `git push` work without SSH keys.
+
+If `gh` is installed and authenticated on your host machine, extract the token directly:
+
+```bash
+echo "GH_TOKEN=$(gh auth token)" >> .env
+```
+
+Otherwise, [create a personal access token](https://github.com/settings/tokens) and add it manually. Both fine-grained tokens (recommended) and classic tokens work. Fine-grained tokens let you scope access to specific repositories. Classic tokens require the `repo` scope for private repository access.
+
+To verify authentication inside the container:
+
+```bash
+gh auth status
+```
 
 ## How Tools Are Installed
 

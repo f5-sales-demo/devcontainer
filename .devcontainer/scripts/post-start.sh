@@ -77,5 +77,21 @@ for cmd in node python3 go rustc javac git gh kubectl helm terraform \
   fi
 done
 
+# GitHub CLI authentication status
+echo ""
+echo "  GitHub CLI:"
+if [ -n "$GH_TOKEN" ]; then
+  if gh auth status 2>&1 | head -3 | sed 's/^/    /'; then
+    :
+  else
+    echo "    WARNING: GH_TOKEN is set but gh auth failed"
+    echo "    Check that your token is valid and not expired"
+  fi
+else
+  echo "    Not authenticated (GH_TOKEN not set)"
+  echo "    To enable: add GH_TOKEN=ghp_... to .env"
+  echo "    Create a token at https://github.com/settings/tokens"
+fi
+
 echo ""
 echo "Ready! Start coding in /workspace"

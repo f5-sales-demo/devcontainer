@@ -115,6 +115,37 @@ CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
 
 See [Configuration](./configuration) for proxy setup with any OpenAI-compatible endpoint.
 
+### Auto-populate from local credentials
+
+If you have `git` and `gh` configured on your host, you can populate most `.env` values automatically. Start by copying the template:
+
+```bash
+cp .env.example .env
+```
+
+Then run whichever commands match your setup:
+
+```bash
+# Git identity
+echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
+echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
+
+# Timezone
+echo "TZ=$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')" >> .env
+
+# GitHub CLI token (requires: gh auth login)
+echo "GH_TOKEN=$(gh auth token)" >> .env
+
+# SSH key (if you use SSH for git)
+echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
+```
+
+Then edit `.env` to add your API key (see options above).
+
+:::tip[AI assistants]
+The `.env.example` file contains `@auto-detect` markers on every variable that can be populated from local tools. AI assistants like Claude Code can scan for these markers and run the associated commands to build a complete `.env` automatically.
+:::
+
 ## 3. Start
 
 <Tabs syncKey="runtime">

@@ -1174,6 +1174,7 @@ COPY claude-config/settings.json /opt/claude-config/settings.json
 COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
 COPY opencode-config/opencode.json /opt/opencode-config/opencode.json
 COPY opencode-config/opencode-anthropic.json /opt/opencode-config/opencode-anthropic.json
+COPY opencode-config/opencode-permissions.json /opt/opencode-config/opencode-permissions.json
 COPY codex-config/config.toml /opt/codex-config/config.toml
 RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh /opt/claude-config/statusline.sh /opt/claude-config/install-plugins.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
