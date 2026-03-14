@@ -78,16 +78,17 @@ if [ -f "$HOME/.claude.json" ] && [ -s "$HOME/.claude.json" ]; then
   fi
 fi
 
-# Seed opencode config if missing (dirs pre-created in image)
+# Seed opencode config (dirs pre-created in image)
+# Anthropic token always wins — overwrite any build-time config from oh-my-opencode
 OPENCODE_CONFIG_DIR="$HOME/.config/opencode"
-if [ ! -f "$OPENCODE_CONFIG_DIR/opencode.json" ] || [ ! -s "$OPENCODE_CONFIG_DIR/opencode.json" ]; then
-  if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -f /opt/opencode-config/opencode-anthropic.json ]; then
-    cp /opt/opencode-config/opencode-anthropic.json "$OPENCODE_CONFIG_DIR/opencode.json"
-    # Seed OAuth credentials for opencode's Anthropic provider
-    cat >"$HOME/.local/share/opencode/auth.json" <<AUTHEOF
+if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -f /opt/opencode-config/opencode-anthropic.json ]; then
+  cp /opt/opencode-config/opencode-anthropic.json "$OPENCODE_CONFIG_DIR/opencode.json"
+  # Seed OAuth credentials for opencode's Anthropic provider
+  cat >"$HOME/.local/share/opencode/auth.json" <<AUTHEOF
 {"anthropic":{"type":"oauth","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}
 AUTHEOF
-  elif [ -n "$OPENAI_API_KEY" ] && [ -f /opt/opencode-config/opencode.json ]; then
+elif [ ! -f "$OPENCODE_CONFIG_DIR/opencode.json" ] || [ ! -s "$OPENCODE_CONFIG_DIR/opencode.json" ]; then
+  if [ -n "$OPENAI_API_KEY" ] && [ -f /opt/opencode-config/opencode.json ]; then
     cp /opt/opencode-config/opencode.json "$OPENCODE_CONFIG_DIR/opencode.json"
   fi
 fi
