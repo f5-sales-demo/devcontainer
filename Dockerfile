@@ -1181,10 +1181,8 @@ RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh /opt
     && cp /opt/claude-config/settings.json /home/${USERNAME}/.claude/settings.json \
     && chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.claude/settings.json \
     && mkdir -p /home/${USERNAME}/.claude/skills \
-    && for skill in /home/${USERNAME}/.agents/skills/*/; do \
-         name=$(basename "$skill"); \
-         ln -sf "../../.agents/skills/$name" "/home/${USERNAME}/.claude/skills/$name"; \
-       done \
+    && find /home/${USERNAME}/.agents/skills -mindepth 1 -maxdepth 1 -type d \
+      -exec sh -c 'name=$(basename "$1"); ln -sf "../../.agents/skills/$name" "/home/'"${USERNAME}"'/.claude/skills/$name"' _ {} \; \
     && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.claude/skills
 
 # Shell hooks: source the proxy function in every interactive shell.
