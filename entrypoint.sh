@@ -92,6 +92,13 @@ AUTHEOF
   fi
 fi
 
+# Seed oh-my-opencode config if missing (generated at build time)
+if [ ! -f "$OPENCODE_CONFIG_DIR/oh-my-opencode.jsonc" ] && \
+   [ -f /opt/opencode-config/oh-my-opencode.jsonc ]; then
+  cp /opt/opencode-config/oh-my-opencode.jsonc \
+     "$OPENCODE_CONFIG_DIR/oh-my-opencode.jsonc"
+fi
+
 # Seed codex config if missing (dir pre-created in image)
 CODEX_CONFIG_DIR="$HOME/.codex"
 if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] || [ ! -s "$CODEX_CONFIG_DIR/config.toml" ]; then
