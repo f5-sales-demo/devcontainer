@@ -1055,11 +1055,13 @@ RUN claude install --force \
 
 # oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
 # Build-time install uses upstream oh-my-opencode (needs platform binaries).
-# Runtime plugin uses the fork (@robinmordasiewicz/oh-my-opencode) via opencode.json.
+# The forked runtime plugin is pre-installed so opencode skips download.
 # hadolint ignore=DL3059
 RUN npx -y oh-my-opencode install --no-tui \
     --claude=max20 --openai=no --gemini=no --copilot=no \
     && rm -f ~/.config/opencode/*.bak.*
+# hadolint ignore=DL3016,DL3059
+RUN sudo npm install -g @robinmordasiewicz/oh-my-opencode@3.11.0-fork.1
 
 # Preserve oh-my-opencode config as fallback template
 # (entrypoint re-seeds if ~/.config/opencode/ is volume-mounted empty)
