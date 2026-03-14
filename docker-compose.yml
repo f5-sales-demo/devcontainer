@@ -40,33 +40,6 @@ services:
     init: true
     restart: unless-stopped
 
-  searxng:
-    image: searxng/searxng:latest
-    container_name: devcontainer-searxng
-    hostname: searxng
-    profiles:
-      - search
-    ports:
-      - "127.0.0.1:8888:8080"
-    environment:
-      - SEARXNG_BASE_URL=http://searxng:8080
-    configs:
-      - source: searxng-settings
-        target: /etc/searxng/settings.yml
-    restart: unless-stopped
-
 volumes:
   workspace:
   home:
-
-configs:
-  searxng-settings:
-    content: |
-      use_default_settings: true
-      server:
-        limiter: false
-        public_instance: false
-      search:
-        formats:
-          - html
-          - json
