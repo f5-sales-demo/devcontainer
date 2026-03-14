@@ -30,5 +30,13 @@
     "providerConcurrency": {
       "openai-proxy": 5
     }
+  },
+  "claude_code": {
+    "plugins": true,
+    "skills": true,
+    "commands": true,
+    "agents": true,
+    "hooks": true,
+    "mcp": true
   }
 }
