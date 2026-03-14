@@ -97,8 +97,8 @@ fi
 # Proxy mode uses openai-proxy/* models; Anthropic mode
 # uses the build-time config from oh-my-opencode install
 if [ -n "$OPENAI_API_KEY" ] &&
-  [ -f /opt/opencode-config/oh-my-opencode-proxy.jsonc ]; then
-  cp /opt/opencode-config/oh-my-opencode-proxy.jsonc \
+  [ -f /opt/opencode-config/oh-my-opencode-proxy.json ]; then
+  cp /opt/opencode-config/oh-my-opencode-proxy.json \
     "$OPENCODE_CONFIG_DIR/oh-my-opencode.jsonc"
 elif [ ! -f "$OPENCODE_CONFIG_DIR/oh-my-opencode.jsonc" ] &&
   [ -f /opt/opencode-config/oh-my-opencode.jsonc ]; then
