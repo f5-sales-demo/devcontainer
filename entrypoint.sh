@@ -50,6 +50,11 @@ SSHCONF
   fi
 fi
 
+# GitHub CLI credential helper (enables HTTPS git clone/push)
+if [ -n "$GH_TOKEN" ]; then
+  gh auth setup-git 2>/dev/null || true
+fi
+
 # Export ANTHROPIC_OAUTH_TOKEN for tools that read it (e.g. Pi)
 if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then
   export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"

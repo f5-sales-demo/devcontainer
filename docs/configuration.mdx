@@ -156,6 +156,22 @@ The container runs a virtual display stack for watching and interacting with hea
 |----------|-------------|------------|
 | `SSH_PRIVATE_KEY` | Base64-encoded private key | `base64 < ~/.ssh/id_ed25519` |
 
+### GitHub CLI
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `GH_TOKEN` | GitHub personal access token for `gh` CLI and HTTPS git | `ghp_abc123...` |
+
+When `GH_TOKEN` is set in `.env`, the `gh` CLI authenticates automatically — no need to run `gh auth login`. The entrypoint also runs `gh auth setup-git`, which configures the git credential helper so HTTPS `git clone` and `git push` work without SSH keys.
+
+Both [fine-grained tokens](https://github.com/settings/tokens?type=beta) (recommended) and classic tokens work. Fine-grained tokens let you scope access to specific repositories. Classic tokens require the `repo` scope for private repository access.
+
+To verify authentication inside the container:
+
+```bash
+gh auth status
+```
+
 ## How Tools Are Installed
 
 Every language runtime, CLI, and tool is installed directly in the `Dockerfile` at image build time. The pre-built image is published to `ghcr.io/f5xc-salesdemos/devcontainer:latest` on every push to `main`, so most users never need to build locally.
