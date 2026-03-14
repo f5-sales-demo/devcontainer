@@ -759,12 +759,6 @@ RUN npm install -g \
     markdownlint-cli \
     asciinema-player
 
-# Bun JavaScript runtime and package manager
-# hadolint ignore=DL3059
-RUN curl -fsSL https://bun.sh/install | bash \
-    && ln -s /home/vscode/.bun/bin/bun /usr/local/bin/bun \
-    && ln -s /home/vscode/.bun/bin/bunx /usr/local/bin/bunx
-
 # ============================================================
 # 12. pip tools
 # ============================================================
@@ -1046,6 +1040,12 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
     ~/.codex \
     ~/.pi/agent \
     ~/.ssh
+
+# Bun JavaScript runtime and package manager
+# hadolint ignore=DL3059
+RUN curl -fsSL https://bun.sh/install | bash \
+    && sudo ln -s /home/vscode/.bun/bin/bun /usr/local/bin/bun \
+    && sudo ln -s /home/vscode/.bun/bin/bunx /usr/local/bin/bunx
 
 # Install native Claude Code binary (replaces npm package)
 # hadolint ignore=DL3059
