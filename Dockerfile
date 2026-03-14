@@ -1062,6 +1062,8 @@ RUN if [ -f /opt/opencode-config/oh-my-opencode.jsonc ]; then \
           /opt/opencode-config/oh-my-opencode.jsonc > /tmp/omc-patched.jsonc \
       && sudo mv /tmp/omc-patched.jsonc /opt/opencode-config/oh-my-opencode.jsonc; \
     fi
+# Remove build-time .json so only the patched .jsonc remains at runtime
+RUN rm -f ~/.config/opencode/oh-my-opencode.json
 COPY opencode-config/oh-my-opencode-proxy.json \
     /opt/opencode-config/oh-my-opencode-proxy.json
 
