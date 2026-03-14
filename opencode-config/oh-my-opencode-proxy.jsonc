@@ -12,7 +12,7 @@
     "momus": { "model": "openai-proxy/claude-opus-4-6" },
     "atlas": { "model": "openai-proxy/claude-sonnet-4-6" },
     "frontend-ui-ux-engineer": { "model": "openai-proxy/gpt-5.4" },
-    "document-writer": { "model": "openai-proxy/claude-opus-4-6" }
+    "document-writer": { "model": "openai-proxy/claude-opus-4-6" },
   },
   "categories": {
     "visual-engineering": { "model": "openai-proxy/gpt-5.4" },
@@ -23,12 +23,12 @@
     "quick": { "model": "openai-proxy/claude-sonnet-4-6" },
     "unspecified-low": { "model": "openai-proxy/claude-opus-4-6" },
     "unspecified-high": { "model": "openai-proxy/claude-opus-4-6" },
-    "writing": { "model": "openai-proxy/claude-opus-4-6" }
+    "writing": { "model": "openai-proxy/claude-opus-4-6" },
   },
   "background_task": {
     "defaultConcurrency": 5,
     "providerConcurrency": {
-      "openai-proxy": 5
-    }
-  }
+      "openai-proxy": 5,
+    },
+  },
 }

@@ -65,7 +65,5 @@
       "*.env.*": "allow"
     }
   },
-  "plugin": [
-    "oh-my-opencode@latest"
-  ]
+  "plugin": ["oh-my-opencode@latest"]
 }

@@ -87,8 +87,8 @@ if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -f /opt/opencode-config/opencode-anthr
   cat >"$HOME/.local/share/opencode/auth.json" <<AUTHEOF
 {"anthropic":{"type":"oauth","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}
 AUTHEOF
-elif [ -n "$OPENAI_API_KEY" ] && \
-     [ -f /opt/opencode-config/opencode.json ]; then
+elif [ -n "$OPENAI_API_KEY" ] &&
+  [ -f /opt/opencode-config/opencode.json ]; then
   cp /opt/opencode-config/opencode.json \
     "$OPENCODE_CONFIG_DIR/opencode.json"
 fi
@@ -96,12 +96,12 @@ fi
 # Seed oh-my-opencode config
 # Proxy mode uses openai-proxy/* models; Anthropic mode
 # uses the build-time config from oh-my-opencode install
-if [ -n "$OPENAI_API_KEY" ] && \
-   [ -f /opt/opencode-config/oh-my-opencode-proxy.jsonc ]; then
+if [ -n "$OPENAI_API_KEY" ] &&
+  [ -f /opt/opencode-config/oh-my-opencode-proxy.jsonc ]; then
   cp /opt/opencode-config/oh-my-opencode-proxy.jsonc \
     "$OPENCODE_CONFIG_DIR/oh-my-opencode.jsonc"
-elif [ ! -f "$OPENCODE_CONFIG_DIR/oh-my-opencode.jsonc" ] && \
-     [ -f /opt/opencode-config/oh-my-opencode.jsonc ]; then
+elif [ ! -f "$OPENCODE_CONFIG_DIR/oh-my-opencode.jsonc" ] &&
+  [ -f /opt/opencode-config/oh-my-opencode.jsonc ]; then
   cp /opt/opencode-config/oh-my-opencode.jsonc \
     "$OPENCODE_CONFIG_DIR/oh-my-opencode.jsonc"
 fi
