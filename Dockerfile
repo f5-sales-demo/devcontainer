@@ -1057,7 +1057,7 @@ RUN npx -y oh-my-opencode install --no-tui \
 RUN sudo cp ~/.config/opencode/oh-my-opencode.jsonc \
     /opt/opencode-config/oh-my-opencode.jsonc 2>/dev/null || true \
     && jq '. + {"claude_code":{"plugins":true,"skills":true,"commands":true,"agents":true,"hooks":true,"mcp":true}}' \
-       /opt/opencode-config/oh-my-opencode.jsonc > /tmp/omc-patched.jsonc \
+        /opt/opencode-config/oh-my-opencode.jsonc > /tmp/omc-patched.jsonc \
     && sudo mv /tmp/omc-patched.jsonc /opt/opencode-config/oh-my-opencode.jsonc
 COPY opencode-config/oh-my-opencode-proxy.json \
     /opt/opencode-config/oh-my-opencode-proxy.json
