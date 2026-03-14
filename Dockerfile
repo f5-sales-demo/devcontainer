@@ -1048,7 +1048,7 @@ RUN claude install --force \
 
 # Tavily skills for Claude Code (must run as vscode user with ~/.claude present)
 # hadolint ignore=DL3059
-RUN npx -y skills add tavily-ai/skills
+RUN npx -y skills add tavily-ai/skills --yes --global
 
 # oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
 # Build-time install uses upstream oh-my-opencode (needs platform binaries).
