@@ -1056,6 +1056,8 @@ RUN npx -y oh-my-opencode install --no-tui \
 # (entrypoint re-seeds if ~/.config/opencode/ is volume-mounted empty)
 RUN sudo cp ~/.config/opencode/oh-my-opencode.jsonc \
     /opt/opencode-config/oh-my-opencode.jsonc 2>/dev/null || true
+COPY opencode-config/oh-my-opencode-proxy.jsonc \
+    /opt/opencode-config/oh-my-opencode-proxy.jsonc
 
 # ============================================================
 # 14. Homebrew (AI assistant deps + formatters)
