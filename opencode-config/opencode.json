@@ -65,5 +65,5 @@
       "*.env.*": "allow"
     }
   },
-  "plugin": ["oh-my-opencode@github:robinmordasiewicz/oh-my-openagent#0d1d405a"]
+  "plugin": ["@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"]
 }
