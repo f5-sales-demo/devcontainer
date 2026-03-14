@@ -1056,14 +1056,13 @@ RUN npx -y oh-my-opencode install --no-tui \
 # (entrypoint re-seeds if ~/.config/opencode/ is volume-mounted empty)
 RUN sudo mkdir -p /opt/opencode-config \
     && sudo cp ~/.config/opencode/oh-my-opencode.json \
-        /opt/opencode-config/oh-my-opencode.jsonc 2>/dev/null || true
-RUN if [ -f /opt/opencode-config/oh-my-opencode.jsonc ]; then \
+        /opt/opencode-config/oh-my-opencode.json 2>/dev/null || true
+# hadolint ignore=DL3059
+RUN if [ -f /opt/opencode-config/oh-my-opencode.json ]; then \
       jq '. + {"claude_code":{"plugins":true,"skills":true,"commands":true,"agents":true,"hooks":true,"mcp":true}}' \
-          /opt/opencode-config/oh-my-opencode.jsonc > /tmp/omc-patched.jsonc \
-      && sudo mv /tmp/omc-patched.jsonc /opt/opencode-config/oh-my-opencode.jsonc; \
+          /opt/opencode-config/oh-my-opencode.json > /tmp/omc-patched.json \
+      && sudo mv /tmp/omc-patched.json /opt/opencode-config/oh-my-opencode.json; \
     fi
-# Remove build-time .json so only the patched .jsonc remains at runtime
-RUN rm -f ~/.config/opencode/oh-my-opencode.json
 COPY opencode-config/oh-my-opencode-proxy.json \
     /opt/opencode-config/oh-my-opencode-proxy.json
 
