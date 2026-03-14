@@ -759,6 +759,12 @@ RUN npm install -g \
     markdownlint-cli \
     asciinema-player
 
+# Bun JavaScript runtime and package manager
+# hadolint ignore=DL3059
+RUN curl -fsSL https://bun.sh/install | bash \
+    && ln -s /home/vscode/.bun/bin/bun /usr/local/bin/bun \
+    && ln -s /home/vscode/.bun/bin/bunx /usr/local/bin/bunx
+
 # ============================================================
 # 12. pip tools
 # ============================================================
@@ -1049,8 +1055,8 @@ RUN claude install --force \
 
 # oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
 # hadolint ignore=DL3059
-RUN npx -y oh-my-opencode install --no-tui \
-    --claude=max20 --openai=no --gemini=no --copilot=no \
+RUN npx -y github:robinmordasiewicz/oh-my-openagent#fix/claude-code-plugin-v3-array-format \
+    install --no-tui --claude=max20 --openai=no --gemini=no --copilot=no \
     && rm -f ~/.config/opencode/*.bak.*
 
 # Preserve oh-my-opencode config as fallback template

@@ -65,5 +65,5 @@
       "*.env.*": "allow"
     }
   },
-  "plugin": ["oh-my-opencode@latest"]
+  "plugin": ["oh-my-opencode@github:robinmordasiewicz/oh-my-openagent#fix/claude-code-plugin-v3-array-format"]
 }
