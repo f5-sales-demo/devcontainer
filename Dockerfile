@@ -94,7 +94,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Tailscale VPN
     tailscale \
     # Shell tools
-    bat fd-find ripgrep neovim htop tree tmux file \
+    bat fd-find ripgrep htop tree tmux file \
     # Node.js
     nodejs \
     # Python
@@ -419,6 +419,12 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && curl ${CURL_RETRY} -fsSL "https://astral.sh/uv/install.sh" | sh \
     && mv "$HOME/.local/bin/uv" /usr/local/bin/uv \
     && mv "$HOME/.local/bin/uvx" /usr/local/bin/uvx 2>/dev/null || true \
+    # neovim (latest — version-free asset name; map aarch64→arm64)
+    && if [ "$UNAME_ARCH" = "aarch64" ]; then NVIM_ARCH="arm64"; else NVIM_ARCH="x86_64"; fi \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${NVIM_ARCH}.tar.gz" \
+      | tar -xz -C /opt \
+    && ln -s "/opt/nvim-linux-${NVIM_ARCH}/bin/nvim" /usr/local/bin/nvim \
     # opencode (already latest)
     && if [ "$UNAME_ARCH" = "x86_64" ]; then OC_ARCH="x64"; else OC_ARCH="arm64"; fi \
     && curl ${CURL_RETRY} -fsSL "https://github.com/anomalyco/opencode/releases/latest/download/opencode-linux-${OC_ARCH}.tar.gz" \
@@ -1146,6 +1152,14 @@ RUN mkdir -p "$HOME/.npm-global" \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh /home/${USERNAME}/.p10k.zsh
+# Neovim plugins (native pack — no plugin manager)
+# hadolint ignore=DL3059
+RUN mkdir -p ~/.local/share/nvim/site/pack/plugins/start \
+    && git clone --depth=1 https://github.com/Mofiqul/vscode.nvim \
+       ~/.local/share/nvim/site/pack/plugins/start/vscode.nvim \
+    && git clone --depth=1 https://github.com/nvim-lualine/lualine.nvim \
+       ~/.local/share/nvim/site/pack/plugins/start/lualine.nvim
+
 COPY --chown=${USERNAME}:${USERNAME} configs/init.vim /home/${USERNAME}/.config/nvim/init.vim
 COPY --chown=${USERNAME}:${USERNAME} configs/.hushlogin /home/${USERNAME}/.hushlogin
 COPY --chown=${USERNAME}:${USERNAME} configs/.inputrc /home/${USERNAME}/.inputrc
