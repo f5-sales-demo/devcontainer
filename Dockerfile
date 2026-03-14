@@ -985,14 +985,6 @@ RUN printf '#!/bin/sh\ncd /opt/caldera\nexec .venv/bin/python server.py --insecu
       > /usr/local/bin/caldera \
     && chmod +x /usr/local/bin/caldera
 
-# Purge build-essential now that all C-extension installs are done.
-# Kept through: Section 12b (claude-code-proxy), 12d (rubocop/prism),
-# 12h (wpscan gem), 12i (recon-ng/spiderfoot pip deps), 12j (Navigator),
-# and 12k (CALDERA).
-# hadolint ignore=DL3059
-RUN apt-get purge -y build-essential \
-    && apt-get autoremove -y \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Pre-stage plugin install script and settings for section 12l
 COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
