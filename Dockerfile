@@ -1054,11 +1054,14 @@ RUN npx -y oh-my-opencode install --no-tui \
 
 # Preserve oh-my-opencode config as fallback template
 # (entrypoint re-seeds if ~/.config/opencode/ is volume-mounted empty)
-RUN sudo cp ~/.config/opencode/oh-my-opencode.jsonc \
-    /opt/opencode-config/oh-my-opencode.jsonc 2>/dev/null || true \
-    && jq '. + {"claude_code":{"plugins":true,"skills":true,"commands":true,"agents":true,"hooks":true,"mcp":true}}' \
-        /opt/opencode-config/oh-my-opencode.jsonc > /tmp/omc-patched.jsonc \
-    && sudo mv /tmp/omc-patched.jsonc /opt/opencode-config/oh-my-opencode.jsonc
+RUN sudo mkdir -p /opt/opencode-config \
+    && sudo cp ~/.config/opencode/oh-my-opencode.jsonc \
+        /opt/opencode-config/oh-my-opencode.jsonc 2>/dev/null || true
+RUN if [ -f /opt/opencode-config/oh-my-opencode.jsonc ]; then \
+      jq '. + {"claude_code":{"plugins":true,"skills":true,"commands":true,"agents":true,"hooks":true,"mcp":true}}' \
+          /opt/opencode-config/oh-my-opencode.jsonc > /tmp/omc-patched.jsonc \
+      && sudo mv /tmp/omc-patched.jsonc /opt/opencode-config/oh-my-opencode.jsonc; \
+    fi
 COPY opencode-config/oh-my-opencode-proxy.json \
     /opt/opencode-config/oh-my-opencode-proxy.json
 
