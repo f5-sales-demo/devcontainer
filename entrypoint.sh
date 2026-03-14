@@ -109,6 +109,12 @@ elif [ -f /opt/opencode-config/oh-my-opencode.json ]; then
   cp /opt/opencode-config/oh-my-opencode.json \
     "$OPENCODE_CONFIG_DIR/oh-my-opencode.json"
 fi
+# Seed permission overrides to ~/.opencode/opencode.json (loaded last, wins
+# over built-in defaults that deny .env reads)
+if [ -f /opt/opencode-config/opencode-permissions.json ]; then
+  mkdir -p "$HOME/.opencode"
+  cp /opt/opencode-config/opencode-permissions.json "$HOME/.opencode/opencode.json"
+fi
 # Remove stale files (old .jsonc extension, oh-my-opencode .bak artifacts)
 rm -f "$OPENCODE_CONFIG_DIR/oh-my-opencode.jsonc"
 rm -f "$OPENCODE_CONFIG_DIR"/*.bak.*

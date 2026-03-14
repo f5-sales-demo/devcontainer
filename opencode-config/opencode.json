@@ -58,12 +58,5 @@
   },
   "model": "openai-proxy/claude-opus-4-6",
   "small_model": "openai-proxy/claude-sonnet-4-6",
-  "permission": {
-    "read": {
-      "*": "allow",
-      "*.env": "allow",
-      "*.env.*": "allow"
-    }
-  },
   "plugin": ["@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"]
 }
