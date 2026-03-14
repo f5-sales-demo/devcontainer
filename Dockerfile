@@ -1055,8 +1055,8 @@ RUN claude install --force \
 
 # oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
 # hadolint ignore=DL3059
-RUN npx -y github:robinmordasiewicz/oh-my-openagent#fix/claude-code-plugin-v3-array-format \
-    install --no-tui --claude=max20 --openai=no --gemini=no --copilot=no \
+RUN npx -y oh-my-opencode install --no-tui \
+    --claude=max20 --openai=no --gemini=no --copilot=no \
     && rm -f ~/.config/opencode/*.bak.*
 
 # Preserve oh-my-opencode config as fallback template
