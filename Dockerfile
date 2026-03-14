@@ -1055,7 +1055,7 @@ RUN npx -y oh-my-opencode install --no-tui \
 # Preserve oh-my-opencode config as fallback template
 # (entrypoint re-seeds if ~/.config/opencode/ is volume-mounted empty)
 RUN sudo mkdir -p /opt/opencode-config \
-    && sudo cp ~/.config/opencode/oh-my-opencode.jsonc \
+    && sudo cp ~/.config/opencode/oh-my-opencode.json \
         /opt/opencode-config/oh-my-opencode.jsonc 2>/dev/null || true
 RUN if [ -f /opt/opencode-config/oh-my-opencode.jsonc ]; then \
       jq '. + {"claude_code":{"plugins":true,"skills":true,"commands":true,"agents":true,"hooks":true,"mcp":true}}' \
