@@ -13,6 +13,12 @@ GIT_SHA=$(cd "$MARKETPLACE" && git rev-parse HEAD)
 
 mkdir -p "$CACHE"
 
+# Opencode skill directory — symlinks are created per-plugin below
+# Uses opencode-only path to avoid duplicate discovery in Claude Code
+HOME_DIR=$(dirname "$(dirname "$PLUGIN_BASE")")
+OPENCODE_SKILLS="${HOME_DIR}/.config/opencode/skill"
+mkdir -p "$OPENCODE_SKILLS"
+
 # Start building installed_plugins.json
 echo '[' >"$INSTALLED_JSON"
 FIRST=true
@@ -55,6 +61,18 @@ for NAME in $PLUGINS; do
     echo "WARNING: no source found for plugin '$NAME', skipping"
     rm -rf "$DEST"
     continue
+  fi
+
+  # Symlink plugin skills into opencode's skill directory
+  # (Claude Code already loads these via its plugin system)
+  if [ -d "${DEST}/skills" ]; then
+    for SKILL_PATH in "${DEST}"/skills/*/SKILL.md; do
+      [ -f "$SKILL_PATH" ] || continue
+      SKILL_NAME=$(basename "$(dirname "$SKILL_PATH")")
+      if [ ! -e "${OPENCODE_SKILLS}/${SKILL_NAME}" ]; then
+        ln -s "$(dirname "$SKILL_PATH")" "${OPENCODE_SKILLS}/${SKILL_NAME}"
+      fi
+    done
   fi
 
   # Append entry to installed_plugins.json
