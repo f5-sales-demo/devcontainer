@@ -21,9 +21,9 @@ WORKDIR /home/vscode
 
 RUN mkdir -p ~/.local/share/nvim/site/pack/plugins/start \
     && git clone --depth=1 https://github.com/Mofiqul/vscode.nvim \
-       ~/.local/share/nvim/site/pack/plugins/start/vscode.nvim \
+      ~/.local/share/nvim/site/pack/plugins/start/vscode.nvim \
     && git clone --depth=1 https://github.com/nvim-lualine/lualine.nvim \
-       ~/.local/share/nvim/site/pack/plugins/start/lualine.nvim
+      ~/.local/share/nvim/site/pack/plugins/start/lualine.nvim
 
 RUN mkdir -p ~/.config/nvim
 COPY --chown=vscode:vscode configs/init.vim /home/vscode/.config/nvim/init.vim

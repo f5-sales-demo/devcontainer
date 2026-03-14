@@ -1156,9 +1156,9 @@ COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh /home/${USERNAME}/.p10k.z
 # hadolint ignore=DL3059
 RUN mkdir -p ~/.local/share/nvim/site/pack/plugins/start \
     && git clone --depth=1 https://github.com/Mofiqul/vscode.nvim \
-       ~/.local/share/nvim/site/pack/plugins/start/vscode.nvim \
+      ~/.local/share/nvim/site/pack/plugins/start/vscode.nvim \
     && git clone --depth=1 https://github.com/nvim-lualine/lualine.nvim \
-       ~/.local/share/nvim/site/pack/plugins/start/lualine.nvim
+      ~/.local/share/nvim/site/pack/plugins/start/lualine.nvim
 
 COPY --chown=${USERNAME}:${USERNAME} configs/init.vim /home/${USERNAME}/.config/nvim/init.vim
 COPY --chown=${USERNAME}:${USERNAME} configs/.hushlogin /home/${USERNAME}/.hushlogin
