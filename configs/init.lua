@@ -1,3 +1,4 @@
+-- luacheck: globals vim
 -- ============================================================
 -- Neovim configuration — VS Code dark theme + AI assistant
 -- ============================================================
