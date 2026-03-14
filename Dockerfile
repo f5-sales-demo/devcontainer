@@ -759,11 +759,6 @@ RUN npm install -g \
     markdownlint-cli \
     asciinema-player
 
-# oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
-# hadolint ignore=DL3059
-RUN npx -y oh-my-opencode install --no-tui \
-    --claude=max20 --openai=no --gemini=no --copilot=no
-
 # ============================================================
 # 12. pip tools
 # ============================================================
@@ -1051,6 +1046,16 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
 RUN claude install --force \
     && sudo npm uninstall -g @anthropic-ai/claude-code \
     && echo '{"hasCompletedOnboarding":true,"theme":"dark-daltonized","projects":{"/workspace":{"hasTrustDialogAccepted":true}}}' > ~/.claude.json
+
+# oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
+# hadolint ignore=DL3059
+RUN npx -y oh-my-opencode install --no-tui \
+    --claude=max20 --openai=no --gemini=no --copilot=no
+
+# Preserve oh-my-opencode config as fallback template
+# (entrypoint re-seeds if ~/.config/opencode/ is volume-mounted empty)
+RUN sudo cp ~/.config/opencode/oh-my-opencode.jsonc \
+    /opt/opencode-config/oh-my-opencode.jsonc 2>/dev/null || true
 
 # ============================================================
 # 14. Homebrew (AI assistant deps + formatters)
