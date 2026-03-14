@@ -54,18 +54,17 @@ check "home directory writable" test -w "$HOME"
 check "TERM is set" test -n "${TERM:-}"
 
 echo ""
-echo "5. Web Search (SearXNG MCP)"
-if [ -f /opt/searxng-mcp/server.py ]; then
-  check "SearXNG MCP server installed" true
-  SEARXNG_URL="${SEARXNG_BASE_URL:-http://searxng:8080}"
-  if curl -sf --connect-timeout 3 "${SEARXNG_URL}/" >/dev/null 2>&1; then
-    check "SearXNG backend reachable" true
-  else
-    echo "  SKIP: SearXNG not reachable (enable with COMPOSE_PROFILES=search)"
-  fi
+echo "5. Web Search (Tavily)"
+if [ -d "$HOME/.claude/skills" ] && ls "$HOME/.claude/skills"/*tavily* >/dev/null 2>&1; then
+  check "Tavily skills installed" true
 else
-  echo "  FAIL: SearXNG MCP server not installed at /opt/searxng-mcp"
+  echo "  FAIL: Tavily skills not found in ~/.claude/skills"
   FAIL=$((FAIL + 1))
+fi
+if [ -n "${TAVILY_API_KEY:-}" ]; then
+  check "TAVILY_API_KEY is set" true
+else
+  echo "  SKIP: TAVILY_API_KEY not set (add to .env for web search)"
 fi
 
 echo ""

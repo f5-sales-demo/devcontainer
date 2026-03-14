@@ -28,16 +28,11 @@ if [ -n "$OPENAI_API_KEY" ]; then
   else
     echo "not reachable (check VPN / network connectivity)"
   fi
-  SEARXNG_URL="${SEARXNG_BASE_URL:-http://searxng:8080}"
-  echo -n "  Checking SearXNG MCP ($SEARXNG_URL)... "
-  if [ -f /opt/searxng-mcp/server.py ]; then
-    if curl -sf --connect-timeout 3 "${SEARXNG_URL}/" >/dev/null 2>&1; then
-      echo "MCP installed, backend reachable"
-    else
-      echo "MCP installed, backend not reachable (enable with COMPOSE_PROFILES=search)"
-    fi
+  echo -n "  Checking Tavily web search... "
+  if [ -n "${TAVILY_API_KEY:-}" ]; then
+    echo "API key configured"
   else
-    echo "MCP server not installed"
+    echo "TAVILY_API_KEY not set (add to .env for web search)"
   fi
 else
   echo "  Mode: direct API (no proxy)"

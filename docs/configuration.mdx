@@ -116,28 +116,18 @@ The container includes several AI coding agents in addition to Claude Code:
 
 Aider is installed via `uv tool install` with Python 3.12 (it requires Python &lt;3.13) and includes the `browser`, `help`, and `playwright` extras. Pi is installed as a global npm package. Codex is a standalone binary that self-updates at runtime.
 
-### Web Search (SearXNG MCP)
+### Web Search (Tavily)
 
-Web search is provided by a [SearXNG MCP server](https://github.com/The-AI-Workshops/searxng-mcp-server) that runs as a stdio process managed by Claude Code. Because MCP tools always appear in the tool schema regardless of provider type, this works with both direct Anthropic API connections and OpenAI-compatible proxy mode.
+Web search is provided by [Tavily](https://tavily.com), an AI-optimized search API.
 
-The MCP server is pre-installed at `/opt/searxng-mcp` in the container image. The entrypoint automatically seeds the server configuration into `~/.claude/settings.json` at startup.
+- **Claude Code**: Uses the [Tavily skills plugin](https://docs.tavily.com/documentation/agent-skills) — search, research, crawl, and extract capabilities are available as slash commands (`/search`, `/research`, `/crawl`, `/extract`)
+- **OpenCode**: Uses the [Tavily MCP server](https://docs.tavily.com/documentation/mcp) — search tools appear automatically in the tool schema
 
-To enable web search, start the SearXNG backend by adding `search` to your `COMPOSE_PROFILES`:
+| Variable | Description | How to Get |
+|----------|-------------|------------|
+| `TAVILY_API_KEY` | Tavily API key | Free at [app.tavily.com](https://app.tavily.com) |
 
-```ini
-COMPOSE_PROFILES=search
-```
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SEARXNG_BASE_URL` | `http://searxng:8080` | SearXNG backend URL passed to the MCP server |
-
-SearXNG is a self-hosted metasearch engine that aggregates results from Google, Bing, DuckDuckGo, and others with no API key required. The SearXNG configuration is defined inline in `docker-compose.yml` using the Docker Compose `configs` block, with two changes from the SearXNG defaults required for API access:
-
-- **`search.formats`** includes `json` (the default only allows `html`, which causes `format=json` requests to return 403)
-- **`server.limiter`** is set to `false` (the default rate limiter blocks automated requests)
-
-To customize SearXNG further, edit the `configs.searxng-settings.content` block in `docker-compose.yml`.
+No sidecar container or compose profile is needed — just set your API key in `.env`.
 
 ### Remote Display (noVNC)
 
@@ -289,6 +279,5 @@ Both persist across container restarts and rebuilds. Run `podman-compose pull` t
 | Host | Container | Service |
 |------|-----------|---------|
 | `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNC remote display (localhost only, override with `NOVNC_HOST_PORT`) |
-| `127.0.0.1:8888` | `8080` | SearXNG search engine (localhost only, search profile) |
 
-Ports are bound to `127.0.0.1` so they are only accessible from your machine, not the network. The SearXNG port is only active when the search profile is enabled (`COMPOSE_PROFILES=search`). The AI proxy runs inside the container on `localhost:8082` and is not exposed to the host.
+Ports are bound to `127.0.0.1` so they are only accessible from your machine, not the network. The AI proxy runs inside the container on `localhost:8082` and is not exposed to the host.

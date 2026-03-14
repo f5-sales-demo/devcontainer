@@ -849,17 +849,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # all require a C compiler.
 
 # ============================================================
-# 12c. SearXNG MCP server (web search for Claude Code)
+# 12c. Tavily web search (skills for Claude Code, MCP for OpenCode)
 # ============================================================
-# stdio MCP server — Claude Code discovers this via settings.json,
-# so it always appears in the tool schema regardless of provider type.
+# Claude Code: Tavily skills plugin installed via npx
+# OpenCode: tavily-mcp package pre-installed for MCP server
 # hadolint ignore=DL3059
-RUN git clone --depth=1 https://github.com/The-AI-Workshops/searxng-mcp-server.git /opt/searxng-mcp
-
-WORKDIR /opt/searxng-mcp
-RUN uv venv .venv \
-    && uv pip install --python .venv/bin/python -r requirements.txt \
-    && chown -R $USERNAME:$USERNAME /opt/searxng-mcp
+RUN npx -y skills add tavily-ai/skills \
+    && npm install -g tavily-mcp@0.1.3
 
 # ============================================================
 # 12d. Ruby linters (rubocop + extensions)

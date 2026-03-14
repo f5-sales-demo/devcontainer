@@ -128,13 +128,13 @@ if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] || [ ! -s "$CODEX_CONFIG_DIR/config.
 fi
 
 # ============================================================
-# SearXNG MCP server (web search via MCP)
+# Tavily web search (API key injection)
 # ============================================================
-# The full settings.json is pre-baked in the image with a
-# __SEARXNG_URL__ placeholder. Replace it with the actual URL.
-if [ -d /opt/searxng-mcp ]; then
-  SEARXNG_MCP_URL="${SEARXNG_BASE_URL:-http://searxng:8080}"
-  sed -i "s|__SEARXNG_URL__|${SEARXNG_MCP_URL}|" "$HOME/.claude/settings.json"
+if [ -n "$TAVILY_API_KEY" ]; then
+  sed -i "s|__TAVILY_API_KEY__|${TAVILY_API_KEY}|" "$HOME/.claude/settings.json"
+else
+  # Remove placeholder if no key provided
+  sed -i 's|__TAVILY_API_KEY__||' "$HOME/.claude/settings.json"
 fi
 
 # ============================================================
