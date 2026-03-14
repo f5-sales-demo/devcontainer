@@ -1060,8 +1060,11 @@ RUN claude install --force \
 RUN npx -y oh-my-opencode install --no-tui \
     --claude=max20 --openai=no --gemini=no --copilot=no \
     && rm -f ~/.config/opencode/*.bak.*
+# Pre-install the forked plugin under vscode's npm prefix so opencode
+# finds it at startup without downloading (sudo installs to /usr/lib,
+# but opencode resolves from the user's npm prefix).
 # hadolint ignore=DL3016,DL3059
-RUN sudo npm install -g @robinmordasiewicz/oh-my-opencode@3.11.0-fork.1
+RUN npm install -g @robinmordasiewicz/oh-my-opencode@3.11.0-fork.1
 
 # Preserve oh-my-opencode config as fallback template
 # (entrypoint re-seeds if ~/.config/opencode/ is volume-mounted empty)
