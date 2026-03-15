@@ -99,10 +99,10 @@ elif [ -n "$OPENAI_API_KEY" ] &&
   # would resolve to the proxy-rewritten OPENAI_BASE_URL after
   # claude-proxy.sh runs, pointing OpenCode at the wrong endpoint.
   sed -e "s|{env:OPENAI_BASE_URL}|${OPENAI_BASE_URL}|g" \
-      -e "s|{env:OPENAI_API_KEY}|${OPENAI_API_KEY}|g" \
-      -e "s|{env:TAVILY_API_KEY}|${TAVILY_API_KEY}|g" \
+    -e "s|{env:OPENAI_API_KEY}|${OPENAI_API_KEY}|g" \
+    -e "s|{env:TAVILY_API_KEY}|${TAVILY_API_KEY}|g" \
     /opt/opencode-config/opencode.json \
-    > "$OPENCODE_CONFIG_DIR/opencode.json"
+    >"$OPENCODE_CONFIG_DIR/opencode.json"
 fi
 
 # Seed oh-my-opencode config
