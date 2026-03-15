@@ -226,8 +226,7 @@ check "all enabled plugins cached" \
 echo ""
 echo "9. Chrome DevTools MCP"
 check "Chrome symlink exists" test -L /opt/google/chrome/chrome
-check "Chrome symlink resolves to Playwright Chromium" \
-  readlink /opt/google/chrome/chrome
+check "Chrome symlink target exists" test -e /opt/google/chrome/chrome
 check "Chrome binary responds" /opt/google/chrome/chrome --version
 MCP_MAIN_FILE=$(find /home/vscode/.npm/_npx -name 'chrome-devtools-mcp-main.js' \
   -path '*/bin/*' 2>/dev/null | head -1)
