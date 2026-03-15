@@ -1022,9 +1022,13 @@ RUN npx playwright install --with-deps chromium
 #      Chromium and patches the MCP entry point for headless
 #      mode in container environments without a display server.
 # ============================================================
-# hadolint ignore=DL3059
-RUN CHROME_BIN="$(find /root/.cache/ms-playwright /home/vscode/.cache/ms-playwright \
-      -name chrome -path '*/chromium-*/chrome-linux/chrome' -print -quit 2>/dev/null)" \
+# hadolint ignore=DL3059,SC2086
+RUN SEARCH="" \
+    && for d in /root/.cache/ms-playwright /home/vscode/.cache/ms-playwright; do \
+        [ -d "$d" ] && SEARCH="$SEARCH $d"; \
+      done \
+    && CHROME_BIN="$(find $SEARCH \
+        -name chrome -path '*/chromium-*/chrome-linux/chrome' -print -quit)" \
     && mkdir -p /opt/google/chrome \
     && ln -sf "$CHROME_BIN" /opt/google/chrome/chrome
 
