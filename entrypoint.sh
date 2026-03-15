@@ -187,7 +187,7 @@ fix_chrome_symlink() {
     return 0
   fi
   local chrome_bin
-  chrome_bin=$(find "$HOME/.cache/ms-playwright" /root/.cache/ms-playwright \
+  chrome_bin=$(find "$HOME/.cache/ms-playwright" \
     -name chrome -path '*/chromium-*/chrome-linux/chrome' -print -quit 2>/dev/null || true)
   if [ -n "$chrome_bin" ]; then
     sudo mkdir -p /opt/google/chrome

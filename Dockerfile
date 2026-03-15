@@ -1011,24 +1011,10 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
     && chown -R ${USERNAME}:${USERNAME} "${PLUGIN_BASE}"
 
 # ============================================================
-# 13. Playwright browsers (Chromium + system deps)
+# 13. Playwright system dependencies (requires root for apt)
 # ============================================================
 # hadolint ignore=DL3059
-RUN npx playwright install --with-deps chromium
-
-# ============================================================
-# 13b. Chrome DevTools MCP (headless browser automation)
-#      Bridges Puppeteer's Chrome lookup to Playwright's
-#      Chromium and patches the MCP entry point for headless
-#      mode in container environments without a display server.
-# ============================================================
-# hadolint ignore=DL3059
-RUN mkdir -p /opt/google/chrome \
-    && CHROME_BIN="$(find /root/.cache/ms-playwright -name chrome \
-        -path '*/chromium-*/chrome-linux/chrome' -print -quit 2>/dev/null || true)" \
-    && if [ -n "$CHROME_BIN" ]; then \
-        ln -sf "$CHROME_BIN" /opt/google/chrome/chrome; \
-      fi
+RUN npx playwright install-deps chromium
 
 # ============================================================
 # User setup
@@ -1064,8 +1050,16 @@ RUN claude install --force \
 # hadolint ignore=DL3059
 RUN npx -y skills add tavily-ai/skills --yes --global
 
+# Playwright Chromium browser binary (runs as vscode — cache to ~/.cache/ms-playwright)
+# hadolint ignore=DL3059
+RUN npx playwright install chromium \
+    && CHROME_BIN="$(find ~/.cache/ms-playwright \
+        -name chrome -path '*/chromium-*/chrome-linux/chrome' -print -quit)" \
+    && sudo mkdir -p /opt/google/chrome \
+    && sudo ln -sf "$CHROME_BIN" /opt/google/chrome/chrome
+
 # Chrome DevTools MCP: pre-cache and apply headless patch (runs as vscode
-# so npm caches to ~/.npm/_npx; the symlink was created as root in 13b)
+# so npm caches to ~/.npm/_npx; symlink created above)
 # hadolint ignore=DL3059
 RUN npm exec chrome-devtools-mcp@latest -- --version 2>/dev/null; \
     MCP_MAIN="$(find ~/.npm/_npx -name 'chrome-devtools-mcp-main.js' \
