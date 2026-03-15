@@ -1054,7 +1054,7 @@ RUN npx -y skills add tavily-ai/skills --yes --global
 # hadolint ignore=DL3059
 RUN npx playwright install chromium \
     && CHROME_BIN="$(find ~/.cache/ms-playwright \
-        -name chrome -path '*/chromium-*/chrome-linux/chrome' -print -quit)" \
+        -name chrome -path '*/chromium-*/chrome-linux*/chrome' -print -quit)" \
     && sudo mkdir -p /opt/google/chrome \
     && sudo ln -sf "$CHROME_BIN" /opt/google/chrome/chrome
 
