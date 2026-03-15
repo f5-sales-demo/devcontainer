@@ -60,6 +60,9 @@ if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then
   export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
 fi
 
+# Enable 1M context window for OpenCode's Anthropic provider
+export ANTHROPIC_1M_CONTEXT="true"
+
 # Seed Pi settings if missing (dirs pre-created in image)
 PI_AGENT_DIR="$HOME/.pi/agent"
 if [ ! -f "$PI_AGENT_DIR/settings.json" ] || [ ! -s "$PI_AGENT_DIR/settings.json" ]; then
