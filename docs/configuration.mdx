@@ -102,7 +102,7 @@ This connects OpenCode directly to Anthropic with no proxy needed.
 
 When `OPENAI_API_KEY` and `OPENAI_BASE_URL` are set (and no OAuth token), the entrypoint seeds `~/.config/opencode/opencode.json` with a custom provider called **OpenAI Proxy** that points at the same upstream endpoint used by the Claude Code proxy.
 
-The config uses OpenCode's `{env:VAR_NAME}` syntax, so credentials are resolved from environment variables at runtime — no secrets are baked into the file.
+The entrypoint substitutes `OPENAI_BASE_URL` and `OPENAI_API_KEY` directly into the config at container start, before the Claude Code proxy rewrites the environment variables. This ensures OpenCode connects to the upstream API endpoint rather than the local translation proxy.
 
 Available models (proxy mode):
 
