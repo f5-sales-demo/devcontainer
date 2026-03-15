@@ -177,11 +177,25 @@ fi
 start_claude_proxy
 
 # ============================================================
-# Chrome DevTools MCP (headless patch)
+# Chrome DevTools MCP (symlink + headless patch)
 # ============================================================
-# The MCP server is launched by the Claude Code proxy without
-# --headless. Re-apply the patch if npm exec fetched a newer
-# version since image build.
+# Re-resolve the Chrome symlink if the target is dangling (e.g. after
+# a Playwright update changed the chromium-XXXX directory name).
+# Also re-apply the headless patch if npm exec fetched a newer MCP version.
+fix_chrome_symlink() {
+  if [ -L /opt/google/chrome/chrome ] && [ -e /opt/google/chrome/chrome ]; then
+    return 0
+  fi
+  local chrome_bin
+  chrome_bin=$(find "$HOME/.cache/ms-playwright" /root/.cache/ms-playwright \
+    -name chrome -path '*/chromium-*/chrome-linux/chrome' 2>/dev/null | head -1)
+  if [ -n "$chrome_bin" ]; then
+    sudo mkdir -p /opt/google/chrome
+    sudo ln -sf "$chrome_bin" /opt/google/chrome/chrome
+  fi
+}
+fix_chrome_symlink
+
 patch_chrome_devtools_mcp() {
   local mcp_main
   mcp_main=$(find /home/vscode/.npm/_npx -name 'chrome-devtools-mcp-main.js' \

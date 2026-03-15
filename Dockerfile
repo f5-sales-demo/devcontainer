@@ -1023,9 +1023,10 @@ RUN npx playwright install --with-deps chromium
 #      mode in container environments without a display server.
 # ============================================================
 # hadolint ignore=DL3059
-RUN mkdir -p /opt/google/chrome \
-    && ln -sf /home/vscode/.cache/ms-playwright/chromium-1208/chrome-linux/chrome \
-              /opt/google/chrome/chrome
+RUN CHROME_BIN=$(find /root/.cache/ms-playwright /home/vscode/.cache/ms-playwright \
+      -name chrome -path '*/chromium-*/chrome-linux/chrome' 2>/dev/null | head -1) \
+    && mkdir -p /opt/google/chrome \
+    && ln -sf "$CHROME_BIN" /opt/google/chrome/chrome
 
 # ============================================================
 # User setup
