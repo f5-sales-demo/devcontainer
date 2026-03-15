@@ -230,7 +230,7 @@ check "Chrome symlink resolves to Playwright Chromium" \
   readlink /opt/google/chrome/chrome
 check "Chrome binary responds" /opt/google/chrome/chrome --version
 MCP_MAIN_FILE=$(find /home/vscode/.npm/_npx -name 'chrome-devtools-mcp-main.js' \
-                -path '*/bin/*' 2>/dev/null | head -1)
+  -path '*/bin/*' 2>/dev/null | head -1)
 if [ -n "$MCP_MAIN_FILE" ]; then
   check "chrome-devtools-mcp pre-cached" true
   check "Headless patch applied" grep -q 'Auto-inject headless' "$MCP_MAIN_FILE"

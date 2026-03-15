@@ -1030,11 +1030,11 @@ RUN mkdir -p /opt/google/chrome \
     && MCP_MAIN=$(find /home/vscode/.npm/_npx -name 'chrome-devtools-mcp-main.js' \
                   -path '*/bin/*' 2>/dev/null | head -1) \
     && if [ -n "$MCP_MAIN" ]; then \
-         sed -i '/^export const args = parseArguments(VERSION);/i \
+        sed -i '/^export const args = parseArguments(VERSION);/i \
 // Auto-inject headless mode for container environments without a display server\
 \nif (!process.argv.includes('\''--headless'\'')) {\n    process.argv.push('\''--headless'\'');\n}' \
-           "$MCP_MAIN"; \
-       fi
+          "$MCP_MAIN"; \
+      fi
 
 # ============================================================
 # User setup
