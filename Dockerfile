@@ -1025,7 +1025,7 @@ RUN npx playwright install --with-deps chromium
 # hadolint ignore=DL3059,SC2086
 RUN SEARCH="" \
     && for d in /root/.cache/ms-playwright /home/vscode/.cache/ms-playwright; do \
-        [ -d "$d" ] && SEARCH="$SEARCH $d"; \
+        [ -d "$d" ] && SEARCH="$SEARCH $d" || true; \
       done \
     && CHROME_BIN="$(find $SEARCH \
         -name chrome -path '*/chromium-*/chrome-linux/chrome' -print -quit)" \
