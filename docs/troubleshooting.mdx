@@ -74,12 +74,17 @@ echo "$ANTHROPIC_API_KEY"
 Common causes:
 
 - **Placeholder not replaced** — `.env` still has `sk-ant-your-api-key-here`. Replace it with your real key from [console.anthropic.com](https://console.anthropic.com/).
-- **Using an OpenAI-compatible provider without proxy vars** — If your key is not an Anthropic key, you need to set `OPENAI_API_KEY` and `OPENAI_BASE_URL` in `.env` so the built-in proxy activates. Set `ANTHROPIC_API_KEY` to any non-empty value.
+- **Using an OpenAI-compatible provider without proxy vars** — If your key is not an Anthropic key, set `OPENAI_API_KEY` and `OPENAI_BASE_URL` in `.env` so the built-in proxy activates. `ANTHROPIC_API_KEY` is auto-set to `openai-proxy` — you only need:
+
+  ```text
+  OPENAI_API_KEY=<your-provider-key>
+  OPENAI_BASE_URL=<your-provider-url>
+  ```
+
+  If auto-detection isn't working, you can set it manually as a fallback:
 
   ```text
   ANTHROPIC_API_KEY=openai-proxy
-  OPENAI_API_KEY=<your-provider-key>
-  OPENAI_BASE_URL=<your-provider-url>
   ```
 
 <Tabs syncKey="runtime">

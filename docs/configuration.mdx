@@ -17,7 +17,13 @@ All configuration lives in the `.env` file at the project root. This file is git
 |----------|-------------|---------|
 | `ANTHROPIC_API_KEY` | API key passed to Claude Code | `sk-ant-abc123...` |
 
-In **direct mode** (default), set this to your Anthropic API key (`sk-ant-...`). In **proxy mode**, this can be any non-empty value — the proxy authenticates upstream with `OPENAI_API_KEY` instead.
+The container supports three **mutually exclusive** authentication modes:
+
+- **Direct mode** (default) — set `ANTHROPIC_API_KEY` to your Anthropic API key (`sk-ant-...`).
+- **OAuth mode** — set `CLAUDE_CODE_OAUTH_TOKEN` only (see below).
+- **Proxy mode** — set `OPENAI_API_KEY` + `OPENAI_BASE_URL` only. `ANTHROPIC_API_KEY` and model mappings are auto-derived (see below).
+
+Do not combine modes — use exactly one.
 
 ### Claude Max (OAuth)
 
@@ -29,7 +35,13 @@ When set, both Claude Code and OpenCode authenticate directly with Anthropic usi
 
 ### AI Proxy (OpenAI-compatible providers)
 
-When `OPENAI_API_KEY` is set, the container automatically starts a built-in proxy process on `localhost:8082` that translates Claude Code's native Anthropic Messages API calls to OpenAI Chat Completions format. No separate container or compose profile is needed.
+When `OPENAI_API_KEY` is set (and `CLAUDE_CODE_OAUTH_TOKEN` is **not**), the container automatically:
+
+1. Starts a built-in proxy on `localhost:8082` that translates Claude Code's Anthropic Messages API calls to OpenAI Chat Completions format.
+2. Sets `ANTHROPIC_API_KEY` to `openai-proxy` (so Claude Code accepts the proxy connection).
+3. Sets `BIG_MODEL`, `MIDDLE_MODEL`, and `SMALL_MODEL` to Claude model names.
+
+You only need two variables in `.env`:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -38,13 +50,13 @@ When `OPENAI_API_KEY` is set, the container automatically starts a built-in prox
 
 #### Model Mapping (proxy mode only)
 
-The proxy maps Claude Code's model requests to your backend's model identifiers:
+The proxy maps Claude Code's model requests to your backend's model identifiers. These are auto-set and only need overriding for non-Claude providers:
 
 | Variable | Default | Used For |
 |----------|---------|----------|
-| `BIG_MODEL` | `gpt-4o` | Primary model for complex tasks |
-| `MIDDLE_MODEL` | `gpt-4o` | General-purpose model |
-| `SMALL_MODEL` | `gpt-4o-mini` | Fast model for simple tasks |
+| `BIG_MODEL` | `claude-opus-4-6` | Primary model for complex tasks |
+| `MIDDLE_MODEL` | `claude-sonnet-4-6` | General-purpose model |
+| `SMALL_MODEL` | `claude-haiku-4-5` | Fast model for simple tasks |
 
 #### Proxy Tuning (proxy mode only)
 
