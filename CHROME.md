@@ -183,7 +183,7 @@ RUN npm exec chrome-devtools-mcp@latest -- --version 2>/dev/null || true \
        fi
 ```
 
-### Option B: entrypoint.sh (run-time)
+### Option B: entrypoint.sh (runtime)
 
 Add a function that patches the file on first launch:
 
