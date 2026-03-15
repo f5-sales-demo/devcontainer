@@ -1,8 +1,12 @@
 {
   "statusLine": { "type": "command", "command": "/opt/claude-config/statusline.sh" },
-  "model": "claude-opus-4-6",
+  "model": "opus[1m]",
   "spinnerTipsEnabled": false,
-  "terminalProgressBarEnabled": true,
+  "terminalProgressBarEnabled": false,
+  "showTurnDuration": false,
+  "prefersReducedMotion": true,
+  "companyAnnouncements": [],
+  "teammateMode": "tmux",
   "defaultMode": "bypassPermissions",
   "skipDangerousModePermissionPrompt": true,
   "permissions": {
