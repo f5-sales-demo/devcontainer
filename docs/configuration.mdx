@@ -145,6 +145,10 @@ No sidecar container or compose profile is needed — just set your API key in `
 
 The container runs a virtual display stack for watching and interacting with headed browsers. See [Remote Display (noVNC)](./vnc) for connection instructions and environment variables (`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`).
 
+### Chrome DevTools MCP
+
+The container includes a pre-configured [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) server for headless browser automation. Claude Code can navigate web pages, take screenshots, and inspect the DOM without any additional setup. See [Chrome DevTools MCP](./chrome) for details.
+
 ### Git
 
 | Variable | Description | How to Set |

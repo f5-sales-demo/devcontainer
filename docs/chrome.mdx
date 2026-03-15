@@ -1,0 +1,79 @@
+---
+title: Chrome DevTools MCP
+description: Browser automation, screenshots, and DOM inspection via headless Chromium.
+sidebar:
+  order: 4
+---
+
+The container includes a pre-configured [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) server that gives Claude Code headless browser automation capabilities. Navigate web pages, take screenshots, inspect the DOM, and interact with page elements — no additional setup needed.
+
+## How It Works
+
+The Chrome DevTools MCP server connects Claude Code to a headless Chromium browser via the Chrome DevTools Protocol. The server is registered as an MCP plugin and launched automatically by the Claude Code proxy when browser tools are needed.
+
+The container patches the MCP server to run in headless mode, since there is no physical display. If VNC is enabled, you can switch to headed mode for visual debugging.
+
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `navigate_page` | Navigate to a URL and wait for the page to load |
+| `take_screenshot` | Capture a PNG screenshot of the current page |
+| `take_snapshot` | Get an accessibility tree snapshot of the page |
+| `click` | Click an element on the page |
+| `type` | Type text into an input field |
+| `hover` | Hover over an element |
+| `scroll` | Scroll the page or a specific element |
+| `evaluate` | Execute JavaScript in the page context |
+| `get_console_logs` | Retrieve console log messages |
+| `get_page_info` | Get page metadata (title, URL, etc.) |
+
+## Architecture
+
+The browser stack uses three components that work together:
+
+1. **Playwright Chromium** — ARM64-compatible Chromium binary installed at build time via `npx playwright install --with-deps chromium`
+2. **Chrome symlink** — bridges Puppeteer's expected path (`/opt/google/chrome/chrome`) to the Playwright binary
+3. **Headless patch** — injects `--headless` into the MCP server's argument parser before launch, since the Claude Code proxy does not pass this flag
+
+Google Chrome has no ARM64 `.deb` package, and Ubuntu 24.04's `chromium-browser` apt package redirects to snap (which doesn't work in containers). Playwright's bundled Chromium is the only reliable option for ARM64 containers.
+
+## Verification
+
+Confirm the setup works inside the container:
+
+```bash
+# Chrome binary responds
+/opt/google/chrome/chrome --version
+
+# Symlink is correct
+ls -la /opt/google/chrome/chrome
+
+# Headless mode works
+/opt/google/chrome/chrome --headless --no-sandbox --disable-gpu \
+    --dump-dom about:blank
+
+# Self-test includes Chrome checks
+claude-self-test
+```
+
+## Headed Mode (VNC)
+
+For visual browser sessions, enable the VNC stack and use Playwright's headed mode instead:
+
+```bash
+# In .env
+ENABLE_VNC=true
+```
+
+Open `http://localhost:6080/vnc.html` to see the virtual display. See [Remote Display (noVNC)](./vnc) for details.
+
+The Chrome DevTools MCP server runs in headless mode by default. For headed debugging, launch Chromium manually:
+
+```bash
+chromium --no-sandbox &
+```
+
+## Troubleshooting
+
+See [Troubleshooting — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) for solutions to common issues including missing Chrome executable, headless patch errors, and MCP update handling.

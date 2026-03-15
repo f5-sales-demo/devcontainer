@@ -177,6 +177,25 @@ fi
 start_claude_proxy
 
 # ============================================================
+# Chrome DevTools MCP (headless patch)
+# ============================================================
+# The MCP server is launched by the Claude Code proxy without
+# --headless. Re-apply the patch if npm exec fetched a newer
+# version since image build.
+patch_chrome_devtools_mcp() {
+    local mcp_main
+    mcp_main=$(find /home/vscode/.npm/_npx -name 'chrome-devtools-mcp-main.js' \
+               -path '*/bin/*' 2>/dev/null | head -1)
+    if [ -n "$mcp_main" ] && ! grep -q 'Auto-inject headless' "$mcp_main"; then
+        sed -i '/^export const args = parseArguments(VERSION);/i \
+// Auto-inject headless mode for container environments without a display server\
+\nif (!process.argv.includes('\''--headless'\'')) {\n    process.argv.push('\''--headless'\'');\n}' \
+          "$mcp_main"
+    fi
+}
+patch_chrome_devtools_mcp
+
+# ============================================================
 # VNC stack (Xvfb + fluxbox + x11vnc + noVNC)
 # ============================================================
 if [ "${ENABLE_VNC:-false}" = "true" ]; then

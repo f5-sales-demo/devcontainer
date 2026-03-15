@@ -1017,6 +1017,26 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
 RUN npx playwright install --with-deps chromium
 
 # ============================================================
+# 13b. Chrome DevTools MCP (headless browser automation)
+#      Bridges Puppeteer's Chrome lookup to Playwright's
+#      Chromium and patches the MCP entry point for headless
+#      mode in container environments without a display server.
+# ============================================================
+# hadolint ignore=DL3059
+RUN mkdir -p /opt/google/chrome \
+    && ln -sf /home/vscode/.cache/ms-playwright/chromium-1208/chrome-linux/chrome \
+              /opt/google/chrome/chrome \
+    && npm exec chrome-devtools-mcp@latest -- --version 2>/dev/null || true \
+    && MCP_MAIN=$(find /home/vscode/.npm/_npx -name 'chrome-devtools-mcp-main.js' \
+                  -path '*/bin/*' 2>/dev/null | head -1) \
+    && if [ -n "$MCP_MAIN" ]; then \
+         sed -i '/^export const args = parseArguments(VERSION);/i \
+// Auto-inject headless mode for container environments without a display server\
+\nif (!process.argv.includes('\''--headless'\'')) {\n    process.argv.push('\''--headless'\'');\n}' \
+           "$MCP_MAIN"; \
+       fi
+
+# ============================================================
 # User setup
 # ============================================================
 # Pre-create Homebrew prefix so the installer skips the sudo check

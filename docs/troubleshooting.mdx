@@ -359,6 +359,41 @@ ports:
   - "127.0.0.1:16080:6080"
 ```
 
+## Chrome DevTools MCP
+
+### "Could not find Google Chrome executable"
+
+The Chrome symlink may be missing. Verify inside the container:
+
+```bash
+ls -la /opt/google/chrome/chrome
+```
+
+If the symlink doesn't exist, pull the latest image and restart.
+
+### "Missing X server to start the headful browser"
+
+The headless patch may not be applied. Check:
+
+```bash
+grep 'Auto-inject headless' \
+  "$(find ~/.npm/_npx -name 'chrome-devtools-mcp-main.js' -path '*/bin/*' | head -1)"
+```
+
+If no output, restart the container — the entrypoint re-applies the patch automatically.
+
+### MCP tools fail after chrome-devtools-mcp update
+
+When `npm exec` fetches a newer version, the patch needs to be reapplied. Restart the container or run the entrypoint's patch function manually:
+
+```bash
+# Find the MCP entry point
+MCP_MAIN=$(find ~/.npm/_npx -name 'chrome-devtools-mcp-main.js' -path '*/bin/*' | head -1)
+echo "$MCP_MAIN"
+```
+
+Then restart the container to re-apply the patch. Reconnect with `/mcp` in Claude Code.
+
 ## Reset Everything
 
 <Tabs syncKey="runtime">
