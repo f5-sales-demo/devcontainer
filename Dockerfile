@@ -1025,16 +1025,7 @@ RUN npx playwright install --with-deps chromium
 # hadolint ignore=DL3059
 RUN mkdir -p /opt/google/chrome \
     && ln -sf /home/vscode/.cache/ms-playwright/chromium-1208/chrome-linux/chrome \
-              /opt/google/chrome/chrome \
-    && npm exec chrome-devtools-mcp@latest -- --version 2>/dev/null || true \
-    && MCP_MAIN=$(find /home/vscode/.npm/_npx -name 'chrome-devtools-mcp-main.js' \
-                  -path '*/bin/*' 2>/dev/null | head -1) \
-    && if [ -n "$MCP_MAIN" ]; then \
-        sed -i '/^export const args = parseArguments(VERSION);/i \
-// Auto-inject headless mode for container environments without a display server\
-\nif (!process.argv.includes('\''--headless'\'')) {\n    process.argv.push('\''--headless'\'');\n}' \
-          "$MCP_MAIN"; \
-      fi
+              /opt/google/chrome/chrome
 
 # ============================================================
 # User setup
@@ -1069,6 +1060,19 @@ RUN claude install --force \
 # Tavily skills for Claude Code (must run as vscode user with ~/.claude present)
 # hadolint ignore=DL3059
 RUN npx -y skills add tavily-ai/skills --yes --global
+
+# Chrome DevTools MCP: pre-cache and apply headless patch (runs as vscode
+# so npm caches to ~/.npm/_npx; the symlink was created as root in 13b)
+# hadolint ignore=DL3059
+RUN npm exec chrome-devtools-mcp@latest -- --version 2>/dev/null; \
+    MCP_MAIN=$(find ~/.npm/_npx -name 'chrome-devtools-mcp-main.js' \
+      -path '*/bin/*' 2>/dev/null | head -1); \
+    if [ -n "$MCP_MAIN" ]; then \
+      sed -i '/^export const args = parseArguments(VERSION);/i \
+// Auto-inject headless mode for container environments without a display server\
+\nif (!process.argv.includes('\''--headless'\'')) {\n    process.argv.push('\''--headless'\'');\n}' \
+        "$MCP_MAIN"; \
+    fi
 
 # oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
 # Build-time install uses upstream oh-my-opencode (needs platform binaries).
