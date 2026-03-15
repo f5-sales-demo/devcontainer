@@ -94,8 +94,15 @@ if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -f /opt/opencode-config/opencode-anthr
 AUTHEOF
 elif [ -n "$OPENAI_API_KEY" ] &&
   [ -f /opt/opencode-config/opencode.json ]; then
-  cp /opt/opencode-config/opencode.json \
-    "$OPENCODE_CONFIG_DIR/opencode.json"
+  # Substitute actual values — OpenCode must bypass the local proxy
+  # and connect directly to the upstream API. The {env:} placeholders
+  # would resolve to the proxy-rewritten OPENAI_BASE_URL after
+  # claude-proxy.sh runs, pointing OpenCode at the wrong endpoint.
+  sed -e "s|{env:OPENAI_BASE_URL}|${OPENAI_BASE_URL}|g" \
+    -e "s|{env:OPENAI_API_KEY}|${OPENAI_API_KEY}|g" \
+    -e "s|{env:TAVILY_API_KEY}|${TAVILY_API_KEY}|g" \
+    /opt/opencode-config/opencode.json \
+    >"$OPENCODE_CONFIG_DIR/opencode.json"
 fi
 
 # Seed oh-my-opencode config
