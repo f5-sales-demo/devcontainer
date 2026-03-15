@@ -113,7 +113,14 @@ CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
 
 ### Option C: OpenAI-compatible provider
 
-See [Configuration](./configuration) for proxy setup with any OpenAI-compatible endpoint.
+Route through any OpenAI-compatible endpoint (Open WebUI, LiteLLM, etc.) — only two variables needed:
+
+```ini
+OPENAI_API_KEY=sk-your-api-key-here
+OPENAI_BASE_URL=https://your-api-endpoint.example.com/v1
+```
+
+The container auto-derives `ANTHROPIC_API_KEY` and model mappings. See [Configuration](./configuration) for advanced proxy tuning.
 
 ### Auto-populate from local credentials
 

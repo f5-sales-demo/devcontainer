@@ -138,6 +138,20 @@ else
 fi
 
 # ============================================================
+# Proxy mode defaults (OPENAI_API_KEY without OAuth)
+# ============================================================
+# When connecting through an OpenAI-compatible proxy, auto-set
+# ANTHROPIC_API_KEY and model mappings so users only need to
+# configure OPENAI_API_KEY and OPENAI_BASE_URL.
+# These are mutually exclusive with CLAUDE_CODE_OAUTH_TOKEN.
+if [ -n "$OPENAI_API_KEY" ] && [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-openai-proxy}"
+  export BIG_MODEL="${BIG_MODEL:-claude-opus-4-6}"
+  export MIDDLE_MODEL="${MIDDLE_MODEL:-claude-sonnet-4-6}"
+  export SMALL_MODEL="${SMALL_MODEL:-claude-haiku-4-5}"
+fi
+
+# ============================================================
 # Claude Code Proxy (Anthropic Messages API -> OpenAI)
 # ============================================================
 # Source the shared proxy startup function, then invoke it.
