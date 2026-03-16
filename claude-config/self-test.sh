@@ -238,6 +238,15 @@ else
 fi
 
 echo ""
+echo "10. iTerm2 Utilities"
+check "imgcat installed" command -v imgcat
+check "imgls installed" command -v imgls
+check "it2dl installed" command -v it2dl
+check "it2ul installed" command -v it2ul
+check "it2copy installed" command -v it2copy
+check "it2check installed" command -v it2check
+
+echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $WARN warnings ==="
 
 if [ "$FAIL" -gt 0 ]; then
