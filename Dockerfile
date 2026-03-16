@@ -136,7 +136,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     lua5.4 liblua5.4-dev luarocks \
     r-base \
     dart \
-    dotnet-sdk-9.0 \
+    dotnet-sdk-8.0 \
     # AI assistant tool dependencies
     libbrotli-dev \
     libc-ares-dev \
