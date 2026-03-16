@@ -491,7 +491,19 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && chown ${USERNAME}:${USERNAME} /usr/local/bin/codex
 
 # ============================================================
-# 10c. Super-linter binary tools (linters + formatters)
+# 10c. iTerm2 terminal image utilities
+#      Standalone scripts — display images, transfer files,
+#      and copy to clipboard via OSC 1337 escape sequences.
+# ============================================================
+# hadolint ignore=DL3059
+RUN for util in imgcat imgls it2dl it2ul it2copy it2check; do \
+      curl ${CURL_RETRY} -fsSL "https://iterm2.com/utilities/${util}" \
+        -o "/usr/local/bin/${util}" \
+      && chmod +x "/usr/local/bin/${util}"; \
+    done
+
+# ============================================================
+# 10d. Super-linter binary tools (linters + formatters)
 #      All resolve latest versions at build time.
 # ============================================================
 # hadolint ignore=DL3059
