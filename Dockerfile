@@ -853,7 +853,12 @@ RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
 # ============================================================
 # Runs as a background process in entrypoint.sh when OPENAI_API_KEY is set.
 # Build tools are needed for C extensions (httptools, uvloop) on Python 3.13.
-# hadolint ignore=DL3008,DL3059
+# Cache-bust: ADD fetches latest commit metadata; when HEAD changes the
+# API response changes, invalidating the Docker layer cache.
+# hadolint ignore=DL3008,DL3020,DL3059
+#checkov:skip=CKV_DOCKER_4:ADD from URL is intentional for Docker layer cache busting
+ADD https://api.github.com/repos/f5xc-salesdemos/claude-code-proxy/commits/main \
+    /tmp/claude-proxy-head.json
 RUN git clone --depth=1 https://github.com/f5xc-salesdemos/claude-code-proxy.git /opt/claude-code-proxy
 
 WORKDIR /opt/claude-code-proxy
