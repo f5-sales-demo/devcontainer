@@ -11,9 +11,9 @@ ARG USERNAME=vscode
 # ============================================================
 ARG NODE_MAJOR=24
 ARG PYTHON_VERSION=3.13
-ARG JAVA_VERSION=21
-ARG MAVEN_VERSION=3.9.9
-ARG BROWSH_VERSION=1.8.2
+ARG JAVA_VERSION=25
+ARG MAVEN_VERSION=3.9.14
+ARG BROWSH_VERSION=1.8.3
 ARG GHIDRA_VERSION=12.0.4
 ARG GHIDRA_DATE=20260303
 
@@ -94,7 +94,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Tailscale VPN
     tailscale \
     # Shell tools
-    bat fd-find ripgrep htop tree tmux file \
+    bat fd-find ripgrep htop tree tmux file xxd \
     # Node.js
     nodejs \
     # Python
@@ -136,7 +136,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     lua5.4 liblua5.4-dev luarocks \
     r-base \
     dart \
-    dotnet-sdk-8.0 \
+    dotnet-sdk-9.0 \
     # AI assistant tool dependencies
     libbrotli-dev \
     libc-ares-dev \
@@ -364,7 +364,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # ARGs don't cross FROM boundaries — redeclare what final needs
 ARG USERNAME=vscode
-ARG IBMCLOUD_VERSION=2.31.0
+ARG IBMCLOUD_VERSION=2.41.1
 ARG GHIDRA_VERSION=12.0.4
 ARG GHIDRA_DATE=20260303
 
@@ -878,7 +878,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # OpenCode: tavily-mcp package pre-installed globally
 # Claude Code: Tavily skills installed later as vscode user (section 17)
 # hadolint ignore=DL3059
-RUN npm install -g tavily-mcp@0.1.3
+RUN npm install -g tavily-mcp@0.2.18
 
 # ============================================================
 # 12d. Ruby linters (rubocop + extensions)
