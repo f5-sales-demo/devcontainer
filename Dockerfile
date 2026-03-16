@@ -758,6 +758,9 @@ RUN npm install -g \
     @googleworkspace/cli \
     html2canvas \
     playwright \
+    puppeteer \
+    puppeteer-extra \
+    puppeteer-extra-plugin-stealth \
     eslint \
     @biomejs/biome \
     standard \
@@ -791,6 +794,10 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     pylint \
     yamllint \
     playwright \
+    playwright-stealth \
+    undetected-chromedriver \
+    nodriver \
+    browserforge \
     "markitdown[all]" \
     progressbar2 \
     checkov \
