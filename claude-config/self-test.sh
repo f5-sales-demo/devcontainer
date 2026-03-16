@@ -247,6 +247,16 @@ check "it2copy installed" command -v it2copy
 check "it2check installed" command -v it2check
 
 echo ""
+echo "11. Anti-Bot Detection Tools"
+check "puppeteer installed (npm)" node -e "require('puppeteer')"
+check "puppeteer-extra installed (npm)" node -e "require('puppeteer-extra')"
+check "puppeteer-extra-plugin-stealth installed (npm)" node -e "require('puppeteer-extra-plugin-stealth')"
+check "playwright-stealth installed (pip)" python3 -c "import playwright_stealth"
+check "undetected-chromedriver installed (pip)" python3 -c "import undetected_chromedriver"
+check "nodriver installed (pip)" python3 -c "import nodriver"
+check "browserforge installed (pip)" python3 -c "import browserforge"
+
+echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $WARN warnings ==="
 
 if [ "$FAIL" -gt 0 ]; then
