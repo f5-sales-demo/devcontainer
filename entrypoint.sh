@@ -69,7 +69,7 @@ fi
 _is_litellm_direct=false
 if [ -n "$ANTHROPIC_BASE_URL" ]; then
   case "$ANTHROPIC_BASE_URL" in
-    http://localhost:*|http://localhost) ;;
+    http://localhost:* | http://localhost) ;;
     *) _is_litellm_direct=true ;;
   esac
 fi
@@ -127,13 +127,11 @@ elif [ -n "$OPENAI_API_KEY" ] &&
   # Escape sed metacharacters (& and \) in replacement values.
   _esc_base_url=$(printf '%s' "$OPENAI_BASE_URL" | sed 's/[&\\/]/\\&/g')
   _esc_api_key=$(printf '%s' "$OPENAI_API_KEY" | sed 's/[&\\/]/\\&/g')
-  _esc_tavily=$(printf '%s' "${TAVILY_API_KEY:-}" | sed 's/[&\\/]/\\&/g')
   sed -e "s|{env:OPENAI_BASE_URL}|${_esc_base_url}|g" \
     -e "s|{env:OPENAI_API_KEY}|${_esc_api_key}|g" \
-    -e "s|{env:TAVILY_API_KEY}|${_esc_tavily}|g" \
     /opt/opencode-config/opencode.json \
     >"$OPENCODE_CONFIG_DIR/opencode.json"
-  unset _esc_base_url _esc_api_key _esc_tavily
+  unset _esc_base_url _esc_api_key
 fi
 
 # Seed oh-my-opencode config
