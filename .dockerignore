@@ -3,4 +3,6 @@
 !claude-config/
 !opencode-config/
 !codex-config/
+!pi-config/
+!.devcontainer/scripts/
 !configs/
