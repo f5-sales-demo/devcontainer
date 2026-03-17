@@ -23,7 +23,7 @@
     }
   },
 
-  "postStartCommand": "bash /workspace/.devcontainer/scripts/post-start.sh",
+  "postStartCommand": "bash /opt/devcontainer/post-start.sh",
 
   "forwardPorts": [4200, 6080, 8888],
   "portsAttributes": {

@@ -54,14 +54,6 @@ check "home directory writable" test -w "$HOME"
 check "TERM is set" test -n "${TERM:-}"
 
 echo ""
-echo "5. Web Search (Tavily)"
-if [ -n "${TAVILY_API_KEY:-}" ]; then
-  check "TAVILY_API_KEY is set" true
-else
-  echo "  SKIP: TAVILY_API_KEY not set (add to .env for web search)"
-fi
-
-echo ""
 echo "6. Super-Linter Tools"
 # Binary tools
 check "shfmt installed" command -v shfmt

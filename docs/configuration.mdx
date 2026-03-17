@@ -142,18 +142,10 @@ The container includes several AI coding agents in addition to Claude Code:
 
 Aider is installed via `uv tool install` with Python 3.12 (it requires Python &lt;3.13) and includes the `browser`, `help`, and `playwright` extras. Pi is installed as a global npm package. Codex is a standalone binary that self-updates at runtime.
 
-### Web Search (Tavily)
+### Web Search
 
-Web search is provided by [Tavily](https://tavily.com), an AI-optimized search API.
-
-- **Claude Code**: Uses the [Tavily skills plugin](https://docs.tavily.com/documentation/agent-skills) — search, research, crawl, and extract capabilities are available as slash commands (`/search`, `/research`, `/crawl`, `/extract`)
-- **OpenCode**: Uses the [Tavily MCP server](https://docs.tavily.com/documentation/mcp) — search tools appear automatically in the tool schema
-
-| Variable | Description | How to Get |
-|----------|-------------|------------|
-| `TAVILY_API_KEY` | Tavily API key | Free at [app.tavily.com](https://app.tavily.com) |
-
-No sidecar container or compose profile is needed — just set your API key in `.env`.
+- **Claude Code**: Uses built-in web search via the Anthropic Messages API (`web_search` tool)
+- **OpenCode**: Uses built-in [Exa](https://exa.ai) web search — no API key required. Enabled via `OPENCODE_ENABLE_EXA=true` or `OPENCODE_EXPERIMENTAL=true`
 
 ### Remote Display (noVNC)
 

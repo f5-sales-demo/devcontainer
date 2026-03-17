@@ -1,0 +1,21 @@
+{
+  "hasCompletedOnboarding": true,
+  "theme": "dark-daltonized",
+  "opusProMigrationComplete": true,
+  "sonnet1m45MigrationComplete": true,
+  "customApiKeyResponses": {
+    "approved": [],
+    "rejected": []
+  },
+  "officialMarketplaceAutoInstallAttempted": true,
+  "officialMarketplaceAutoInstalled": true,
+  "cachedChromeExtensionInstalled": false,
+  "projects": {
+    "/workspace": {
+      "hasTrustDialogAccepted": true,
+      "projectOnboardingSeenCount": 1,
+      "hasClaudeMdExternalIncludesApproved": true,
+      "hasClaudeMdExternalIncludesWarningShown": true
+    }
+  }
+}
