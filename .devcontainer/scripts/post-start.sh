@@ -3,8 +3,27 @@ set -e
 
 echo "Running post-start checks..."
 
+# Detect LiteLLM direct mode
+_litellm_direct=false
+if [ -n "$ANTHROPIC_BASE_URL" ]; then
+  case "$ANTHROPIC_BASE_URL" in
+    http://localhost:*|http://localhost) ;;
+    *) _litellm_direct=true ;;
+  esac
+fi
+
 # Check AI provider mode
-if [ -n "$OPENAI_API_KEY" ]; then
+if [ "$_litellm_direct" = true ]; then
+  echo "  Mode: LiteLLM direct (Anthropic-compatible proxy)"
+  echo "  Endpoint: $ANTHROPIC_BASE_URL"
+  echo -n "  Checking endpoint... "
+  if curl -sf --connect-timeout 5 -o /dev/null "${ANTHROPIC_BASE_URL%/}" 2>/dev/null; then
+    echo "reachable"
+  else
+    echo "not reachable (check VPN / network connectivity)"
+  fi
+  echo "  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:+set}${ANTHROPIC_API_KEY:-NOT SET}"
+elif [ -n "$OPENAI_API_KEY" ]; then
   echo "  Mode: proxy (OpenAI-compatible)"
   echo -n "  Checking proxy (http://localhost:8082)... "
   if curl -sf --connect-timeout 5 "http://localhost:8082/" >/dev/null 2>&1; then
@@ -59,6 +78,7 @@ else
     echo "  ANTHROPIC_API_KEY is set"
   fi
 fi
+unset _litellm_direct
 
 # Check installed tools
 echo "  Installed tools:"

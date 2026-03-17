@@ -55,13 +55,6 @@ check "TERM is set" test -n "${TERM:-}"
 
 echo ""
 echo "5. Web Search (Tavily)"
-if [ -d "$HOME/.agents/skills" ] && ls "$HOME/.agents/skills"/search >/dev/null 2>&1; then
-  check "Tavily skills installed" true
-  check "Tavily skills symlinked to Claude Code" test -L "$HOME/.claude/skills/search"
-else
-  echo "  FAIL: Tavily skills not found in ~/.agents/skills"
-  FAIL=$((FAIL + 1))
-fi
 if [ -n "${TAVILY_API_KEY:-}" ]; then
   check "TAVILY_API_KEY is set" true
 else

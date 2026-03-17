@@ -19,6 +19,16 @@
 # ============================================================
 
 start_claude_proxy() {
+  # LiteLLM direct mode: user has configured their own Anthropic-compatible
+  # endpoint. Skip the proxy entirely. Exclude http://localhost:* which is
+  # set by this function itself (preserves idempotency on re-source).
+  if [ -n "$ANTHROPIC_BASE_URL" ]; then
+    case "$ANTHROPIC_BASE_URL" in
+      http://localhost:*|http://localhost) ;;  # proxy-set — fall through
+      *) return 0 ;;                           # user-configured — skip
+    esac
+  fi
+
   # Nothing to do if proxy mode is not requested
   if [ -z "$OPENAI_API_KEY" ] || [ ! -d /opt/claude-code-proxy ]; then
     return 0

@@ -17,8 +17,9 @@ All configuration lives in the `.env` file at the project root. This file is git
 |----------|-------------|---------|
 | `ANTHROPIC_API_KEY` | API key passed to Claude Code | `sk-ant-abc123...` |
 
-The container supports three **mutually exclusive** authentication modes:
+The container supports four **mutually exclusive** authentication modes (in priority order):
 
+- **LiteLLM direct** — set `ANTHROPIC_BASE_URL` to an Anthropic-compatible proxy (see below).
 - **Direct mode** (default) — set `ANTHROPIC_API_KEY` to your Anthropic API key (`sk-ant-...`).
 - **OAuth mode** — set `CLAUDE_CODE_OAUTH_TOKEN` only (see below).
 - **Proxy mode** — set `OPENAI_API_KEY` + `OPENAI_BASE_URL` only. `ANTHROPIC_API_KEY` and model mappings are auto-derived (see below).
@@ -32,6 +33,19 @@ Do not combine modes — use exactly one.
 | `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token from a Claude Max subscription | `sk-ant-oat01-...` |
 
 When set, both Claude Code and OpenCode authenticate directly with Anthropic using OAuth — no API key or proxy needed. This takes priority over `OPENAI_API_KEY` for OpenCode configuration. Get your token from Claude Code settings or the [Anthropic console](https://console.anthropic.com/).
+
+### LiteLLM Direct (Anthropic-compatible proxies)
+
+If your LiteLLM (or other) proxy already speaks the native Anthropic Messages API — including `web_search`, streaming, and tool use — set `ANTHROPIC_BASE_URL` to route Claude Code directly to it. No built-in translation proxy is started.
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `ANTHROPIC_BASE_URL` | URL of your Anthropic-compatible proxy | `https://f5ai.pd.f5net.com/anthropic` |
+| `ANTHROPIC_API_KEY` | API key for authentication (optional) | Falls back to `OPENAI_API_KEY` or `litellm-proxy` |
+
+This mode takes priority over Proxy mode: when `ANTHROPIC_BASE_URL` is set to a non-localhost URL, the built-in proxy is never started — even if `OPENAI_API_KEY` is also present.
+
+Model names are **not** remapped in this mode. Claude Code sends its standard model identifiers (e.g. `claude-sonnet-4-6`) and LiteLLM routes them to your configured backend.
 
 ### AI Proxy (OpenAI-compatible providers)
 

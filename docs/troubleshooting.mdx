@@ -132,6 +132,20 @@ echo "OPENAI_BASE_URL=$OPENAI_BASE_URL"
 
 The proxy only starts when `OPENAI_API_KEY` is set. If it's empty, add it to `.env` and restart the container.
 
+### Claude ignores ANTHROPIC_BASE_URL (still uses proxy)
+
+If you set `ANTHROPIC_BASE_URL` but Claude Code connects to `localhost:8082`:
+
+```bash
+echo "$ANTHROPIC_BASE_URL"
+```
+
+If it shows `http://localhost:8082`, the LiteLLM guard didn't fire. Check:
+
+- Your URL does **not** start with `http://localhost` (reserved for the built-in proxy)
+- The variable is exported in `.env` (not commented out)
+- You restarted the container after changing `.env`
+
 ### API requests fail with 401
 
 **Direct mode** — Check that your API key is set correctly:
