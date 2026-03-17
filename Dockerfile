@@ -1246,6 +1246,11 @@ RUN printf '#!/bin/bash\nif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPI
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# Ensure the entire home directory (including hidden files/folders created
+# by earlier root-owned stages) is owned by the runtime user.  This catches
+# .claude/, .config/, .codex/, .pi/, and any future additions.
+RUN chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
+
 USER $USERNAME
 ENV FORCE_AUTOUPDATE_PLUGINS=true
 ENV SHELL=/bin/zsh
