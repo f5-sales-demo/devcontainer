@@ -96,17 +96,38 @@ PIEOF
   fi
 fi
 
-# Ensure Claude Code onboarding + theme + workspace trust are always set
+# Ensure Claude Code onboarding + theme + workspace trust + state flags are always set
 # The image pre-bakes the full default; only act if volume-mounted with different content
 if [ -f "$HOME/.claude.json" ] && [ -s "$HOME/.claude.json" ]; then
-  if jq -e '.hasCompletedOnboarding and .projects["/workspace"].hasTrustDialogAccepted' \
+  if jq -e '.hasCompletedOnboarding and .opusProMigrationComplete and .projects["/workspace"].hasTrustDialogAccepted and .projects["/workspace"].hasClaudeMdExternalIncludesApproved' \
     "$HOME/.claude.json" >/dev/null 2>&1; then
     : # Already correct, skip
   else
-    jq '. + {"hasCompletedOnboarding": true, "theme": (.theme // "dark-daltonized")}
-        | .projects["/workspace"].hasTrustDialogAccepted = true' \
+    jq '. + {
+          "hasCompletedOnboarding": true,
+          "theme": (.theme // "dark-daltonized"),
+          "opusProMigrationComplete": true,
+          "sonnet1m45MigrationComplete": true,
+          "customApiKeyResponses": (.customApiKeyResponses // {"approved": [], "rejected": []}),
+          "officialMarketplaceAutoInstallAttempted": true,
+          "officialMarketplaceAutoInstalled": true,
+          "cachedChromeExtensionInstalled": false
+        }
+        | .projects["/workspace"].hasTrustDialogAccepted = true
+        | .projects["/workspace"].projectOnboardingSeenCount = (.projects["/workspace"].projectOnboardingSeenCount // 1)
+        | .projects["/workspace"].hasClaudeMdExternalIncludesApproved = true
+        | .projects["/workspace"].hasClaudeMdExternalIncludesWarningShown = true' \
       "$HOME/.claude.json" >"$HOME/.claude.json.tmp" && mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
   fi
+fi
+
+# If ANTHROPIC_API_KEY is set, auto-approve it in customApiKeyResponses
+if [ -n "$ANTHROPIC_API_KEY" ] && [ -f "$HOME/.claude.json" ]; then
+  jq --arg key "$ANTHROPIC_API_KEY" '
+    .customApiKeyResponses.approved = (
+      (.customApiKeyResponses.approved // []) + [$key] | unique
+    )' "$HOME/.claude.json" > "$HOME/.claude.json.tmp" \
+    && mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
 fi
 
 # Seed opencode config (dirs pre-created in image)
