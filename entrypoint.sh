@@ -126,8 +126,8 @@ if [ -n "$ANTHROPIC_API_KEY" ] && [ -f "$HOME/.claude.json" ]; then
   jq --arg key "$ANTHROPIC_API_KEY" '
     .customApiKeyResponses.approved = (
       (.customApiKeyResponses.approved // []) + [$key] | unique
-    )' "$HOME/.claude.json" > "$HOME/.claude.json.tmp" \
-    && mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
+    )' "$HOME/.claude.json" >"$HOME/.claude.json.tmp" &&
+    mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
 fi
 
 # Seed opencode config (dirs pre-created in image)
