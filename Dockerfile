@@ -1244,7 +1244,11 @@ RUN printf '#!/bin/bash\nif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPI
 # 18. Entrypoint (absolute last COPY — most volatile file)
 # ============================================================
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# chmod the entrypoint and ensure the entire home directory (including hidden
+# files/folders created by earlier root-owned stages such as .claude/, .config/,
+# .codex/, .pi/) is owned by the runtime user.
+RUN chmod +x /usr/local/bin/entrypoint.sh \
+    && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
 
 USER $USERNAME
 ENV FORCE_AUTOUPDATE_PLUGINS=true
