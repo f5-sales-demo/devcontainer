@@ -1068,7 +1068,7 @@ RUN curl -fsSL https://bun.sh/install | bash \
 # hadolint ignore=DL3059
 RUN claude install --force \
     && sudo npm uninstall -g @anthropic-ai/claude-code \
-    && echo '{"hasCompletedOnboarding":true,"theme":"dark-daltonized","projects":{"/workspace":{"hasTrustDialogAccepted":true}}}' > ~/.claude.json
+    && echo '{"hasCompletedOnboarding":true,"theme":"dark-daltonized","opusProMigrationComplete":true,"sonnet1m45MigrationComplete":true,"customApiKeyResponses":{"approved":[],"rejected":[]},"officialMarketplaceAutoInstallAttempted":true,"officialMarketplaceAutoInstalled":true,"cachedChromeExtensionInstalled":false,"projects":{"/workspace":{"hasTrustDialogAccepted":true,"projectOnboardingSeenCount":1,"hasClaudeMdExternalIncludesApproved":true,"hasClaudeMdExternalIncludesWarningShown":true}}}' > ~/.claude.json
 
 # Tavily skills for Claude Code (must run as vscode user with ~/.claude present)
 # hadolint ignore=DL3059
