@@ -1,6 +1,6 @@
 {
   "statusLine": { "type": "command", "command": "/opt/claude-config/statusline.sh" },
-  "model": "opus[1m]",
+  "model": "claude-opus-4-6",
   "spinnerTipsEnabled": false,
   "terminalProgressBarEnabled": false,
   "showTurnDuration": false,
@@ -31,7 +31,6 @@
   "mcpServers": {},
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-    "TAVILY_API_KEY": "__TAVILY_API_KEY__",
     "ANTHROPIC_1M_CONTEXT": "true"
   },
   "preferences": {

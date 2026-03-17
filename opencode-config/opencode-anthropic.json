@@ -3,14 +3,5 @@
   "permission": "allow",
   "model": "anthropic/claude-opus-4-6",
   "plugin": ["@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"],
-  "mcp": {
-    "tavily": {
-      "type": "local",
-      "command": ["npx", "-y", "tavily-mcp@0.1.3"],
-      "environment": {
-        "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
-      },
-      "enabled": false
-    }
-  }
+  "mcp": {}
 }

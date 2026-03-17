@@ -60,8 +60,31 @@ if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then
   export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
 fi
 
-# Enable 1M context window for OpenCode's Anthropic provider
-export ANTHROPIC_1M_CONTEXT="true"
+# ============================================================
+# Detect LiteLLM direct mode (reused in multiple blocks below)
+# ============================================================
+# When the user provides ANTHROPIC_BASE_URL pointing at their own
+# Anthropic-compatible proxy (e.g. LiteLLM), Claude Code uses it
+# natively. No translation proxy is needed, no model mapping required.
+_is_litellm_direct=false
+if [ -n "$ANTHROPIC_BASE_URL" ]; then
+  case "$ANTHROPIC_BASE_URL" in
+  http://localhost:* | http://localhost) ;;
+  *) _is_litellm_direct=true ;;
+  esac
+fi
+
+# Enable 1M context window for OpenCode's Anthropic provider.
+# Disabled in LiteLLM direct mode — LiteLLM does not yet support
+# the 1M context window parameter.
+if [ "$_is_litellm_direct" = true ]; then
+  export ANTHROPIC_1M_CONTEXT="false"
+  # Also update Claude Code's settings.json env block
+  sed -i 's|"ANTHROPIC_1M_CONTEXT": "true"|"ANTHROPIC_1M_CONTEXT": "false"|' \
+    "$HOME/.claude/settings.json"
+else
+  export ANTHROPIC_1M_CONTEXT="true"
+fi
 
 # Seed Pi settings if missing (dirs pre-created in image)
 PI_AGENT_DIR="$HOME/.pi/agent"
@@ -104,13 +127,11 @@ elif [ -n "$OPENAI_API_KEY" ] &&
   # Escape sed metacharacters (& and \) in replacement values.
   _esc_base_url=$(printf '%s' "$OPENAI_BASE_URL" | sed 's/[&\\/]/\\&/g')
   _esc_api_key=$(printf '%s' "$OPENAI_API_KEY" | sed 's/[&\\/]/\\&/g')
-  _esc_tavily=$(printf '%s' "${TAVILY_API_KEY:-}" | sed 's/[&\\/]/\\&/g')
   sed -e "s|{env:OPENAI_BASE_URL}|${_esc_base_url}|g" \
     -e "s|{env:OPENAI_API_KEY}|${_esc_api_key}|g" \
-    -e "s|{env:TAVILY_API_KEY}|${_esc_tavily}|g" \
     /opt/opencode-config/opencode.json \
     >"$OPENCODE_CONFIG_DIR/opencode.json"
-  unset _esc_base_url _esc_api_key _esc_tavily
+  unset _esc_base_url _esc_api_key
 fi
 
 # Seed oh-my-opencode config
@@ -143,15 +164,20 @@ if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] || [ ! -s "$CODEX_CONFIG_DIR/config.
 fi
 
 # ============================================================
-# Tavily web search (API key injection)
+# Remove Tavily skills from Claude Code
 # ============================================================
-if [ -n "$TAVILY_API_KEY" ]; then
-  sed -i "s|__TAVILY_API_KEY__|${TAVILY_API_KEY}|" "$HOME/.claude/settings.json"
-else
-  # Remove placeholder if no key provided
-  sed -i 's|__TAVILY_API_KEY__||' "$HOME/.claude/settings.json"
-fi
+# Tavily skills are baked into the image but Claude Code does not
+# need them — web search is handled natively or via the proxy.
+# The skills remain installed for other tools (e.g. OpenCode MCP).
+rm -rf "$HOME/.agents/skills/tavily-"* 2>/dev/null || true
 
+# ============================================================
+# LiteLLM direct mode (ANTHROPIC_BASE_URL set by user)
+# ============================================================
+if [ "$_is_litellm_direct" = true ]; then
+  # Default ANTHROPIC_API_KEY: prefer user value, fall back to
+  # OPENAI_API_KEY (LiteLLM often uses the same key), then placeholder.
+  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-${OPENAI_API_KEY:-litellm-proxy}}"
 # ============================================================
 # Proxy mode defaults (OPENAI_API_KEY without OAuth)
 # ============================================================
@@ -159,12 +185,13 @@ fi
 # ANTHROPIC_API_KEY and model mappings so users only need to
 # configure OPENAI_API_KEY and OPENAI_BASE_URL.
 # These are mutually exclusive with CLAUDE_CODE_OAUTH_TOKEN.
-if [ -n "$OPENAI_API_KEY" ] && [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+elif [ -n "$OPENAI_API_KEY" ] && [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
   export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-openai-proxy}"
   export BIG_MODEL="${BIG_MODEL:-claude-opus-4-6}"
   export MIDDLE_MODEL="${MIDDLE_MODEL:-claude-sonnet-4-6}"
   export SMALL_MODEL="${SMALL_MODEL:-claude-haiku-4-5}"
 fi
+unset _is_litellm_direct
 
 # ============================================================
 # Claude Code Proxy (Anthropic Messages API -> OpenAI)
