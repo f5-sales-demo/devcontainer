@@ -1205,12 +1205,6 @@ RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh \
 COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.json /home/${USERNAME}/.claude/settings.json
 COPY --chown=${USERNAME}:${USERNAME} claude-config/claude.json /home/${USERNAME}/.claude.json
 
-# --- Claude Code: skill symlinks ---
-RUN mkdir -p /home/${USERNAME}/.claude/skills \
-    && find /home/${USERNAME}/.agents/skills -mindepth 1 -maxdepth 1 -type d \
-      -exec sh -c 'name=$(basename "$1"); ln -sf "../../.agents/skills/$name" "/home/'"${USERNAME}"'/.claude/skills/$name"' _ {} \; \
-    && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.claude/skills
-
 # --- OpenCode: bake all config variants to final paths ---
 # Default (proxy mode) config lives at the active path; OAuth variant
 # is stored alongside it. Entrypoint swaps the active file at runtime
