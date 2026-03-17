@@ -7,8 +7,8 @@ echo "Running post-start checks..."
 _litellm_direct=false
 if [ -n "$ANTHROPIC_BASE_URL" ]; then
   case "$ANTHROPIC_BASE_URL" in
-    http://localhost:* | http://localhost) ;;
-    *) _litellm_direct=true ;;
+  http://localhost:* | http://localhost) ;;
+  *) _litellm_direct=true ;;
   esac
 fi
 

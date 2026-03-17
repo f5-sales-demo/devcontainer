@@ -69,8 +69,8 @@ fi
 _is_litellm_direct=false
 if [ -n "$ANTHROPIC_BASE_URL" ]; then
   case "$ANTHROPIC_BASE_URL" in
-    http://localhost:* | http://localhost) ;;
-    *) _is_litellm_direct=true ;;
+  http://localhost:* | http://localhost) ;;
+  *) _is_litellm_direct=true ;;
   esac
 fi
 

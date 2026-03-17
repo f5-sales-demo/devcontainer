@@ -24,8 +24,8 @@ start_claude_proxy() {
   # set by this function itself (preserves idempotency on re-source).
   if [ -n "$ANTHROPIC_BASE_URL" ]; then
     case "$ANTHROPIC_BASE_URL" in
-      http://localhost:* | http://localhost) ;; # proxy-set — fall through
-      *) return 0 ;;                            # user-configured — skip
+    http://localhost:* | http://localhost) ;; # proxy-set — fall through
+    *) return 0 ;;                            # user-configured — skip
     esac
   fi
 
@@ -57,8 +57,8 @@ start_claude_proxy() {
   # Suppress output in non-interactive shells (e.g. zshenv in scripts)
   local quiet=false
   case "$-" in
-    *i*) ;; # interactive — print status
-    *) quiet=true ;;
+  *i*) ;; # interactive — print status
+  *) quiet=true ;;
   esac
 
   $quiet || echo "Starting Claude Code proxy on port ${proxy_port}..."
