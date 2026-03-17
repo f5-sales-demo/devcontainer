@@ -1,20 +1,8 @@
 #!/bin/bash
-# Fix volume permissions
-for dir in "$HOME/.cache" "$HOME/.local" "$HOME/.claude" "$HOME/.ssh"; do
-  if [ -d "$dir" ] && [ ! -O "$dir" ]; then
-    sudo chown -R "$(id -u):$(id -g)" "$dir" 2>/dev/null || true
-  fi
-done
-
-if [ ! -O "$HOME" ]; then
-  sudo chown -R "$(id -u):$(id -g)" "$HOME" 2>/dev/null || true
-fi
-
 # ============================================================
-# Configure user environment
+# Configure user environment (env-var-dependent only)
 # ============================================================
 
-# Git config from env vars
 if [ -n "$GIT_AUTHOR_NAME" ]; then
   git config --global user.name "$GIT_AUTHOR_NAME"
 fi
@@ -22,16 +10,13 @@ if [ -n "$GIT_AUTHOR_EMAIL" ]; then
   git config --global user.email "$GIT_AUTHOR_EMAIL"
 fi
 
-# Trust /workspace for git operations (volume ownership may differ)
 git config --global --add safe.directory /workspace
 
-# Timezone
 if [ -n "$TZ" ]; then
   sudo ln -snf "/usr/share/zoneinfo/$TZ" /etc/localtime
   echo "$TZ" | sudo tee /etc/timezone >/dev/null
 fi
 
-# SSH key from env var (base64 encoded)
 if [ -n "$SSH_PRIVATE_KEY" ]; then
   _old_umask=$(umask)
   umask 077
@@ -50,12 +35,10 @@ SSHCONF
   fi
 fi
 
-# GitHub CLI credential helper (enables HTTPS git clone/push)
 if [ -n "$GH_TOKEN" ]; then
   gh auth setup-git 2>/dev/null || true
 fi
 
-# Export ANTHROPIC_OAUTH_TOKEN for tools that read it (e.g. Pi)
 if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then
   export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
 fi
@@ -63,9 +46,6 @@ fi
 # ============================================================
 # Detect LiteLLM direct mode (reused in multiple blocks below)
 # ============================================================
-# When the user provides ANTHROPIC_BASE_URL pointing at their own
-# Anthropic-compatible proxy (e.g. LiteLLM), Claude Code uses it
-# natively. No translation proxy is needed, no model mapping required.
 _is_litellm_direct=false
 if [ -n "$ANTHROPIC_BASE_URL" ]; then
   case "$ANTHROPIC_BASE_URL" in
@@ -74,54 +54,17 @@ if [ -n "$ANTHROPIC_BASE_URL" ]; then
   esac
 fi
 
-# Enable 1M context window for OpenCode's Anthropic provider.
-# Disabled in LiteLLM direct mode — LiteLLM does not yet support
-# the 1M context window parameter.
 if [ "$_is_litellm_direct" = true ]; then
   export ANTHROPIC_1M_CONTEXT="false"
-  # Also update Claude Code's settings.json env block
   sed -i 's|"ANTHROPIC_1M_CONTEXT": "true"|"ANTHROPIC_1M_CONTEXT": "false"|' \
     "$HOME/.claude/settings.json"
 else
   export ANTHROPIC_1M_CONTEXT="true"
 fi
 
-# Seed Pi settings if missing (dirs pre-created in image)
-PI_AGENT_DIR="$HOME/.pi/agent"
-if [ ! -f "$PI_AGENT_DIR/settings.json" ] || [ ! -s "$PI_AGENT_DIR/settings.json" ]; then
-  if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-    cat >"$PI_AGENT_DIR/settings.json" <<'PIEOF'
-{"defaultProvider":"anthropic","defaultModel":"claude-opus-4-6"}
-PIEOF
-  fi
-fi
-
-# Ensure Claude Code onboarding + theme + workspace trust + state flags are always set
-# The image pre-bakes the full default; only act if volume-mounted with different content
-if [ -f "$HOME/.claude.json" ] && [ -s "$HOME/.claude.json" ]; then
-  if jq -e '.hasCompletedOnboarding and .opusProMigrationComplete and .projects["/workspace"].hasTrustDialogAccepted and .projects["/workspace"].hasClaudeMdExternalIncludesApproved' \
-    "$HOME/.claude.json" >/dev/null 2>&1; then
-    : # Already correct, skip
-  else
-    jq '. + {
-          "hasCompletedOnboarding": true,
-          "theme": (.theme // "dark-daltonized"),
-          "opusProMigrationComplete": true,
-          "sonnet1m45MigrationComplete": true,
-          "customApiKeyResponses": (.customApiKeyResponses // {"approved": [], "rejected": []}),
-          "officialMarketplaceAutoInstallAttempted": true,
-          "officialMarketplaceAutoInstalled": true,
-          "cachedChromeExtensionInstalled": false
-        }
-        | .projects["/workspace"].hasTrustDialogAccepted = true
-        | .projects["/workspace"].projectOnboardingSeenCount = (.projects["/workspace"].projectOnboardingSeenCount // 1)
-        | .projects["/workspace"].hasClaudeMdExternalIncludesApproved = true
-        | .projects["/workspace"].hasClaudeMdExternalIncludesWarningShown = true' \
-      "$HOME/.claude.json" >"$HOME/.claude.json.tmp" && mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
-  fi
-fi
-
-# If ANTHROPIC_API_KEY is set, auto-approve it in customApiKeyResponses
+# ============================================================
+# Auto-approve ANTHROPIC_API_KEY in Claude Code state
+# ============================================================
 if [ -n "$ANTHROPIC_API_KEY" ] && [ -f "$HOME/.claude.json" ]; then
   jq --arg key "$ANTHROPIC_API_KEY" '
     .customApiKeyResponses.approved = (
@@ -130,82 +73,35 @@ if [ -n "$ANTHROPIC_API_KEY" ] && [ -f "$HOME/.claude.json" ]; then
     mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
 fi
 
-# Seed opencode config (dirs pre-created in image)
-# Anthropic token always wins — overwrite any build-time config from oh-my-opencode
+# ============================================================
+# OpenCode config switching (OAuth vs proxy mode)
+# ============================================================
+# All config variants are baked into the image at final paths.
+# This block only activates the correct variant based on env vars.
 OPENCODE_CONFIG_DIR="$HOME/.config/opencode"
-if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -f /opt/opencode-config/opencode-anthropic.json ]; then
-  cp /opt/opencode-config/opencode-anthropic.json "$OPENCODE_CONFIG_DIR/opencode.json"
-  # Seed OAuth credentials for opencode's Anthropic provider
+if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+  cp "$OPENCODE_CONFIG_DIR/opencode-anthropic.json" "$OPENCODE_CONFIG_DIR/opencode.json"
   cat >"$HOME/.local/share/opencode/auth.json" <<AUTHEOF
 {"anthropic":{"type":"oauth","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}
 AUTHEOF
-elif [ -n "$OPENAI_API_KEY" ] &&
-  [ -f /opt/opencode-config/opencode.json ]; then
-  # Substitute actual values — OpenCode must bypass the local proxy
-  # and connect directly to the upstream API. The {env:} placeholders
-  # would resolve to the proxy-rewritten OPENAI_BASE_URL after
-  # claude-proxy.sh runs, pointing OpenCode at the wrong endpoint.
-  # Escape sed metacharacters (& and \) in replacement values.
+elif [ -n "$OPENAI_API_KEY" ]; then
   _esc_base_url=$(printf '%s' "$OPENAI_BASE_URL" | sed 's/[&\\/]/\\&/g')
   _esc_api_key=$(printf '%s' "$OPENAI_API_KEY" | sed 's/[&\\/]/\\&/g')
   sed -e "s|{env:OPENAI_BASE_URL}|${_esc_base_url}|g" \
     -e "s|{env:OPENAI_API_KEY}|${_esc_api_key}|g" \
-    /opt/opencode-config/opencode.json \
-    >"$OPENCODE_CONFIG_DIR/opencode.json"
+    "$OPENCODE_CONFIG_DIR/opencode.json" \
+    >"$OPENCODE_CONFIG_DIR/opencode.json.tmp" &&
+    mv "$OPENCODE_CONFIG_DIR/opencode.json.tmp" "$OPENCODE_CONFIG_DIR/opencode.json"
   unset _esc_base_url _esc_api_key
-fi
-
-# Seed oh-my-opencode config
-# Proxy mode uses openai-proxy/* models; Anthropic mode
-# uses the build-time config from oh-my-opencode install
-if [ -n "$OPENAI_API_KEY" ] &&
-  [ -f /opt/opencode-config/oh-my-opencode-proxy.json ]; then
-  cp /opt/opencode-config/oh-my-opencode-proxy.json \
-    "$OPENCODE_CONFIG_DIR/oh-my-opencode.json"
-elif [ -f /opt/opencode-config/oh-my-opencode.json ]; then
-  cp /opt/opencode-config/oh-my-opencode.json \
+  cp "$OPENCODE_CONFIG_DIR/oh-my-opencode-proxy.json" \
     "$OPENCODE_CONFIG_DIR/oh-my-opencode.json"
 fi
-# Seed permission overrides to ~/.opencode/opencode.json (loaded last, wins
-# over built-in defaults that deny .env reads)
-if [ -f /opt/opencode-config/opencode-permissions.json ]; then
-  mkdir -p "$HOME/.opencode"
-  cp /opt/opencode-config/opencode-permissions.json "$HOME/.opencode/opencode.json"
-fi
-# Remove stale files (old .jsonc extension, oh-my-opencode .bak artifacts)
-rm -f "$OPENCODE_CONFIG_DIR/oh-my-opencode.jsonc"
-rm -f "$OPENCODE_CONFIG_DIR"/*.bak.*
-
-# Seed codex config if missing (dir pre-created in image)
-CODEX_CONFIG_DIR="$HOME/.codex"
-if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] || [ ! -s "$CODEX_CONFIG_DIR/config.toml" ]; then
-  if [ -n "$OPENAI_API_KEY" ] && [ -f /opt/codex-config/config.toml ]; then
-    cp /opt/codex-config/config.toml "$CODEX_CONFIG_DIR/config.toml"
-  fi
-fi
 
 # ============================================================
-# Remove Tavily skills from Claude Code
-# ============================================================
-# Tavily skills are baked into the image but Claude Code does not
-# need them — web search is handled natively or via the proxy.
-# The skills remain installed for other tools (e.g. OpenCode MCP).
-rm -rf "$HOME/.agents/skills/tavily-"* 2>/dev/null || true
-
-# ============================================================
-# LiteLLM direct mode (ANTHROPIC_BASE_URL set by user)
+# Auth mode env defaults
 # ============================================================
 if [ "$_is_litellm_direct" = true ]; then
-  # Default ANTHROPIC_API_KEY: prefer user value, fall back to
-  # OPENAI_API_KEY (LiteLLM often uses the same key), then placeholder.
   export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-${OPENAI_API_KEY:-litellm-proxy}}"
-# ============================================================
-# Proxy mode defaults (OPENAI_API_KEY without OAuth)
-# ============================================================
-# When connecting through an OpenAI-compatible proxy, auto-set
-# ANTHROPIC_API_KEY and model mappings so users only need to
-# configure OPENAI_API_KEY and OPENAI_BASE_URL.
-# These are mutually exclusive with CLAUDE_CODE_OAUTH_TOKEN.
 elif [ -n "$OPENAI_API_KEY" ] && [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
   export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-openai-proxy}"
   export BIG_MODEL="${BIG_MODEL:-claude-opus-4-6}"
@@ -217,9 +113,6 @@ unset _is_litellm_direct
 # ============================================================
 # Claude Code Proxy (Anthropic Messages API -> OpenAI)
 # ============================================================
-# Source the shared proxy startup function, then invoke it.
-# The same function is sourced by interactive shells so the proxy
-# auto-recovers even if it was not running at container start.
 # shellcheck source=/dev/null
 . /usr/local/lib/claude-proxy.sh
 start_claude_proxy
@@ -227,9 +120,6 @@ start_claude_proxy
 # ============================================================
 # Chrome DevTools MCP (symlink + headless patch)
 # ============================================================
-# Re-resolve the Chrome symlink if the target is dangling (e.g. after
-# a Playwright update changed the chromium-XXXX directory name).
-# Also re-apply the headless patch if npm exec fetched a newer MCP version.
 fix_chrome_symlink() {
   if [ -L /opt/google/chrome/chrome ] && [ -e /opt/google/chrome/chrome ]; then
     return 0
@@ -268,7 +158,6 @@ if [ "${ENABLE_VNC:-false}" = "true" ]; then
 
   Xvfb "${DISPLAY}" -screen 0 "${VNC_RESOLUTION}" -ac +extension GLX +render -noreset >/dev/null 2>&1 &
 
-  # Background readiness check + dependent daemons — does NOT block entrypoint
   (
     retries=0
     while [ $retries -lt 50 ]; do

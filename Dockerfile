@@ -873,15 +873,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # all require a C compiler.
 
 # ============================================================
-# 12c. Tavily web search (MCP for OpenCode)
-# ============================================================
-# OpenCode: tavily-mcp package pre-installed globally
-# Claude Code: Tavily skills installed later as vscode user (section 17)
-# hadolint ignore=DL3059
-RUN npm install -g tavily-mcp@0.2.18
-
-# ============================================================
-# 12d. Ruby linters (rubocop + extensions)
+# 12c. Ruby linters (rubocop + extensions)
 # ============================================================
 # hadolint ignore=DL3028,DL3059
 RUN gem install --no-document \
@@ -1067,12 +1059,7 @@ RUN curl -fsSL https://bun.sh/install | bash \
 # Install native Claude Code binary (replaces npm package)
 # hadolint ignore=DL3059
 RUN claude install --force \
-    && sudo npm uninstall -g @anthropic-ai/claude-code \
-    && echo '{"hasCompletedOnboarding":true,"theme":"dark-daltonized","opusProMigrationComplete":true,"sonnet1m45MigrationComplete":true,"customApiKeyResponses":{"approved":[],"rejected":[]},"officialMarketplaceAutoInstallAttempted":true,"officialMarketplaceAutoInstalled":true,"cachedChromeExtensionInstalled":false,"projects":{"/workspace":{"hasTrustDialogAccepted":true,"projectOnboardingSeenCount":1,"hasClaudeMdExternalIncludesApproved":true,"hasClaudeMdExternalIncludesWarningShown":true}}}' > ~/.claude.json
-
-# Tavily skills for Claude Code (must run as vscode user with ~/.claude present)
-# hadolint ignore=DL3059
-RUN npx -y skills add tavily-ai/skills --yes --global
+    && sudo npm uninstall -g @anthropic-ai/claude-code
 
 # Playwright Chromium browser binary (runs as vscode — cache to ~/.cache/ms-playwright)
 # hadolint ignore=DL3059
@@ -1107,19 +1094,13 @@ RUN npx -y oh-my-opencode install --no-tui \
 # hadolint ignore=DL3016,DL3059
 RUN npm install --prefix ~/.npm-global -g @robinmordasiewicz/oh-my-opencode@3.11.0-fork.1
 
-# Preserve oh-my-opencode config as fallback template
-# (entrypoint re-seeds if ~/.config/opencode/ is volume-mounted empty)
-RUN sudo mkdir -p /opt/opencode-config \
-    && sudo cp ~/.config/opencode/oh-my-opencode.json \
-        /opt/opencode-config/oh-my-opencode.json 2>/dev/null || true
+# Patch oh-my-opencode config in-place with claude_code integration flags
 # hadolint ignore=DL3059
-RUN if [ -f /opt/opencode-config/oh-my-opencode.json ]; then \
+RUN if [ -f ~/.config/opencode/oh-my-opencode.json ]; then \
       jq '. + {"claude_code":{"plugins":true,"skills":true,"commands":true,"agents":true,"hooks":true,"mcp":true}}' \
-          /opt/opencode-config/oh-my-opencode.json > /tmp/omc-patched.json \
-      && sudo mv /tmp/omc-patched.json /opt/opencode-config/oh-my-opencode.json; \
+          ~/.config/opencode/oh-my-opencode.json > /tmp/omc-patched.json \
+      && mv /tmp/omc-patched.json ~/.config/opencode/oh-my-opencode.json; \
     fi
-COPY opencode-config/oh-my-opencode-proxy.json \
-    /opt/opencode-config/oh-my-opencode-proxy.json
 
 # ============================================================
 # 14. Homebrew (AI assistant deps + formatters)
@@ -1201,34 +1182,47 @@ COPY --chown=${USERNAME}:${USERNAME} configs/.lessfilter /home/${USERNAME}/.less
 RUN chmod +x /home/${USERNAME}/.lessfilter
 
 # ============================================================
-# 17. Claude Code configuration (self-test + managed policy)
-#     COPY moved to end of file — config changes rebuild only
-#     this thin layer, not Playwright/Homebrew/ZSH (~1 GB).
+# 17. All tool configuration — baked to final paths
+#     COPY'd late so config changes rebuild only this thin
+#     layer, not Playwright/Homebrew/ZSH (~1 GB).
 # ============================================================
-# The Managed policy tier (/etc/claude-code/) is the highest priority in
-# Claude Code's memory hierarchy and is always loaded, even when a project
-# CLAUDE.md exists in the working directory. This prevents tool awareness
-# from being deprioritized by large project-level instructions.
 USER root
+
+# --- System-wide scripts and managed policy ---
 COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
 COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
 COPY claude-config/claude-proxy.sh /usr/local/lib/claude-proxy.sh
 COPY claude-config/statusline.sh /opt/claude-config/statusline.sh
-COPY claude-config/settings.json /opt/claude-config/settings.json
 COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
-COPY opencode-config/opencode.json /opt/opencode-config/opencode.json
-COPY opencode-config/opencode-anthropic.json /opt/opencode-config/opencode-anthropic.json
-COPY opencode-config/opencode-permissions.json /opt/opencode-config/opencode-permissions.json
-COPY codex-config/config.toml /opt/codex-config/config.toml
-RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh /opt/claude-config/statusline.sh /opt/claude-config/install-plugins.sh \
+COPY .devcontainer/scripts/post-start.sh /opt/devcontainer/post-start.sh
+RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh \
+      /opt/claude-config/statusline.sh /opt/claude-config/install-plugins.sh \
+      /opt/devcontainer/post-start.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
-    && mkdir -p /etc/claude-code/.claude/rules \
-    && cp /opt/claude-config/settings.json /home/${USERNAME}/.claude/settings.json \
-    && chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.claude/settings.json \
-    && mkdir -p /home/${USERNAME}/.claude/skills \
+    && mkdir -p /etc/claude-code/.claude/rules
+
+# --- Claude Code: settings.json + claude.json → final $HOME paths ---
+COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.json /home/${USERNAME}/.claude/settings.json
+COPY --chown=${USERNAME}:${USERNAME} claude-config/claude.json /home/${USERNAME}/.claude.json
+
+# --- Claude Code: skill symlinks ---
+RUN mkdir -p /home/${USERNAME}/.claude/skills \
     && find /home/${USERNAME}/.agents/skills -mindepth 1 -maxdepth 1 -type d \
       -exec sh -c 'name=$(basename "$1"); ln -sf "../../.agents/skills/$name" "/home/'"${USERNAME}"'/.claude/skills/$name"' _ {} \; \
     && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.claude/skills
+
+# --- OpenCode: bake all config variants to final paths ---
+# Default (proxy mode) config lives at the active path; OAuth variant
+# is stored alongside it. Entrypoint swaps the active file at runtime
+# based on which auth env vars are set.
+COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json /home/${USERNAME}/.config/opencode/opencode.json
+COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-anthropic.json /home/${USERNAME}/.config/opencode/opencode-anthropic.json
+COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-opencode-proxy.json /home/${USERNAME}/.config/opencode/oh-my-opencode-proxy.json
+COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.opencode/opencode.json
+
+# --- Codex + Pi: bake static defaults ---
+COPY --chown=${USERNAME}:${USERNAME} codex-config/config.toml /home/${USERNAME}/.codex/config.toml
+COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
 
 # Shell hooks: source the proxy function in every interactive shell.
 # If the user exports OPENAI_API_KEY after container start (or the

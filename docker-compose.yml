@@ -4,9 +4,6 @@ services:
     pull_policy: always
     container_name: devcontainer
     hostname: devcontainer
-    volumes:
-      - workspace:/workspace
-      - home:/home/vscode
     env_file:
       - path: .env
         required: false
@@ -39,7 +36,3 @@ services:
     tty: true
     init: true
     restart: unless-stopped
-
-volumes:
-  workspace:
-  home:

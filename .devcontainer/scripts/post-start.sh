@@ -47,12 +47,7 @@ elif [ -n "$OPENAI_API_KEY" ]; then
   else
     echo "not reachable (check VPN / network connectivity)"
   fi
-  echo -n "  Checking Tavily web search... "
-  if [ -n "${TAVILY_API_KEY:-}" ]; then
-    echo "API key configured"
-  else
-    echo "TAVILY_API_KEY not set (add to .env for web search)"
-  fi
+
 else
   echo "  Mode: direct API (no proxy)"
   if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
