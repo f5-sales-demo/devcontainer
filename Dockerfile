@@ -1166,6 +1166,7 @@ RUN mkdir -p "$HOME/.npm-global" \
     && git clone --depth=1 https://github.com/tfutils/tfenv.git "$HOME/.tfenv" \
     && "$HOME/.tfenv/bin/tfenv" install latest \
     && "$HOME/.tfenv/bin/tfenv" use latest \
+    && git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh /home/${USERNAME}/.p10k.zsh
@@ -1179,6 +1180,7 @@ COPY --chown=${USERNAME}:${USERNAME} configs/.inputrc /home/${USERNAME}/.inputrc
 COPY --chown=${USERNAME}:${USERNAME} configs/.tmux.conf /home/${USERNAME}/.tmux.conf
 COPY --chown=${USERNAME}:${USERNAME} configs/.nanorc /home/${USERNAME}/.nanorc
 COPY --chown=${USERNAME}:${USERNAME} configs/.lessfilter /home/${USERNAME}/.lessfilter
+COPY --chown=${USERNAME}:${USERNAME} configs/.digrc /home/${USERNAME}/.digrc
 RUN chmod +x /home/${USERNAME}/.lessfilter
 
 # ============================================================
