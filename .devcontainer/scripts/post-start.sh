@@ -80,7 +80,9 @@ echo "  Installed tools:"
 for cmd in node python3 go rustc javac git gh kubectl helm terraform \
   pre-commit uv claude opencode codex prettier markdownlint-cli2 \
   actionlint act terraform-docs ansible black pylint yamllint yt-dlp \
-  aws az pwsh devcontainer brew playwright; do
+  aws az pwsh devcontainer brew playwright \
+  marksman terraform-ls taplo yaml-language-server bash-language-server \
+  vscode-json-language-server mdx-language-server; do
   if command -v $cmd &>/dev/null; then
     ver=$($cmd --version 2>&1 | head -1 | sed 's/^[[:space:]]*//')
     printf "    %-20s %s\n" "$cmd" "$ver"
