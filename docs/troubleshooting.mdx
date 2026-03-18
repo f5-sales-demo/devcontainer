@@ -375,32 +375,53 @@ ports:
 
 ## Chrome DevTools MCP
 
-### "Could not find Google Chrome executable"
+### Chrome remote debugging not responding
 
-The Chrome symlink may be missing. Verify inside the container:
+The shared Chrome instance should be running on port 9222. Check inside the container:
 
 ```bash
+# Is Chrome running?
+curl http://localhost:9222/json/version
+
+# Check Chrome logs
+cat ~/.local/share/chrome-browser/chrome.log
+
+# Verify the symlink
 ls -la /opt/google/chrome/chrome
+
+# Restart Chrome manually
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
 ```
 
-If the symlink doesn't exist, pull the latest image and restart.
+If the symlink is missing, pull the latest image and restart the container.
 
-### "Missing X server to start the headful browser"
+### Browser profile lock error
 
-The `--headless` flag is missing from the MCP server configuration. Ensure your `.mcp.json` passes `--headless` in the args:
+With the shared browser architecture, profile lock errors should not occur. If you see one, a stale Chrome process may be holding the lock:
 
-```json
-{
-  "mcpServers": {
-    "chrome-devtools-mcp": {
-      "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest", "--headless"]
-    }
-  }
-}
+```bash
+# Kill any stale Chrome processes
+pkill -f 'chrome.*remote-debugging-port' || true
+
+# Remove the lock file
+rm -f ~/.cache/chrome-devtools-mcp/chrome-profile/SingletonLock
+
+# Restart Chrome
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
 ```
 
-Without `--headless`, the MCP server tries to launch a headed browser, which requires a display server. See [Chrome DevTools MCP — Configuring `--headless`](./chrome#configuring---headless-in-mcpjson) for details.
+### Duplicate chrome-devtools-mcp tools
+
+The chrome-devtools-mcp server is now registered globally in `~/.claude/settings.json`. If you have a per-repo `.mcp.json` that also registers it, you will see duplicate tools. Remove the `chrome-devtools-mcp` entry from per-repo `.mcp.json` files:
+
+```bash
+# Check for per-repo config
+cat .mcp.json
+```
+
+Remove the `chrome-devtools-mcp` key from any per-repo `.mcp.json` to use the global registration.
 
 ## Reset Everything
 

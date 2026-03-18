@@ -28,7 +28,12 @@
     "claude-code-setup@claude-plugins-official": true,
     "hookify@claude-plugins-official": true
   },
-  "mcpServers": {},
+  "mcpServers": {
+    "chrome-devtools-mcp": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest", "--browserUrl=http://localhost:9222"]
+    }
+  },
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
     "ANTHROPIC_1M_CONTEXT": "true"

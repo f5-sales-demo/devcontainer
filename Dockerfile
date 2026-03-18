@@ -1230,10 +1230,12 @@ USER root
 COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
 COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
 COPY claude-config/claude-proxy.sh /usr/local/lib/claude-proxy.sh
+COPY claude-config/chrome-browser.sh /usr/local/lib/chrome-browser.sh
 COPY claude-config/statusline.sh /opt/claude-config/statusline.sh
 COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
 COPY .devcontainer/scripts/post-start.sh /opt/devcontainer/post-start.sh
 RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh \
+      /usr/local/lib/chrome-browser.sh \
       /opt/claude-config/statusline.sh /opt/claude-config/install-plugins.sh \
       /opt/devcontainer/post-start.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \

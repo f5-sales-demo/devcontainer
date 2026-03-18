@@ -118,7 +118,7 @@ unset _is_litellm_direct
 start_claude_proxy
 
 # ============================================================
-# Chrome DevTools MCP (symlink fix)
+# Chrome DevTools MCP (symlink + shared browser)
 # ============================================================
 fix_chrome_symlink() {
   if [ -L /opt/google/chrome/chrome ] && [ -e /opt/google/chrome/chrome ]; then
@@ -133,6 +133,9 @@ fix_chrome_symlink() {
   fi
 }
 fix_chrome_symlink
+
+# shellcheck source=/dev/null
+. /usr/local/lib/chrome-browser.sh
 
 # ============================================================
 # VNC stack (Xvfb + fluxbox + x11vnc + noVNC)
@@ -176,6 +179,11 @@ if [ "${ENABLE_VNC:-false}" = "true" ]; then
 
   ) &
 fi
+
+# ============================================================
+# Shared Chrome browser (remote debugging on port 9222)
+# ============================================================
+start_chrome_browser
 
 # ============================================================
 # Tailscale (userspace networking)
