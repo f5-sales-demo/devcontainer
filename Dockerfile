@@ -538,7 +538,7 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && curl ${CURL_RETRY} -fsSL "https://github.com/dotenv-linter/dotenv-linter/releases/latest/download/dotenv-linter-linux-${DL_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin dotenv-linter \
     # gopls (Go LSP server)
-    && GOBIN=/usr/local/bin go install golang.org/x/tools/gopls@latest \
+    && GOBIN=/usr/local/bin go install golang.org/x/tools/gopls@v0.21.1 \
     # golangci-lint (install script auto-detects arch)
     && curl ${CURL_RETRY} -sSfL https://golangci-lint.run/install.sh | sh -s -- -b /usr/local/bin \
     # goreleaser
