@@ -537,6 +537,8 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && if [ "$UNAME_ARCH" = "x86_64" ]; then DL_ARCH="x86_64"; else DL_ARCH="aarch64"; fi \
     && curl ${CURL_RETRY} -fsSL "https://github.com/dotenv-linter/dotenv-linter/releases/latest/download/dotenv-linter-linux-${DL_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin dotenv-linter \
+    # gopls (Go LSP server)
+    && GOBIN=/usr/local/bin go install golang.org/x/tools/gopls@latest \
     # golangci-lint (install script auto-detects arch)
     && curl ${CURL_RETRY} -sSfL https://golangci-lint.run/install.sh | sh -s -- -b /usr/local/bin \
     # goreleaser
@@ -812,6 +814,7 @@ RUN npm install -g \
     @mdx-js/language-server \
     typescript-language-server \
     typescript \
+    pyright \
     vscode-langservers-extracted
 
 # ============================================================
