@@ -810,6 +810,8 @@ RUN npm install -g \
     yaml-language-server \
     bash-language-server \
     @mdx-js/language-server \
+    typescript-language-server \
+    typescript \
     vscode-langservers-extracted
 
 # ============================================================
