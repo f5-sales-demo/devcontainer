@@ -36,6 +36,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && curl ${CURL_RETRY} -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
     # deadsnakes (Python)
     && add-apt-repository -y ppa:deadsnakes/ppa \
+    # .NET backports (dotnet 9.0+ for Ubuntu 24.04)
+    && add-apt-repository -y ppa:dotnet/backports \
     # HashiCorp
     && curl ${CURL_RETRY} -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
@@ -136,7 +138,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     lua5.4 liblua5.4-dev luarocks \
     r-base \
     dart \
-    dotnet-sdk-8.0 \
+    dotnet-sdk-9.0 \
     # AI assistant tool dependencies
     libbrotli-dev \
     libc-ares-dev \
@@ -746,6 +748,32 @@ RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
     fi
 
 # ============================================================
+# 10k. Language server binaries (LSP)
+#      Pre-installed for faster editor startup. All resolve
+#      latest versions at build time.
+# ============================================================
+# hadolint ignore=DL3059
+RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
+    && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
+    # marksman (Markdown/MDX LSP — self-contained binary, no runtime deps)
+    && if [ "$DPKG_ARCH" = "amd64" ]; then MK_ARCH="x64"; else MK_ARCH="arm64"; fi \
+    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/marksman \
+      "https://github.com/artempyanykh/marksman/releases/latest/download/marksman-linux-${MK_ARCH}" \
+    && chmod +x /usr/local/bin/marksman \
+    # terraform-ls (Terraform LSP — version in asset name)
+    && TFLS_VERSION=$(ghlatest hashicorp/terraform-ls) \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/hashicorp/terraform-ls/releases/latest/download/terraform-ls_${TFLS_VERSION}_linux_${DPKG_ARCH}.zip" \
+      -o /tmp/terraform-ls.zip \
+    && unzip -q /tmp/terraform-ls.zip -d /usr/local/bin && rm /tmp/terraform-ls.zip \
+    # taplo (TOML LSP — gzip'd binary)
+    && if [ "$UNAME_ARCH" = "x86_64" ]; then TAPLO_ARCH="x86_64"; else TAPLO_ARCH="aarch64"; fi \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-${TAPLO_ARCH}.gz" \
+      | gzip -d > /usr/local/bin/taplo \
+    && chmod +x /usr/local/bin/taplo
+
+# ============================================================
 # 11. npm global tools
 # ============================================================
 # hadolint ignore=DL3016,DL3059
@@ -778,7 +806,11 @@ RUN npm install -g \
     asl-validator \
     renovate \
     markdownlint-cli \
-    asciinema-player
+    asciinema-player \
+    yaml-language-server \
+    bash-language-server \
+    @mdx-js/language-server \
+    vscode-langservers-extracted
 
 # ============================================================
 # 12. pip tools

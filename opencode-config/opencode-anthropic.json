@@ -3,5 +3,31 @@
   "permission": "allow",
   "model": "anthropic/claude-opus-4-6",
   "plugin": ["@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"],
-  "mcp": {}
+  "mcp": {},
+  "lsp": {
+    "marksman": {
+      "command": ["marksman", "server"],
+      "extensions": [".md", ".mdx"]
+    },
+    "mdx": {
+      "command": ["mdx-language-server", "--stdio"],
+      "extensions": [".mdx"]
+    },
+    "json": {
+      "command": ["vscode-json-language-server", "--stdio"],
+      "extensions": [".json", ".jsonc"]
+    },
+    "css": {
+      "command": ["vscode-css-language-server", "--stdio"],
+      "extensions": [".css", ".less", ".scss"]
+    },
+    "html": {
+      "command": ["vscode-html-language-server", "--stdio"],
+      "extensions": [".html", ".htm"]
+    },
+    "toml": {
+      "command": ["taplo", "lsp", "stdio"],
+      "extensions": [".toml"]
+    }
+  }
 }
