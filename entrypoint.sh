@@ -118,7 +118,7 @@ unset _is_litellm_direct
 start_claude_proxy
 
 # ============================================================
-# Chrome DevTools MCP (symlink + headless patch)
+# Chrome DevTools MCP (symlink fix)
 # ============================================================
 fix_chrome_symlink() {
   if [ -L /opt/google/chrome/chrome ] && [ -e /opt/google/chrome/chrome ]; then
@@ -133,19 +133,6 @@ fix_chrome_symlink() {
   fi
 }
 fix_chrome_symlink
-
-patch_chrome_devtools_mcp() {
-  local mcp_main
-  mcp_main=$(find /home/vscode/.npm/_npx -name 'chrome-devtools-mcp-main.js' \
-    -path '*/bin/*' 2>/dev/null | head -1)
-  if [ -n "$mcp_main" ] && ! grep -q 'Auto-inject headless' "$mcp_main"; then
-    sed -i '/^export const args = parseArguments(VERSION);/i \
-// Auto-inject headless mode for container environments without a display server\
-\nif (!process.argv.includes('\''--headless'\'')) {\n    process.argv.push('\''--headless'\'');\n}' \
-      "$mcp_main"
-  fi
-}
-patch_chrome_devtools_mcp
 
 # ============================================================
 # VNC stack (Xvfb + fluxbox + x11vnc + noVNC)

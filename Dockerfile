@@ -1106,18 +1106,10 @@ RUN npx playwright install chromium \
     && sudo mkdir -p /opt/google/chrome \
     && sudo ln -sf "$CHROME_BIN" /opt/google/chrome/chrome
 
-# Chrome DevTools MCP: pre-cache and apply headless patch (runs as vscode
-# so npm caches to ~/.npm/_npx; symlink created above)
+# Chrome DevTools MCP: pre-cache the package (runs as vscode so npm caches
+# to ~/.npm/_npx; --headless is passed via .mcp.json args in each content repo)
 # hadolint ignore=DL3059
-RUN npm exec chrome-devtools-mcp@latest -- --version 2>/dev/null; \
-    MCP_MAIN="$(find ~/.npm/_npx -name 'chrome-devtools-mcp-main.js' \
-      -path '*/bin/*' -print -quit 2>/dev/null)"; \
-    if [ -n "$MCP_MAIN" ]; then \
-      sed -i '/^export const args = parseArguments(VERSION);/i \
-// Auto-inject headless mode for container environments without a display server\
-\nif (!process.argv.includes('\''--headless'\'')) {\n    process.argv.push('\''--headless'\'');\n}' \
-        "$MCP_MAIN"; \
-    fi
+RUN npm exec chrome-devtools-mcp@latest -- --version 2>/dev/null || true
 
 # oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
 # Build-time install uses upstream oh-my-opencode (needs platform binaries).

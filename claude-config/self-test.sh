@@ -217,9 +217,8 @@ MCP_MAIN_FILE=$(find /home/vscode/.npm/_npx -name 'chrome-devtools-mcp-main.js' 
   -path '*/bin/*' 2>/dev/null | head -1)
 if [ -n "$MCP_MAIN_FILE" ]; then
   check "chrome-devtools-mcp pre-cached" true
-  check "Headless patch applied" grep -q 'Auto-inject headless' "$MCP_MAIN_FILE"
 else
-  echo "  SKIP: chrome-devtools-mcp not yet cached (will be patched on first use)"
+  echo "  SKIP: chrome-devtools-mcp not yet cached (will download on first use)"
 fi
 
 echo ""
