@@ -1,6 +1,6 @@
 ---
 title: Chrome DevTools MCP
-description: Browser automation, screenshots, and DOM inspection via headless Chromium.
+description: Browser automation, screenshots, and DOM inspection via a shared headless Chrome instance.
 sidebar:
   order: 4
 ---
@@ -9,9 +9,7 @@ The container includes a pre-configured [Chrome DevTools MCP](https://github.com
 
 ## How It Works
 
-The Chrome DevTools MCP server connects Claude Code to a headless Chromium browser via the Chrome DevTools Protocol. The server is registered as an MCP plugin and launched automatically by the Claude Code proxy when browser tools are needed.
-
-Content repositories pass `--headless` to the MCP server via `.mcp.json` args, since there is no physical display in the container. If VNC is enabled, you can switch to headed mode for visual debugging.
+The entrypoint launches a persistent headless Chrome with remote debugging on port 9222. The chrome-devtools-mcp MCP server is registered in Claude Code settings and connects to this shared browser via `--browserUrl`. All sessions share a single browser instance and cookie jar — logins, cookies, and authentication persist across projects.
 
 ## Available Tools
 
@@ -30,11 +28,12 @@ Content repositories pass `--headless` to the MCP server via `.mcp.json` args, s
 
 ## Architecture
 
-The browser stack uses three components that work together:
+The browser stack uses four components that work together:
 
 1. **Playwright Chromium** — ARM64-compatible Chromium binary installed at build time via `npx playwright install --with-deps chromium`
 2. **Chrome symlink** — bridges Puppeteer's expected path (`/opt/google/chrome/chrome`) to the Playwright binary
-3. **`--headless` flag** — passed via `.mcp.json` args in each content repository, since the container has no physical display
+3. **Shared Chrome process** — launched by `chrome-browser.sh` with `--remote-debugging-port=9222`, auto-restarts on crash
+4. **Global MCP registration** — `settings.json` registers chrome-devtools-mcp with `--browserUrl=http://localhost:9222`
 
 Google Chrome has no ARM64 `.deb` package, and Ubuntu 24.04's `chromium-browser` apt package redirects to snap (which doesn't work in containers). Playwright's bundled Chromium is the only reliable option for ARM64 containers.
 
@@ -49,9 +48,8 @@ Confirm the setup works inside the container:
 # Symlink is correct
 ls -la /opt/google/chrome/chrome
 
-# Headless mode works
-/opt/google/chrome/chrome --headless --no-sandbox --disable-gpu \
-    --dump-dom about:blank
+# Remote debugging is active
+curl http://localhost:9222/json/version
 
 # Self-test includes Chrome checks
 claude-self-test
@@ -59,38 +57,10 @@ claude-self-test
 
 ## Headed Mode (VNC)
 
-For visual browser sessions, enable the VNC stack and use Playwright's headed mode instead:
-
-```bash
-# In .env
-ENABLE_VNC=true
-```
+When `ENABLE_VNC=true`, the entrypoint starts the VNC stack before launching Chrome. The `chrome-browser.sh` script detects that `DISPLAY` is set and runs Chrome in headed mode on the virtual display, so you can see the browser in the VNC viewer.
 
 Open `http://localhost:6080/vnc.html` to see the virtual display. See [Remote Display (noVNC)](./vnc) for details.
 
-When `--headless` is passed via `.mcp.json` args, the MCP server runs without a display. For headed debugging, remove the `--headless` arg and launch Chromium manually:
-
-```bash
-chromium --no-sandbox &
-```
-
-## Configuring `--headless` in `.mcp.json`
-
-Each content repository must pass `--headless` to the MCP server via its `.mcp.json` configuration. This is the upstream-supported mechanism and survives package updates via `npx`.
-
-```json
-{
-  "mcpServers": {
-    "chrome-devtools-mcp": {
-      "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest", "--headless"]
-    }
-  }
-}
-```
-
-Without `--headless`, the MCP server attempts to launch a headed browser, which fails inside containers that have no display server.
-
 ## Troubleshooting
 
-See [Troubleshooting — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) for solutions to common issues including missing Chrome executable and headless configuration.
+See [Troubleshooting — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) for solutions to common issues including remote debugging failures, profile lock errors, and duplicate MCP tools.

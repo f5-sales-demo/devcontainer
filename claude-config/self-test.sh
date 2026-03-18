@@ -213,6 +213,9 @@ echo "9. Chrome DevTools MCP"
 check "Chrome symlink exists" test -L /opt/google/chrome/chrome
 check "Chrome symlink target exists" test -e /opt/google/chrome/chrome
 check "Chrome binary responds" /opt/google/chrome/chrome --version
+check "chrome-browser.sh installed" test -f /usr/local/lib/chrome-browser.sh
+check "Chrome remote debugging active" curl -sf --connect-timeout 2 http://localhost:9222/json/version
+check "chrome-devtools-mcp in settings" grep -q 'chrome-devtools-mcp' "$HOME/.claude/settings.json"
 MCP_MAIN_FILE=$(find /home/vscode/.npm/_npx -name 'chrome-devtools-mcp-main.js' \
   -path '*/bin/*' 2>/dev/null | head -1)
 if [ -n "$MCP_MAIN_FILE" ]; then
