@@ -29,7 +29,7 @@
     "hookify@claude-plugins-official": true
   },
   "mcpServers": {
-    "chrome-devtools-mcp": {
+    "chrome-devtools": {
       "command": "npx",
       "args": ["-y", "chrome-devtools-mcp@latest", "--browserUrl=http://localhost:9222"]
     }
