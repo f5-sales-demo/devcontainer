@@ -760,10 +760,10 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/marksman \
       "https://github.com/artempyanykh/marksman/releases/latest/download/marksman-linux-${MK_ARCH}" \
     && chmod +x /usr/local/bin/marksman \
-    # terraform-ls (Terraform LSP — version in asset name)
+    # terraform-ls (Terraform LSP — distributed via releases.hashicorp.com)
     && TFLS_VERSION=$(ghlatest hashicorp/terraform-ls) \
     && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/hashicorp/terraform-ls/releases/latest/download/terraform-ls_${TFLS_VERSION}_linux_${DPKG_ARCH}.zip" \
+      "https://releases.hashicorp.com/terraform-ls/${TFLS_VERSION}/terraform-ls_${TFLS_VERSION}_linux_${DPKG_ARCH}.zip" \
       -o /tmp/terraform-ls.zip \
     && unzip -q /tmp/terraform-ls.zip -d /usr/local/bin && rm /tmp/terraform-ls.zip \
     # taplo (TOML LSP — gzip'd binary)
