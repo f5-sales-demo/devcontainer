@@ -1169,11 +1169,13 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && git clone --depth=1 https://github.com/yuhonas/zsh-aliases-lsd.git \
       "${ZSH_CUSTOM}/plugins/zsh-aliases-lsd" \
     && mkdir -p "${ZSH_CUSTOM}/plugins/gh-clone-complete" \
+    && git clone --depth=1 https://github.com/wbingli/zsh-claudecode-completion.git \
+      "${ZSH_CUSTOM}/plugins/zsh-claudecode-completion" \
     && git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
       "${ZSH_CUSTOM}/themes/powerlevel10k" \
     && "${ZSH_CUSTOM}/themes/powerlevel10k/gitstatus/install" \
     && sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$HOME/.zshrc" \
-    && sed -i 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd ubuntu jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl iterm2 kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found)/' \
+    && sed -i 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd ubuntu jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl iterm2 kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux zsh-claudecode-completion)/' \
       "$HOME/.zshrc" \
     && sed -i 's/^# HYPHEN_INSENSITIVE=.*/HYPHEN_INSENSITIVE="true"/' "$HOME/.zshrc" \
     && sed -i 's/^# COMPLETION_WAITING_DOTS=.*/COMPLETION_WAITING_DOTS="true"/' "$HOME/.zshrc" \
@@ -1200,6 +1202,7 @@ RUN mkdir -p "$HOME/.npm-global" \
     && "$HOME/.tfenv/bin/tfenv" install latest \
     && "$HOME/.tfenv/bin/tfenv" use latest \
     && git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" \
+    && opencode completion > /usr/local/share/zsh/site-functions/_opencode \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh /home/${USERNAME}/.p10k.zsh
