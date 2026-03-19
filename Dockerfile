@@ -1258,7 +1258,6 @@ RUN chmod +x /usr/local/bin/entrypoint.sh \
     && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
 
 USER $USERNAME
-ENV FORCE_AUTOUPDATE_PLUGINS=true
 ENV SHELL=/bin/zsh
 WORKDIR /workspace
 
