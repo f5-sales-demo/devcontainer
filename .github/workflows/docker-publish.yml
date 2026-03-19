@@ -9,6 +9,9 @@ on:
       - entrypoint.sh
       - configs/**
       - claude-config/**
+      - opencode-config/**
+      - codex-config/**
+      - pi-config/**
       - docker-compose.yml
       - .devcontainer/**
       - .github/workflows/docker-publish.yml
