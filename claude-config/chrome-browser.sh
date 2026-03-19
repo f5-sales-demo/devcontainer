@@ -49,7 +49,7 @@ start_chrome_browser() {
     --disable-extensions
     --disable-background-timer-throttling
     --disable-backgrounding-occluded-windows
-    --disable-features=HttpsFirstBalancedModeAutoEnable,HttpsUpgrades,HttpsFirstModeV2
+    "--disable-features=HttpsFirstBalancedModeAutoEnable,HttpsUpgrades,HttpsFirstModeV2"
   )
 
   # If DISPLAY is set and working, run headed (VNC visibility)
