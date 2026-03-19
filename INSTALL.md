@@ -419,6 +419,55 @@ cd ~/.config/opencode && bun install && cd -
 
 This creates `~/.config/opencode/node_modules/` with the OpenCode plugin SDK.
 
+### 7.1 — Pre-cache OpenCode Runtime Dependencies
+
+On first launch, OpenCode downloads four npm packages into `~/.cache/opencode/` using bun. Pre-installing them avoids the startup delay and ensures the environment works immediately — even without internet access.
+
+The four packages are:
+
+| Package | Purpose |
+| ------- | ------- |
+| `@robinmordasiewicz/oh-my-opencode` | Oh-My-OpenCode plugin — multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.) |
+| `@ai-sdk/anthropic` | Vercel AI SDK provider for Anthropic models (Claude) |
+| `@ai-sdk/openai-compatible` | Vercel AI SDK provider for OpenAI-compatible proxy endpoints |
+| `opencode-anthropic-auth` | Authentication module for Anthropic API access |
+
+Create the cache directory and write its `package.json`:
+
+```bash
+mkdir -p ~/.cache/opencode
+```
+
+Write the file `~/.cache/opencode/package.json` with the following content:
+
+```json
+{
+  "dependencies": {
+    "@robinmordasiewicz/oh-my-opencode": "3.11.0-fork.1",
+    "@ai-sdk/anthropic": "*",
+    "@ai-sdk/openai-compatible": "*",
+    "opencode-anthropic-auth": "0.0.13"
+  }
+}
+```
+
+Then install the dependencies:
+
+```bash
+cd ~/.cache/opencode && bun install && cd -
+```
+
+This populates `~/.cache/opencode/node_modules/` with the plugin and AI provider packages. OpenCode detects the existing install on startup and skips the download step.
+
+### Verify Runtime Cache
+
+```bash
+ls ~/.cache/opencode/node_modules/@robinmordasiewicz/oh-my-opencode/   # Expected: directory exists
+ls ~/.cache/opencode/node_modules/@ai-sdk/anthropic/                   # Expected: directory exists
+ls ~/.cache/opencode/node_modules/@ai-sdk/openai-compatible/           # Expected: directory exists
+ls ~/.cache/opencode/node_modules/opencode-anthropic-auth/             # Expected: directory exists
+```
+
 ---
 
 ## Step 8 — Write `opencode.json`
@@ -882,7 +931,18 @@ ls -la ~/.config/opencode/node_modules/@opencode-ai/plugin/
 
 All files should exist and be owned by the current user.
 
-### 15.7 — Environment Variables
+### 15.7 — OpenCode Runtime Cache
+
+```bash
+ls ~/.cache/opencode/node_modules/@robinmordasiewicz/oh-my-opencode/package.json  # Expected: file exists
+ls ~/.cache/opencode/node_modules/@ai-sdk/anthropic/package.json                  # Expected: file exists
+ls ~/.cache/opencode/node_modules/@ai-sdk/openai-compatible/package.json          # Expected: file exists
+ls ~/.cache/opencode/node_modules/opencode-anthropic-auth/package.json            # Expected: file exists
+```
+
+All four runtime packages should be pre-installed. If any are missing, re-run `cd ~/.cache/opencode && bun install && cd -`.
+
+### 15.8 — Environment Variables
 
 ```bash
 echo $BUN_INSTALL            # Expected: /Users/<you>/.bun
@@ -890,7 +950,7 @@ echo $F5AI_API_KEY           # Expected: your API key (not empty)
 echo $ANTHROPIC_1M_CONTEXT   # Expected: true
 ```
 
-### 15.8 — Claude Code Plugins
+### 15.9 — Claude Code Plugins
 
 ```bash
 # Verify plugin count
@@ -906,7 +966,7 @@ jq '.enabledPlugins | keys | length' ~/.claude/settings.json
 # Expected: 14
 ```
 
-### 15.9 — Project Tooling (Podman, Docker Shim, pre-commit)
+### 15.10 — Project Tooling (Podman, Docker Shim, pre-commit)
 
 ```bash
 podman --version                # Expected: podman 5.x
@@ -916,7 +976,7 @@ which docker                    # Expected: ~/.local/bin/docker (once PATH inclu
 pre-commit --version            # Expected: pre-commit 4.x
 ```
 
-### 15.10 — Terminal Environment (iTerm2, Oh My Zsh, Theme, Plugins)
+### 15.11 — Terminal Environment (iTerm2, Oh My Zsh, Theme, Plugins)
 
 ```bash
 ls "/Applications/iTerm.app"                                                    # Expected: iTerm2 installed
@@ -930,7 +990,7 @@ grep "^ZSH_THEME" ~/.zshrc                                                      
 grep "^plugins=" ~/.zshrc                                                        # Expected: (git z zsh-autosuggestions zsh-syntax-highlighting)
 ```
 
-### 15.11 — Launch OpenCode
+### 15.12 — Launch OpenCode
 
 ```bash
 opencode
@@ -1098,7 +1158,16 @@ Additionally, the following user-local binaries and runtime directories are crea
 ~/.local/bin/
 └── docker                         # Podman shim — corporate standard forbids Docker Desktop
 
-~/.cache/opencode/             # Plugin downloads, auto-installed LSP servers
+~/.cache/opencode/             # Runtime dependencies and auto-installed LSP servers
+├── package.json               # Runtime dependency manifest (4 packages)
+├── bun.lock                   # Bun lockfile (auto-generated)
+└── node_modules/              # Pre-cached runtime packages
+    ├── @robinmordasiewicz/
+    │   └── oh-my-opencode/    # Oh-My-OpenCode plugin
+    ├── @ai-sdk/
+    │   ├── anthropic/         # Vercel AI SDK — Anthropic provider
+    │   └── openai-compatible/ # Vercel AI SDK — OpenAI-compatible provider
+    └── opencode-anthropic-auth/ # Anthropic auth module
 ~/.cache/chrome-devtools-mcp/  # Chrome browser profile for MCP
 ~/.npm/_npx/                   # npx cache for chrome-devtools-mcp
 ~/.local/share/containers/     # Podman machine storage
