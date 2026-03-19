@@ -16,7 +16,7 @@ Every instruction in this guide follows these rules:
 - **Homebrew owns `/opt/homebrew`** with permissions `0755`, owned by the current user. No root access required.
 - **npm global packages** install under `/opt/homebrew/lib` (Homebrew-managed Node.js). No `sudo` needed.
 - **Bun** installs to `~/.bun` — a single binary, user-owned, no system modification.
-- **API keys** are exported as environment variables in `~/.zshrc`, never committed to git repositories.
+- **API keys** are exported as environment variables in `~/.zshrc`, never committed to Git repositories.
 - **All config files** live under `~/.config/opencode/` following the XDG Base Directory convention.
 - **Claude Code plugins** are installed to `~/.claude/plugins/` — entirely within `$HOME`, no system paths touched.
 - **Podman** is the corporate-standard container runtime. Docker Desktop is **not permitted**. A lightweight shim at `~/.local/bin/docker` transparently routes any `docker` command to `podman`.
@@ -155,7 +155,7 @@ iTerm2 bundles command-line utilities — including `imgcat`, `imgls`, `it2api` 
 
 ### 5.2 — Install Oh My Zsh
 
-Oh My Zsh is a framework for managing zsh configuration, plugins, and themes. The installer creates `~/.zshrc` from a template — any prior `.zshrc` is backed up automatically.
+Oh My Zsh is a framework for managing Zsh configuration, plugins, and themes. The installer creates `~/.zshrc` from a template — any prior `.zshrc` is backed up automatically.
 
 ```bash
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
@@ -165,7 +165,7 @@ The `--unattended` flag prevents the installer from switching the default shell 
 
 ### 5.3 — Install Powerlevel10k Theme and Fonts
 
-Powerlevel10k is a fast, highly-configurable zsh prompt theme that uses special glyphs (icons, branch symbols, lock icons, etc.) which require a patched Nerd Font. Install the theme, its recommended font, and the full Nerd Font collection:
+Powerlevel10k is a fast, highly-configurable Zsh prompt theme that uses special glyphs (icons, branch symbols, lock icons, etc.) which require a patched Nerd Font. Install the theme, its recommended font, and the full Nerd Font collection:
 
 ```bash
 # Powerlevel10k theme
@@ -214,7 +214,7 @@ plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)
 ```
 
 | Plugin | What It Does |
-|--------|-------------|
+| ------ | ------------ |
 | `git` | Git aliases and prompt integration (`gst`, `gco`, `gp`, branch status in prompt) |
 | `z` | Frecency-based directory jumping (`z project` jumps to most-used matching path) |
 | `zsh-autosuggestions` | Fish-like inline suggestions from command history (accept with →) |
@@ -426,7 +426,7 @@ This is the main OpenCode configuration file. Write the file `~/.config/opencode
 **Chrome flags explained**: The `--chromeArg` entries disable Chrome 115+'s automatic HTTP→HTTPS upgrading. Without these flags, Chrome silently redirects `http://` URLs to `https://`, which breaks demo environments that serve plain HTTP only. The three disabled features are:
 
 | Feature Disabled | What It Would Do If Enabled |
-|---|---|
+| ---------------- | --------------------------- |
 | `HttpsFirstBalancedModeAutoEnable` | Automatically enables HTTPS-First Mode on sites Chrome thinks support HTTPS |
 | `HttpsUpgrades` | Silently rewrites `http://` navigations to `https://` before the request is sent |
 | `HttpsFirstModeV2` | Shows a full-page interstitial warning when falling back to HTTP |
