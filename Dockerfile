@@ -1095,17 +1095,20 @@ RUN npm exec chrome-devtools-mcp@latest -- --version 2>/dev/null || true
 RUN npx -y oh-my-opencode install --no-tui \
     --claude=max20 --openai=no --gemini=no --copilot=no \
     && rm -f ~/.config/opencode/*.bak.*
-# Pre-install the forked plugin into opencode's XDG cache so it skips
-# the download on first launch.  Write the cache-version marker ("21")
-# and a package.json with the pinned dependency so BunProc.install()
-# sees the package as already present.
+# Pre-install npm packages into opencode's XDG cache so it skips
+# downloads on first launch.  Write the cache-version marker ("21")
+# and a package.json with pinned dependencies so BunProc.install()
+# sees each package as already present.
 # hadolint ignore=DL3059
 RUN OPENCODE_CACHE="$HOME/.cache/opencode" \
     && mkdir -p "$OPENCODE_CACHE" \
     && printf '21' > "$OPENCODE_CACHE/version" \
     && printf '{"dependencies":{}}\n' > "$OPENCODE_CACHE/package.json" \
     && bun add --cwd "$OPENCODE_CACHE" --force --exact \
-        @robinmordasiewicz/oh-my-opencode@3.11.0-fork.1
+        @robinmordasiewicz/oh-my-opencode@3.11.0-fork.1 \
+        @ai-sdk/anthropic \
+        @ai-sdk/openai-compatible \
+        opencode-anthropic-auth@0.0.13
 
 # Patch oh-my-opencode config in-place with claude_code integration flags
 # hadolint ignore=DL3059
