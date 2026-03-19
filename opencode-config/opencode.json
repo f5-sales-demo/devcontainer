@@ -1,12 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
-    "openai-proxy": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "OpenAI Proxy",
+    "anthropic-proxy": {
+      "name": "Anthropic Proxy",
       "options": {
-        "baseURL": "{env:OPENAI_BASE_URL}",
-        "apiKey": "{env:OPENAI_API_KEY}"
+        "baseURL": "{env:ANTHROPIC_BASE_URL}",
+        "apiKey": "{env:ANTHROPIC_API_KEY}"
       },
       "models": {
         "claude-opus-4-6": {
@@ -28,22 +27,35 @@
           },
           "limit": {
             "context": 1000000,
-            "output": 128000
+            "output": 64000
           }
-        },
+        }
+      }
+    },
+    "openai-proxy": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "OpenAI Proxy",
+      "options": {
+        "baseURL": "{env:OPENAI_BASE_URL}",
+        "apiKey": "{env:OPENAI_API_KEY}"
+      },
+      "models": {
         "gpt-5.4": {
-          "name": "GPT-5.4",
+          "name": "GPT 5.4",
           "modalities": {
             "input": ["text", "image"],
             "output": ["text"]
           },
           "limit": {
-            "context": 1050000,
+            "context": 1000000,
             "output": 128000
+          },
+          "options": {
+            "reasoningSummary": null
           }
         },
         "grok-code-fast-1": {
-          "name": "Grok Code Fast 1",
+          "name": "Explore",
           "modalities": {
             "input": ["text"],
             "output": ["text"]
@@ -56,8 +68,8 @@
       }
     }
   },
-  "model": "openai-proxy/claude-opus-4-6",
-  "small_model": "openai-proxy/claude-sonnet-4-6",
+  "model": "anthropic-proxy/claude-opus-4-6",
+  "small_model": "anthropic-proxy/claude-sonnet-4-6",
   "plugin": ["@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"],
   "mcp": {},
   "lsp": {

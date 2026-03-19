@@ -87,12 +87,16 @@ AUTHEOF
 elif [ -n "$OPENAI_API_KEY" ]; then
   _esc_base_url=$(printf '%s' "$OPENAI_BASE_URL" | sed 's/[&\\/]/\\&/g')
   _esc_api_key=$(printf '%s' "$OPENAI_API_KEY" | sed 's/[&\\/]/\\&/g')
+  _esc_anthropic_base_url=$(printf '%s' "$ANTHROPIC_BASE_URL" | sed 's/[&\\/]/\\&/g')
+  _esc_anthropic_api_key=$(printf '%s' "$ANTHROPIC_API_KEY" | sed 's/[&\\/]/\\&/g')
   sed -e "s|{env:OPENAI_BASE_URL}|${_esc_base_url}|g" \
     -e "s|{env:OPENAI_API_KEY}|${_esc_api_key}|g" \
+    -e "s|{env:ANTHROPIC_BASE_URL}|${_esc_anthropic_base_url}|g" \
+    -e "s|{env:ANTHROPIC_API_KEY}|${_esc_anthropic_api_key}|g" \
     "$OPENCODE_CONFIG_DIR/opencode.json" \
     >"$OPENCODE_CONFIG_DIR/opencode.json.tmp" &&
     mv "$OPENCODE_CONFIG_DIR/opencode.json.tmp" "$OPENCODE_CONFIG_DIR/opencode.json"
-  unset _esc_base_url _esc_api_key
+  unset _esc_base_url _esc_api_key _esc_anthropic_base_url _esc_anthropic_api_key
   cp "$OPENCODE_CONFIG_DIR/oh-my-opencode-proxy.json" \
     "$OPENCODE_CONFIG_DIR/oh-my-opencode.json"
 fi
