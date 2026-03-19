@@ -1,6 +1,6 @@
 {
   "statusLine": { "type": "command", "command": "/opt/claude-config/statusline.sh" },
-  "model": "claude-opus-4-6",
+  "model": "opus",
   "spinnerTipsEnabled": false,
   "terminalProgressBarEnabled": false,
   "showTurnDuration": false,
