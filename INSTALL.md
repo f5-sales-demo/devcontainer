@@ -151,7 +151,11 @@ A modern terminal environment is required for inline image display (`imgcat`), s
 brew install --cask iterm2
 ```
 
-iTerm2 bundles command-line utilities — including `imgcat`, `imgls`, `it2api` — inside the app at `/Applications/iTerm.app/Contents/Resources/utilities/`. When running inside iTerm2, this directory is added to `PATH` automatically. To ensure these utilities are always available (including when a shell is launched by opencode or another process), the `PATH` addition is made explicit in `~/.zshrc` (see Step 13).
+iTerm2 bundles command-line utilities — including `imgcat`, `imgls`, `it2api` — inside the
+app at `/Applications/iTerm.app/Contents/Resources/utilities/`. When running inside iTerm2,
+this directory is added to `PATH` automatically. To ensure these utilities are always available
+(including when a shell is launched by opencode or another process), the `PATH` addition is
+made explicit in `~/.zshrc` (see Step 13).
 
 ### 5.2 — Install Oh My Zsh
 
@@ -1011,7 +1015,11 @@ done
 
 ### Chrome cannot resolve a domain (`ERR_NAME_NOT_RESOLVED`)
 
-macOS caches DNS failures (`NXDOMAIN`) in the `mDNSResponder` system daemon. If Chrome (or any application using the system resolver) queries a domain **before** its DNS record exists, the negative result is cached for up to 30 minutes (determined by the SOA minimum TTL). Subsequent lookups — including from a freshly launched Chrome — return the cached failure even after the real DNS record is created.
+macOS caches DNS failures (`NXDOMAIN`) in the `mDNSResponder` system daemon. If Chrome
+(or any application using the system resolver) queries a domain **before** its DNS record
+exists, the negative result is cached for up to 30 minutes (determined by the SOA minimum
+TTL). Subsequent lookups — including from a freshly launched Chrome — return the cached
+failure even after the real DNS record is created.
 
 **Diagnosis**: `dig +short <domain>` resolves correctly, but Chrome shows `ERR_NAME_NOT_RESOLVED`.
 
