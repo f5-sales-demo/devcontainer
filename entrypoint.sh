@@ -63,7 +63,16 @@ else
 fi
 
 # ============================================================
-# Auto-approve ANTHROPIC_API_KEY in Claude Code state
+# Configure apiKeyHelper for non-interactive API key auth
+# ============================================================
+if [ -n "$ANTHROPIC_API_KEY" ] && [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -f "$HOME/.claude/settings.json" ]; then
+  jq '.apiKeyHelper = "/opt/claude-config/api-key-helper.sh"' \
+    "$HOME/.claude/settings.json" >"$HOME/.claude/settings.json.tmp" &&
+    mv "$HOME/.claude/settings.json.tmp" "$HOME/.claude/settings.json"
+fi
+
+# ============================================================
+# Auto-approve ANTHROPIC_API_KEY in Claude Code state (fallback)
 # ============================================================
 if [ -n "$ANTHROPIC_API_KEY" ] && [ -f "$HOME/.claude.json" ]; then
   jq --arg key "$ANTHROPIC_API_KEY" '
