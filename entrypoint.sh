@@ -44,17 +44,6 @@ if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then
 fi
 
 # ============================================================
-# Detect LiteLLM direct mode (reused in multiple blocks below)
-# ============================================================
-_is_litellm_direct=false
-if [ -n "$ANTHROPIC_BASE_URL" ]; then
-  case "$ANTHROPIC_BASE_URL" in
-  http://localhost:* | http://localhost) ;;
-  *) _is_litellm_direct=true ;;
-  esac
-fi
-
-# ============================================================
 # Derive ANTHROPIC_API_KEY from OPENAI_API_KEY when not set.
 # Both providers share the same LiteLLM server and API key.
 # Must happen before auto-approve and the opencode.json sed substitution.
@@ -103,26 +92,6 @@ elif [ -n "$OPENAI_API_KEY" ]; then
   cp "$OPENCODE_CONFIG_DIR/oh-my-opencode-proxy.json" \
     "$OPENCODE_CONFIG_DIR/oh-my-opencode.json"
 fi
-
-# ============================================================
-# Auth mode env defaults
-# ============================================================
-if [ "$_is_litellm_direct" = true ]; then
-  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-${OPENAI_API_KEY:-litellm-proxy}}"
-elif [ -n "$OPENAI_API_KEY" ] && [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-openai-proxy}"
-  export BIG_MODEL="${BIG_MODEL:-claude-opus-4-6}"
-  export MIDDLE_MODEL="${MIDDLE_MODEL:-claude-sonnet-4-6}"
-  export SMALL_MODEL="${SMALL_MODEL:-claude-haiku-4-5}"
-fi
-unset _is_litellm_direct
-
-# ============================================================
-# Claude Code Proxy (Anthropic Messages API -> OpenAI)
-# ============================================================
-# shellcheck source=/dev/null
-. /usr/local/lib/claude-proxy.sh
-start_claude_proxy
 
 # ============================================================
 # Chrome DevTools MCP (symlink + shared browser)

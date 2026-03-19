@@ -19,8 +19,6 @@ All Claude Code tools use PascalCase. NEVER use snake_case.
 | `Grep` | `grep`, `search`, `search_files` | Search file contents |
 | `Task` | `task`, `run_task`, `agent` | Launch subagent tasks |
 
-**Note:** `MultiEdit` is not available through all proxy configurations —
-use sequential `Edit` calls instead.
 
 ## Task Tool Requirements
 
