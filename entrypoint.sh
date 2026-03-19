@@ -57,8 +57,7 @@ fi
 # ============================================================
 # Derive ANTHROPIC_API_KEY from OPENAI_API_KEY when not set.
 # Both providers share the same LiteLLM server and API key.
-# Must happen before apiKeyHelper (~line 68), auto-approve
-# (~line 77), and the opencode.json sed substitution (~line 96).
+# Must happen before auto-approve and the opencode.json sed substitution.
 # ============================================================
 if [ -n "$OPENAI_API_KEY" ]; then
   export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-$OPENAI_API_KEY}"
@@ -73,16 +72,7 @@ else
 fi
 
 # ============================================================
-# Configure apiKeyHelper for non-interactive API key auth
-# ============================================================
-if [ -n "$ANTHROPIC_API_KEY" ] && [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -f "$HOME/.claude/settings.json" ]; then
-  jq '.apiKeyHelper = "/opt/claude-config/api-key-helper.sh"' \
-    "$HOME/.claude/settings.json" >"$HOME/.claude/settings.json.tmp" &&
-    mv "$HOME/.claude/settings.json.tmp" "$HOME/.claude/settings.json"
-fi
-
-# ============================================================
-# Auto-approve ANTHROPIC_API_KEY in Claude Code state (fallback)
+# Auto-approve ANTHROPIC_API_KEY in Claude Code state
 # ============================================================
 if [ -n "$ANTHROPIC_API_KEY" ] && [ -f "$HOME/.claude.json" ]; then
   jq --arg key "$ANTHROPIC_API_KEY" '
