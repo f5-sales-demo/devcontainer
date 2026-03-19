@@ -1095,10 +1095,17 @@ RUN npm exec chrome-devtools-mcp@latest -- --version 2>/dev/null || true
 RUN npx -y oh-my-opencode install --no-tui \
     --claude=max20 --openai=no --gemini=no --copilot=no \
     && rm -f ~/.config/opencode/*.bak.*
-# Pre-install the forked plugin under vscode's npm prefix so opencode
-# finds it at startup without downloading.
-# hadolint ignore=DL3016,DL3059
-RUN npm install --prefix ~/.npm-global -g @robinmordasiewicz/oh-my-opencode@3.11.0-fork.1
+# Pre-install the forked plugin into opencode's XDG cache so it skips
+# the download on first launch.  Write the cache-version marker ("21")
+# and a package.json with the pinned dependency so BunProc.install()
+# sees the package as already present.
+# hadolint ignore=DL3059
+RUN OPENCODE_CACHE="$HOME/.cache/opencode" \
+    && mkdir -p "$OPENCODE_CACHE" \
+    && printf '21' > "$OPENCODE_CACHE/version" \
+    && printf '{"dependencies":{}}\n' > "$OPENCODE_CACHE/package.json" \
+    && bun add --cwd "$OPENCODE_CACHE" --force --exact \
+        @robinmordasiewicz/oh-my-opencode@3.11.0-fork.1
 
 # Patch oh-my-opencode config in-place with claude_code integration flags
 # hadolint ignore=DL3059
