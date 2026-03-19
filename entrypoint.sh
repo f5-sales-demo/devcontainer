@@ -54,6 +54,16 @@ if [ -n "$ANTHROPIC_BASE_URL" ]; then
   esac
 fi
 
+# ============================================================
+# Derive ANTHROPIC_API_KEY from OPENAI_API_KEY when not set.
+# Both providers share the same LiteLLM server and API key.
+# Must happen before apiKeyHelper (~line 68), auto-approve
+# (~line 77), and the opencode.json sed substitution (~line 96).
+# ============================================================
+if [ -n "$OPENAI_API_KEY" ]; then
+  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-$OPENAI_API_KEY}"
+fi
+
 if [ "$_is_litellm_direct" = true ]; then
   export ANTHROPIC_1M_CONTEXT="false"
   sed -i 's|"ANTHROPIC_1M_CONTEXT": "true"|"ANTHROPIC_1M_CONTEXT": "false"|' \
