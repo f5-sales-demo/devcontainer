@@ -63,13 +63,7 @@ if [ -n "$OPENAI_API_KEY" ]; then
   export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-$OPENAI_API_KEY}"
 fi
 
-if [ "$_is_litellm_direct" = true ]; then
-  export ANTHROPIC_1M_CONTEXT="false"
-  sed -i 's|"ANTHROPIC_1M_CONTEXT": "true"|"ANTHROPIC_1M_CONTEXT": "false"|' \
-    "$HOME/.claude/settings.json"
-else
-  export ANTHROPIC_1M_CONTEXT="true"
-fi
+export ANTHROPIC_1M_CONTEXT="true"
 
 # ============================================================
 # Auto-approve ANTHROPIC_API_KEY in Claude Code state
