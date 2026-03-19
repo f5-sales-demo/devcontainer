@@ -29,7 +29,7 @@ cd devcontainer
 ├── .env.example                # Example environment variables
 ├── docs/                       # Documentation site (Starlight)
 ├── claude-config/              # Claude Code configuration files
-├── opencode-config/            # OpenCode provider templates (OAuth + proxy)
+├── opencode-config/            # OpenCode provider templates (OAuth + LiteLLM)
 └── codex-config/               # Codex configuration
 ```
 
@@ -130,7 +130,6 @@ These layers change more frequently (npm/pip updates, config changes) but rebuil
 | 10j. Metasploit | Exploitation framework (amd64 only) |
 | 11. npm global tools | claude-code, prettier, markdownlint-cli2, devcontainers-cli, playwright, pi-coding-agent |
 | 12. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
-| 12b. Claude Code Proxy | OpenAI-compatible translation proxy |
 | 12c. Ruby linters | rubocop + extensions |
 | 12e. Perl linter modules | Perl::Critic extensions |
 | 12f. Lua linter | luacheck |

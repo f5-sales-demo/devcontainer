@@ -74,33 +74,7 @@ echo "$ANTHROPIC_API_KEY"
 Common causes:
 
 - **Placeholder not replaced** — `.env` still has `sk-ant-your-api-key-here`. Replace it with your real key from [console.anthropic.com](https://console.anthropic.com/).
-- **Using an OpenAI-compatible provider without proxy vars** — If your key is not an Anthropic key, set `OPENAI_API_KEY` and `OPENAI_BASE_URL` in `.env` so the built-in proxy activates. `ANTHROPIC_API_KEY` is auto-set to `openai-proxy` — you only need:
-
-  ```text
-  OPENAI_API_KEY=<your-provider-key>
-  OPENAI_BASE_URL=<your-provider-url>
-  ```
-
-  If auto-detection isn't working, you can set it manually as a fallback:
-
-  ```text
-  ANTHROPIC_API_KEY=openai-proxy
-  ```
-
-<Tabs syncKey="runtime">
-<TabItem label="Docker">
-
-  Then restart: `docker compose up -d`.
-
-</TabItem>
-<TabItem label="Podman">
-
-  Then restart: `podman-compose up -d`.
-
-</TabItem>
-</Tabs>
-
-- **Key doesn't start with `sk-ant-`** — Anthropic API keys always start with `sk-ant-`. If yours doesn't, it may be for a different provider. Use the proxy mode above, or get a direct key from [console.anthropic.com](https://console.anthropic.com/).
+- **Key doesn't start with `sk-ant-`** — Anthropic API keys always start with `sk-ant-`. If yours doesn't, it may be for a different provider. Get a direct key from [console.anthropic.com](https://console.anthropic.com/).
 
 ### OpenCode shows "Model not found"
 
@@ -114,41 +88,9 @@ The file should contain an `"anthropic"` key with your OAuth token. If missing, 
 
 To reset OpenCode config: delete `~/.config/opencode/opencode.json` and `~/.local/share/opencode/auth.json`, then restart.
 
-### Claude shows "Connection error"
-
-The built-in proxy may not be running. Check:
-
-```bash
-# Is the proxy process alive?
-curl http://localhost:8082/
-
-# Check proxy logs
-cat ~/.local/share/claude-proxy/proxy.log
-
-# Verify environment variables are set
-echo "OPENAI_API_KEY=$OPENAI_API_KEY"
-echo "OPENAI_BASE_URL=$OPENAI_BASE_URL"
-```
-
-The proxy only starts when `OPENAI_API_KEY` is set. If it's empty, add it to `.env` and restart the container.
-
-### Claude ignores ANTHROPIC_BASE_URL (still uses proxy)
-
-If you set `ANTHROPIC_BASE_URL` but Claude Code connects to `localhost:8082`:
-
-```bash
-echo "$ANTHROPIC_BASE_URL"
-```
-
-If it shows `http://localhost:8082`, the LiteLLM guard didn't fire. Check:
-
-- Your URL does **not** start with `http://localhost` (reserved for the built-in proxy)
-- The variable is exported in `.env` (not commented out)
-- You restarted the container after changing `.env`
-
 ### API requests fail with 401
 
-**Direct mode** — Check that your API key is set correctly:
+Check that your API key is set correctly:
 
 ```bash
 echo "$ANTHROPIC_API_KEY"
@@ -156,19 +98,9 @@ echo "$ANTHROPIC_API_KEY"
 
 Verify it works by making a direct call to your provider.
 
-**Proxy mode** — Check that the proxy is running and configured:
-
-```bash
-curl http://localhost:8082/
-echo "$OPENAI_API_KEY"
-echo "$OPENAI_BASE_URL"
-```
-
 ### Claude says "model not found"
 
-In proxy mode, check `BIG_MODEL`, `MIDDLE_MODEL`, and `SMALL_MODEL` in `.env` — these must match model names your API provider accepts. See [Configuration — Model Mapping](./configuration#model-mapping-proxy-mode-only).
-
-In direct mode, the model is determined by your provider and API key. Check your provider's documentation for available models.
+The model is determined by your provider and API key. Check your provider's documentation for available models.
 
 ## GitHub CLI
 

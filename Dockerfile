@@ -885,29 +885,6 @@ RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
       --with aider-chat[help] \
       --with aider-chat[playwright]
 
-# ============================================================
-# 12b. Claude Code Proxy (Anthropic Messages API -> OpenAI)
-# ============================================================
-# Runs as a background process in entrypoint.sh when OPENAI_API_KEY is set.
-# Build tools are needed for C extensions (httptools, uvloop) on Python 3.13.
-# Cache-bust (2026-03-16): ADD fetches latest commit metadata; when HEAD
-# changes the API response changes, invalidating the Docker layer cache.
-# hadolint ignore=DL3008,DL3020,DL3059
-#checkov:skip=CKV_DOCKER_4:ADD from URL is intentional for Docker layer cache busting
-ADD https://api.github.com/repos/f5xc-salesdemos/claude-code-proxy/commits/main \
-    /tmp/claude-proxy-head.json
-RUN git clone --depth=1 https://github.com/f5xc-salesdemos/claude-code-proxy.git /opt/claude-code-proxy
-
-WORKDIR /opt/claude-code-proxy
-# hadolint ignore=DL3008,DL3059
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential \
-    && uv sync \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* \
-    && chown -R $USERNAME:$USERNAME /opt/claude-code-proxy
-# NOTE: build-essential is purged after Section 12i (git-cloned tools)
-# because rubocop/prism (12d), wpscan (12h), and lxml/spiderfoot (12i)
-# all require a C compiler.
 
 # ============================================================
 # 12c. Ruby linters (rubocop + extensions)
@@ -1082,7 +1059,7 @@ WORKDIR /home/$USERNAME
 RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
     ~/.config/opencode \
     ~/.local/share/opencode \
-    ~/.local/share/claude-proxy \
+
     ~/.codex \
     ~/.pi/agent \
     ~/.ssh
@@ -1229,13 +1206,13 @@ USER root
 # --- System-wide scripts and managed policy ---
 COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
 COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
-COPY claude-config/claude-proxy.sh /usr/local/lib/claude-proxy.sh
+
 COPY claude-config/chrome-browser.sh /usr/local/lib/chrome-browser.sh
 COPY claude-config/statusline.sh /opt/claude-config/statusline.sh
 COPY claude-config/api-key-helper.sh /opt/claude-config/api-key-helper.sh
 COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
 COPY .devcontainer/scripts/post-start.sh /opt/devcontainer/post-start.sh
-RUN chmod +x /opt/claude-config/self-test.sh /usr/local/lib/claude-proxy.sh \
+RUN chmod +x /opt/claude-config/self-test.sh \
       /usr/local/lib/chrome-browser.sh \
       /opt/claude-config/statusline.sh /opt/claude-config/api-key-helper.sh \
       /opt/claude-config/install-plugins.sh \
@@ -1248,7 +1225,7 @@ COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.json /home/${USERNAM
 COPY --chown=${USERNAME}:${USERNAME} claude-config/claude.json /home/${USERNAME}/.claude.json
 
 # --- OpenCode: bake all config variants to final paths ---
-# Default (proxy mode) config lives at the active path; OAuth variant
+# Default config lives at the active path; OAuth variant
 # is stored alongside it. Entrypoint swaps the active file at runtime
 # based on which auth env vars are set.
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json /home/${USERNAME}/.config/opencode/opencode.json
@@ -1260,18 +1237,6 @@ COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /
 COPY --chown=${USERNAME}:${USERNAME} codex-config/config.toml /home/${USERNAME}/.codex/config.toml
 COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
 
-# Shell hooks: source the proxy function in every interactive shell.
-# If the user exports OPENAI_API_KEY after container start (or the
-# entrypoint missed it), the next shell session starts the proxy
-# automatically and sets ANTHROPIC_BASE_URL.
-# - /etc/profile.d/ covers bash login shells
-# - /etc/zsh/zshrc.d/ (sourced by oh-my-zsh base image) covers zsh
-# hadolint ignore=SC1091
-RUN printf '#!/bin/bash\n. /usr/local/lib/claude-proxy.sh\nstart_claude_proxy\n' \
-      > /etc/profile.d/claude-proxy.sh \
-    && chmod +x /etc/profile.d/claude-proxy.sh \
-    && printf '. /usr/local/lib/claude-proxy.sh\nstart_claude_proxy\n' \
-      >> /etc/zsh/zshenv
 
 # Map CLAUDE_CODE_OAUTH_TOKEN → ANTHROPIC_OAUTH_TOKEN for tools
 # that read the Anthropic-native env var (e.g. Pi).

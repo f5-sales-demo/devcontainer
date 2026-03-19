@@ -17,12 +17,11 @@ All configuration lives in the `.env` file at the project root. This file is git
 |----------|-------------|---------|
 | `ANTHROPIC_API_KEY` | API key passed to Claude Code | `sk-ant-abc123...` |
 
-The container supports four **mutually exclusive** authentication modes (in priority order):
+The container supports three **mutually exclusive** authentication modes (in priority order):
 
 - **LiteLLM direct** — set `ANTHROPIC_BASE_URL` to an Anthropic-compatible proxy (see below).
 - **Direct mode** (default) — set `ANTHROPIC_API_KEY` to your Anthropic API key (`sk-ant-...`).
 - **OAuth mode** — set `CLAUDE_CODE_OAUTH_TOKEN` only (see below).
-- **Proxy mode** — set `OPENAI_API_KEY` + `OPENAI_BASE_URL` only. `ANTHROPIC_API_KEY` and model mappings are auto-derived (see below).
 
 Do not combine modes — use exactly one.
 
@@ -36,58 +35,14 @@ When set, both Claude Code and OpenCode authenticate directly with Anthropic usi
 
 ### LiteLLM Direct (Anthropic-compatible proxies)
 
-If your LiteLLM (or other) proxy already speaks the native Anthropic Messages API — including `web_search`, streaming, and tool use — set `ANTHROPIC_BASE_URL` to route Claude Code directly to it. No built-in translation proxy is started.
+If your LiteLLM (or other) proxy already speaks the native Anthropic Messages API — including `web_search`, streaming, and tool use — set `ANTHROPIC_BASE_URL` to route Claude Code directly to it.
 
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `ANTHROPIC_BASE_URL` | URL of your Anthropic-compatible proxy | `https://f5ai.pd.f5net.com/anthropic` |
 | `ANTHROPIC_API_KEY` | API key for authentication (optional) | Falls back to `OPENAI_API_KEY` or `litellm-proxy` |
 
-This mode takes priority over Proxy mode: when `ANTHROPIC_BASE_URL` is set to a non-localhost URL, the built-in proxy is never started — even if `OPENAI_API_KEY` is also present.
-
 Model names are **not** remapped in this mode. Claude Code sends its standard model identifiers (e.g. `claude-sonnet-4-6`) and LiteLLM routes them to your configured backend.
-
-### AI Proxy (OpenAI-compatible providers)
-
-When `OPENAI_API_KEY` is set (and `CLAUDE_CODE_OAUTH_TOKEN` is **not**), the container automatically:
-
-1. Starts a built-in proxy on `localhost:8082` that translates Claude Code's Anthropic Messages API calls to OpenAI Chat Completions format.
-2. Sets `ANTHROPIC_API_KEY` to `openai-proxy` (so Claude Code accepts the proxy connection).
-3. Sets `BIG_MODEL`, `MIDDLE_MODEL`, and `SMALL_MODEL` to Claude model names.
-
-You only need two variables in `.env`:
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `OPENAI_API_KEY` | API key for the upstream provider | `sk-abc123...` |
-| `OPENAI_BASE_URL` | Upstream API endpoint | `https://your-provider.example.com/v1` |
-
-#### Model Mapping (proxy mode only)
-
-The proxy maps Claude Code's model requests to your backend's model identifiers. These are auto-set and only need overriding for non-Claude providers:
-
-| Variable | Default | Used For |
-|----------|---------|----------|
-| `BIG_MODEL` | `claude-opus-4-6` | Primary model for complex tasks |
-| `MIDDLE_MODEL` | `claude-sonnet-4-6` | General-purpose model |
-| `SMALL_MODEL` | `claude-haiku-4-5` | Fast model for simple tasks |
-
-#### Proxy Tuning (proxy mode only)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LOG_LEVEL` | `WARNING` | Proxy log verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-| `MAX_TOKENS_LIMIT` | `64000` | Maximum tokens per request |
-| `REQUEST_TIMEOUT` | `120` | Request timeout in seconds |
-
-#### Proxy Logs
-
-The proxy logs to `~/.local/share/claude-proxy/proxy.log` inside the container. To check proxy status:
-
-```bash
-curl http://localhost:8082/
-cat ~/.local/share/claude-proxy/proxy.log
-```
 
 ### TLS Certificate Validation
 
@@ -112,13 +67,11 @@ When `CLAUDE_CODE_OAUTH_TOKEN` is set, the entrypoint seeds:
 
 This connects OpenCode directly to Anthropic with no proxy needed.
 
-#### Proxy mode (OpenAI-compatible)
+#### LiteLLM mode
 
-When `OPENAI_API_KEY` and `OPENAI_BASE_URL` are set (and no OAuth token), the entrypoint seeds `~/.config/opencode/opencode.json` with a custom provider called **OpenAI Proxy** that points at the same upstream endpoint used by the Claude Code proxy.
+When `OPENAI_API_KEY` and `OPENAI_BASE_URL` are set (and no OAuth token), the entrypoint seeds `~/.config/opencode/opencode.json` with a custom provider called **OpenAI Proxy** that points at the upstream endpoint.
 
-The entrypoint substitutes `OPENAI_BASE_URL` and `OPENAI_API_KEY` directly into the config at container start, before the Claude Code proxy rewrites the environment variables. This ensures OpenCode connects to the upstream API endpoint rather than the local translation proxy.
-
-Available models (proxy mode):
+Available models (LiteLLM mode):
 
 | Model ID | Description |
 |----------|-------------|
@@ -136,7 +89,7 @@ The container includes several AI coding agents in addition to Claude Code:
 | Agent | Command | Provider |
 |-------|---------|----------|
 | [OpenCode](https://opencode.ai/) | `opencode` | Anthropic (OAuth) or OpenAI-compatible (proxy) |
-| [Codex](https://github.com/openai/codex) | `codex` | OpenAI-compatible (proxy mode only) |
+| [Codex](https://github.com/openai/codex) | `codex` | OpenAI-compatible |
 | [Aider](https://aider.chat/) | `aider` | Multi-provider (configure at runtime) |
 | [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | Multi-provider (configure at runtime) |
 
@@ -302,4 +255,4 @@ Both persist across container restarts and rebuilds. Run `podman-compose pull` t
 |------|-----------|---------|
 | `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNC remote display (localhost only, override with `NOVNC_HOST_PORT`) |
 
-Ports are bound to `127.0.0.1` so they are only accessible from your machine, not the network. The AI proxy runs inside the container on `localhost:8082` and is not exposed to the host.
+Ports are bound to `127.0.0.1` so they are only accessible from your machine, not the network.

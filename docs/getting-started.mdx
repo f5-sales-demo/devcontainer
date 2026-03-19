@@ -111,16 +111,16 @@ If you have a Claude Max subscription, use your OAuth token instead:
 CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
 ```
 
-### Option C: OpenAI-compatible provider
+### Option C: LiteLLM or Anthropic-compatible proxy
 
-Route through any OpenAI-compatible endpoint (Open WebUI, LiteLLM, etc.) — only two variables needed:
+If you have a LiteLLM instance or other Anthropic-compatible proxy, set these two variables:
 
 ```ini
-OPENAI_API_KEY=sk-your-api-key-here
-OPENAI_BASE_URL=https://your-api-endpoint.example.com/v1
+ANTHROPIC_BASE_URL=https://your-litellm-endpoint.example.com/anthropic
+ANTHROPIC_API_KEY=your-api-key
 ```
 
-The container auto-derives `ANTHROPIC_API_KEY` and model mappings. See [Configuration](./configuration) for advanced proxy tuning.
+Claude Code connects directly to the endpoint without any built-in translation layer.
 
 ### Auto-populate from local credentials
 

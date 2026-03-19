@@ -62,9 +62,8 @@ Docker containers do not share clipboard state with the host. Data cannot leak t
 The container communicates with the outside world in one of two modes:
 
 - **Direct mode (default)** — outbound HTTPS to your AI provider through Docker's NAT.
-- **Proxy mode (optional)** — traffic routes through a built-in proxy process on `localhost:8082` inside the container, which translates Anthropic API calls to OpenAI format and connects outbound to your API endpoint. The proxy port is not exposed to the host.
 
-In both modes, the container has no access to VPN tunnels, corporate network interfaces, or other services on the host.
+The container has no access to VPN tunnels, corporate network interfaces, or other services on the host.
 
 ### Ephemeral by Design
 
@@ -101,8 +100,6 @@ The `docker-compose.yml` applies several defense-in-depth measures:
 - **Resource limits** — CPU (4 cores), memory (8 GB), and PID count (4096) are capped via `mem_limit`, `cpus`, and `pids_limit` to prevent resource exhaustion attacks.
 - **tmpfs for `/tmp`** — The `/tmp` directory is mounted as a 256 MB tmpfs, keeping temporary files in memory and preventing them from persisting to the container's writable layer.
 - **TLS validation on by default** — `NODE_TLS_REJECT_UNAUTHORIZED` is not set, so Node.js validates TLS certificates by default. Users who need to accept self-signed certificates (e.g. for an internal proxy) can opt in by adding `NODE_TLS_REJECT_UNAUTHORIZED=0` to their `.env` file.
-- **Proxy binds to localhost** — The built-in AI proxy listens on `127.0.0.1` only, not `0.0.0.0`, preventing other containers on the same Docker network from reaching it.
-- **Private proxy logs** — Proxy logs are written to `~/.local/share/claude-proxy/proxy.log` under the user's home directory (created with restrictive permissions), not to world-readable `/tmp`.
 - **SSH key umask** — SSH private keys are written under `umask 077`, so the file is never world-readable — even briefly — between creation and the `chmod` call.
 
 ### Security and Penetration Testing Tools
@@ -165,8 +162,6 @@ For the complete list, run `claude-self-test` inside the container (section 7 ch
 
 </TabItem>
 </Tabs>
-6. **The proxy runs inside the container** on `localhost:8082` and is not exposed to the host network.
-
 ## References
 
 - [LayerX: Claude Desktop Extensions RCE](https://layerxsecurity.com/blog/claude-desktop-extensions-rce/)
