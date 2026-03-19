@@ -13,6 +13,14 @@
   "projects": {
     "/workspace": {
       "hasTrustDialogAccepted": true,
+      "hasTrustDialogHooksAccepted": true,
+      "projectOnboardingSeenCount": 1,
+      "hasClaudeMdExternalIncludesApproved": true,
+      "hasClaudeMdExternalIncludesWarningShown": true
+    },
+    "/home/vscode": {
+      "hasTrustDialogAccepted": true,
+      "hasTrustDialogHooksAccepted": true,
       "projectOnboardingSeenCount": 1,
       "hasClaudeMdExternalIncludesApproved": true,
       "hasClaudeMdExternalIncludesWarningShown": true
