@@ -1234,9 +1234,8 @@ RUN chmod +x /opt/claude-config/self-test.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
     && mkdir -p /etc/claude-code/.claude/rules
 
-# --- Claude Code: settings.json + settings.local.json + claude.json → final $HOME paths ---
+# --- Claude Code: settings.json + claude.json → final $HOME paths ---
 COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.json /home/${USERNAME}/.claude/settings.json
-COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.local.json /home/${USERNAME}/.claude/settings.local.json
 COPY --chown=${USERNAME}:${USERNAME} claude-config/claude.json /home/${USERNAME}/.claude.json
 
 # --- OpenCode: bake all config variants to final paths ---
