@@ -1169,9 +1169,6 @@ grep -q 'iTerm.app' ~/.zshrc || \
 grep -q 'LITELLM_API_KEY' ~/.zshrc || \
   echo "export LITELLM_API_KEY=\"${LITELLM_API_KEY}\"" >> ~/.zshrc
 
-# Enable 1M token context for Anthropic models
-grep -q 'ANTHROPIC_1M_CONTEXT' ~/.zshrc || \
-  echo 'export ANTHROPIC_1M_CONTEXT=true' >> ~/.zshrc
 ```
 
 ### Activate Environment for Current Session
@@ -1330,7 +1327,6 @@ All four runtime packages should be pre-installed. If any are missing, re-run `(
 ```bash
 echo $BUN_INSTALL            # VERIFY: output is /Users/<username>/.bun (not empty)
 echo $LITELLM_API_KEY        # VERIFY: output is your API key (not empty, not a placeholder)
-echo $ANTHROPIC_1M_CONTEXT   # VERIFY: output is "true"
 ```
 
 ### 16.9 — Claude Code Plugins

@@ -57,7 +57,16 @@ if [ -n "$LITELLM_BASE_URL" ]; then
   export ANTHROPIC_BASE_URL="${LITELLM_BASE_URL}/anthropic"
 fi
 
-export ANTHROPIC_1M_CONTEXT="true"
+# ============================================================
+# Override Claude Code's default date-suffixed model IDs with
+# short names the LiteLLM proxy accepts.
+# ============================================================
+if [ -n "$LITELLM_BASE_URL" ]; then
+  export ANTHROPIC_SMALL_FAST_MODEL="claude-haiku-4-5"
+  export ANTHROPIC_DEFAULT_HAIKU_MODEL="claude-haiku-4-5"
+  export ANTHROPIC_DEFAULT_SONNET_MODEL="claude-sonnet-4-6"
+  export ANTHROPIC_DEFAULT_OPUS_MODEL="claude-opus-4-6"
+fi
 
 # ============================================================
 # Auto-approve ANTHROPIC_API_KEY in Claude Code state
