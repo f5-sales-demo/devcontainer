@@ -44,12 +44,17 @@ if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then
 fi
 
 # ============================================================
-# Derive ANTHROPIC_API_KEY from OPENAI_API_KEY when not set.
-# Both providers share the same LiteLLM server and API key.
+# Derive intermediate variables from LITELLM_API_KEY and LITELLM_BASE_URL.
+# Both OpenCode providers and Claude Code share the same LiteLLM server.
 # Must happen before auto-approve and the opencode.json sed substitution.
 # ============================================================
-if [ -n "$OPENAI_API_KEY" ]; then
-  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-$OPENAI_API_KEY}"
+if [ -n "$LITELLM_API_KEY" ]; then
+  export OPENAI_API_KEY="$LITELLM_API_KEY"
+  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-$LITELLM_API_KEY}"
+fi
+if [ -n "$LITELLM_BASE_URL" ]; then
+  export OPENAI_BASE_URL="${LITELLM_BASE_URL}/api/v1"
+  export ANTHROPIC_BASE_URL="${LITELLM_BASE_URL}/anthropic"
 fi
 
 export ANTHROPIC_1M_CONTEXT="true"
@@ -76,7 +81,7 @@ if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
   cat >"$HOME/.local/share/opencode/auth.json" <<AUTHEOF
 {"anthropic":{"type":"oauth","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}
 AUTHEOF
-elif [ -n "$OPENAI_API_KEY" ]; then
+elif [ -n "$LITELLM_API_KEY" ]; then
   _esc_base_url=$(printf '%s' "$OPENAI_BASE_URL" | sed 's/[&\\/]/\\&/g')
   _esc_api_key=$(printf '%s' "$OPENAI_API_KEY" | sed 's/[&\\/]/\\&/g')
   _esc_anthropic_base_url=$(printf '%s' "$ANTHROPIC_BASE_URL" | sed 's/[&\\/]/\\&/g')
