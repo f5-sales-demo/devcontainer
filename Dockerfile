@@ -490,7 +490,11 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
       | tar -xz -C /usr/local/bin \
     && mv /usr/local/bin/codex-${CODEX_ARCH}-unknown-linux-gnu /usr/local/bin/codex \
     && chmod +x /usr/local/bin/codex \
-    && chown ${USERNAME}:${USERNAME} /usr/local/bin/codex
+    && chown ${USERNAME}:${USERNAME} /usr/local/bin/codex \
+    # gogcli (resolve version — asset name contains version)
+    && GOGCLI_VERSION=$(ghlatest steipete/gogcli) \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/steipete/gogcli/releases/latest/download/gogcli_${GOGCLI_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin gog
 
 # ============================================================
 # 10c. iTerm2 terminal image utilities
@@ -1063,7 +1067,8 @@ WORKDIR /home/$USERNAME
 RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
     ~/.config/opencode \
     ~/.local/share/opencode \
-
+    ~/.config/gogcli \
+    ~/.config/gws \
     ~/.codex \
     ~/.pi/agent \
     ~/.ssh
@@ -1191,6 +1196,7 @@ RUN mkdir -p "$HOME/.npm-global" \
     && "$HOME/.tfenv/bin/tfenv" use latest \
     && git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" \
     && opencode completion > /usr/local/share/zsh/site-functions/_opencode \
+    && gog completion zsh > /usr/local/share/zsh/site-functions/_gog \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh /home/${USERNAME}/.p10k.zsh
