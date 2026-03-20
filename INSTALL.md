@@ -86,7 +86,12 @@ Every instruction in this guide follows these rules:
 
 > **MANUAL STEP (required before `opencode run`):** This step must be performed by the user — not by an AI agent. It grants OpenCode's AI agent permission to access directories outside the project root, which is required by every subsequent step.
 
-**Why this is necessary**: OpenCode's default permission policy is `"ask"` — the agent must request user confirmation before reading or writing files outside the project directory, running shell commands, or accessing external paths like `~/.config`, `~/.claude`, `/opt/homebrew`, etc. In interactive mode (the TUI), this works fine — the user clicks "allow". But `opencode run` is **non-interactive**: there is no UI to approve permission requests, so the agent fails immediately.
+**Why this is necessary**: OpenCode's default permission policy is `"ask"` — the agent must
+request user confirmation before reading or writing files outside the project directory,
+running shell commands, or accessing external paths like `~/.config`, `~/.claude`,
+`/opt/homebrew`, etc. In interactive mode (the TUI), this works fine — the user clicks
+"allow". But `opencode run` is **non-interactive**: there is no UI to approve permission
+requests, so the agent fails immediately.
 
 This step creates a minimal `opencode.json` that sets `"permission": "allow"` — a blanket grant that lets the agent use all tools and access all paths without confirmation prompts. Step 9 later overwrites this file with the full configuration (providers, models, MCP servers, etc.), so this bootstrap config is temporary.
 
@@ -128,7 +133,12 @@ OpenCode will read this document and execute Steps 1–16 sequentially. The `"pe
 
 These are the brew packages required by OpenCode and its LSP/tooling ecosystem. Homebrew is idempotent — running `brew install` on an already-installed package prints a warning and exits with code 0. No pre-checks are needed.
 
-**Known issue — stale Cellar directories**: Some packages (notably `trivy`) can leave behind a Cellar directory from a previous version after an upgrade or partial uninstall. When Homebrew tries to pour a newer bottle, it fails with `Error: /opt/homebrew/Cellar/<pkg>/<version> is not a directory` because a directory for a *different* version already exists. The workaround is to remove the stale Cellar entry and re-link. A helper function below handles this automatically for all packages.
+**Known issue — stale Cellar directories**: Some packages (notably `trivy`) can leave behind
+a Cellar directory from a previous version after an upgrade or partial uninstall. When
+Homebrew tries to pour a newer bottle, it fails with
+`Error: /opt/homebrew/Cellar/<pkg>/<version> is not a directory` because a directory for a
+*different* version already exists. The workaround is to remove the stale Cellar entry and
+re-link. A helper function below handles this automatically for all packages.
 
 ```bash
 # Helper function: install a brew package with stale-Cellar recovery.
@@ -415,7 +425,11 @@ Configure the default iTerm2 profile to use the installed font. iTerm2 stores it
 
 **Why this cannot be a simple `defaults write`**: The font setting is nested inside an array of dictionaries (`New Bookmarks → [0] → Normal Font`). The `defaults` command cannot address nested keys — only `/usr/libexec/PlistBuddy` can.
 
-**Race condition with a running iTerm2**: A running iTerm2 instance holds preferences in memory and writes them to the plist when it quits — overwriting any external changes. The script below handles this by gracefully quitting iTerm2 first (if running), waiting for it to fully exit, and then modifying the plist on disk. The user can relaunch iTerm2 afterward and the font will be active immediately.
+**Race condition with a running iTerm2**: A running iTerm2 instance holds preferences in
+memory and writes them to the plist when it quits — overwriting any external changes. The
+script below handles this by gracefully quitting iTerm2 first (if running), waiting for it
+to fully exit, and then modifying the plist on disk. The user can relaunch iTerm2 afterward
+and the font will be active immediately.
 
 The script handles three scenarios:
 
