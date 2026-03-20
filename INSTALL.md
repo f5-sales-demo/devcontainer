@@ -220,6 +220,8 @@ brew_install dos2unix          # Convert Windows CRLF line endings to Unix LF
 
 # Cloud CLI
 brew_install azure-cli         # Azure resource management
+brew install --cask google-cloud-sdk  # Google Cloud CLI (gcloud, gsutil, bq)
+brew_install gogcli            # Google Suite CLI — Gmail, Calendar, Drive, Contacts, Tasks, Sheets (gog)
 
 # Terraform ecosystem
 brew_install tflint            # Terraform linter (catches errors before plan)
@@ -274,6 +276,8 @@ nvim --version         # VERIFY: output contains "NVIM v"
 uv --version           # VERIFY: output starts with "uv"
 dos2unix --version     # VERIFY: output contains "dos2unix"
 az --version           # VERIFY: output contains "azure-cli" (first run may be slow)
+gcloud --version       # VERIFY: output contains "Google Cloud SDK"
+gog --version          # VERIFY: output contains a version number (gogcli)
 tflint --version       # VERIFY: output starts with "TFLint version"
 terraform-docs --version # VERIFY: output contains a version number
 hadolint --version     # VERIFY: output contains "Haskell Dockerfile Linter"
@@ -303,6 +307,9 @@ npm install -g yaml-language-server           # YAML LSP
 npm install -g @mdx-js/language-server        # MDX LSP
 npm install -g @taplo/cli                     # TOML LSP (taplo)
 
+# Google Workspace CLI (mirrors devcontainer toolset)
+npm install -g @googleworkspace/cli           # Google Workspace admin CLI (gws)
+
 # Code formatters (mirrors devcontainer toolset)
 npm install -g prettier                       # Multi-language code formatter
 npm install -g @biomejs/biome                 # Fast JS/TS/JSON linter and formatter
@@ -311,12 +318,13 @@ npm install -g @biomejs/biome                 # Fast JS/TS/JSON linter and forma
 ### Verify npm Global Packages
 
 ```bash
-npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|taplo|prettier|biome)"
+npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|taplo|prettier|biome|googleworkspace)"
 ```
 
-VERIFY: All seven packages appear in the output (exact versions may differ):
+VERIFY: All eight packages appear in the output (exact versions may differ):
 
 - `@biomejs/biome`
+- `@googleworkspace/cli`
 - `@mdx-js/language-server`
 - `@taplo/cli`
 - `bash-language-server`
@@ -924,6 +932,45 @@ if [ -f "$OPENCODE_JSON" ]; then
   [ -n "$_OC_BASE_URL" ] && env_set LITELLM_BASE_URL "$_OC_BASE_URL"
 fi
 
+# --- gogcli (gog) credentials and token ---
+if command -v gog >/dev/null 2>&1 && gog auth list --plain >/dev/null 2>&1; then
+  _GOG_EMAIL="$(gog auth list --plain 2>/dev/null | head -1 | cut -f1)"
+  [ -n "$_GOG_EMAIL" ] && env_set GOG_ACCOUNT "$_GOG_EMAIL"
+
+  _GOG_CREDS_PATH="$HOME/Library/Application Support/gogcli/credentials.json"
+  if [ -f "$_GOG_CREDS_PATH" ]; then
+    _GOG_CREDS_B64="$(base64 < "$_GOG_CREDS_PATH")"
+    [ -n "$_GOG_CREDS_B64" ] && env_set GOG_CREDENTIALS_JSON "$_GOG_CREDS_B64"
+  fi
+
+  if [ -n "$_GOG_EMAIL" ]; then
+    _GOG_TMP="$(mktemp)"
+    if gog auth tokens export "$_GOG_EMAIL" --out "$_GOG_TMP" --overwrite >/dev/null 2>&1; then
+      _GOG_TOK_B64="$(base64 < "$_GOG_TMP")"
+      [ -n "$_GOG_TOK_B64" ] && env_set GOG_TOKEN_JSON "$_GOG_TOK_B64"
+    fi
+    rm -f "$_GOG_TMP"
+  fi
+fi
+
+# --- Google Workspace CLI (gws) credentials ---
+_GWS_CONFIG="$HOME/.config/gws"
+if [ -f "$_GWS_CONFIG/client_secret.json" ]; then
+  _GWS_CS_B64="$(base64 < "$_GWS_CONFIG/client_secret.json")"
+  [ -n "$_GWS_CS_B64" ] && env_set GWS_CLIENT_SECRET_JSON "$_GWS_CS_B64"
+fi
+if [ -f "$_GWS_CONFIG/credentials.enc" ]; then
+  _GWS_KEY="$(security find-generic-password -s "gws-cli" -w 2>/dev/null || cat "$_GWS_CONFIG/.encryption_key" 2>/dev/null)"
+  [ -n "$_GWS_KEY" ] && env_set GWS_ENCRYPTION_KEY "$_GWS_KEY"
+
+  _GWS_ENC_B64="$(base64 < "$_GWS_CONFIG/credentials.enc")"
+  [ -n "$_GWS_ENC_B64" ] && env_set GWS_CREDENTIALS_ENC "$_GWS_ENC_B64"
+fi
+if [ -f "$_GWS_CONFIG/token_cache.json" ]; then
+  _GWS_TC_B64="$(base64 < "$_GWS_CONFIG/token_cache.json")"
+  [ -n "$_GWS_TC_B64" ] && env_set GWS_TOKEN_CACHE "$_GWS_TC_B64"
+fi
+
 echo "Auto-detection complete."
 ```
 
@@ -1412,7 +1459,10 @@ grep -q 'BUN_INSTALL/bin' ~/.zshrc || \
 
 # Bun completions
 grep -q '_bun' ~/.zshrc || \
-  echo '[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"' >> ~/.zshrc
+  echo '[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"'  >> ~/.zshrc
+
+# gogcli (gog) zsh completion
+gog completion zsh > /opt/homebrew/share/zsh/site-functions/_gog 2>/dev/null || true
 
 # User-local binaries (docker shim, etc.)
 grep -q '\.local/bin' ~/.zshrc || \
