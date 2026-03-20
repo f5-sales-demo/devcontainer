@@ -310,6 +310,9 @@ npm install -g @taplo/cli                     # TOML LSP (taplo)
 # Google Workspace CLI (mirrors devcontainer toolset)
 npm install -g @googleworkspace/cli           # Google Workspace admin CLI (gws)
 
+# TypeScript native compiler (tsgo — 10x faster type checking)
+npm install -g @typescript/native-preview     # Provides tsgo binary (TypeScript 7 Go port)
+
 # Code formatters (mirrors devcontainer toolset)
 npm install -g prettier                       # Multi-language code formatter
 npm install -g @biomejs/biome                 # Fast JS/TS/JSON linter and formatter
@@ -318,15 +321,16 @@ npm install -g @biomejs/biome                 # Fast JS/TS/JSON linter and forma
 ### Verify npm Global Packages
 
 ```bash
-npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|taplo|prettier|biome|googleworkspace)"
+npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|taplo|prettier|biome|googleworkspace|native-preview)"
 ```
 
-VERIFY: All eight packages appear in the output (exact versions may differ):
+VERIFY: All nine packages appear in the output (exact versions may differ):
 
 - `@biomejs/biome`
 - `@googleworkspace/cli`
 - `@mdx-js/language-server`
 - `@taplo/cli`
+- `@typescript/native-preview`
 - `bash-language-server`
 - `prettier`
 - `vscode-langservers-extracted`

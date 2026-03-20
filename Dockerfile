@@ -818,6 +818,7 @@ RUN npm install -g \
     @mdx-js/language-server \
     typescript-language-server \
     typescript \
+    @typescript/native-preview \
     pyright \
     vscode-langservers-extracted
 
