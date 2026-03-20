@@ -50,7 +50,7 @@ fi
 # ============================================================
 if [ -n "$LITELLM_API_KEY" ]; then
   export OPENAI_API_KEY="$LITELLM_API_KEY"
-  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-$LITELLM_API_KEY}"
+  export ANTHROPIC_API_KEY="$LITELLM_API_KEY"
 fi
 if [ -n "$LITELLM_BASE_URL" ]; then
   export OPENAI_BASE_URL="${LITELLM_BASE_URL}/api/v1"

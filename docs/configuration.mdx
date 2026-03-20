@@ -13,14 +13,9 @@ All configuration lives in the `.env` file at the project root. This file is git
 
 ### AI Provider
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `ANTHROPIC_API_KEY` | API key passed to Claude Code | `sk-ant-abc123...` |
-
-The container supports three **mutually exclusive** authentication modes (in priority order):
+The container supports two **mutually exclusive** authentication modes (in priority order):
 
 - **LiteLLM proxy** — set `LITELLM_BASE_URL` and `LITELLM_API_KEY` to route through a LiteLLM proxy (see below).
-- **Direct mode** (default) — set `ANTHROPIC_API_KEY` to your Anthropic API key (`sk-ant-...`).
 - **OAuth mode** — set `CLAUDE_CODE_OAUTH_TOKEN` only (see below).
 
 Do not combine modes — use exactly one.
@@ -46,6 +41,7 @@ If your LiteLLM (or other) proxy already speaks the native Anthropic Messages AP
 | `LITELLM_API_KEY` | API key for proxy authentication | `your-api-key` or defaults to `litellm-proxy` |
 
 Users only need to set the domain — provider path suffixes are added automatically.
+At runtime, the entrypoint derives `ANTHROPIC_API_KEY` from `LITELLM_API_KEY` so Claude Code can consume the proxy credential without requiring a separate user-facing variable.
 
 Model names are **not** remapped in this mode. Claude Code sends its standard model identifiers (e.g. `claude-sonnet-4-6`) and LiteLLM routes them to your configured backend.
 

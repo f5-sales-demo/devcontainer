@@ -611,7 +611,7 @@ env_set() {
     current="${current#\"}"
     # Skip if already set to a real (non-placeholder) value
     case "$current" in
-      ""|sk-example-api-key-here|sk-ant-example-*|sk-example-*|you@example.com|"Example Name"|ghp_example-*|tskey-auth-example-*|https://proxy.example.com|https://proxy.example.com/*)
+      ""|sk-example-api-key-here|you@example.com|"Example Name"|ghp_example-*|tskey-auth-example-*|https://proxy.example.com|https://proxy.example.com/*)
         sed -i '' "s|^${key}=.*|${key}=${val}|" "$ENV_FILE"
         echo "  Updated: ${key}"
         ;;
