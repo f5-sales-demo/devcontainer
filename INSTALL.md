@@ -6,9 +6,53 @@
 > **Platform**: macOS on Apple Silicon (arm64). Homebrew is already installed.
 > OpenCode is already installed via `brew install opencode`.
 >
+> **First-time setup**: If this is a fresh OpenCode install, you **must** complete Step 0 manually
+> before running `opencode run`. Step 0 grants the AI agent permission to access directories
+> outside the project root (`~/.config`, `~/.claude`, `~/.cache`, `/opt/homebrew`, etc.) which
+> is required by nearly every step in this guide. Without Step 0, `opencode run` will fail with
+> permission errors because the default policy prompts for confirmation — which is impossible in
+> non-interactive mode.
+>
 > **Execution notes**: This document is long (~1200 lines). Execute steps sequentially — do not
 > skip ahead. Each step includes inline VERIFY comments that must pass before proceeding.
 > Steps marked **MANUAL STEP** require human interaction and should be skipped during automated runs.
+
+---
+
+## Preflight Check — Verify Permissions Before Starting
+
+**AI agent: run this check FIRST, before doing anything else.** If it fails, print the error message and stop immediately — do not attempt any other steps.
+
+```bash
+if ! jq -e '
+  (.permission == "allow") or
+  ((.permission.read == "allow" or .permission.read["*"] == "allow") and
+   (.permission.edit == "allow" or .permission.edit["*"] == "allow") and
+   (.permission.bash == "allow" or .permission.bash["*"] == "allow") and
+   (.permission.external_directory == "allow" or .permission.external_directory["*"] == "allow"))
+' ~/.config/opencode/opencode.json > /dev/null 2>&1; then
+  echo ""
+  echo "ERROR: OpenCode permissions are not configured for automated setup."
+  echo ""
+  echo "This guide needs to read and write files outside the project directory"
+  echo "(~/.config, ~/.claude, ~/.cache, /opt/homebrew, etc.). Without the"
+  echo "correct permissions, every step will fail."
+  echo ""
+  echo "Paste the following into your terminal, then rerun the command:"
+  echo ""
+  echo '  rm -rf ~/.config/opencode'
+  echo '  mkdir -p ~/.config/opencode'
+  echo '  cat > ~/.config/opencode/opencode.json << '"'"'EOF'"'"''
+  echo '  {'
+  echo '    "$schema": "https://opencode.ai/config.json",'
+  echo '    "permission": "allow"'
+  echo '  }'
+  echo '  EOF'
+  echo ""
+  exit 1
+fi
+echo "Preflight check passed — permissions are configured correctly."
+```
 
 ---
 
@@ -38,75 +82,160 @@ Every instruction in this guide follows these rules:
 
 ---
 
+## Step 0 — Bootstrap OpenCode Permissions (Manual Prerequisite)
+
+> **MANUAL STEP (required before `opencode run`):** This step must be performed by the user — not by an AI agent. It grants OpenCode's AI agent permission to access directories outside the project root, which is required by every subsequent step.
+
+**Why this is necessary**: OpenCode's default permission policy is `"ask"` — the agent must
+request user confirmation before reading or writing files outside the project directory,
+running shell commands, or accessing external paths like `~/.config`, `~/.claude`,
+`/opt/homebrew`, etc. In interactive mode (the TUI), this works fine — the user clicks
+"allow". But `opencode run` is **non-interactive**: there is no UI to approve permission
+requests, so the agent fails immediately.
+
+This step creates a minimal `opencode.json` that sets `"permission": "allow"` — a blanket grant that lets the agent use all tools and access all paths without confirmation prompts. Step 9 later overwrites this file with the full configuration (providers, models, MCP servers, etc.), so this bootstrap config is temporary.
+
+**When to skip**: If you already have a `~/.config/opencode/opencode.json` with a `"permission"` key that is set to `"allow"` (or has explicit `"allow"` rules for `read`, `edit`, `bash`, and `external_directory`), you can skip this step.
+
+Run the following in your terminal:
+
+```bash
+mkdir -p ~/.config/opencode
+cat > ~/.config/opencode/opencode.json << 'EOF'
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": "allow"
+}
+EOF
+```
+
+### Verify Step 0
+
+```bash
+cat ~/.config/opencode/opencode.json
+```
+
+VERIFY: output shows `"permission": "allow"`. The file must be valid JSON.
+
+### Now Run the Automated Setup
+
+After creating the bootstrap config, you can launch the automated setup. Run this from the repository root:
+
+```bash
+opencode run "read the @INSTALL.md file and follow the instructions and accept all prompts as yes"
+```
+
+OpenCode will read this document and execute Steps 1–16 sequentially. The `"permission": "allow"` config ensures the agent can access all required paths without prompting.
+
+---
+
 ## Step 1 — Install Homebrew Dependencies
 
 These are the brew packages required by OpenCode and its LSP/tooling ecosystem. Homebrew is idempotent — running `brew install` on an already-installed package prints a warning and exits with code 0. No pre-checks are needed.
 
+**Known issue — stale Cellar directories**: Some packages (notably `trivy`) can leave behind
+a Cellar directory from a previous version after an upgrade or partial uninstall. When
+Homebrew tries to pour a newer bottle, it fails with
+`Error: /opt/homebrew/Cellar/<pkg>/<version> is not a directory` because a directory for a
+*different* version already exists. The workaround is to remove the stale Cellar entry and
+re-link. A helper function below handles this automatically for all packages.
+
 ```bash
+# Helper function: install a brew package with stale-Cellar recovery.
+# On re-runs, Homebrew may fail to pour a new bottle version if an old
+# Cellar directory from a previous version still exists (commonly seen
+# with trivy, but can affect any package). This function:
+#   1. Attempts a normal `brew install`.
+#   2. If that fails, removes the stale Cellar directory and retries.
+#   3. If the retry also fails, forces a re-link of whatever version
+#      is already in the Cellar (covers the case where the binary
+#      exists but symlinks are missing).
+brew_install() {
+  local pkg="$1"
+  if brew install "$pkg" 2>&1; then
+    return 0
+  fi
+  echo "  ⚠ brew install $pkg failed — checking for stale Cellar entry..."
+  local cellar="/opt/homebrew/Cellar/$pkg"
+  if [ -d "$cellar" ]; then
+    echo "  Removing stale Cellar directory: $cellar"
+    rm -rf "$cellar"
+    if brew install "$pkg" 2>&1; then
+      return 0
+    fi
+  fi
+  # Final fallback: if a Cellar entry exists (perhaps re-created by the
+  # failed pour), attempt to link whatever version is present.
+  if [ -d "$cellar" ]; then
+    echo "  Attempting to link existing Cellar entry for $pkg..."
+    brew link --overwrite "$pkg" 2>&1 || true
+  fi
+}
+
 # Core runtime (required by opencode)
-brew install node
-brew install ripgrep
-brew install jq                # JSON processor (used by plugin install scripts in Step 6)
+brew_install node
+brew_install ripgrep
+brew_install jq                # JSON processor (used by plugin install scripts in Step 6)
 
 # GitHub CLI (used by opencode for PR/issue operations)
-brew install gh
+brew_install gh
 
 # Terminal multiplexer (used by opencode for interactive sessions)
-brew install tmux
+brew_install tmux
 
 # LSP servers installed via brew (opencode auto-detects these on PATH)
-brew install marksman          # Markdown language server
-brew install shellcheck        # Shell script static analysis (used by bash-language-server)
-brew install shfmt             # Shell script formatter
+brew_install marksman          # Markdown language server
+brew_install shellcheck        # Shell script static analysis (used by bash-language-server)
+brew_install shfmt             # Shell script formatter
 brew install hashicorp/tap/terraform-ls 2>/dev/null \
-  || brew install terraform-ls  # Terraform language server (prefers HashiCorp tap, falls back to core)
+  || brew_install terraform-ls  # Terraform language server (prefers HashiCorp tap, falls back to core)
 
 # Git hooks and project governance
-brew install pre-commit        # Git hook framework (enforces linting and branch policies)
+brew_install pre-commit        # Git hook framework (enforces linting and branch policies)
 
 # Container runtime — corporate standard is Podman (Docker is not permitted)
-brew install podman            # OCI container runtime — runs in a user-space VM, no sudo
-brew install podman-compose    # docker-compose compatible CLI for podman
+brew_install podman            # OCI container runtime — runs in a user-space VM, no sudo
+brew_install podman-compose    # docker-compose compatible CLI for podman
 
 # Common CLI utilities (mirrors devcontainer toolset for consistent local experience)
-brew install wget              # HTTP/FTP download tool
-brew install curl              # Newer curl with HTTP/3 (macOS ships an older version)
-brew install watch             # Repeat commands periodically (not included in macOS)
-brew install coreutils         # GNU coreutils (gdate, gsort, gls, etc. — macOS ships BSD variants)
-brew install gnu-sed           # GNU sed (macOS ships BSD sed with incompatible flags)
-brew install tree              # Directory tree viewer
-brew install bat               # cat with syntax highlighting and git integration
-brew install eza               # Modern ls replacement with icons and git status
-brew install fzf               # Fuzzy finder for files, history, and command output
-brew install lsd               # ls replacement with color and icons (Nerd Font aware)
-brew install yq                # YAML/JSON/XML processor (like jq for YAML)
+brew_install wget              # HTTP/FTP download tool
+brew_install curl              # Newer curl with HTTP/3 (macOS ships an older version)
+brew_install watch             # Repeat commands periodically (not included in macOS)
+brew_install coreutils         # GNU coreutils (gdate, gsort, gls, etc. — macOS ships BSD variants)
+brew_install gnu-sed           # GNU sed (macOS ships BSD sed with incompatible flags)
+brew_install tree              # Directory tree viewer
+brew_install bat               # cat with syntax highlighting and git integration
+brew_install eza               # Modern ls replacement with icons and git status
+brew_install fzf               # Fuzzy finder for files, history, and command output
+brew_install lsd               # ls replacement with color and icons (Nerd Font aware)
+brew_install yq                # YAML/JSON/XML processor (like jq for YAML)
 
 # Development runtimes and tools (mirrors devcontainer toolset)
-brew install python            # Python 3.13 runtime (macOS ships an older system Python)
-brew install go                # Go compiler (build terraform providers, CLI tools)
-brew install terraform         # Infrastructure as Code for cloud resources
-brew install neovim            # Terminal editor with LSP support
-brew install uv                # Fast Python package manager (10-100x faster than pip)
-brew install dos2unix          # Convert Windows CRLF line endings to Unix LF
+brew_install python            # Python 3.13 runtime (macOS ships an older system Python)
+brew_install go                # Go compiler (build terraform providers, CLI tools)
+brew_install terraform         # Infrastructure as Code for cloud resources
+brew_install neovim            # Terminal editor with LSP support
+brew_install uv                # Fast Python package manager (10-100x faster than pip)
+brew_install dos2unix          # Convert Windows CRLF line endings to Unix LF
 
 # Cloud CLI
-brew install azure-cli         # Azure resource management
+brew_install azure-cli         # Azure resource management
 
 # Terraform ecosystem
-brew install tflint            # Terraform linter (catches errors before plan)
-brew install terraform-docs    # Auto-generate Terraform module documentation
+brew_install tflint            # Terraform linter (catches errors before plan)
+brew_install terraform-docs    # Auto-generate Terraform module documentation
 
 # Linting and security scanning
-brew install hadolint          # Dockerfile linter (best practices enforcement)
-brew install gitleaks          # Secret scanner (catches leaked credentials pre-commit)
-brew install trivy             # Vulnerability scanner for containers and code
-brew install sslscan           # TLS/SSL configuration scanner
-brew install nuclei            # Web application vulnerability scanner
-brew install trufflehog        # Deep git history secret scanner
+brew_install hadolint          # Dockerfile linter (best practices enforcement)
+brew_install gitleaks          # Secret scanner (catches leaked credentials pre-commit)
+brew_install trivy             # Vulnerability scanner for containers and code
+brew_install sslscan           # TLS/SSL configuration scanner
+brew_install nuclei            # Web application vulnerability scanner
+brew_install trufflehog        # Deep git history secret scanner
 
 # Media tools
-brew install ffmpeg            # Video/audio processing (convert, extract, transcode)
-brew install yt-dlp            # Video downloader (YouTube and other sites)
+brew_install ffmpeg            # Video/audio processing (convert, extract, transcode)
+brew_install yt-dlp            # Video downloader (YouTube and other sites)
 ```
 
 ### Verify Brew Installations
@@ -186,6 +315,7 @@ npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|y
 ```
 
 VERIFY: All seven packages appear in the output (exact versions may differ):
+
 - `@biomejs/biome`
 - `@mdx-js/language-server`
 - `@taplo/cli`
@@ -291,13 +421,84 @@ brew install --cask font-meslo-lg-nerd-font
 
 Homebrew Cask installs fonts to `~/Library/Fonts/` — user-owned, no `sudo` required.
 
-> **MANUAL STEP (skip in automated runs):** The font must be configured through the iTerm2 GUI. This cannot be done by an AI agent. The user must perform this manually after the installation completes:
->
-> 1. Open **iTerm2** → **Settings** (⌘,) → **Profiles** → **Text**
-> 2. Set **Font** to `MesloLGS NF` at size 13
-> 3. Ensure **Use ligatures** is checked
->
-> Without this font, Powerlevel10k's prompt will display placeholder rectangles instead of icons and branch symbols.
+Configure the default iTerm2 profile to use the installed font. iTerm2 stores its preferences in a binary plist at `~/Library/Preferences/com.googlecode.iterm2.plist`. Profile settings live in the `New Bookmarks` array — the default profile is at index 0. We use `/usr/libexec/PlistBuddy` to set the font directly.
+
+**Why this cannot be a simple `defaults write`**: The font setting is nested inside an array of dictionaries (`New Bookmarks → [0] → Normal Font`). The `defaults` command cannot address nested keys — only `/usr/libexec/PlistBuddy` can.
+
+**Race condition with a running iTerm2**: A running iTerm2 instance holds preferences in
+memory and writes them to the plist when it quits — overwriting any external changes. The
+script below handles this by gracefully quitting iTerm2 first (if running), waiting for it
+to fully exit, and then modifying the plist on disk. The user can relaunch iTerm2 afterward
+and the font will be active immediately.
+
+The script handles three scenarios:
+
+| Scenario | What happens |
+| -------- | ------------ |
+| iTerm2 not installed | Skipped — Step 5.1 installs it, but if this is a partial re-run without 5.1, there is nothing to configure. |
+| iTerm2 installed but never launched | No plist exists yet. The script launches iTerm2 once in the background to generate default preferences, then quits it. |
+| iTerm2 installed and running | The script quits iTerm2 gracefully (so it flushes in-memory prefs to disk), then overwrites the font setting. |
+
+```bash
+PLIST="$HOME/Library/Preferences/com.googlecode.iterm2.plist"
+FONT="MesloLGS-NF-Regular 13"
+
+# Scenario 1: iTerm2 is not installed — nothing to configure.
+if [ ! -d "/Applications/iTerm.app" ]; then
+  echo "iTerm2 is not installed — skipping font configuration"
+else
+  # Scenario 3: iTerm2 is running — quit it gracefully so it flushes its
+  # in-memory preferences to disk. Then we can safely overwrite the font.
+  if pgrep -xq iTerm2; then
+    echo "iTerm2 is running — quitting gracefully to flush preferences..."
+    osascript -e 'tell application "iTerm2" to quit' 2>/dev/null
+    for i in $(seq 1 20); do
+      pgrep -xq iTerm2 || break
+      sleep 0.5
+    done
+    if pgrep -xq iTerm2; then
+      echo "WARNING: iTerm2 did not exit within 10 seconds — force killing"
+      killall iTerm2 2>/dev/null
+      sleep 1
+    fi
+  fi
+
+  # Scenario 2: iTerm2 was installed but never launched — no plist exists.
+  # Launch it once in the background to generate default preferences, then
+  # quit immediately. The brief window flash is expected.
+  if [ ! -f "$PLIST" ]; then
+    echo "No iTerm2 preferences found — launching once to generate defaults..."
+    open -a iTerm2
+    # Wait up to 8 seconds for the plist to appear (first launch is slow)
+    for i in $(seq 1 16); do
+      [ -f "$PLIST" ] && break
+      sleep 0.5
+    done
+    sleep 1  # Let iTerm2 finish writing defaults
+    osascript -e 'tell application "iTerm2" to quit' 2>/dev/null
+    for i in $(seq 1 20); do
+      pgrep -xq iTerm2 || break
+      sleep 0.5
+    done
+  fi
+
+  # Apply the font setting
+  if [ -f "$PLIST" ]; then
+    CURRENT="$(/usr/libexec/PlistBuddy -c 'Print :"New Bookmarks":0:"Normal Font"' "$PLIST" 2>/dev/null)"
+    if [ "$CURRENT" = "$FONT" ]; then
+      echo "iTerm2 font already set to $FONT"
+    else
+      /usr/libexec/PlistBuddy -c "Set :\"New Bookmarks\":0:\"Normal Font\" \"$FONT\"" "$PLIST"
+      echo "Set iTerm2 Normal Font to: $FONT"
+    fi
+  else
+    echo "ERROR: iTerm2 plist not found at $PLIST after launch — font configuration skipped."
+    echo "  Launch iTerm2 manually once, quit it, and re-run this step."
+  fi
+fi
+```
+
+Without this font, Powerlevel10k's prompt will display placeholder rectangles instead of icons and branch symbols.
 
 ### 5.4 — Install Zsh Plugins
 
@@ -332,6 +533,7 @@ sed -i '' 's/^plugins=(.*/plugins=(git z zsh-autosuggestions zsh-syntax-highligh
 ```
 
 VERIFY both changes applied:
+
 ```bash
 grep '^ZSH_THEME=' ~/.zshrc    # VERIFY: output is ZSH_THEME="powerlevel10k/powerlevel10k"
 grep '^plugins=' ~/.zshrc       # VERIFY: output is plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)
@@ -365,6 +567,8 @@ ls ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting                 # Expecte
 ls ~/Library/Fonts/MesloLGS\ NF\ Regular.ttf                          # Expected: file exists (p10k font)
 ls ~/Library/Fonts/MesloLGSNerdFont-Regular.ttf 2>/dev/null \
   || ls ~/Library/Fonts/MesloLGLNerdFont-Regular.ttf                   # Expected: Nerd Font installed
+/usr/libexec/PlistBuddy -c 'Print :"New Bookmarks":0:"Normal Font"' \
+  ~/Library/Preferences/com.googlecode.iterm2.plist                    # Expected: MesloLGS-NF-Regular 13
 ```
 
 ---
@@ -609,6 +813,7 @@ ls ~/.cache/opencode/node_modules/opencode-anthropic-auth/             # Expecte
 This repository includes a `.env.example` template with `@auto-detect` / `@check` / `@manual` annotations. The `.env` file is gitignored and holds secrets used by `docker-compose.yml` (via Podman) and by the OpenCode config files written in later steps.
 
 **Behavior**:
+
 - **First run** (no `.env` exists): copy `.env.example` to `.env`, then auto-detect values.
 - **Re-run** (`.env` already exists): read it, only fill in variables that are missing or still contain placeholder values.
 - Auto-detectable variables are populated from command-line tools (`gh`, `git config`, system timezone).
@@ -1276,6 +1481,7 @@ chmod +x ~/.local/bin/docker
 ```
 
 Verify the shim works:
+
 ```bash
 ~/.local/bin/docker --version   # VERIFY: output contains "podman version 5"
 docker --version                 # VERIFY: output contains "podman" (requires ~/.local/bin in PATH from Step 14)
@@ -1553,6 +1759,31 @@ echo "==========================================================="
 ---
 
 ## Troubleshooting
+
+### Homebrew install fails with "is not a directory"
+
+**Symptom**: `brew install <pkg>` fails with:
+
+```
+Error: /opt/homebrew/Cellar/<pkg>/<version> is not a directory
+```
+
+**Cause**: A previous version's Cellar directory survived an upgrade or partial uninstall. Homebrew refuses to pour a new bottle version when an old version directory already exists. This is commonly seen with `trivy` but can affect any package. Running `brew uninstall --force` does not always remove the stale directory.
+
+**Fix**:
+
+```bash
+# Remove the entire Cellar entry for the package
+rm -rf /opt/homebrew/Cellar/<pkg>
+
+# Re-install
+brew install <pkg>
+
+# If install still fails (stale directory reappears), link whatever is present
+brew link --overwrite <pkg>
+```
+
+The `brew_install` helper function in Step 1 performs this recovery automatically.
 
 ### Plugin fails to load
 
