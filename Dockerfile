@@ -817,6 +817,10 @@ RUN npm install -g \
     pyright \
     vscode-langservers-extracted
 
+# Ensure Node.js can resolve globally-installed packages at the system prefix
+# even after npm prefix is changed to $HOME/.npm-global later.
+ENV NODE_PATH=/usr/lib/node_modules
+
 # ============================================================
 # 12. pip tools
 # ============================================================
@@ -1044,7 +1048,7 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
 # 13. Playwright system dependencies (requires root for apt)
 # ============================================================
 # hadolint ignore=DL3059
-RUN npx playwright install-deps chromium
+RUN npx playwright install-deps
 
 # ============================================================
 # User setup
@@ -1077,7 +1081,7 @@ RUN claude install --force \
 
 # Playwright Chromium browser binary (runs as vscode — cache to ~/.cache/ms-playwright)
 # hadolint ignore=DL3059
-RUN npx playwright install chromium \
+RUN npx playwright install \
     && CHROME_BIN="$(find ~/.cache/ms-playwright \
         -name chrome -path '*/chromium-*/chrome-linux*/chrome' -print -quit)" \
     && sudo mkdir -p /opt/google/chrome \
@@ -1086,7 +1090,7 @@ RUN npx playwright install chromium \
 # Chrome DevTools MCP: pre-cache the package (runs as vscode so npm caches
 # to ~/.npm/_npx; --headless is passed via .mcp.json args in each content repo)
 # hadolint ignore=DL3059
-RUN npm exec chrome-devtools-mcp@latest -- --version 2>/dev/null || true
+RUN npm exec chrome-devtools-mcp@0.20.2 -- --version 2>/dev/null || true
 
 # oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
 # Build-time install uses upstream oh-my-opencode (needs platform binaries).
