@@ -1028,7 +1028,7 @@ bun.lock
 
 After writing all configuration files (Steps 9–13), verify that OpenCode can actually start and communicate with the AI provider.
 
-**Why this step is critical**: A broken `opencode.json` (malformed JSON, wrong API key, unreachable base URL) would prevent OpenCode from launching. If you are an AI agent running inside OpenCode and you wrote a bad config, your next restart will fail — and there will be no running agent to fix the problem. This smoke test catches config errors **while you still have a working session** to correct them.
+**Why this step is critical**: A broken `opencode.json` (malformed JSON, wrong API key, unreachable base URL) would prevent OpenCode from launching. If you are an AI agent running inside OpenCode and you wrote a bad config, your next restart will fail — and there will be no running agent to fix it. This smoke test catches config errors **while you still have a working session** to correct them.
 
 **Why this is safe**: `opencode run` with a one-shot prompt spawns a **separate process** that reads `~/.config/opencode/opencode.json`, sends one request to the AI provider, prints the response, and exits. It does **not** interfere with any already-running OpenCode session. Running from `/tmp` ensures no project files are touched. You **must** run this test — do not skip it.
 
