@@ -18,7 +18,7 @@ This guide uses a `.env` file (in the repository root) as the **single source of
 
 - **First run**: Step 8 creates `.env` from `.env.example` and auto-detects values from command-line tools (`gh`, `git config`, system timezone).
 - **Re-runs**: Step 8 reads the existing `.env` and only updates variables that are missing or still have placeholder values.
-- **Required variables** (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL`) cannot be auto-detected from command-line tools. However, if an existing `opencode.json` is present from a prior setup, Step 8 will extract these values from its provider configuration. The AI agent only prompts the user if the values are still missing after this fallback.
+- **Required variables** (`LITELLM_API_KEY`, `LITELLM_BASE_URL`) cannot be auto-detected from command-line tools. However, if an existing `opencode.json` is present from a prior setup, Step 8 will extract these values from its provider configuration. The AI agent only prompts the user if the values are still missing after this fallback.
 - **Git identity** (`GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`) is auto-detected from `git config`. If not configured, the AI agent will prompt the user and set them via `git config --global`.
 
 ---
@@ -611,7 +611,7 @@ env_set() {
     current="${current#\"}"
     # Skip if already set to a real (non-placeholder) value
     case "$current" in
-      ""|sk-ant-example-*|sk-example-*|you@example.com|"Example Name"|ghp_example-*|tskey-auth-example-*|https://proxy.example.com/*)
+      ""|sk-example-api-key-here|sk-ant-example-*|sk-example-*|you@example.com|"Example Name"|ghp_example-*|tskey-auth-example-*|https://proxy.example.com|https://proxy.example.com/*)
         sed -i '' "s|^${key}=.*|${key}=${val}|" "$ENV_FILE"
         echo "  Updated: ${key}"
         ;;
@@ -661,22 +661,18 @@ if gh auth status >/dev/null 2>&1; then
 fi
 
 # --- AI proxy variables (fallback: read from existing opencode.json) ---
-# These three variables are normally provided by the user. However, if
+# These two variables are normally provided by the user. However, if
 # an opencode.json already exists from a previous setup, extract the values
 # from the provider config so the user is not prompted again.
 OPENCODE_JSON="$HOME/.config/opencode/opencode.json"
 if [ -f "$OPENCODE_JSON" ]; then
   _OC_API_KEY="$(jq -r '.provider["openai-proxy"].options.apiKey // empty' "$OPENCODE_JSON" 2>/dev/null)"
-  [ -n "$_OC_API_KEY" ] && env_set OPENAI_API_KEY "$_OC_API_KEY"
+  [ -n "$_OC_API_KEY" ] && env_set LITELLM_API_KEY "$_OC_API_KEY"
 
   _OC_BASE_URL="$(jq -r '.provider["openai-proxy"].options.baseURL // empty' "$OPENCODE_JSON" 2>/dev/null)"
-  [ -n "$_OC_BASE_URL" ] && env_set OPENAI_BASE_URL "$_OC_BASE_URL"
-
-  # The anthropic-proxy baseURL in opencode.json has /v1 appended by Step 9.
-  # Strip the trailing /v1 so the .env value matches the expected format.
-  _OC_ANTH_URL="$(jq -r '.provider["anthropic-proxy"].options.baseURL // empty' "$OPENCODE_JSON" 2>/dev/null)"
-  _OC_ANTH_URL="${_OC_ANTH_URL%/v1}"
-  [ -n "$_OC_ANTH_URL" ] && env_set ANTHROPIC_BASE_URL "$_OC_ANTH_URL"
+  # Strip /api/v1 suffix to recover the domain-only LITELLM_BASE_URL
+  _OC_BASE_URL="${_OC_BASE_URL%/api/v1}"
+  [ -n "$_OC_BASE_URL" ] && env_set LITELLM_BASE_URL "$_OC_BASE_URL"
 fi
 
 echo "Auto-detection complete."
@@ -684,17 +680,17 @@ echo "Auto-detection complete."
 
 ### 8.3 — Prompt for Required Manual Variables
 
-The three AI proxy variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL`) cannot be auto-detected from command-line tools. Step 8.2 already attempted to recover them from an existing `opencode.json`. If they are still missing or placeholders after that, the AI agent **must ask the user** for the values before proceeding.
+The two AI proxy variables (`LITELLM_API_KEY`, `LITELLM_BASE_URL`) cannot be auto-detected from command-line tools. Step 8.2 already attempted to recover them from an existing `opencode.json`. If they are still missing or placeholders after that, the AI agent **must ask the user** for the values before proceeding.
 
 ```bash
 REPO_DIR="$(pwd)"
 ENV_FILE="${REPO_DIR}/.env"
 
 MISSING=""
-for VAR in OPENAI_API_KEY OPENAI_BASE_URL ANTHROPIC_BASE_URL; do
+for VAR in LITELLM_API_KEY LITELLM_BASE_URL; do
   VAL="$(grep "^${VAR}=" "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2-)"
   case "$VAL" in
-    ""|sk-ant-example-*|sk-example-*|https://proxy.example.com/*) MISSING="${MISSING} ${VAR}" ;;
+    ""|sk-example-api-key-here|https://proxy.example.com) MISSING="${MISSING} ${VAR}" ;;
   esac
 done
 
@@ -703,7 +699,7 @@ if [ -n "$MISSING" ]; then
   echo " $MISSING"
   echo ""
   echo "These could not be auto-detected from command-line tools or an existing opencode.json."
-  echo "Ask the user for these values, then update .env before proceeding."
+  echo "Ask the user for LITELLM_API_KEY and LITELLM_BASE_URL, then update .env before proceeding."
   # AI agent: stop here and ask the user for the missing values.
   # Use env_set to write each value to .env once provided.
 else
@@ -728,7 +724,7 @@ done < <(grep -v '^\s*#' "$ENV_FILE" | grep -v '^\s*$')
 set +a
 
 # VERIFY: spot-check critical variables
-echo "OPENAI_API_KEY=${OPENAI_API_KEY:0:10}..."   # VERIFY: starts with "sk-" (truncated for safety)
+echo "LITELLM_API_KEY=${LITELLM_API_KEY:0:10}..."  # VERIFY: starts with "sk-" (truncated for safety)
 echo "TZ=$TZ"                                       # VERIFY: a valid IANA timezone
 echo "GIT_AUTHOR_EMAIL=$GIT_AUTHOR_EMAIL"           # VERIFY: an email address
 ```
@@ -739,25 +735,22 @@ echo "GIT_AUTHOR_EMAIL=$GIT_AUTHOR_EMAIL"           # VERIFY: an email address
 
 This is the main OpenCode configuration file. Write the file `~/.config/opencode/opencode.json` with the following content.
 
-The environment variables `OPENAI_API_KEY`, `OPENAI_BASE_URL`, and `ANTHROPIC_BASE_URL` were sourced from `.env` in Step 8.4 and should already be in the current shell session. Verify they are set:
+The environment variables `LITELLM_API_KEY` and `LITELLM_BASE_URL` were sourced from `.env` in Step 8.4 and should already be in the current shell session. Verify they are set:
 
 ```bash
-[ -n "$OPENAI_API_KEY" ]    || { echo "ERROR: OPENAI_API_KEY is not set — re-run Step 8"; exit 1; }
-[ -n "$OPENAI_BASE_URL" ]   || { echo "ERROR: OPENAI_BASE_URL is not set — re-run Step 8"; exit 1; }
-[ -n "$ANTHROPIC_BASE_URL" ] || { echo "ERROR: ANTHROPIC_BASE_URL is not set — re-run Step 8"; exit 1; }
+[ -n "$LITELLM_API_KEY" ]    || { echo "ERROR: LITELLM_API_KEY is not set — re-run Step 8"; exit 1; }
+[ -n "$LITELLM_BASE_URL" ]   || { echo "ERROR: LITELLM_BASE_URL is not set — re-run Step 8"; exit 1; }
 echo "All required environment variables are set"
 ```
 
-**Base URL format (SDK behavior)**:
+**Base URL derivation**:
 
-The two AI SDK providers have different URL conventions:
+The script derives provider URLs from `LITELLM_BASE_URL` (domain only, no path suffix):
 
-| Provider | SDK Package | URL Handling | Your `.env` Value |
-| -------- | ----------- | ------------ | ----------------- |
-| `openai-proxy` | `@ai-sdk/openai-compatible` | SDK auto-appends `/v1` | e.g. `https://f5ai.pd.f5net.com/api` (no `/v1`) |
-| `anthropic-proxy` | `@ai-sdk/anthropic` | SDK does NOT append `/v1` | e.g. `https://f5ai.pd.f5net.com/anthropic` (no `/v1`) |
+- `openai-proxy` gets `${LITELLM_BASE_URL}/api/v1`
+- `anthropic-proxy` gets `${LITELLM_BASE_URL}/anthropic/v1`
 
-The heredoc below appends `/v1` to `ANTHROPIC_BASE_URL` for you. Do **not** include `/v1` in your `.env` values — it would result in double `/v1/v1` paths.
+Do **not** include path suffixes in your `LITELLM_BASE_URL` `.env` value — the heredoc below adds them for you.
 
 **Chrome flags explained**: The `--chromeArg` entries disable Chrome 115+'s automatic HTTP→HTTPS upgrading. Without these flags, Chrome silently redirects `http://` URLs to `https://`, which breaks demo environments that serve plain HTTP only. The three disabled features are:
 
@@ -797,8 +790,8 @@ cat > ~/.config/opencode/opencode.json << ENDOFJSON
     "openai-proxy": {
       "name": "OpenAI Proxy",
       "options": {
-        "baseURL": "${OPENAI_BASE_URL}",
-        "apiKey": "${OPENAI_API_KEY}"
+        "baseURL": "${LITELLM_BASE_URL}/api/v1",
+        "apiKey": "${LITELLM_API_KEY}"
       },
       "models": {
         "gpt-5.4": {
@@ -831,8 +824,8 @@ cat > ~/.config/opencode/opencode.json << ENDOFJSON
     "anthropic-proxy": {
       "name": "Anthropic Proxy",
       "options": {
-        "baseURL": "${ANTHROPIC_BASE_URL}/v1",
-        "apiKey": "${OPENAI_API_KEY}"
+        "baseURL": "${LITELLM_BASE_URL}/anthropic/v1",
+        "apiKey": "${LITELLM_API_KEY}"
       },
       "models": {
         "claude-opus-4-6": {
@@ -1065,7 +1058,7 @@ while kill -0 "$OCPID" 2>/dev/null; do
     wait "$OCPID" 2>/dev/null
     echo "ERROR: opencode run timed out after 120 seconds."
     echo "  This usually means the AI provider is unreachable."
-    echo "  Check OPENAI_BASE_URL and ANTHROPIC_BASE_URL in .env"
+    echo "  Check LITELLM_API_KEY and LITELLM_BASE_URL in .env"
     cat "$SMOKE_OUT"
     rm -f "$SMOKE_OUT"
     exit 1
@@ -1097,7 +1090,7 @@ rm -f "$SMOKE_OUT"
 VERIFY: output ends with `Smoke test passed — OpenCode responded: ...` followed by a non-empty AI response. If the smoke test fails, check:
 
 1. **JSON syntax**: `jq . ~/.config/opencode/opencode.json` — any parse error means Step 9's heredoc expanded incorrectly (likely a special character in an API key or URL).
-2. **API connectivity**: `curl -s -o /dev/null -w "%{http_code}" "${OPENAI_BASE_URL}/models" -H "Authorization: Bearer ${OPENAI_API_KEY}"` — should return `200`.
+2. **API connectivity**: `curl -s -o /dev/null -w "%{http_code}" "${LITELLM_BASE_URL}/api/v1/models" -H "Authorization: Bearer ${LITELLM_API_KEY}"` — should return `200`.
 3. **Plugin load failure**: `rm -rf ~/.cache/opencode/node_modules && opencode run "test"` — forces a clean plugin re-download.
 
 ---
@@ -1108,7 +1101,7 @@ Oh My Zsh (Step 5) created `~/.zshrc` with its own boilerplate. This step adds e
 
 **Idempotency strategy**: Each block below uses `grep -q` to check if the line already exists before appending. This makes the step safe to re-run without creating duplicate entries.
 
-**IMPORTANT**: The `OPENAI_API_KEY` line uses the `$OPENAI_API_KEY` environment variable sourced from `.env` in Step 8.4. That variable must still be set in the current shell session.
+**IMPORTANT**: The `LITELLM_API_KEY` line uses the `$LITELLM_API_KEY` environment variable sourced from `.env` in Step 8.4. That variable must still be set in the current shell session.
 
 ### 14.1 — Top of File: Powerlevel10k Instant Prompt
 
@@ -1173,8 +1166,8 @@ grep -q 'iTerm.app' ~/.zshrc || \
   echo 'export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"' >> ~/.zshrc
 
 # API key for AI proxy (sourced from .env in Step 8.4)
-grep -q 'OPENAI_API_KEY' ~/.zshrc || \
-  echo "export OPENAI_API_KEY=\"${OPENAI_API_KEY}\"" >> ~/.zshrc
+grep -q 'LITELLM_API_KEY' ~/.zshrc || \
+  echo "export LITELLM_API_KEY=\"${LITELLM_API_KEY}\"" >> ~/.zshrc
 
 # Enable 1M token context for Anthropic models
 grep -q 'ANTHROPIC_1M_CONTEXT' ~/.zshrc || \
@@ -1336,7 +1329,7 @@ All four runtime packages should be pre-installed. If any are missing, re-run `(
 
 ```bash
 echo $BUN_INSTALL            # VERIFY: output is /Users/<username>/.bun (not empty)
-echo $OPENAI_API_KEY         # VERIFY: output is your API key (not empty, not a placeholder)
+echo $LITELLM_API_KEY        # VERIFY: output is your API key (not empty, not a placeholder)
 echo $ANTHROPIC_1M_CONTEXT   # VERIFY: output is "true"
 ```
 
@@ -1385,9 +1378,8 @@ grep "^plugins=" ~/.zshrc                                                       
 ```bash
 REPO_DIR="$(pwd)"
 test -f "${REPO_DIR}/.env" && echo "OK: .env exists" || echo "MISSING: .env"
-grep -q '^OPENAI_API_KEY=' "${REPO_DIR}/.env" && echo "OK: OPENAI_API_KEY" || echo "MISSING: OPENAI_API_KEY"
-grep -q '^OPENAI_BASE_URL=' "${REPO_DIR}/.env" && echo "OK: OPENAI_BASE_URL" || echo "MISSING: OPENAI_BASE_URL"
-grep -q '^ANTHROPIC_BASE_URL=' "${REPO_DIR}/.env" && echo "OK: ANTHROPIC_BASE_URL" || echo "MISSING: ANTHROPIC_BASE_URL"
+grep -q '^LITELLM_API_KEY=' "${REPO_DIR}/.env" && echo "OK: LITELLM_API_KEY" || echo "MISSING: LITELLM_API_KEY"
+grep -q '^LITELLM_BASE_URL=' "${REPO_DIR}/.env" && echo "OK: LITELLM_BASE_URL" || echo "MISSING: LITELLM_BASE_URL"
 grep -q '^TZ=' "${REPO_DIR}/.env" && echo "OK: TZ" || echo "MISSING: TZ"
 grep -q '^GIT_AUTHOR_EMAIL=' "${REPO_DIR}/.env" && echo "OK: GIT_AUTHOR_EMAIL" || echo "MISSING: GIT_AUTHOR_EMAIL"
 grep -q '^GIT_AUTHOR_NAME=' "${REPO_DIR}/.env" && echo "OK: GIT_AUTHOR_NAME" || echo "MISSING: GIT_AUTHOR_NAME"
