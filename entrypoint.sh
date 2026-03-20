@@ -39,6 +39,50 @@ if [ -n "$GH_TOKEN" ]; then
   gh auth setup-git 2>/dev/null || true
 fi
 
+# ============================================================
+# gogcli (gog) — restore OAuth credentials and refresh token
+# ============================================================
+if [ -n "$GOG_CREDENTIALS_JSON" ]; then
+  GOG_CONFIG_DIR="$HOME/.config/gogcli"
+  mkdir -p "$GOG_CONFIG_DIR"
+  echo "$GOG_CREDENTIALS_JSON" | base64 -d >"$GOG_CONFIG_DIR/credentials.json"
+  chmod 600 "$GOG_CONFIG_DIR/credentials.json"
+
+  if [ -n "$GOG_TOKEN_JSON" ]; then
+    _gog_tmp="$(mktemp)"
+    echo "$GOG_TOKEN_JSON" | base64 -d >"$_gog_tmp"
+    export GOG_KEYRING_BACKEND=file
+    export GOG_KEYRING_PASSWORD="${GOG_KEYRING_PASSWORD:-gogcli-container}"
+    gog auth tokens import "$_gog_tmp" 2>/dev/null || true
+    rm -f "$_gog_tmp"
+  fi
+fi
+if [ -n "$GOG_ACCOUNT" ]; then
+  export GOG_ACCOUNT
+fi
+
+# ============================================================
+# Google Workspace CLI (gws) — restore OAuth credentials
+# ============================================================
+if [ -n "$GWS_CLIENT_SECRET_JSON" ]; then
+  GWS_CONFIG_DIR="${GOOGLE_WORKSPACE_CLI_CONFIG_DIR:-$HOME/.config/gws}"
+  mkdir -p "$GWS_CONFIG_DIR"
+  echo "$GWS_CLIENT_SECRET_JSON" | base64 -d >"$GWS_CONFIG_DIR/client_secret.json"
+  chmod 600 "$GWS_CONFIG_DIR/client_secret.json"
+
+  if [ -n "$GWS_ENCRYPTION_KEY" ] && [ -n "$GWS_CREDENTIALS_ENC" ]; then
+    echo "$GWS_ENCRYPTION_KEY" >"$GWS_CONFIG_DIR/.encryption_key"
+    chmod 600 "$GWS_CONFIG_DIR/.encryption_key"
+    echo "$GWS_CREDENTIALS_ENC" | base64 -d >"$GWS_CONFIG_DIR/credentials.enc"
+    chmod 600 "$GWS_CONFIG_DIR/credentials.enc"
+    export GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file
+  fi
+  if [ -n "$GWS_TOKEN_CACHE" ]; then
+    echo "$GWS_TOKEN_CACHE" | base64 -d >"$GWS_CONFIG_DIR/token_cache.json"
+    chmod 600 "$GWS_CONFIG_DIR/token_cache.json"
+  fi
+fi
+
 if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then
   export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
 fi
