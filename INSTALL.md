@@ -67,6 +67,19 @@ brew install pre-commit        # Git hook framework (enforces linting and branch
 # Container runtime — corporate standard is Podman (Docker is not permitted)
 brew install podman            # OCI container runtime — runs in a user-space VM, no sudo
 brew install podman-compose    # docker-compose compatible CLI for podman
+
+# Common CLI utilities (mirrors devcontainer toolset for consistent local experience)
+brew install wget              # HTTP/FTP download tool
+brew install curl              # Newer curl with HTTP/3 (macOS ships an older version)
+brew install watch             # Repeat commands periodically (not included in macOS)
+brew install coreutils         # GNU coreutils (gdate, gsort, gls, etc. — macOS ships BSD variants)
+brew install gnu-sed           # GNU sed (macOS ships BSD sed with incompatible flags)
+brew install tree              # Directory tree viewer
+brew install bat               # cat with syntax highlighting and git integration
+brew install eza               # Modern ls replacement with icons and git status
+brew install fzf               # Fuzzy finder for files, history, and command output
+brew install lsd               # ls replacement with color and icons (Nerd Font aware)
+brew install yq                # YAML/JSON/XML processor (like jq for YAML)
 ```
 
 ### Verify Brew Installations
@@ -87,6 +100,17 @@ shfmt --version        # VERIFY: output starts with "v3"
 terraform-ls --version # VERIFY: output contains a version number
 pre-commit --version   # VERIFY: output contains "pre-commit 4" or higher
 podman --version       # VERIFY: output contains "podman version 5" or higher
+wget --version         # VERIFY: output contains "GNU Wget"
+curl --version         # VERIFY: output starts with "curl" followed by a version number
+watch --version        # VERIFY: output contains "watch from procps"
+gdate --version        # VERIFY: output contains "GNU coreutils" (coreutils prefixes with 'g')
+gsed --version         # VERIFY: output contains "GNU sed"
+tree --version         # VERIFY: output contains "tree v"
+bat --version          # VERIFY: output starts with "bat"
+eza --version          # VERIFY: output starts with "v"
+fzf --version          # VERIFY: output contains a version number
+lsd --version          # VERIFY: output starts with "lsd"
+yq --version           # VERIFY: output contains "yq" followed by a version number
 ```
 
 ---
@@ -105,18 +129,24 @@ npm install -g bash-language-server           # Bash/Zsh/Shell LSP
 npm install -g yaml-language-server           # YAML LSP
 npm install -g @mdx-js/language-server        # MDX LSP
 npm install -g @taplo/cli                     # TOML LSP (taplo)
+
+# Code formatters (mirrors devcontainer toolset)
+npm install -g prettier                       # Multi-language code formatter
+npm install -g @biomejs/biome                 # Fast JS/TS/JSON linter and formatter
 ```
 
 ### Verify npm Global Packages
 
 ```bash
-npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|taplo)"
+npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|taplo|prettier|biome)"
 ```
 
-VERIFY: All five packages appear in the output (exact versions may differ):
+VERIFY: All seven packages appear in the output (exact versions may differ):
+- `@biomejs/biome`
 - `@mdx-js/language-server`
 - `@taplo/cli`
 - `bash-language-server`
+- `prettier`
 - `vscode-langservers-extracted`
 - `yaml-language-server`
 
@@ -1441,16 +1471,41 @@ fi
 
 CURRENT_DIR="$(pwd)"
 
+# Check Powerlevel10k configuration status
+P10K_STATUS=""
+if [ ! -f "$HOME/.p10k.zsh" ]; then
+  P10K_STATUS="unconfigured"
+fi
+
 echo ""
 echo "==========================================================="
 echo "  Setup complete! All tools installed and verified."
 echo "==========================================================="
 echo ""
+if [ "$P10K_STATUS" = "unconfigured" ]; then
+  echo "  ⚠  Powerlevel10k is installed but not yet configured."
+  echo "     Open iTerm2 and run:"
+  echo ""
+  echo "       p10k configure"
+  echo ""
+  echo "     This launches an interactive wizard that sets your"
+  echo "     prompt style and writes ~/.p10k.zsh."
+  echo ""
+fi
 echo "  To launch the devcontainer, open a NEW terminal window"
 echo "  and run:"
 echo ""
 echo "    cd ${CURRENT_DIR}"
-echo "    podman-compose down && podman-compose pull && podman-compose up -d && podman run --rm -it --env-file .env ghcr.io/f5xc-salesdemos/devcontainer:latest zsh"
+echo "    podman-compose down && podman-compose pull && podman-compose up -d && \\"
+echo "      podman run --rm -it --env-file .env ghcr.io/f5xc-salesdemos/devcontainer:latest zsh"
+echo ""
+echo "  What this does:"
+echo "    1. podman-compose down    — stops any existing devcontainer"
+echo "    2. podman-compose pull    — pulls the latest container image"
+echo "    3. podman-compose up -d   — starts the compose services in the background"
+echo "    4. podman run ... zsh     — opens an interactive Zsh session in a fresh"
+echo "                                container, loading your .env variables"
+echo "                                (API keys, Git identity, timezone, etc.)"
 echo ""
 echo "==========================================================="
 ```
