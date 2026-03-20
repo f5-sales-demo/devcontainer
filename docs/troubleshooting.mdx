@@ -73,8 +73,8 @@ echo "$ANTHROPIC_API_KEY"
 
 Common causes:
 
-- **Placeholder not replaced** — `.env` still has `sk-ant-your-api-key-here`. Replace it with your real key from [console.anthropic.com](https://console.anthropic.com/).
-- **Key doesn't start with `sk-ant-`** — Anthropic API keys always start with `sk-ant-`. If yours doesn't, it may be for a different provider. Get a direct key from [console.anthropic.com](https://console.anthropic.com/).
+- **LiteLLM proxy key missing or invalid** — if you're using proxy mode, make sure `LITELLM_API_KEY` in `.env` contains the correct proxy credential, then restart the container so the entrypoint can derive `ANTHROPIC_API_KEY`.
+- **OAuth token or proxy mode mismatch** — use exactly one auth mode. If `CLAUDE_CODE_OAUTH_TOKEN` is set, it takes precedence over LiteLLM proxy mode.
 
 ### OpenCode shows "Model not found"
 

@@ -93,34 +93,26 @@ mkdir devcontainer && cd devcontainer
 curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/docker-compose.yml
 ```
 
-## 2. Add Your API Key (Optional)
+## 2. Add Your Auth Credentials (Optional)
 
 Create a `.env` file in the same folder to pre-configure Claude Code. Choose one of the following options:
 
-### Option A: Anthropic API key
-
-```ini
-ANTHROPIC_API_KEY=sk-ant-your-key-here
-```
-
-### Option B: Claude Max (OAuth)
-
-If you have a Claude Max subscription, use your OAuth token instead:
+### Option A: Claude Max (OAuth)
 
 ```ini
 CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
 ```
 
-### Option C: LiteLLM or Anthropic-compatible proxy
+### Option B: LiteLLM or Anthropic-compatible proxy
 
 If you have a LiteLLM instance or other Anthropic-compatible proxy, set these two variables:
 
 ```ini
-ANTHROPIC_BASE_URL=https://your-litellm-endpoint.example.com/anthropic
-ANTHROPIC_API_KEY=your-api-key
+LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
+LITELLM_API_KEY=your-api-key
 ```
 
-Claude Code connects directly to the endpoint without any built-in translation layer.
+Set the domain only — the container derives provider-specific URL suffixes automatically (e.g. `/anthropic` for Claude Code, `/api/v1` for OpenCode).
 
 ### Auto-populate from local credentials
 
@@ -147,7 +139,7 @@ echo "GH_TOKEN=$(gh auth token)" >> .env
 echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 ```
 
-Then edit `.env` to add your API key (see options above).
+Then edit `.env` to add your OAuth token or LiteLLM proxy settings (see options above).
 
 :::tip[AI assistants]
 The `.env.example` file contains `@auto-detect` markers on every variable that can be populated from local tools. AI assistants like Claude Code can scan for these markers and run the associated commands to build a complete `.env` automatically.

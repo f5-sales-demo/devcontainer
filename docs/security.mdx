@@ -59,9 +59,10 @@ Docker containers do not share clipboard state with the host. Data cannot leak t
 
 ### Network Isolation
 
-The container communicates with the outside world in one of two modes:
+The container communicates with the outside world in one of two supported authentication modes:
 
-- **Direct mode (default)** — outbound HTTPS to your AI provider through Docker's NAT.
+- **LiteLLM proxy mode** — outbound HTTPS to your LiteLLM proxy through Docker's NAT.
+- **OAuth mode** — outbound HTTPS directly to Anthropic through Docker's NAT.
 
 The container has no access to VPN tunnels, corporate network interfaces, or other services on the host.
 
