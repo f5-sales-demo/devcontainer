@@ -80,6 +80,33 @@ brew install eza               # Modern ls replacement with icons and git status
 brew install fzf               # Fuzzy finder for files, history, and command output
 brew install lsd               # ls replacement with color and icons (Nerd Font aware)
 brew install yq                # YAML/JSON/XML processor (like jq for YAML)
+
+# Development runtimes and tools (mirrors devcontainer toolset)
+brew install python            # Python 3.13 runtime (macOS ships an older system Python)
+brew install go                # Go compiler (build terraform providers, CLI tools)
+brew install terraform         # Infrastructure as Code for cloud resources
+brew install neovim            # Terminal editor with LSP support
+brew install uv                # Fast Python package manager (10-100x faster than pip)
+brew install dos2unix          # Convert Windows CRLF line endings to Unix LF
+
+# Cloud CLI
+brew install azure-cli         # Azure resource management
+
+# Terraform ecosystem
+brew install tflint            # Terraform linter (catches errors before plan)
+brew install terraform-docs    # Auto-generate Terraform module documentation
+
+# Linting and security scanning
+brew install hadolint          # Dockerfile linter (best practices enforcement)
+brew install gitleaks          # Secret scanner (catches leaked credentials pre-commit)
+brew install trivy             # Vulnerability scanner for containers and code
+brew install sslscan           # TLS/SSL configuration scanner
+brew install nuclei            # Web application vulnerability scanner
+brew install trufflehog        # Deep git history secret scanner
+
+# Media tools
+brew install ffmpeg            # Video/audio processing (convert, extract, transcode)
+brew install yt-dlp            # Video downloader (YouTube and other sites)
 ```
 
 ### Verify Brew Installations
@@ -111,6 +138,23 @@ eza --version          # VERIFY: output starts with "v"
 fzf --version          # VERIFY: output contains a version number
 lsd --version          # VERIFY: output starts with "lsd"
 yq --version           # VERIFY: output contains "yq" followed by a version number
+python3 --version      # VERIFY: output starts with "Python 3.13"
+go version             # VERIFY: output contains "go1."
+terraform --version    # VERIFY: output contains "Terraform v1"
+nvim --version         # VERIFY: output contains "NVIM v"
+uv --version           # VERIFY: output starts with "uv"
+dos2unix --version     # VERIFY: output contains "dos2unix"
+az --version           # VERIFY: output contains "azure-cli" (first run may be slow)
+tflint --version       # VERIFY: output starts with "TFLint version"
+terraform-docs --version # VERIFY: output contains a version number
+hadolint --version     # VERIFY: output contains "Haskell Dockerfile Linter"
+gitleaks version       # VERIFY: output contains a version number
+trivy --version        # VERIFY: output starts with "Version:"
+sslscan --version      # VERIFY: output contains "sslscan version"
+nuclei --version       # VERIFY: output contains "nuclei"
+trufflehog --version   # VERIFY: output contains a version number
+ffmpeg -version        # VERIFY: output starts with "ffmpeg version"
+yt-dlp --version       # VERIFY: output contains a version string
 ```
 
 ---
