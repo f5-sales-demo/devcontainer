@@ -305,6 +305,7 @@ npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|y
 ```
 
 VERIFY: All seven packages appear in the output (exact versions may differ):
+
 - `@biomejs/biome`
 - `@mdx-js/language-server`
 - `@taplo/cli`
@@ -518,6 +519,7 @@ sed -i '' 's/^plugins=(.*/plugins=(git z zsh-autosuggestions zsh-syntax-highligh
 ```
 
 VERIFY both changes applied:
+
 ```bash
 grep '^ZSH_THEME=' ~/.zshrc    # VERIFY: output is ZSH_THEME="powerlevel10k/powerlevel10k"
 grep '^plugins=' ~/.zshrc       # VERIFY: output is plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)
@@ -797,6 +799,7 @@ ls ~/.cache/opencode/node_modules/opencode-anthropic-auth/             # Expecte
 This repository includes a `.env.example` template with `@auto-detect` / `@check` / `@manual` annotations. The `.env` file is gitignored and holds secrets used by `docker-compose.yml` (via Podman) and by the OpenCode config files written in later steps.
 
 **Behavior**:
+
 - **First run** (no `.env` exists): copy `.env.example` to `.env`, then auto-detect values.
 - **Re-run** (`.env` already exists): read it, only fill in variables that are missing or still contain placeholder values.
 - Auto-detectable variables are populated from command-line tools (`gh`, `git config`, system timezone).
@@ -1464,6 +1467,7 @@ chmod +x ~/.local/bin/docker
 ```
 
 Verify the shim works:
+
 ```bash
 ~/.local/bin/docker --version   # VERIFY: output contains "podman version 5"
 docker --version                 # VERIFY: output contains "podman" (requires ~/.local/bin in PATH from Step 14)
