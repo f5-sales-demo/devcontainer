@@ -385,6 +385,16 @@ VERIFY: output contains `Google Chrome` followed by a version number.
 
 ---
 
+## Step 4b — Install OpenCode Desktop
+
+OpenCode Desktop is the GUI companion for OpenCode. Install via Homebrew Cask:
+
+```bash
+brew install --cask opencode-desktop
+```
+
+---
+
 ## Step 5 — Install Terminal Environment (iTerm2, Oh My Zsh, Theme, Plugins)
 
 A modern terminal environment is required for inline image display (`imgcat`), syntax-highlighted command output, autosuggestions, and a context-rich shell prompt. This step installs the complete terminal stack.
