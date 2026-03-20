@@ -16,9 +16,9 @@
 
 This guide uses a `.env` file (in the repository root) as the **single source of truth** for all environment variables. The `.env` file is gitignored and holds secrets used by Podman containers (`docker-compose.yml`) and by the OpenCode configuration files.
 
-- **First run**: Step 8 creates `.env` from `.env.example` and auto-detects values from CLI tools (`gh`, `git config`, system timezone).
+- **First run**: Step 8 creates `.env` from `.env.example` and auto-detects values from command-line tools (`gh`, `git config`, system timezone).
 - **Re-runs**: Step 8 reads the existing `.env` and only updates variables that are missing or still have placeholder values.
-- **Required variables** (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL`) cannot be auto-detected from CLI tools. However, if an existing `opencode.json` is present from a prior setup, Step 8 will extract these values from its provider configuration. The AI agent only prompts the user if the values are still missing after this fallback.
+- **Required variables** (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL`) cannot be auto-detected from command-line tools. However, if an existing `opencode.json` is present from a prior setup, Step 8 will extract these values from its provider configuration. The AI agent only prompts the user if the values are still missing after this fallback.
 - **Git identity** (`GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`) is auto-detected from `git config`. If not configured, the AI agent will prompt the user and set them via `git config --global`.
 
 ---
@@ -537,7 +537,7 @@ This repository includes a `.env.example` template with `@auto-detect` / `@check
 **Behavior**:
 - **First run** (no `.env` exists): copy `.env.example` to `.env`, then auto-detect values.
 - **Re-run** (`.env` already exists): read it, only fill in variables that are missing or still contain placeholder values.
-- Auto-detectable variables are populated from CLI tools (`gh`, `git config`, system timezone).
+- Auto-detectable variables are populated from command-line tools (`gh`, `git config`, system timezone).
 - Manual variables that cannot be auto-detected are left as-is; the user is prompted for required ones.
 
 ### 8.1 — Bootstrap `.env`
@@ -562,7 +562,7 @@ fi
 
 ### 8.2 — Auto-Detect and Populate Variables
 
-The following script reads `.env`, detects missing or placeholder values, and fills them using CLI tools. It is idempotent — running it again only updates variables that are still empty or set to known placeholder values.
+The following script reads `.env`, detects missing or placeholder values, and fills them using command-line tools. It is idempotent — running it again only updates variables that are still empty or set to known placeholder values.
 
 ```bash
 REPO_DIR="$(pwd)"
@@ -654,7 +654,7 @@ echo "Auto-detection complete."
 
 ### 8.3 — Prompt for Required Manual Variables
 
-The three AI proxy variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL`) cannot be auto-detected from CLI tools. Step 8.2 already attempted to recover them from an existing `opencode.json`. If they are still missing or placeholders after that, the AI agent **must ask the user** for the values before proceeding.
+The three AI proxy variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL`) cannot be auto-detected from command-line tools. Step 8.2 already attempted to recover them from an existing `opencode.json`. If they are still missing or placeholders after that, the AI agent **must ask the user** for the values before proceeding.
 
 ```bash
 REPO_DIR="$(pwd)"
@@ -672,7 +672,7 @@ if [ -n "$MISSING" ]; then
   echo "The following required variables are missing or have placeholder values in .env:"
   echo " $MISSING"
   echo ""
-  echo "These could not be auto-detected from CLI tools or an existing opencode.json."
+  echo "These could not be auto-detected from command-line tools or an existing opencode.json."
   echo "Ask the user for these values, then update .env before proceeding."
   # AI agent: stop here and ask the user for the missing values.
   # Use env_set to write each value to .env once provided.
@@ -685,7 +685,7 @@ fi
 
 After `.env` is populated, export all non-comment, non-empty lines so subsequent steps (Steps 9, 14) can reference the variables:
 
-**Important**: macOS ships bash 3.2 which does not support `lastpipe`. A `grep | while` pipeline runs the `while` in a subshell, so any variables exported inside it are lost when the loop ends. Use process substitution (`< <(...)`) instead to keep exports in the current shell:
+**Important**: macOS ships Bash 3.2 which does not support `lastpipe`. A `grep | while` pipeline runs the `while` in a subshell, so any variables exported inside it are lost when the loop ends. Use process substitution (`< <(...)`) instead to keep exports in the current shell:
 
 ```bash
 REPO_DIR="$(pwd)"
