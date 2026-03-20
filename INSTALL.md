@@ -1026,9 +1026,13 @@ bun.lock
 
 ### 13.1 — Smoke-Test OpenCode Configuration
 
-After writing all configuration files (Steps 9–13), verify that OpenCode can actually start and communicate with the AI provider. A broken `opencode.json` (malformed JSON, wrong API key, unreachable base URL) would prevent OpenCode from launching, and at that point the AI agent running this script would no longer be available to fix it.
+After writing all configuration files (Steps 9–13), verify that OpenCode can actually start and communicate with the AI provider.
 
-**Strategy**: First validate that the JSON is syntactically correct, then run `opencode run` with a trivial prompt and check for a non-empty response. If either check fails, stop and report the error — do not proceed to Step 14.
+**Why this step is critical**: A broken `opencode.json` (malformed JSON, wrong API key, unreachable base URL) would prevent OpenCode from launching. If you are an AI agent running inside OpenCode and you wrote a bad config, your next restart will fail — and there will be no running agent to fix the problem. This smoke test catches config errors **while you still have a working session** to correct them.
+
+**Why this is safe**: `opencode run` with a one-shot prompt spawns a **separate process** that reads `~/.config/opencode/opencode.json`, sends one request to the AI provider, prints the response, and exits. It does **not** interfere with any already-running OpenCode session. Running from `/tmp` ensures no project files are touched. You **must** run this test — do not skip it.
+
+**Strategy**: First validate that the JSON is syntactically correct, then run `opencode run` from `/tmp` with a trivial prompt and check for a non-empty response. If either check fails, stop and report the error — do not proceed to Step 14.
 
 ```bash
 # Phase 1: Validate JSON syntax of all config files
@@ -1042,8 +1046,11 @@ for f in opencode.json oh-my-opencode.json tui.json; do
   echo "  OK: $f"
 done
 
-# Phase 2: Live smoke test — send a trivial prompt and verify a response arrives
-echo "Running OpenCode smoke test..."
+# Phase 2: Live smoke test — launch a separate opencode process from /tmp
+# This does NOT conflict with the current session. It spawns a one-shot
+# process that reads the config, sends one request, and exits.
+echo "Running OpenCode smoke test from /tmp..."
+cd /tmp
 SMOKE_OUT=$(mktemp)
 opencode run "Reply with exactly one word: OPENCODE_OK" > "$SMOKE_OUT" 2>&1 &
 OCPID=$!
@@ -1085,6 +1092,7 @@ else
   echo "Smoke test passed — OpenCode responded: $CLEAN_OUT"
 fi
 rm -f "$SMOKE_OUT"
+cd - > /dev/null
 ```
 
 VERIFY: output ends with `Smoke test passed — OpenCode responded: ...` followed by a non-empty AI response. If the smoke test fails, check:
