@@ -19,7 +19,7 @@ All configuration lives in the `.env` file at the project root. This file is git
 
 The container supports three **mutually exclusive** authentication modes (in priority order):
 
-- **LiteLLM direct** — set `ANTHROPIC_BASE_URL` to an Anthropic-compatible proxy (see below).
+- **LiteLLM proxy** — set `LITELLM_BASE_URL` and `LITELLM_API_KEY` to route through a LiteLLM proxy (see below).
 - **Direct mode** (default) — set `ANTHROPIC_API_KEY` to your Anthropic API key (`sk-ant-...`).
 - **OAuth mode** — set `CLAUDE_CODE_OAUTH_TOKEN` only (see below).
 
@@ -31,16 +31,21 @@ Do not combine modes — use exactly one.
 |----------|-------------|---------|
 | `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token from a Claude Max subscription | `sk-ant-oat01-...` |
 
-When set, both Claude Code and OpenCode authenticate directly with Anthropic using OAuth — no API key or proxy needed. This takes priority over `OPENAI_API_KEY` for OpenCode configuration. Get your token from Claude Code settings or the [Anthropic console](https://console.anthropic.com/).
+When set, both Claude Code and OpenCode authenticate directly with Anthropic using OAuth — no API key or proxy needed. This takes priority over `LITELLM_API_KEY` for OpenCode configuration. Get your token from Claude Code settings or the [Anthropic console](https://console.anthropic.com/).
 
-### LiteLLM Direct (Anthropic-compatible proxies)
+### LiteLLM Proxy
 
-If your LiteLLM (or other) proxy already speaks the native Anthropic Messages API — including `web_search`, streaming, and tool use — set `ANTHROPIC_BASE_URL` to route Claude Code directly to it.
+If your LiteLLM (or other) proxy already speaks the native Anthropic Messages API — including `web_search`, streaming, and tool use — set `LITELLM_BASE_URL` to the proxy domain. The container automatically derives the provider-specific URLs:
+
+- Anthropic endpoint → `${LITELLM_BASE_URL}/anthropic` (used by Claude Code)
+- OpenAI-compatible endpoint → `${LITELLM_BASE_URL}/api/v1` (used by OpenCode)
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `ANTHROPIC_BASE_URL` | URL of your Anthropic-compatible proxy | `https://f5ai.pd.f5net.com/anthropic` |
-| `ANTHROPIC_API_KEY` | API key for authentication (optional) | Falls back to `OPENAI_API_KEY` or `litellm-proxy` |
+| `LITELLM_BASE_URL` | Domain of your LiteLLM proxy (no path suffix) | `https://f5ai.pd.f5net.com` |
+| `LITELLM_API_KEY` | API key for proxy authentication | `your-api-key` or defaults to `litellm-proxy` |
+
+Users only need to set the domain — provider path suffixes are added automatically.
 
 Model names are **not** remapped in this mode. Claude Code sends its standard model identifiers (e.g. `claude-sonnet-4-6`) and LiteLLM routes them to your configured backend.
 
@@ -69,7 +74,7 @@ This connects OpenCode directly to Anthropic with no proxy needed.
 
 #### LiteLLM mode
 
-When `OPENAI_API_KEY` and `OPENAI_BASE_URL` are set (and no OAuth token), the entrypoint seeds `~/.config/opencode/opencode.json` with a custom provider called **OpenAI Proxy** that points at the upstream endpoint.
+When `LITELLM_API_KEY` and `LITELLM_BASE_URL` are set (and no OAuth token), the entrypoint seeds `~/.config/opencode/opencode.json` with a custom provider called **OpenAI Proxy** that points at the upstream endpoint.
 
 Available models (LiteLLM mode):
 

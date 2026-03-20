@@ -116,11 +116,11 @@ CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
 If you have a LiteLLM instance or other Anthropic-compatible proxy, set these two variables:
 
 ```ini
-ANTHROPIC_BASE_URL=https://your-litellm-endpoint.example.com/anthropic
-ANTHROPIC_API_KEY=your-api-key
+LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
+LITELLM_API_KEY=your-api-key
 ```
 
-Claude Code connects directly to the endpoint without any built-in translation layer.
+Set the domain only — the container derives provider-specific URL suffixes automatically (e.g. `/anthropic` for Claude Code, `/api/v1` for OpenCode).
 
 ### Auto-populate from local credentials
 
