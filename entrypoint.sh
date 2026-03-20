@@ -52,7 +52,14 @@ if [ -n "$OPENAI_API_KEY" ]; then
   export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-$OPENAI_API_KEY}"
 fi
 
-export ANTHROPIC_1M_CONTEXT="true"
+# When running behind a proxy that requires short model names (no date suffixes),
+# override Claude Code's default model IDs to use proxy-compatible names.
+if [ -n "$ANTHROPIC_BASE_URL" ]; then
+  export ANTHROPIC_SMALL_FAST_MODEL="${ANTHROPIC_SMALL_FAST_MODEL:-claude-haiku-4-5}"
+  export ANTHROPIC_DEFAULT_HAIKU_MODEL="${ANTHROPIC_DEFAULT_HAIKU_MODEL:-claude-haiku-4-5}"
+  export ANTHROPIC_DEFAULT_SONNET_MODEL="${ANTHROPIC_DEFAULT_SONNET_MODEL:-claude-sonnet-4-6}"
+  export ANTHROPIC_DEFAULT_OPUS_MODEL="${ANTHROPIC_DEFAULT_OPUS_MODEL:-claude-opus-4-6}"
+fi
 
 # ============================================================
 # Auto-approve ANTHROPIC_API_KEY in Claude Code state
