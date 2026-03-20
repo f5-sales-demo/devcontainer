@@ -5,6 +5,21 @@
 >
 > **Platform**: macOS on Apple Silicon (arm64). Homebrew is already installed.
 > OpenCode is already installed via `brew install opencode`.
+>
+> **Execution notes**: This document is long (~1200 lines). Execute steps sequentially — do not
+> skip ahead. Each step includes inline VERIFY comments that must pass before proceeding.
+> Steps marked **MANUAL STEP** require human interaction and should be skipped during automated runs.
+
+---
+
+## Prerequisites
+
+This guide uses a `.env` file (in the repository root) as the **single source of truth** for all environment variables. The `.env` file is gitignored and holds secrets used by Podman containers (`docker-compose.yml`) and by the OpenCode configuration files.
+
+- **First run**: Step 8 creates `.env` from `.env.example` and auto-detects values from command-line tools (`gh`, `git config`, system timezone).
+- **Re-runs**: Step 8 reads the existing `.env` and only updates variables that are missing or still have placeholder values.
+- **Required variables** (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL`) cannot be auto-detected from command-line tools. However, if an existing `opencode.json` is present from a prior setup, Step 8 will extract these values from its provider configuration. The AI agent only prompts the user if the values are still missing after this fallback.
+- **Git identity** (`GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`) is auto-detected from `git config`. If not configured, the AI agent will prompt the user and set them via `git config --global`.
 
 ---
 
@@ -25,12 +40,13 @@ Every instruction in this guide follows these rules:
 
 ## Step 1 — Install Homebrew Dependencies
 
-These are the brew packages required by OpenCode and its LSP/tooling ecosystem. Run each `brew install` command. Skip any package that is already installed.
+These are the brew packages required by OpenCode and its LSP/tooling ecosystem. Homebrew is idempotent — running `brew install` on an already-installed package prints a warning and exits with code 0. No pre-checks are needed.
 
 ```bash
 # Core runtime (required by opencode)
 brew install node
 brew install ripgrep
+brew install jq                # JSON processor (used by plugin install scripts in Step 6)
 
 # GitHub CLI (used by opencode for PR/issue operations)
 brew install gh
@@ -42,7 +58,8 @@ brew install tmux
 brew install marksman          # Markdown language server
 brew install shellcheck        # Shell script static analysis (used by bash-language-server)
 brew install shfmt             # Shell script formatter
-brew install terraform-ls      # Terraform language server (HashiCorp)
+brew install hashicorp/tap/terraform-ls 2>/dev/null \
+  || brew install terraform-ls  # Terraform language server (prefers HashiCorp tap, falls back to core)
 
 # Git hooks and project governance
 brew install pre-commit        # Git hook framework (enforces linting and branch policies)
@@ -54,19 +71,22 @@ brew install podman-compose    # docker-compose compatible CLI for podman
 
 ### Verify Brew Installations
 
+Run each command and confirm the output matches. If any command fails, re-run the corresponding `brew install` above.
+
 ```bash
-node --version        # Expected: v25.x or later
-npm --version         # Expected: 11.x or later
-npx --version         # Expected: 11.x or later
-rg --version          # Expected: 15.x or later
-gh --version          # Expected: 2.x or later
-tmux -V               # Expected: 3.x or later
-marksman --version    # Should print a date
-shellcheck --version  # Expected: 0.10+
-shfmt --version       # Expected: 3.x
-terraform-ls --version # Expected: 0.x
-pre-commit --version  # Expected: pre-commit 4.x
-podman --version      # Expected: podman 5.x
+node --version         # VERIFY: output starts with v25 (v25.x+)
+npm --version          # VERIFY: output starts with 11 (11.x+)
+npx --version          # VERIFY: output starts with 11 (11.x+)
+rg --version           # VERIFY: output contains "ripgrep"
+gh --version           # VERIFY: output contains "gh version 2"
+tmux -V                # VERIFY: output contains "tmux 3" or higher
+jq --version           # VERIFY: output starts with "jq-1"
+marksman --version     # VERIFY: prints a version string (any output = success)
+shellcheck --version   # VERIFY: output contains "version: 0.10" or higher
+shfmt --version        # VERIFY: output starts with "v3"
+terraform-ls --version # VERIFY: output contains a version number
+pre-commit --version   # VERIFY: output contains "pre-commit 4" or higher
+podman --version       # VERIFY: output contains "podman version 5" or higher
 ```
 
 ---
@@ -76,6 +96,8 @@ podman --version      # Expected: podman 5.x
 These are language servers that OpenCode discovers on `PATH` via `which()`. When found, OpenCode uses the brew/npm-installed version instead of auto-downloading its own copy.
 
 **Important**: Because Node.js is installed via Homebrew, `npm install -g` writes to `/opt/homebrew/lib` which is user-owned. No `sudo` required.
+
+**Note**: Unlike `brew install`, `npm install -g` always re-downloads even if the package is already installed. This is safe but adds ~30 seconds of network I/O on re-runs.
 
 ```bash
 npm install -g vscode-langservers-extracted   # HTML, CSS, JSON, ESLint LSP servers
@@ -88,35 +110,39 @@ npm install -g @taplo/cli                     # TOML LSP (taplo)
 ### Verify npm Global Packages
 
 ```bash
-npm list -g --depth=0
+npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|taplo)"
 ```
 
-Expected output should include:
-
-```
-├── @mdx-js/language-server@0.6.3
-├── @taplo/cli@0.7.0
-├── bash-language-server@5.6.0
-├── vscode-langservers-extracted@4.10.0
-└── yaml-language-server@1.21.0
-```
+VERIFY: All five packages appear in the output (exact versions may differ):
+- `@mdx-js/language-server`
+- `@taplo/cli`
+- `bash-language-server`
+- `vscode-langservers-extracted`
+- `yaml-language-server`
 
 ---
 
 ## Step 3 — Install Bun
 
-Bun is used by OpenCode internally for plugin management. Install it to `~/.bun` (user-space, no sudo):
+Bun is used by OpenCode internally for plugin management. Install it to `~/.bun` (user-space, no sudo).
+
+**Idempotency**: The bun installer always re-downloads the binary even if already installed. The guard below skips the download when bun is already on PATH.
 
 ```bash
-curl -fsSL https://bun.com/install | bash
+if ! command -v bun &>/dev/null; then
+  curl -fsSL https://bun.sh/install | bash
+fi
 ```
 
 ### Verify Bun
 
+After installing bun, add it to the current shell's PATH so subsequent steps can use it. Do **not** run `source ~/.zshrc` — it will fail in a non-interactive shell context (Oh My Zsh and Powerlevel10k require a TTY).
+
 ```bash
-source ~/.zshrc
-which bun       # Expected: /Users/<you>/.bun/bin/bun
-bun --version   # Expected: 1.3.x or later
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+which bun       # VERIFY: output is ~/.bun/bin/bun
+bun --version   # VERIFY: output starts with "1." (1.3.x+)
 ```
 
 ---
@@ -125,8 +151,10 @@ bun --version   # Expected: 1.3.x or later
 
 Chrome is required by the `chrome-devtools-mcp` MCP server for browser automation. Install it via Homebrew Cask — this places it at `/Applications/Google Chrome.app` which is the path referenced in the `opencode.json` MCP configuration.
 
+**Idempotency**: Unlike brew formulae, `brew install --cask` fails if the app already exists at `/Applications/` (Chrome auto-updates itself outside Homebrew's control, causing a version mismatch). Guard with an existence check:
+
 ```bash
-brew install --cask google-chrome
+[ -d "/Applications/Google Chrome.app" ] || brew install --cask google-chrome
 ```
 
 Chrome auto-updates itself after installation. No `sudo` is required — Homebrew Cask installs applications to `/Applications` using the current user's permissions.
@@ -137,7 +165,7 @@ Chrome auto-updates itself after installation. No `sudo` is required — Homebre
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version
 ```
 
-Expected: `Google Chrome 144.x` or later.
+VERIFY: output contains `Google Chrome` followed by a version number.
 
 ---
 
@@ -147,25 +175,31 @@ A modern terminal environment is required for inline image display (`imgcat`), s
 
 ### 5.1 — Install iTerm2
 
+**Idempotency**: Like Chrome in Step 4, guard with an existence check — `brew install --cask` can fail or emit warnings if the app already exists:
+
 ```bash
-brew install --cask iterm2
+[ -d "/Applications/iTerm.app" ] || brew install --cask iterm2
 ```
 
 iTerm2 bundles command-line utilities — including `imgcat`, `imgls`, `it2api` — inside the
 app at `/Applications/iTerm.app/Contents/Resources/utilities/`. When running inside iTerm2,
 this directory is added to `PATH` automatically. To ensure these utilities are always available
 (including when a shell is launched by opencode or another process), the `PATH` addition is
-made explicit in `~/.zshrc` (see Step 13).
+made explicit in `~/.zshrc` (see Step 14).
 
 ### 5.2 — Install Oh My Zsh
 
 Oh My Zsh is a framework for managing Zsh configuration, plugins, and themes. The installer creates `~/.zshrc` from a template — any prior `.zshrc` is backed up automatically.
 
+**IMPORTANT**: The Oh My Zsh installer exits with code 1 if `~/.oh-my-zsh` already exists. The `--unattended` flag does NOT bypass this check — it only disables shell switching and confirmation prompts. Always guard with an existence check:
+
 ```bash
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+fi
 ```
 
-The `--unattended` flag prevents the installer from switching the default shell or launching a new session. Oh My Zsh is installed to `~/.oh-my-zsh/` — entirely within `$HOME`.
+Oh My Zsh is installed to `~/.oh-my-zsh/` — entirely within `$HOME`.
 
 ### 5.3 — Install Powerlevel10k Theme and Fonts
 
@@ -181,40 +215,52 @@ brew install --cask font-meslo-for-powerlevel10k
 brew install --cask font-meslo-lg-nerd-font
 ```
 
-Homebrew Cask installs fonts to `~/Library/Fonts/` — user-owned, no `sudo` required. After installation, configure iTerm2 to use the font:
+Homebrew Cask installs fonts to `~/Library/Fonts/` — user-owned, no `sudo` required.
 
-1. Open **iTerm2** → **Settings** (⌘,) → **Profiles** → **Text**
-2. Set **Font** to `MesloLGS NF` at size 13
-3. Ensure **Use ligatures** is checked
-
-Without this font, Powerlevel10k's prompt will display placeholder rectangles instead of icons and branch symbols.
+> **MANUAL STEP (skip in automated runs):** The font must be configured through the iTerm2 GUI. This cannot be done by an AI agent. The user must perform this manually after the installation completes:
+>
+> 1. Open **iTerm2** → **Settings** (⌘,) → **Profiles** → **Text**
+> 2. Set **Font** to `MesloLGS NF` at size 13
+> 3. Ensure **Use ligatures** is checked
+>
+> Without this font, Powerlevel10k's prompt will display placeholder rectangles instead of icons and branch symbols.
 
 ### 5.4 — Install Zsh Plugins
 
-These plugins provide fish-shell-like autosuggestions and real-time syntax highlighting. Clone them into Oh My Zsh's custom plugins directory:
+These plugins provide fish-shell-like autosuggestions and real-time syntax highlighting. Clone them into Oh My Zsh's custom plugins directory.
+
+**IMPORTANT**: `git clone` fails with exit code 128 if the target directory already exists. Always guard with an existence check:
 
 ```bash
-git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
-  ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+[ -d ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions ] || \
+  git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
+    ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
 
-git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
-  ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+[ -d ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting ] || \
+  git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
+    ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
 ```
 
 ### 5.5 — Configure `~/.zshrc` for Oh My Zsh
 
-The Oh My Zsh installer creates a `~/.zshrc` with defaults. The following settings must be present in the file. If they already exist, update them to match; if not, add them.
+The Oh My Zsh installer creates a `~/.zshrc` with defaults. Two settings must be changed using `sed`. These commands are idempotent — they replace existing lines by pattern match, so running them twice produces the same result.
 
-**Theme** — set near the top of `~/.zshrc`:
+**Theme** — replace the default `ZSH_THEME="robbyrussell"` line:
 
 ```bash
-ZSH_THEME="powerlevel10k/powerlevel10k"
+sed -i '' 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
 ```
 
-**Plugins** — find the `plugins=(...)` line and set:
+**Plugins** — replace the default `plugins=(git)` line:
 
 ```bash
-plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)
+sed -i '' 's/^plugins=(.*/plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc
+```
+
+VERIFY both changes applied:
+```bash
+grep '^ZSH_THEME=' ~/.zshrc    # VERIFY: output is ZSH_THEME="powerlevel10k/powerlevel10k"
+grep '^plugins=' ~/.zshrc       # VERIFY: output is plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)
 ```
 
 | Plugin | What It Does |
@@ -226,19 +272,20 @@ plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)
 
 ### 5.6 — Configure Powerlevel10k Prompt
 
-On first launch in iTerm2 after setting the theme, Powerlevel10k's configuration wizard runs automatically. Follow the prompts to choose your preferred style. The wizard writes `~/.p10k.zsh`.
-
-To re-run the wizard at any time:
-```bash
-p10k configure
-```
+> **MANUAL STEP (skip in automated runs):** The Powerlevel10k configuration wizard is a fully interactive TUI that requires keystroke input in a real terminal. An AI agent cannot run this. The user must perform this manually:
+>
+> 1. Open **iTerm2** (not a regular Terminal.app session)
+> 2. The wizard runs automatically on first launch after setting the theme
+> 3. Follow the prompts to choose your preferred style — the wizard writes `~/.p10k.zsh`
+>
+> To re-run the wizard at any time: `p10k configure`
 
 ### Verify Terminal Environment
 
 ```bash
 ls "/Applications/iTerm.app/Contents/Resources/utilities/imgcat"       # Expected: file exists
 ls ~/.oh-my-zsh/oh-my-zsh.sh                                          # Expected: file exists
-ls ~/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme    # Expected: symlink to /opt/homebrew/share
+test -f ~/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme && echo "OK"  # Expected: file exists
 ls ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions                     # Expected: directory exists
 ls ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting                 # Expected: directory exists
 ls ~/Library/Fonts/MesloLGS\ NF\ Regular.ttf                          # Expected: file exists (p10k font)
@@ -256,11 +303,17 @@ This step clones the official plugin marketplace, copies each enabled plugin int
 
 ### 6.1 — Clone the Official Plugin Marketplace
 
+`git clone` fails with exit code 128 if the target directory already exists. Guard with an existence check. If the directory exists, pull the latest changes instead:
+
 ```bash
 mkdir -p ~/.claude/plugins/marketplaces
-git clone --depth=1 --single-branch --branch main \
-  https://github.com/anthropics/claude-plugins-official.git \
-  ~/.claude/plugins/marketplaces/claude-plugins-official
+if [ -d ~/.claude/plugins/marketplaces/claude-plugins-official/.git ]; then
+  git -C ~/.claude/plugins/marketplaces/claude-plugins-official pull --ff-only
+else
+  git clone --depth=1 --single-branch --branch main \
+    https://github.com/anthropics/claude-plugins-official.git \
+    ~/.claude/plugins/marketplaces/claude-plugins-official
+fi
 ```
 
 ### 6.2 — Install Each Plugin into the Cache
@@ -299,18 +352,25 @@ for NAME in frontend-design superpowers code-review code-simplifier feature-dev 
   if [ -n "$SRC" ]; then
     cp -a "${SRC}/." "$DEST/"
   elif [ "$NAME" = "superpowers" ]; then
-    git clone --depth=1 --single-branch --branch main \
-      https://github.com/obra/superpowers.git "$DEST"
-    if [ -f "${DEST}/.claude-plugin/plugin.json" ]; then
-      V="$(jq -r '.version // empty' "${DEST}/.claude-plugin/plugin.json")"
-      if [ -n "$V" ]; then
-        VERSION="$V"
-        NEW_DEST="${CACHE}/${NAME}/${VERSION}"
-        if [ "$DEST" != "$NEW_DEST" ]; then
-          mkdir -p "$NEW_DEST"
-          cp -a "${DEST}/." "$NEW_DEST/"
-          rm -rf "$DEST"
-          DEST="$NEW_DEST"
+    # Check if any version is already cached (avoids re-cloning on every run)
+    EXISTING="$(ls -d "${CACHE}/${NAME}"/*/. 2>/dev/null | head -1)"
+    if [ -n "$EXISTING" ]; then
+      DEST="${EXISTING%/}"
+      VERSION="$(basename "$DEST")"
+    else
+      git clone --depth=1 --single-branch --branch main \
+        https://github.com/obra/superpowers.git "$DEST"
+      if [ -f "${DEST}/.claude-plugin/plugin.json" ]; then
+        V="$(jq -r '.version // empty' "${DEST}/.claude-plugin/plugin.json")"
+        if [ -n "$V" ]; then
+          VERSION="$V"
+          NEW_DEST="${CACHE}/${NAME}/${VERSION}"
+          if [ "$DEST" != "$NEW_DEST" ]; then
+            mkdir -p "$NEW_DEST"
+            cp -a "${DEST}/." "$NEW_DEST/"
+            rm -rf "$DEST"
+            DEST="$NEW_DEST"
+          fi
         fi
       fi
     fi
@@ -401,7 +461,7 @@ OpenCode uses a `package.json` in its config directory for local plugin SDK depe
 mkdir -p ~/.config/opencode
 ```
 
-Write the file `~/.config/opencode/package.json` with the following content:
+Write the file `~/.config/opencode/package.json` with the following content (versions last verified 2026-03-19):
 
 ```json
 {
@@ -411,10 +471,10 @@ Write the file `~/.config/opencode/package.json` with the following content:
 }
 ```
 
-Then install the dependencies:
+Then install the dependencies (using a subshell to avoid changing the working directory):
 
 ```bash
-cd ~/.config/opencode && bun install && cd -
+(cd ~/.config/opencode && bun install)
 ```
 
 This creates `~/.config/opencode/node_modules/` with the OpenCode plugin SDK.
@@ -438,7 +498,7 @@ Create the cache directory and write its `package.json`:
 mkdir -p ~/.cache/opencode
 ```
 
-Write the file `~/.cache/opencode/package.json` with the following content:
+Write the file `~/.cache/opencode/package.json` with the following content (versions last verified 2026-03-19):
 
 ```json
 {
@@ -451,10 +511,10 @@ Write the file `~/.cache/opencode/package.json` with the following content:
 }
 ```
 
-Then install the dependencies:
+Then install the dependencies (using a subshell to avoid changing the working directory):
 
 ```bash
-cd ~/.cache/opencode && bun install && cd -
+(cd ~/.cache/opencode && bun install)
 ```
 
 This populates `~/.cache/opencode/node_modules/` with the plugin and AI provider packages. OpenCode detects the existing install on startup and skips the download step.
@@ -470,11 +530,204 @@ ls ~/.cache/opencode/node_modules/opencode-anthropic-auth/             # Expecte
 
 ---
 
-## Step 8 — Write `opencode.json`
+## Step 8 — Create or Update `.env` (Environment File)
+
+This repository includes a `.env.example` template with `@auto-detect` / `@check` / `@manual` annotations. The `.env` file is gitignored and holds secrets used by `docker-compose.yml` (via Podman) and by the OpenCode config files written in later steps.
+
+**Behavior**:
+- **First run** (no `.env` exists): copy `.env.example` to `.env`, then auto-detect values.
+- **Re-run** (`.env` already exists): read it, only fill in variables that are missing or still contain placeholder values.
+- Auto-detectable variables are populated from command-line tools (`gh`, `git config`, system timezone).
+- Manual variables that cannot be auto-detected are left as-is; the user is prompted for required ones.
+
+### 8.1 — Bootstrap `.env`
+
+```bash
+REPO_DIR="$(pwd)"
+ENV_FILE="${REPO_DIR}/.env"
+ENV_EXAMPLE="${REPO_DIR}/.env.example"
+
+if [ ! -f "$ENV_FILE" ]; then
+  if [ -f "$ENV_EXAMPLE" ]; then
+    cp "$ENV_EXAMPLE" "$ENV_FILE"
+    echo "Created .env from .env.example"
+  else
+    touch "$ENV_FILE"
+    echo "Created empty .env (no .env.example found)"
+  fi
+else
+  echo ".env already exists — will update in place"
+fi
+```
+
+### 8.2 — Auto-Detect and Populate Variables
+
+The following script reads `.env`, detects missing or placeholder values, and fills them using command-line tools. It is idempotent — running it again only updates variables that are still empty or set to known placeholder values.
+
+```bash
+REPO_DIR="$(pwd)"
+ENV_FILE="${REPO_DIR}/.env"
+
+# Helper: set a variable in .env only if it is missing, empty, or a known placeholder.
+# Usage: env_set VARNAME "value"
+env_set() {
+  local key="$1" val="$2"
+  if [ -z "$val" ]; then return; fi
+  if grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
+    local current
+    current="$(grep "^${key}=" "$ENV_FILE" | head -1 | cut -d= -f2-)"
+    # Strip surrounding quotes for comparison
+    current="${current%\"}"
+    current="${current#\"}"
+    # Skip if already set to a real (non-placeholder) value
+    case "$current" in
+      ""|sk-ant-example-*|sk-example-*|you@example.com|"Example Name"|ghp_example-*|tskey-auth-example-*|https://proxy.example.com/*)
+        sed -i '' "s|^${key}=.*|${key}=${val}|" "$ENV_FILE"
+        echo "  Updated: ${key}"
+        ;;
+      *)
+        echo "  Kept:    ${key} (already set)"
+        ;;
+    esac
+  else
+    echo "${key}=${val}" >> "$ENV_FILE"
+    echo "  Added:   ${key}"
+  fi
+}
+
+echo "Auto-detecting environment variables..."
+
+# --- Timezone ---
+if readlink /etc/localtime >/dev/null 2>&1; then
+  _TZ="$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')"
+  env_set TZ "$_TZ"
+fi
+
+# --- Git identity ---
+# Auto-detect from git config. If not configured, the AI agent must ask the
+# user for their name and email, set them via git config --global, then retry.
+#
+# AI agent: if either command below fails (exit code != 0), ask the user:
+#   "What is your full name for git commits?" → git config --global user.name "<answer>"
+#   "What is your email for git commits?"     → git config --global user.email "<answer>"
+# Then re-run the env_set lines.
+if git config user.email >/dev/null 2>&1; then
+  env_set GIT_AUTHOR_EMAIL "$(git config user.email)"
+else
+  echo "  PROMPT NEEDED: git user.email is not configured."
+  echo "  Ask the user for their email, then run: git config --global user.email \"<email>\""
+fi
+if git config user.name >/dev/null 2>&1; then
+  env_set GIT_AUTHOR_NAME "\"$(git config user.name)\""
+else
+  echo "  PROMPT NEEDED: git user.name is not configured."
+  echo "  Ask the user for their full name, then run: git config --global user.name \"<name>\""
+fi
+
+# --- GitHub CLI token ---
+if gh auth status >/dev/null 2>&1; then
+  _GH_TOKEN="$(gh auth token 2>/dev/null)"
+  [ -n "$_GH_TOKEN" ] && env_set GH_TOKEN "$_GH_TOKEN"
+fi
+
+# --- AI proxy variables (fallback: read from existing opencode.json) ---
+# These three variables are normally provided by the user. However, if
+# an opencode.json already exists from a previous setup, extract the values
+# from the provider config so the user is not prompted again.
+OPENCODE_JSON="$HOME/.config/opencode/opencode.json"
+if [ -f "$OPENCODE_JSON" ]; then
+  _OC_API_KEY="$(jq -r '.provider["openai-proxy"].options.apiKey // empty' "$OPENCODE_JSON" 2>/dev/null)"
+  [ -n "$_OC_API_KEY" ] && env_set OPENAI_API_KEY "$_OC_API_KEY"
+
+  _OC_BASE_URL="$(jq -r '.provider["openai-proxy"].options.baseURL // empty' "$OPENCODE_JSON" 2>/dev/null)"
+  [ -n "$_OC_BASE_URL" ] && env_set OPENAI_BASE_URL "$_OC_BASE_URL"
+
+  # The anthropic-proxy baseURL in opencode.json has /v1 appended by Step 9.
+  # Strip the trailing /v1 so the .env value matches the expected format.
+  _OC_ANTH_URL="$(jq -r '.provider["anthropic-proxy"].options.baseURL // empty' "$OPENCODE_JSON" 2>/dev/null)"
+  _OC_ANTH_URL="${_OC_ANTH_URL%/v1}"
+  [ -n "$_OC_ANTH_URL" ] && env_set ANTHROPIC_BASE_URL "$_OC_ANTH_URL"
+fi
+
+echo "Auto-detection complete."
+```
+
+### 8.3 — Prompt for Required Manual Variables
+
+The three AI proxy variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL`) cannot be auto-detected from command-line tools. Step 8.2 already attempted to recover them from an existing `opencode.json`. If they are still missing or placeholders after that, the AI agent **must ask the user** for the values before proceeding.
+
+```bash
+REPO_DIR="$(pwd)"
+ENV_FILE="${REPO_DIR}/.env"
+
+MISSING=""
+for VAR in OPENAI_API_KEY OPENAI_BASE_URL ANTHROPIC_BASE_URL; do
+  VAL="$(grep "^${VAR}=" "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2-)"
+  case "$VAL" in
+    ""|sk-ant-example-*|sk-example-*|https://proxy.example.com/*) MISSING="${MISSING} ${VAR}" ;;
+  esac
+done
+
+if [ -n "$MISSING" ]; then
+  echo "The following required variables are missing or have placeholder values in .env:"
+  echo " $MISSING"
+  echo ""
+  echo "These could not be auto-detected from command-line tools or an existing opencode.json."
+  echo "Ask the user for these values, then update .env before proceeding."
+  # AI agent: stop here and ask the user for the missing values.
+  # Use env_set to write each value to .env once provided.
+else
+  echo "All required variables are set in .env"
+fi
+```
+
+### 8.4 — Source `.env` into the Current Shell Session
+
+After `.env` is populated, export all non-comment, non-empty lines so subsequent steps (Steps 9, 14) can reference the variables:
+
+**Important**: macOS ships Bash 3.2 which does not support `lastpipe`. A `grep | while` pipeline runs the `while` in a subshell, so any variables exported inside it are lost when the loop ends. Use process substitution (`< <(...)`) instead to keep exports in the current shell:
+
+```bash
+REPO_DIR="$(pwd)"
+ENV_FILE="${REPO_DIR}/.env"
+
+set -a
+while IFS= read -r line; do
+  eval "export $line"
+done < <(grep -v '^\s*#' "$ENV_FILE" | grep -v '^\s*$')
+set +a
+
+# VERIFY: spot-check critical variables
+echo "OPENAI_API_KEY=${OPENAI_API_KEY:0:10}..."   # VERIFY: starts with "sk-" (truncated for safety)
+echo "TZ=$TZ"                                       # VERIFY: a valid IANA timezone
+echo "GIT_AUTHOR_EMAIL=$GIT_AUTHOR_EMAIL"           # VERIFY: an email address
+```
+
+---
+
+## Step 9 — Write `opencode.json`
 
 This is the main OpenCode configuration file. Write the file `~/.config/opencode/opencode.json` with the following content.
 
-**Before writing**: Replace `YOUR_API_KEY_HERE` with your actual API key, and `YOUR_OPENAI_PROXY_BASE_URL` / `YOUR_ANTHROPIC_PROXY_BASE_URL` with the correct proxy endpoint URLs for your organization.
+The environment variables `OPENAI_API_KEY`, `OPENAI_BASE_URL`, and `ANTHROPIC_BASE_URL` were sourced from `.env` in Step 8.4 and should already be in the current shell session. Verify they are set:
+
+```bash
+[ -n "$OPENAI_API_KEY" ]    || { echo "ERROR: OPENAI_API_KEY is not set — re-run Step 8"; exit 1; }
+[ -n "$OPENAI_BASE_URL" ]   || { echo "ERROR: OPENAI_BASE_URL is not set — re-run Step 8"; exit 1; }
+[ -n "$ANTHROPIC_BASE_URL" ] || { echo "ERROR: ANTHROPIC_BASE_URL is not set — re-run Step 8"; exit 1; }
+echo "All required environment variables are set"
+```
+
+**Base URL format (SDK behavior)**:
+
+The two AI SDK providers have different URL conventions:
+
+| Provider | SDK Package | URL Handling | Your `.env` Value |
+| -------- | ----------- | ------------ | ----------------- |
+| `openai-proxy` | `@ai-sdk/openai-compatible` | SDK auto-appends `/v1` | e.g. `https://f5ai.pd.f5net.com/api` (no `/v1`) |
+| `anthropic-proxy` | `@ai-sdk/anthropic` | SDK does NOT append `/v1` | e.g. `https://f5ai.pd.f5net.com/anthropic` (no `/v1`) |
+
+The heredoc below appends `/v1` to `ANTHROPIC_BASE_URL` for you. Do **not** include `/v1` in your `.env` values — it would result in double `/v1/v1` paths.
 
 **Chrome flags explained**: The `--chromeArg` entries disable Chrome 115+'s automatic HTTP→HTTPS upgrading. Without these flags, Chrome silently redirects `http://` URLs to `https://`, which breaks demo environments that serve plain HTTP only. The three disabled features are:
 
@@ -486,9 +739,12 @@ This is the main OpenCode configuration file. Write the file `~/.config/opencode
 
 The remaining flags (`--no-first-run`, `--no-default-browser-check`, `--disable-extensions`, `--disable-background-timer-throttling`, `--disable-backgrounding-occluded-windows`) ensure a clean, automation-friendly Chrome session. No sandbox or GPU flags are needed on macOS — those are Linux container workarounds.
 
-```json
+Write the file using a heredoc that substitutes the environment variables (note: **not** a quoted heredoc — the `$` variables are intentionally expanded):
+
+```bash
+cat > ~/.config/opencode/opencode.json << ENDOFJSON
 {
-  "$schema": "https://opencode.ai/config.json",
+  "\$schema": "https://opencode.ai/config.json",
   "mcp": {
     "chrome-devtools": {
       "type": "local",
@@ -511,8 +767,8 @@ The remaining flags (`--no-first-run`, `--no-default-browser-check`, `--disable-
     "openai-proxy": {
       "name": "OpenAI Proxy",
       "options": {
-        "baseURL": "YOUR_OPENAI_PROXY_BASE_URL",
-        "apiKey": "YOUR_API_KEY_HERE"
+        "baseURL": "${OPENAI_BASE_URL}",
+        "apiKey": "${OPENAI_API_KEY}"
       },
       "models": {
         "gpt-5.4": {
@@ -545,8 +801,8 @@ The remaining flags (`--no-first-run`, `--no-default-browser-check`, `--disable-
     "anthropic-proxy": {
       "name": "Anthropic Proxy",
       "options": {
-        "baseURL": "YOUR_ANTHROPIC_PROXY_BASE_URL",
-        "apiKey": "YOUR_API_KEY_HERE"
+        "baseURL": "${ANTHROPIC_BASE_URL}/v1",
+        "apiKey": "${OPENAI_API_KEY}"
       },
       "models": {
         "claude-opus-4-6": {
@@ -568,7 +824,7 @@ The remaining flags (`--no-first-run`, `--no-default-browser-check`, `--disable-
           },
           "limit": {
             "context": 1000000,
-            "output": 64000
+            "output": 128000
           }
         }
       }
@@ -587,11 +843,21 @@ The remaining flags (`--no-first-run`, `--no-default-browser-check`, `--disable-
     "@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"
   ]
 }
+ENDOFJSON
+```
+
+Verify the file was written with actual values (not placeholder strings):
+
+```bash
+grep -c 'YOUR_' ~/.config/opencode/opencode.json
+# VERIFY: output is 0 (no placeholder strings remain)
+jq '.provider["openai-proxy"].options.baseURL' ~/.config/opencode/opencode.json
+# VERIFY: output is your actual OpenAI proxy URL (not empty, not a placeholder)
 ```
 
 ---
 
-## Step 9 — Write `oh-my-opencode.json`
+## Step 10 — Write `oh-my-opencode.json`
 
 This configures the Oh-My-OpenCode plugin — agent model assignments, task category routing, and background concurrency. Write the file `~/.config/opencode/oh-my-opencode.json`:
 
@@ -677,7 +943,7 @@ This configures the Oh-My-OpenCode plugin — agent model assignments, task cate
 
 ---
 
-## Step 10 — Write `AGENTS.md`
+## Step 11 — Write `AGENTS.md`
 
 This file contains global rules injected into every OpenCode LLM session. Write the file `~/.config/opencode/AGENTS.md`:
 
@@ -709,7 +975,7 @@ This file contains global rules injected into every OpenCode LLM session. Write 
 
 ---
 
-## Step 11 — Write `tui.json`
+## Step 12 — Write `tui.json`
 
 This configures the OpenCode terminal UI. Write the file `~/.config/opencode/tui.json`:
 
@@ -724,7 +990,7 @@ This configures the OpenCode terminal UI. Write the file `~/.config/opencode/tui
 
 ---
 
-## Step 12 — Write `.gitignore`
+## Step 13 — Write `.gitignore`
 
 If you plan to version-control your OpenCode config directory, this `.gitignore` prevents tracking generated files. Write the file `~/.config/opencode/.gitignore`:
 
@@ -735,102 +1001,195 @@ bun.lock
 .gitignore
 ```
 
----
+### 13.1 — Smoke-Test OpenCode Configuration
 
-## Step 13 — Configure `~/.zshrc` (Environment Variables and PATH)
+After writing all configuration files (Steps 9–13), verify that OpenCode can actually start and communicate with the AI provider. A broken `opencode.json` (malformed JSON, wrong API key, unreachable base URL) would prevent OpenCode from launching, and at that point the AI agent running this script would no longer be available to fix it.
 
-Oh My Zsh (Step 5) created `~/.zshrc` with its own boilerplate. This file has a specific structure — the Powerlevel10k instant prompt **must** be at the very top, the Oh My Zsh `source` line stays in the middle, and user additions go at the end. If any of the lines below already exist, skip them. Do not duplicate entries.
-
-### 13.1 — Top of File: Powerlevel10k Instant Prompt
-
-This block **must be the first thing** in `~/.zshrc` (before any other code that produces output). It enables sub-millisecond prompt rendering by caching the prompt while the rest of `.zshrc` loads in the background. Without it, the terminal flickers briefly on each new shell.
+**Strategy**: First validate that the JSON is syntactically correct, then run `opencode run` with a trivial prompt and check for a non-empty response. If either check fails, stop and report the error — do not proceed to Step 14.
 
 ```bash
+# Phase 1: Validate JSON syntax of all config files
+echo "Validating config file syntax..."
+for f in opencode.json oh-my-opencode.json tui.json; do
+  if ! jq . "$HOME/.config/opencode/$f" > /dev/null 2>&1; then
+    echo "ERROR: $f is not valid JSON. Fix the file and re-run this step."
+    echo "  Hint: jq . ~/.config/opencode/$f"
+    exit 1
+  fi
+  echo "  OK: $f"
+done
+
+# Phase 2: Live smoke test — send a trivial prompt and verify a response arrives
+echo "Running OpenCode smoke test..."
+SMOKE_OUT=$(mktemp)
+opencode run "Reply with exactly one word: OPENCODE_OK" > "$SMOKE_OUT" 2>&1 &
+OCPID=$!
+
+# Wait up to 120 seconds (first run may download MCP servers)
+ELAPSED=0
+while kill -0 "$OCPID" 2>/dev/null; do
+  sleep 2
+  ELAPSED=$((ELAPSED + 2))
+  if [ "$ELAPSED" -ge 120 ]; then
+    kill "$OCPID" 2>/dev/null
+    wait "$OCPID" 2>/dev/null
+    echo "ERROR: opencode run timed out after 120 seconds."
+    echo "  This usually means the AI provider is unreachable."
+    echo "  Check OPENAI_BASE_URL and ANTHROPIC_BASE_URL in .env"
+    cat "$SMOKE_OUT"
+    rm -f "$SMOKE_OUT"
+    exit 1
+  fi
+done
+wait "$OCPID"
+OC_EXIT=$?
+
+# Strip ANSI escape codes and check for non-empty response
+CLEAN_OUT=$(sed 's/\x1b\[[0-9;]*m//g' "$SMOKE_OUT" | grep -v '^$' | grep -v '^>' | tail -1)
+
+if [ "$OC_EXIT" -ne 0 ]; then
+  echo "ERROR: opencode run exited with code $OC_EXIT"
+  cat "$SMOKE_OUT"
+  rm -f "$SMOKE_OUT"
+  exit 1
+elif [ -z "$CLEAN_OUT" ]; then
+  echo "ERROR: opencode run produced no response"
+  echo "  This may indicate an authentication or provider configuration issue."
+  cat "$SMOKE_OUT"
+  rm -f "$SMOKE_OUT"
+  exit 1
+else
+  echo "Smoke test passed — OpenCode responded: $CLEAN_OUT"
+fi
+rm -f "$SMOKE_OUT"
+```
+
+VERIFY: output ends with `Smoke test passed — OpenCode responded: ...` followed by a non-empty AI response. If the smoke test fails, check:
+
+1. **JSON syntax**: `jq . ~/.config/opencode/opencode.json` — any parse error means Step 9's heredoc expanded incorrectly (likely a special character in an API key or URL).
+2. **API connectivity**: `curl -s -o /dev/null -w "%{http_code}" "${OPENAI_BASE_URL}/models" -H "Authorization: Bearer ${OPENAI_API_KEY}"` — should return `200`.
+3. **Plugin load failure**: `rm -rf ~/.cache/opencode/node_modules && opencode run "test"` — forces a clean plugin re-download.
+
+---
+
+## Step 14 — Configure `~/.zshrc` (Environment Variables and PATH)
+
+Oh My Zsh (Step 5) created `~/.zshrc` with its own boilerplate. This step adds environment variables and PATH entries **after** the Oh My Zsh `source` line.
+
+**Idempotency strategy**: Each block below uses `grep -q` to check if the line already exists before appending. This makes the step safe to re-run without creating duplicate entries.
+
+**IMPORTANT**: The `OPENAI_API_KEY` line uses the `$OPENAI_API_KEY` environment variable sourced from `.env` in Step 8.4. That variable must still be set in the current shell session.
+
+### 14.1 — Top of File: Powerlevel10k Instant Prompt
+
+This block **must be the first thing** in `~/.zshrc` (before any other code that produces output). It enables sub-millisecond prompt rendering. Check if already present before adding:
+
+```bash
+if ! grep -q 'p10k-instant-prompt' ~/.zshrc; then
+  # Prepend the p10k instant prompt block to the top of ~/.zshrc
+  TMPFILE=$(mktemp)
+  cat > "$TMPFILE" << 'INSTANT_PROMPT'
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
+
+INSTANT_PROMPT
+  cat ~/.zshrc >> "$TMPFILE"
+  mv "$TMPFILE" ~/.zshrc
+fi
 ```
 
-### 13.2 — Middle: Oh My Zsh Settings (already present)
+### 14.2 — Middle: Oh My Zsh Settings (already present)
 
-The following lines were set in Step 5.5 and should already be in `~/.zshrc`. Verify they are present:
+The following lines were set in Step 5.5 via `sed` and should already be in `~/.zshrc`. Verify they are present:
 
 ```bash
-export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="powerlevel10k/powerlevel10k"
-plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)
-source $ZSH/oh-my-zsh.sh
+grep '^ZSH_THEME="powerlevel10k/powerlevel10k"' ~/.zshrc   # VERIFY: line exists
+grep '^plugins=(git z zsh-autosuggestions' ~/.zshrc          # VERIFY: line exists
 ```
 
-### 13.3 — After `source $ZSH/oh-my-zsh.sh`: User Configuration
+### 14.3 — After `source $ZSH/oh-my-zsh.sh`: User Configuration
 
-Add the following lines **after** the `source $ZSH/oh-my-zsh.sh` line:
+Append each line only if it is not already present. Each `grep -q` guard prevents duplicates on re-runs:
 
 ```bash
 # Homebrew (Apple Silicon)
-eval $(/opt/homebrew/bin/brew shellenv)
+grep -q 'brew shellenv' ~/.zshrc || \
+  echo 'eval $(/opt/homebrew/bin/brew shellenv)' >> ~/.zshrc
 
 # Powerlevel10k config (written by `p10k configure` wizard)
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+grep -q 'p10k.zsh' ~/.zshrc || \
+  echo '[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh' >> ~/.zshrc
 
 # Bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
+grep -q 'BUN_INSTALL' ~/.zshrc || \
+  echo 'export BUN_INSTALL="$HOME/.bun"' >> ~/.zshrc
+grep -q 'BUN_INSTALL/bin' ~/.zshrc || \
+  echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> ~/.zshrc
 
 # Bun completions
-[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+grep -q '_bun' ~/.zshrc || \
+  echo '[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"' >> ~/.zshrc
 
 # User-local binaries (docker shim, etc.)
-export PATH="$HOME/.local/bin:$PATH"
+grep -q '\.local/bin' ~/.zshrc || \
+  echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 
 # iTerm2 utilities (imgcat, imgls, it2api, etc.)
-export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
+grep -q 'iTerm.app' ~/.zshrc || \
+  echo 'export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"' >> ~/.zshrc
 
-# API key for AI proxy (replace with your actual key)
-export F5AI_API_KEY="YOUR_API_KEY_HERE"
+# API key for AI proxy (sourced from .env in Step 8.4)
+grep -q 'OPENAI_API_KEY' ~/.zshrc || \
+  echo "export OPENAI_API_KEY=\"${OPENAI_API_KEY}\"" >> ~/.zshrc
 
 # Enable 1M token context for Anthropic models
-export ANTHROPIC_1M_CONTEXT=true
+grep -q 'ANTHROPIC_1M_CONTEXT' ~/.zshrc || \
+  echo 'export ANTHROPIC_1M_CONTEXT=true' >> ~/.zshrc
 ```
 
-### Reload the Shell
+### Activate Environment for Current Session
+
+Do **not** run `source ~/.zshrc` — it will fail in a non-interactive shell context (Oh My Zsh and Powerlevel10k require a TTY). Instead, export the critical variables for the current session:
 
 ```bash
-source ~/.zshrc
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$HOME/.local/bin:/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
+eval $(/opt/homebrew/bin/brew shellenv)
 ```
 
 ---
 
-## Step 14 — Install Project Tooling (Containers, Git Hooks, Docker Shim)
+## Step 15 — Install Project Tooling (Containers, Git Hooks, Docker Shim)
 
 These tools support the standard development workflow across all repositories: container-based linting via pre-commit hooks, OCI container builds, and compatibility with tools that expect a `docker` CLI.
 
-### 14.1 — Ensure Podman is Running
+### 15.1 — Ensure Podman is Running
 
 The corporate standard container runtime is **Podman**. Docker Desktop is not permitted. Podman runs containers in a lightweight user-space VM with no root privileges required.
 
-Verify Podman is installed and the machine is running:
+The following script is idempotent — it handles all three states (machine running, machine stopped, no machine):
 
 ```bash
-podman --version       # Expected: podman 5.x or later
-podman machine list    # Expected: one machine with "Currently running" status
+podman --version  # VERIFY: output contains "podman version 5"
+
+# Idempotent Podman machine setup: init if missing, start if stopped, skip if running
+if podman machine list --format '{{.Running}}' 2>/dev/null | grep -q true; then
+  echo "Podman machine is already running"
+elif podman machine list --format '{{.Name}}' 2>/dev/null | grep -q .; then
+  podman machine start
+else
+  podman machine init --memory 10240
+  podman machine start
+fi
+
+podman machine list  # VERIFY: output shows "Currently running"
 ```
 
-If the machine is not running:
-```bash
-podman machine start
-```
-
-If no machine exists:
-```bash
-podman machine init --cpus 4 --memory 8192 --disk-size 80
-podman machine start
-```
-
-### 14.2 — Create a Podman-to-Docker Compatibility Shim
+### 15.2 — Create a Podman-to-Docker Compatibility Shim
 
 Many third-party tools (super-linter, CI scripts, Makefiles) hardcode the `docker` CLI command. Since Docker is not permitted on corporate workstations, create a one-line shim that transparently forwards all `docker` invocations to `podman`:
 
@@ -846,16 +1205,16 @@ chmod +x ~/.local/bin/docker
 
 Verify the shim works:
 ```bash
-~/.local/bin/docker --version   # Expected: podman version 5.x (proxied)
-docker --version                 # Expected: podman 5.x (routed via shim, once PATH is updated in Step 14)
+~/.local/bin/docker --version   # VERIFY: output contains "podman version 5"
+docker --version                 # VERIFY: output contains "podman" (requires ~/.local/bin in PATH from Step 14)
 ```
 
-### 14.3 — Verify pre-commit
+### 15.3 — Verify pre-commit
 
 pre-commit was installed in Step 1 via Homebrew. Verify it is available:
 
 ```bash
-pre-commit --version   # Expected: pre-commit 4.x or later
+pre-commit --version   # VERIFY: output contains "pre-commit 4" or higher
 ```
 
 To activate pre-commit hooks in any repository that uses `.pre-commit-config.yaml`:
@@ -867,50 +1226,51 @@ pre-commit install
 
 ---
 
-## Step 15 — Verify the Complete Installation
+## Step 16 — Verify the Complete Installation
 
 Run each of these commands to confirm everything is in place.
 
-### 15.1 — Core Tools
+### 16.1 — Core Tools
 
 ```bash
-opencode --version          # Expected: 1.2.20 or later
-node --version              # Expected: v25.x or later
-bun --version               # Expected: 1.3.x or later
-npm --version               # Expected: 11.x or later
-rg --version                # Expected: 15.x or later
-gh --version                # Expected: 2.x or later
-tmux -V                     # Expected: tmux 3.x
+opencode --version          # VERIFY: output starts with 1.2 (1.2.20+)
+node --version              # VERIFY: output starts with v25 (v25.x+)
+bun --version               # VERIFY: output starts with 1 (1.3.x+)
+npm --version               # VERIFY: output starts with 11 (11.x+)
+rg --version                # VERIFY: contains "ripgrep"
+gh --version                # VERIFY: 2.x+
+tmux -V                     # VERIFY: tmux 3.x+
+jq --version                # VERIFY: jq-1.x+
 ```
 
-### 15.2 — LSP Servers on PATH
+### 16.2 — LSP Servers on PATH
 
 ```bash
-which bash-language-server   # Expected: /opt/homebrew/bin/bash-language-server
-which yaml-language-server   # Expected: /opt/homebrew/bin/yaml-language-server
-which marksman               # Expected: /opt/homebrew/bin/marksman
-which terraform-ls           # Expected: /opt/homebrew/bin/terraform-ls
-which shellcheck             # Expected: /opt/homebrew/bin/shellcheck
-which shfmt                  # Expected: /opt/homebrew/bin/shfmt
+which bash-language-server   # VERIFY: prints a path (typically /opt/homebrew/bin/...)
+which yaml-language-server   # VERIFY: prints a path
+which marksman               # VERIFY: prints a path
+which terraform-ls           # VERIFY: prints a path
+which shellcheck             # VERIFY: prints a path
+which shfmt                  # VERIFY: prints a path
 ```
 
-### 15.3 — npm Global LSP Packages
+### 16.3 — npm Global LSP Packages
 
 ```bash
 npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|taplo)"
 ```
 
-Expected: all five packages listed.
+VERIFY: all five packages appear in the output (exact versions may vary).
 
-### 15.4 — Chrome
+### 16.4 — Chrome
 
 ```bash
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version
 ```
 
-Expected: Google Chrome 144.x or later.
+VERIFY: output contains `Google Chrome` followed by a version number.
 
-### 15.5 — chrome-devtools-mcp
+### 16.5 — chrome-devtools-mcp
 
 ```bash
 npx -y chrome-devtools-mcp@latest --help
@@ -918,7 +1278,7 @@ npx -y chrome-devtools-mcp@latest --help
 
 Expected: prints the CLI help with options like `--executablePath`, `--headless`, etc.
 
-### 15.6 — OpenCode Config Files
+### 16.6 — OpenCode Config Files
 
 ```bash
 ls -la ~/.config/opencode/opencode.json
@@ -931,7 +1291,7 @@ ls -la ~/.config/opencode/node_modules/@opencode-ai/plugin/
 
 All files should exist and be owned by the current user.
 
-### 15.7 — OpenCode Runtime Cache
+### 16.7 — OpenCode Runtime Cache
 
 ```bash
 ls ~/.cache/opencode/node_modules/@robinmordasiewicz/oh-my-opencode/package.json  # Expected: file exists
@@ -940,17 +1300,17 @@ ls ~/.cache/opencode/node_modules/@ai-sdk/openai-compatible/package.json        
 ls ~/.cache/opencode/node_modules/opencode-anthropic-auth/package.json            # Expected: file exists
 ```
 
-All four runtime packages should be pre-installed. If any are missing, re-run `cd ~/.cache/opencode && bun install && cd -`.
+All four runtime packages should be pre-installed. If any are missing, re-run `(cd ~/.cache/opencode && bun install)`.
 
-### 15.8 — Environment Variables
+### 16.8 — Environment Variables
 
 ```bash
-echo $BUN_INSTALL            # Expected: /Users/<you>/.bun
-echo $F5AI_API_KEY           # Expected: your API key (not empty)
-echo $ANTHROPIC_1M_CONTEXT   # Expected: true
+echo $BUN_INSTALL            # VERIFY: output is /Users/<username>/.bun (not empty)
+echo $OPENAI_API_KEY         # VERIFY: output is your API key (not empty, not a placeholder)
+echo $ANTHROPIC_1M_CONTEXT   # VERIFY: output is "true"
 ```
 
-### 15.9 — Claude Code Plugins
+### 16.9 — Claude Code Plugins
 
 ```bash
 # Verify plugin count
@@ -966,37 +1326,134 @@ jq '.enabledPlugins | keys | length' ~/.claude/settings.json
 # Expected: 14
 ```
 
-### 15.10 — Project Tooling (Podman, Docker Shim, pre-commit)
+### 16.10 — Project Tooling (Podman, Docker Shim, pre-commit)
 
 ```bash
-podman --version                # Expected: podman 5.x
-podman machine list             # Expected: machine "Currently running"
-~/.local/bin/docker --version   # Expected: podman 5.x (via shim)
-which docker                    # Expected: ~/.local/bin/docker (once PATH includes ~/.local/bin)
-pre-commit --version            # Expected: pre-commit 4.x
+podman --version                # VERIFY: output contains "podman version 5"
+podman machine list             # VERIFY: output shows "Currently running"
+~/.local/bin/docker --version   # VERIFY: output contains "podman version 5" (via shim)
+which docker                    # VERIFY: output is ~/.local/bin/docker
+pre-commit --version            # VERIFY: output contains "pre-commit 4"
 ```
 
-### 15.11 — Terminal Environment (iTerm2, Oh My Zsh, Theme, Plugins)
+### 16.11 — Terminal Environment (iTerm2, Oh My Zsh, Theme, Plugins)
 
 ```bash
-ls "/Applications/iTerm.app"                                                    # Expected: iTerm2 installed
-which imgcat                                                                     # Expected: /Applications/iTerm.app/.../utilities/imgcat
-ls ~/.oh-my-zsh/oh-my-zsh.sh                                                    # Expected: file exists
-ls ~/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme             # Expected: symlink exists
-ls ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh # Expected: file exists
-ls ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting                           # Expected: directory exists
-ls ~/Library/Fonts/MesloLGS\ NF\ Regular.ttf                                    # Expected: p10k font installed
-grep "^ZSH_THEME" ~/.zshrc                                                      # Expected: powerlevel10k/powerlevel10k
-grep "^plugins=" ~/.zshrc                                                        # Expected: (git z zsh-autosuggestions zsh-syntax-highlighting)
+ls "/Applications/iTerm.app"                                                    # VERIFY: directory exists
+which imgcat                                                                     # VERIFY: prints a path containing iTerm.app
+ls ~/.oh-my-zsh/oh-my-zsh.sh                                                    # VERIFY: file exists
+test -f ~/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme && echo "OK" # VERIFY: file exists
+ls ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh # VERIFY: file exists
+ls ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting                           # VERIFY: directory exists
+ls ~/Library/Fonts/MesloLGS\ NF\ Regular.ttf                                    # VERIFY: file exists (p10k font)
+grep "^ZSH_THEME" ~/.zshrc                                                      # VERIFY: output contains "powerlevel10k"
+grep "^plugins=" ~/.zshrc                                                        # VERIFY: output contains "zsh-autosuggestions zsh-syntax-highlighting"
 ```
 
-### 15.12 — Launch OpenCode
+### 16.12 — Verify .env File
+
+```bash
+REPO_DIR="$(pwd)"
+test -f "${REPO_DIR}/.env" && echo "OK: .env exists" || echo "MISSING: .env"
+grep -q '^OPENAI_API_KEY=' "${REPO_DIR}/.env" && echo "OK: OPENAI_API_KEY" || echo "MISSING: OPENAI_API_KEY"
+grep -q '^OPENAI_BASE_URL=' "${REPO_DIR}/.env" && echo "OK: OPENAI_BASE_URL" || echo "MISSING: OPENAI_BASE_URL"
+grep -q '^ANTHROPIC_BASE_URL=' "${REPO_DIR}/.env" && echo "OK: ANTHROPIC_BASE_URL" || echo "MISSING: ANTHROPIC_BASE_URL"
+grep -q '^TZ=' "${REPO_DIR}/.env" && echo "OK: TZ" || echo "MISSING: TZ"
+grep -q '^GIT_AUTHOR_EMAIL=' "${REPO_DIR}/.env" && echo "OK: GIT_AUTHOR_EMAIL" || echo "MISSING: GIT_AUTHOR_EMAIL"
+grep -q '^GIT_AUTHOR_NAME=' "${REPO_DIR}/.env" && echo "OK: GIT_AUTHOR_NAME" || echo "MISSING: GIT_AUTHOR_NAME"
+```
+
+VERIFY: All lines print "OK". Any "MISSING" line means Step 8 did not complete successfully.
+
+### 16.13 — Verify File Manifest
+
+Confirm that all expected directories and files were created:
+
+```bash
+# ~/.config/opencode/ structure
+test -f ~/.config/opencode/opencode.json        && echo "OK: opencode.json"        || echo "MISSING: opencode.json"
+test -f ~/.config/opencode/oh-my-opencode.json  && echo "OK: oh-my-opencode.json"  || echo "MISSING: oh-my-opencode.json"
+test -f ~/.config/opencode/AGENTS.md            && echo "OK: AGENTS.md"            || echo "MISSING: AGENTS.md"
+test -f ~/.config/opencode/tui.json             && echo "OK: tui.json"             || echo "MISSING: tui.json"
+test -f ~/.config/opencode/package.json         && echo "OK: package.json"         || echo "MISSING: package.json"
+test -d ~/.config/opencode/node_modules         && echo "OK: node_modules/"        || echo "MISSING: node_modules/"
+
+# ~/.claude/ structure
+test -f ~/.claude/settings.json                         && echo "OK: settings.json"            || echo "MISSING: settings.json"
+test -f ~/.claude/plugins/installed_plugins.json         && echo "OK: installed_plugins.json"   || echo "MISSING: installed_plugins.json"
+test -f ~/.claude/plugins/known_marketplaces.json        && echo "OK: known_marketplaces.json"  || echo "MISSING: known_marketplaces.json"
+test -f ~/.claude/plugins/blocklist.json                 && echo "OK: blocklist.json"           || echo "MISSING: blocklist.json"
+test -d ~/.claude/plugins/cache/claude-plugins-official  && echo "OK: plugin cache/"            || echo "MISSING: plugin cache/"
+
+# ~/.cache/opencode/ runtime
+test -d ~/.cache/opencode/node_modules  && echo "OK: runtime cache/"  || echo "MISSING: runtime cache/"
+
+# ~/.local/bin/ shim
+test -x ~/.local/bin/docker  && echo "OK: docker shim"  || echo "MISSING: docker shim"
+```
+
+VERIFY: All lines print "OK". Any "MISSING" line indicates a failed step — go back and re-run the corresponding step.
+
+### 16.14 — Launch OpenCode
 
 ```bash
 opencode
 ```
 
 OpenCode should start without errors. The Oh-My-OpenCode plugin should load automatically (you will see the Sisyphus agent and multi-agent orchestration capabilities).
+
+### 16.15 — Verify Podman and Print Next Steps
+
+Confirm that Podman and podman-compose are installed and the Podman machine is running, then print instructions for launching the devcontainer.
+
+```bash
+echo ""
+echo "=== Final Podman Verification ==="
+
+# Verify Podman is installed
+if ! command -v podman &>/dev/null; then
+  echo "ERROR: podman is not installed. Re-run Step 1."
+  exit 1
+fi
+echo "OK: $(podman --version)"
+
+# Verify podman-compose is installed
+if ! command -v podman-compose &>/dev/null; then
+  echo "ERROR: podman-compose is not installed. Re-run Step 1."
+  exit 1
+fi
+echo "OK: podman-compose is installed"
+
+# Verify Podman machine is running
+if ! podman machine list --format '{{.Running}}' 2>/dev/null | grep -q true; then
+  echo "ERROR: Podman machine is not running. Re-run Step 15.1."
+  exit 1
+fi
+echo "OK: Podman machine is running"
+
+# Smoke test: verify podman can pull and run a container
+if podman run --rm docker.io/library/alpine:latest echo "PODMAN_OK" 2>/dev/null | grep -q "PODMAN_OK"; then
+  echo "OK: Podman smoke test passed"
+else
+  echo "ERROR: Podman cannot run containers. Check: podman machine list"
+  exit 1
+fi
+
+CURRENT_DIR="$(pwd)"
+
+echo ""
+echo "==========================================================="
+echo "  Setup complete! All tools installed and verified."
+echo "==========================================================="
+echo ""
+echo "  To launch the devcontainer, open a NEW terminal window"
+echo "  and run:"
+echo ""
+echo "    cd ${CURRENT_DIR}"
+echo "    podman-compose down && podman-compose pull && podman-compose up -d && podman run --rm -it --env-file .env ghcr.io/f5xc-salesdemos/devcontainer:latest zsh"
+echo ""
+echo "==========================================================="
+```
 
 ---
 
@@ -1050,7 +1507,7 @@ ls ~/.bun/bin/bun
 echo $PATH | tr ':' '\n' | grep bun
 ```
 
-If missing, re-run: `curl -fsSL https://bun.com/install | bash` and then `source ~/.zshrc`.
+If missing, re-run: `curl -fsSL https://bun.sh/install | bash` and then `export PATH="$HOME/.bun/bin:$PATH"`.
 
 ---
 
@@ -1101,6 +1558,33 @@ dig +short <domain> @8.8.8.8
 **Prevention**: Ensure DNS records are created and propagated **before** Chrome first attempts to load the domain. If your workflow creates DNS records programmatically (e.g., via API), restart opencode after DNS creation to launch Chrome with a clean resolver cache.
 
 **Note**: `dscacheutil -flushcache` does not reliably clear the `mDNSResponder` negative cache on macOS. The `killall -HUP mDNSResponder` command that would clear it requires elevated privileges, which are not available on corporate workstations.
+
+### Reset to Clean State
+
+If the installation is in a broken state and you need to start over, remove all generated files and directories. Homebrew packages are left in place (they are managed separately).
+
+```bash
+# Remove OpenCode config and cache
+rm -rf ~/.config/opencode/node_modules ~/.config/opencode/bun.lock
+rm -rf ~/.cache/opencode/node_modules ~/.cache/opencode/bun.lock
+
+# Remove Claude Code plugins
+rm -rf ~/.claude/plugins ~/.claude/settings.json
+
+# Remove Oh My Zsh (will also remove custom plugins and themes)
+rm -rf ~/.oh-my-zsh
+
+# Remove Podman-to-Docker shim
+rm -f ~/.local/bin/docker
+
+# Remove npx cache
+rm -rf ~/.npm/_npx
+
+# Remove chrome-devtools-mcp profile
+rm -rf ~/.cache/chrome-devtools-mcp
+```
+
+After cleanup, re-run this document from Step 3 onward (Homebrew packages from Steps 1-2 persist and do not need re-installation).
 
 ---
 
