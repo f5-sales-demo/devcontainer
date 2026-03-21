@@ -874,14 +874,14 @@ grep '^plugins=' ~/.zshrc       # VERIFY: output includes zsh-claudecode-complet
 | `terraform` | OMZ built-in | Terraform completions and aliases |
 | `fluxcd` | OMZ built-in | FluxCD completions |
 | `azure` | OMZ built-in | Azure CLI completions |
-| `git-auto-fetch` | OMZ built-in | Auto-fetches git remotes in background |
+| `git-auto-fetch` | OMZ built-in | Auto-fetches Git remotes in background |
 | `helm` | OMZ built-in | Helm completions |
 | `istioctl` | OMZ built-in | Istio CLI completions |
 | `iterm2` | OMZ built-in | iTerm2 shell integration |
 | `kube-ps1` | OMZ built-in | Kubernetes context/namespace in prompt |
 | `kubectl` | OMZ built-in | kubectl completions and aliases |
 | `sudo` | OMZ built-in | Press Escape twice to prepend `sudo` to current command |
-| `vscode` | OMZ built-in | VS Code aliases (`code .`, etc.) |
+| `vscode` | OMZ built-in | Visual Studio Code aliases (`code .`, etc.) |
 | `aws` | OMZ built-in | AWS CLI completions |
 | `fzf` | OMZ built-in | Fuzzy finder integration (Ctrl+R history, Ctrl+T files) |
 | `docker` | OMZ built-in | Docker completions |
@@ -890,7 +890,7 @@ grep '^plugins=' ~/.zshrc       # VERIFY: output includes zsh-claudecode-complet
 | `command-not-found` | OMZ built-in | Suggests packages when a command is not found |
 | `tmux` | OMZ built-in | Tmux aliases and completions |
 | `zsh-claudecode-completion` | Custom clone | Tab completions for Claude Code CLI |
-| `zsh-eza` | Custom clone | Enhanced `ls` using `eza` with icons and git status |
+| `zsh-eza` | Custom clone | Enhanced `ls` using `eza` with icons and Git status |
 
 **Note**: The devcontainer also includes the `ubuntu` plugin which is Linux-only and not applicable to macOS.
 
