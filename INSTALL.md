@@ -538,7 +538,7 @@ Configure sensible defaults for developer workflows. These settings are stored i
 **Prerequisites**: Step 5.3 must have run first — that step handles launching iTerm2 to generate the plist if needed, and quitting a running instance to avoid the in-memory overwrite race condition.
 
 | Setting | Key | Value | Why |
-|---------|-----|-------|-----|
+| ------- | --- | ----- | --- |
 | Silence bell | `Silence Bell` | `true` | Stops the audible beep on tab completion miss, Ctrl+G, etc. |
 | Disable visual bell | `Visual Bell` | `false` | Screen flash is distracting; silence is enough |
 | Unlimited scrollback | `Unlimited Scrollback` | `true` | Never lose build output or long log tails |
@@ -915,7 +915,7 @@ fi
 
 ### 6.4a — Install Status Line Script
 
-The container runs a custom status line showing context window usage, git branch, and working tree state. Install the same script locally so the `statusLine.command` in settings.json works:
+The container runs a custom status line showing context window usage, Git branch, and working tree state. Install the same script locally so the `statusLine.command` in settings.json works:
 
 ```bash
 REPO_DIR="$(pwd)"
