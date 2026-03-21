@@ -820,7 +820,13 @@ RUN npm install -g \
     typescript \
     @typescript/native-preview \
     pyright \
-    vscode-langservers-extracted
+    vscode-langservers-extracted \
+    pptxgenjs \
+    react-icons \
+    react \
+    react-dom \
+    sharp \
+    markitdown
 
 # Ensure Node.js can resolve globally-installed packages at the system prefix
 # even after npm prefix is changed to $HOME/.npm-global later.
@@ -1252,6 +1258,7 @@ COPY --chown=${USERNAME}:${USERNAME} claude-config/claude.json /home/${USERNAME}
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json /home/${USERNAME}/.config/opencode/opencode.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-anthropic.json /home/${USERNAME}/.config/opencode/opencode-anthropic.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-opencode-proxy.json /home/${USERNAME}/.config/opencode/oh-my-opencode-proxy.json
+COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-opencode-anthropic.json /home/${USERNAME}/.config/opencode/oh-my-opencode-anthropic.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.opencode/opencode.json
 
 # --- Codex + Pi: bake static defaults ---
