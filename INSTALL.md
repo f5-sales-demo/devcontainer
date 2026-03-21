@@ -233,7 +233,6 @@ brew_install hadolint          # Dockerfile linter (best practices enforcement)
 brew_install gitleaks          # Secret scanner (catches leaked credentials pre-commit)
 brew_install trivy             # Vulnerability scanner for containers and code
 brew_install sslscan           # TLS/SSL configuration scanner
-brew_install nuclei            # Web application vulnerability scanner
 brew_install trufflehog        # Deep git history secret scanner
 
 # Media tools
@@ -285,7 +284,6 @@ hadolint --version     # VERIFY: output contains "Haskell Dockerfile Linter"
 gitleaks version       # VERIFY: output contains a version number
 trivy --version        # VERIFY: output starts with "Version:"
 sslscan --version      # VERIFY: output contains "sslscan version"
-nuclei --version       # VERIFY: output contains "nuclei"
 trufflehog --version   # VERIFY: output contains a version number
 ffmpeg -version        # VERIFY: output starts with "ffmpeg version"
 yt-dlp --version       # VERIFY: output contains a version string
@@ -400,6 +398,196 @@ OpenCode Desktop is the GUI companion for OpenCode. Install via Homebrew Cask:
 
 ```bash
 brew install --cask opencode-desktop
+```
+
+---
+
+## Step 4c — Configure macOS System Defaults
+
+Configure macOS for developer workflows and long-running AI assistant tasks. These settings prevent sleep interruptions, speed up keyboard input, disable code-breaking text substitutions, and optimize the Finder and Dock for productivity.
+
+All commands are idempotent — `defaults write` overwrites existing values. Safe to re-run.
+
+### 4c.1 — Power and Sleep (prevents AI job interruptions)
+
+> **MANUAL STEP**: Power management requires `sudo` which this guide does not use. Configure these settings through the GUI:
+>
+> 1. Open **System Settings** > **Battery** > **Options**
+> 2. Enable **"Prevent automatic sleeping on power adapter when the display is off"**
+> 3. Optionally set **"Turn display off on power adapter"** to **Never**
+>
+> This ensures long-running AI sessions, builds, and background tasks are never interrupted by sleep.
+
+### 4c.2 — Dock
+
+```bash
+echo "Configuring Dock..."
+
+# Auto-hide the Dock (reclaim screen space)
+defaults write com.apple.dock autohide -bool true
+
+# Remove the show/hide delay (instant reveal on hover)
+defaults write com.apple.dock autohide-delay -float 0
+
+# Speed up the show/hide animation
+defaults write com.apple.dock autohide-time-modifier -float 0.25
+
+# Smaller icons (45px instead of default 64px)
+defaults write com.apple.dock tilesize -int 45
+
+# Scale animation for minimize (faster than genie)
+defaults write com.apple.dock mineffect -string "scale"
+
+# Don't show recent apps in the Dock
+defaults write com.apple.dock show-recents -bool false
+
+# Apply Dock changes
+killall Dock
+echo "Dock configured and restarted."
+```
+
+### 4c.3 — Finder
+
+```bash
+echo "Configuring Finder..."
+
+# Show all file extensions (.txt, .json, .md, etc.)
+defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+
+# Show hidden files (dotfiles: .gitignore, .env, etc.)
+defaults write com.apple.finder AppleShowAllFiles -bool true
+
+# Show path bar at bottom of Finder windows
+defaults write com.apple.finder ShowPathbar -bool true
+
+# Show status bar (item count and free space)
+defaults write com.apple.finder ShowStatusBar -bool true
+
+# Default to list view (alternatives: icnv, clsv, Flwv)
+defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
+
+# Search the current folder by default (not "This Mac")
+defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
+
+# Show full POSIX path in Finder title bar
+defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
+
+# Apply Finder changes
+killall Finder
+echo "Finder configured and restarted."
+```
+
+### 4c.4 — Keyboard
+
+These settings are critical for developers — smart quotes and dashes silently corrupt code when pasting, and slow key repeat wastes time navigating.
+
+```bash
+echo "Configuring keyboard..."
+
+# Fast key repeat (1 = fastest; default is 2)
+defaults write -g KeyRepeat -int 1
+
+# Short delay before repeat starts (10 ≈ 80ms; default is 15)
+defaults write -g InitialKeyRepeat -int 10
+
+# Disable auto-correct (changes your typos to wrong words)
+defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
+
+# Disable smart quotes ("curly quotes" break code)
+defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
+
+# Disable smart dashes (hyphens become em-dashes)
+defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false
+
+# Disable period substitution (double-space inserts period)
+defaults write NSGlobalDomain NSAutomaticPeriodSubstitutionEnabled -bool false
+
+# Enable full keyboard access for all UI controls (Tab navigates buttons, not just text fields)
+defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
+
+# Key repeat instead of press-and-hold accent menu (essential for vim/terminal)
+defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
+
+echo "Keyboard configured."
+```
+
+### 4c.5 — Trackpad
+
+```bash
+echo "Configuring trackpad..."
+
+# Enable tap to click (tap instead of physical press)
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+
+# Fast tracking speed (range: 0.0 slow to 3.0 fast; default ~1.0)
+defaults write NSGlobalDomain com.apple.trackpad.scaling -float 2.5
+
+echo "Trackpad configured."
+```
+
+### 4c.6 — Screenshots
+
+```bash
+echo "Configuring screenshots..."
+
+# Save screenshots to ~/Screenshots (not Desktop)
+mkdir -p ~/Screenshots
+defaults write com.apple.screencapture location ~/Screenshots
+
+# PNG format (lossless)
+defaults write com.apple.screencapture type -string "png"
+
+echo "Screenshots will save to ~/Screenshots as PNG."
+```
+
+### 4c.7 — Miscellaneous
+
+```bash
+echo "Configuring miscellaneous settings..."
+
+# Prevent .DS_Store files on network volumes
+defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+
+# Prevent .DS_Store files on USB/external drives
+defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true
+
+# Expand save and print dialogs by default (show all options)
+defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
+defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
+
+echo "Miscellaneous settings configured."
+```
+
+### Verify macOS Defaults
+
+```bash
+echo "=== Power (manual check) ==="
+pmset -g | grep -E "^\s*(sleep|displaysleep)"          # Expected: sleep 0, displaysleep 0 (set via System Settings)
+
+echo "=== Dock ==="
+defaults read com.apple.dock autohide                   # Expected: 1
+defaults read com.apple.dock autohide-delay             # Expected: 0
+defaults read com.apple.dock show-recents               # Expected: 0
+
+echo "=== Finder ==="
+defaults read NSGlobalDomain AppleShowAllExtensions     # Expected: 1
+defaults read com.apple.finder AppleShowAllFiles        # Expected: 1
+defaults read com.apple.finder ShowPathbar              # Expected: 1
+
+echo "=== Keyboard ==="
+defaults read -g KeyRepeat                              # Expected: 1
+defaults read -g InitialKeyRepeat                       # Expected: 10
+defaults read NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled  # Expected: 0
+defaults read NSGlobalDomain ApplePressAndHoldEnabled    # Expected: 0
+
+echo "=== Screenshots ==="
+defaults read com.apple.screencapture location           # Expected: ~/Screenshots
+
+echo "=== Misc ==="
+defaults read com.apple.desktopservices DSDontWriteNetworkStores  # Expected: 1
 ```
 
 ---
@@ -604,7 +792,7 @@ fi
 
 ### 5.4 — Install Zsh Plugins
 
-These plugins provide fish-shell-like autosuggestions and real-time syntax highlighting. Clone them into Oh My Zsh's custom plugins directory.
+Clone third-party plugins into Oh My Zsh's custom plugins directory. These mirror the plugins installed in the devcontainer Dockerfile.
 
 **IMPORTANT**: `git clone` fails with exit code 128 if the target directory already exists. Always guard with an existence check:
 
@@ -617,10 +805,33 @@ These plugins provide fish-shell-like autosuggestions and real-time syntax highl
   git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
     ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
 
-# Claude Code zsh completions (mirrors devcontainer Dockerfile)
 [ -d ~/.oh-my-zsh/custom/plugins/zsh-claudecode-completion ] || \
   git clone --depth=1 https://github.com/wbingli/zsh-claudecode-completion.git \
     ~/.oh-my-zsh/custom/plugins/zsh-claudecode-completion
+
+[ -d ~/.oh-my-zsh/custom/plugins/conda-zsh-completion ] || \
+  git clone --depth=1 https://github.com/conda-incubator/conda-zsh-completion.git \
+    ~/.oh-my-zsh/custom/plugins/conda-zsh-completion
+
+[ -d ~/.oh-my-zsh/custom/plugins/zsh-eza ] || \
+  git clone --depth=1 https://github.com/z-shell/zsh-eza.git \
+    ~/.oh-my-zsh/custom/plugins/zsh-eza
+
+[ -d ~/.oh-my-zsh/custom/plugins/zsh-tfenv ] || \
+  git clone --depth=1 https://github.com/cda0/zsh-tfenv.git \
+    ~/.oh-my-zsh/custom/plugins/zsh-tfenv
+
+[ -d ~/.oh-my-zsh/custom/plugins/zsh-aliases-lsd ] || \
+  git clone --depth=1 https://github.com/yuhonas/zsh-aliases-lsd.git \
+    ~/.oh-my-zsh/custom/plugins/zsh-aliases-lsd
+```
+
+Copy the custom `gh-clone-complete` plugin from this repo:
+
+```bash
+mkdir -p ~/.oh-my-zsh/custom/plugins/gh-clone-complete
+cp configs/gh-clone-complete.plugin.zsh \
+  ~/.oh-my-zsh/custom/plugins/gh-clone-complete/gh-clone-complete.plugin.zsh
 ```
 
 ### 5.5 — Configure `~/.zshrc` for Oh My Zsh
@@ -633,10 +844,10 @@ The Oh My Zsh installer creates a `~/.zshrc` with defaults. Two settings must be
 sed -i '' 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
 ```
 
-**Plugins** — replace the default `plugins=(git)` line:
+**Plugins** — replace the default `plugins=(git)` line with the full plugin set matching the devcontainer:
 
 ```bash
-sed -i '' 's/^plugins=(.*/plugins=(git z zsh-autosuggestions zsh-syntax-highlighting zsh-claudecode-completion)/' ~/.zshrc
+sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl iterm2 kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux zsh-claudecode-completion)/' ~/.zshrc
 ```
 
 VERIFY both changes applied:
@@ -646,23 +857,79 @@ grep '^ZSH_THEME=' ~/.zshrc    # VERIFY: output is ZSH_THEME="powerlevel10k/powe
 grep '^plugins=' ~/.zshrc       # VERIFY: output includes zsh-claudecode-completion
 ```
 
-| Plugin | What It Does |
-| ------ | ------------ |
-| `git` | Git aliases and prompt integration (`gst`, `gco`, `gp`, branch status in prompt) |
-| `z` | Frecency-based directory jumping (`z project` jumps to most-used matching path) |
-| `zsh-autosuggestions` | Fish-like inline suggestions from command history (accept with →) |
-| `zsh-syntax-highlighting` | Real-time color coding of commands as you type (green = valid, red = error) |
-| `zsh-claudecode-completion` | Tab completions for Claude Code CLI commands and flags |
+| Plugin | Source | What It Does |
+| ------ | ------ | ------------ |
+| `zsh-syntax-highlighting` | Custom clone | Real-time color coding of commands as you type |
+| `zsh-autosuggestions` | Custom clone | Fish-like inline suggestions from command history (accept with →) |
+| `zsh-interactive-cd` | OMZ built-in | Interactive directory selection with fzf |
+| `jsontools` | OMZ built-in | JSON pretty-printing and manipulation (`pp_json`, `is_json`) |
+| `gh` | OMZ built-in | GitHub CLI completions |
+| `gh-clone-complete` | Custom (configs/) | Tab completion for GitHub repo names during `gh repo clone` |
+| `common-aliases` | OMZ built-in | Useful shell aliases (`ll`, `la`, `..`, etc.) |
+| `zsh-aliases-lsd` | Custom clone | Aliases that use `lsd` as a modern `ls` replacement |
+| `zsh-tfenv` | Custom clone | Terraform version manager completions |
+| `conda-zsh-completion` | Custom clone | Conda environment and package completions |
+| `z` | OMZ built-in | Frecency-based directory jumping (`z project`) |
+| `pip` | OMZ built-in | Python pip completions |
+| `terraform` | OMZ built-in | Terraform completions and aliases |
+| `fluxcd` | OMZ built-in | FluxCD completions |
+| `azure` | OMZ built-in | Azure CLI completions |
+| `git-auto-fetch` | OMZ built-in | Auto-fetches Git remotes in background |
+| `helm` | OMZ built-in | Helm completions |
+| `istioctl` | OMZ built-in | Istio CLI completions |
+| `iterm2` | OMZ built-in | iTerm2 shell integration |
+| `kube-ps1` | OMZ built-in | Kubernetes context/namespace in prompt |
+| `kubectl` | OMZ built-in | kubectl completions and aliases |
+| `sudo` | OMZ built-in | Press Escape twice to prepend `sudo` to current command |
+| `vscode` | OMZ built-in | Visual Studio Code aliases (`code .`, etc.) |
+| `aws` | OMZ built-in | AWS CLI completions |
+| `fzf` | OMZ built-in | Fuzzy finder integration (Ctrl+R history, Ctrl+T files) |
+| `docker` | OMZ built-in | Docker completions |
+| `history` | OMZ built-in | History search aliases (`h`, `hs`) |
+| `colored-man-pages` | OMZ built-in | Colorized man pages |
+| `command-not-found` | OMZ built-in | Suggests packages when a command is not found |
+| `tmux` | OMZ built-in | Tmux aliases and completions |
+| `zsh-claudecode-completion` | Custom clone | Tab completions for Claude Code CLI |
+| `zsh-eza` | Custom clone | Enhanced `ls` using `eza` with icons and Git status |
 
-### 5.6 — Configure Powerlevel10k Prompt
+**Note**: The devcontainer also includes the `ubuntu` plugin which is Linux-only and not applicable to macOS.
 
-> **MANUAL STEP (skip in automated runs):** The Powerlevel10k configuration wizard is a fully interactive TUI that requires keystroke input in a real terminal. An AI agent cannot run this. The user must perform this manually:
->
-> 1. Open **iTerm2** (not a regular Terminal.app session)
-> 2. The wizard runs automatically on first launch after setting the theme
-> 3. Follow the prompts to choose your preferred style — the wizard writes `~/.p10k.zsh`
->
-> To re-run the wizard at any time: `p10k configure`
+### 5.6 — Install Powerlevel10k Configuration
+
+Copy the pre-built Powerlevel10k configuration from this repo. This is the same config installed in the devcontainer (rainbow theme, 2-line prompt, Nerdfont icons, transient prompt):
+
+```bash
+cp configs/.p10k.zsh ~/.p10k.zsh
+```
+
+To customize the prompt style later, run `p10k configure` in iTerm2.
+
+### 5.7 — Install Dotfiles
+
+Copy shell environment dotfiles from this repo to match the devcontainer setup:
+
+```bash
+cp configs/.tmux.conf ~/.tmux.conf
+
+# Install Tmux Plugin Manager (tpm) — required by .tmux.conf
+[ -d ~/.tmux/plugins/tpm ] || \
+  git clone --depth=1 https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+cp configs/.digrc ~/.digrc
+cp configs/.inputrc ~/.inputrc
+cp configs/.nanorc ~/.nanorc
+cp configs/.lessfilter ~/.lessfilter
+chmod +x ~/.lessfilter
+touch ~/.hushlogin
+```
+
+| File | Purpose |
+| ---- | ------- |
+| `.tmux.conf` | Tmux terminal multiplexer — true color, extended keys, Vi bindings |
+| `.digrc` | Cleaner `dig` output (`+nostats +nocomments +nocmd`) |
+| `.inputrc` | Readline — case-insensitive tab completion, history substring search |
+| `.lessfilter` | Syntax highlighting when viewing files with `less` |
+| `.nanorc` | Nano editor defaults |
+| `.hushlogin` | Suppress the "Last login" banner on new terminal sessions |
 
 ### Verify Terminal Environment
 
@@ -672,6 +939,19 @@ ls ~/.oh-my-zsh/oh-my-zsh.sh                                          # Expected
 test -f ~/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme && echo "OK"  # Expected: file exists
 ls ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions                     # Expected: directory exists
 ls ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting                 # Expected: directory exists
+ls ~/.oh-my-zsh/custom/plugins/zsh-claudecode-completion               # Expected: directory exists
+ls ~/.oh-my-zsh/custom/plugins/conda-zsh-completion                    # Expected: directory exists
+ls ~/.oh-my-zsh/custom/plugins/zsh-eza                                 # Expected: directory exists
+ls ~/.oh-my-zsh/custom/plugins/zsh-tfenv                               # Expected: directory exists
+ls ~/.oh-my-zsh/custom/plugins/zsh-aliases-lsd                         # Expected: directory exists
+ls ~/.oh-my-zsh/custom/plugins/gh-clone-complete                       # Expected: directory exists
+test -f ~/.p10k.zsh && echo "OK: p10k config"                         # Expected: OK
+test -f ~/.tmux.conf && echo "OK: tmux config"                        # Expected: OK
+test -f ~/.digrc && echo "OK: digrc"                                  # Expected: OK
+test -f ~/.inputrc && echo "OK: inputrc"                              # Expected: OK
+test -x ~/.lessfilter && echo "OK: lessfilter (executable)"           # Expected: OK
+test -f ~/.nanorc && echo "OK: nanorc"                                # Expected: OK
+test -f ~/.hushlogin && echo "OK: hushlogin"                          # Expected: OK
 ls ~/Library/Fonts/MesloLGS\ NF\ Regular.ttf                          # Expected: file exists (p10k font)
 ls ~/Library/Fonts/MesloLGSNerdFont-Regular.ttf 2>/dev/null \
   || ls ~/Library/Fonts/MesloLGLNerdFont-Regular.ttf                   # Expected: Nerd Font installed
@@ -690,7 +970,7 @@ defaults read com.googlecode.iterm2 TabStyleWithAutomaticOption        # Expecte
 
 ---
 
-### 5.7 — Install Claude Code (Native Binary)
+### 5.8 — Install Claude Code (Native Binary)
 
 Claude Code is installed as a native binary (not via npm). The native installer is idempotent — re-running it updates to the latest version. Claude Code requires an Anthropic Pro, Max, Teams, or Enterprise account.
 
@@ -1453,10 +1733,10 @@ After `.env` is populated, export all non-comment, non-empty lines so subsequent
 REPO_DIR="$(pwd)"
 ENV_FILE="${REPO_DIR}/.env"
 
+# Source .env using set -a (auto-export) instead of eval.
+# eval on .env lines is a code injection risk if values contain shell metacharacters.
 set -a
-while IFS= read -r line; do
-  eval "export $line"
-done < <(grep -v '^\s*#' "$ENV_FILE" | grep -v '^\s*$')
+source "$ENV_FILE"
 set +a
 
 # VERIFY: spot-check critical variables
@@ -1967,13 +2247,24 @@ INSTANT_PROMPT
 fi
 ```
 
-### 14.2 — Middle: Oh My Zsh Settings (already present)
+### 14.2 — Middle: Oh My Zsh Settings
 
-The following lines were set in Step 5.5 via `sed` and should already be in `~/.zshrc`. Verify they are present:
+The theme and plugins were set in Step 5.5. Now add the remaining Oh My Zsh settings that match the devcontainer. These use `sed` to uncomment and set values that Oh My Zsh's default `~/.zshrc` includes as commented-out examples:
+
+```bash
+sed -i '' 's/^# HYPHEN_INSENSITIVE=.*/HYPHEN_INSENSITIVE="true"/' ~/.zshrc
+sed -i '' 's/^# COMPLETION_WAITING_DOTS=.*/COMPLETION_WAITING_DOTS="true"/' ~/.zshrc
+sed -i '' 's/^# HIST_STAMPS=.*/HIST_STAMPS="yyyy-mm-dd"/' ~/.zshrc
+```
+
+Verify the theme, plugins, and settings are present:
 
 ```bash
 grep '^ZSH_THEME="powerlevel10k/powerlevel10k"' ~/.zshrc   # VERIFY: line exists
-grep '^plugins=(git z zsh-autosuggestions' ~/.zshrc          # VERIFY: line exists
+grep '^plugins=(zsh-syntax-highlighting' ~/.zshrc            # VERIFY: line exists
+grep '^HYPHEN_INSENSITIVE="true"' ~/.zshrc                   # VERIFY: line exists
+grep '^COMPLETION_WAITING_DOTS="true"' ~/.zshrc              # VERIFY: line exists
+grep '^HIST_STAMPS="yyyy-mm-dd"' ~/.zshrc                    # VERIFY: line exists
 ```
 
 ### 14.3 — After `source $ZSH/oh-my-zsh.sh`: User Configuration
@@ -1985,9 +2276,33 @@ Append each line only if it is not already present. Each `grep -q` guard prevent
 grep -q 'brew shellenv' ~/.zshrc || \
   echo 'eval $(/opt/homebrew/bin/brew shellenv)' >> ~/.zshrc
 
-# Powerlevel10k config (written by `p10k configure` wizard)
+# Powerlevel10k config (installed in Step 5.6)
 grep -q 'p10k.zsh' ~/.zshrc || \
   echo '[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh' >> ~/.zshrc
+
+# History size (match devcontainer)
+grep -q 'HISTSIZE=50000' ~/.zshrc || \
+  echo 'export HISTSIZE=50000' >> ~/.zshrc
+grep -q 'SAVEHIST=50000' ~/.zshrc || \
+  echo 'export SAVEHIST=50000' >> ~/.zshrc
+
+# Vim alias (use Neovim)
+grep -q 'alias vim=nvim' ~/.zshrc || \
+  echo 'alias vim=nvim' >> ~/.zshrc
+
+# Less pager configuration
+grep -q 'export LESS=' ~/.zshrc || \
+  echo 'export LESS="-R -F -X -i -J --mouse"' >> ~/.zshrc
+grep -q 'LESSHISTFILE' ~/.zshrc || \
+  echo 'export LESSHISTFILE="$HOME/.cache/lesshst"' >> ~/.zshrc
+grep -q 'LESSOPEN' ~/.zshrc || \
+  echo 'export LESSOPEN="|~/.lessfilter %s"' >> ~/.zshrc
+
+# Man pages with bat syntax highlighting
+grep -q 'MANPAGER' ~/.zshrc || \
+  echo 'export MANPAGER="sh -c '\''col -bx | bat -l man -p'\''"' >> ~/.zshrc
+grep -q 'BAT_THEME' ~/.zshrc || \
+  echo 'export BAT_THEME="Coldark-Dark"' >> ~/.zshrc
 
 # Bun
 grep -q 'BUN_INSTALL' ~/.zshrc || \
@@ -1998,6 +2313,10 @@ grep -q 'BUN_INSTALL/bin' ~/.zshrc || \
 # Bun completions
 grep -q '_bun' ~/.zshrc || \
   echo '[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"'  >> ~/.zshrc
+
+# gogcli (gog) zsh completion
+# OpenCode zsh completion
+opencode completion > /opt/homebrew/share/zsh/site-functions/_opencode 2>/dev/null || true
 
 # gogcli (gog) zsh completion
 gog completion zsh > /opt/homebrew/share/zsh/site-functions/_gog 2>/dev/null || true
