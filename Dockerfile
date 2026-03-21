@@ -96,7 +96,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Tailscale VPN
     tailscale \
     # Shell tools
-    bat fd-find ripgrep htop tree tmux file xxd \
+    bat bubblewrap fd-find ripgrep htop tree tmux file xxd \
     # Node.js
     nodejs \
     # Python
