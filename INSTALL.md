@@ -748,6 +748,7 @@ Configure sensible defaults for developer workflows. These settings are stored i
 | Unlimited scrollback | `Unlimited Scrollback` | `true` | Never lose build output or long log tails |
 | Left Option as Esc+ | `Option Key Sends` | `2` | Enables Alt+B / Alt+F word navigation in the shell |
 | Right Option as Esc+ | `Right Option Key Sends` | `2` | Same for the right Option key |
+| Notification alerts | `BounceIconInDockEnabled` | `true` | Enables Notification Center alerts for escape sequences |
 | Force dark theme | `TabStyleWithAutomaticOption` | `1` | Terminal stays dark regardless of macOS system appearance |
 
 **Option Key Sends values**: 0 = Normal, 1 = Meta, 2 = Esc+
@@ -789,6 +790,9 @@ if [ -f "$PLIST" ]; then
   plist_profile_set "Option Key Sends" integer 2
   plist_profile_set "Right Option Key Sends" integer 2
 
+  # Enable Notification Center alerts (required for Claude Code notifications in tmux)
+  plist_profile_set "BounceIconInDockEnabled" bool true
+
   # --- Global settings (application-level) ---
   # Force dark theme (don't follow system appearance)
   # Values: 0=Light, 1=Dark, 2=Light HC, 3=Dark HC, 4=Automatic, 5=Minimal
@@ -805,6 +809,12 @@ else
   echo "iTerm2 plist not found — skipping settings (run Step 5.3 first)"
 fi
 ```
+
+> **MANUAL STEP**: iTerm2 requires one additional setting for Claude Code notifications that cannot be set via plist:
+>
+> 1. Open **iTerm2 Settings** → **Profiles** → **Terminal**
+> 2. Click **"Filter Alerts"** and check **"Send escape sequence-generated alerts"**
+> 3. Verify iTerm2 has notification permissions in **System Settings** → **Notifications** → **iTerm2**
 
 ### 5.4 — Install Zsh Plugins
 
