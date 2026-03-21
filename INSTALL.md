@@ -2314,9 +2314,9 @@ grep -q 'BUN_INSTALL/bin' ~/.zshrc || \
 grep -q '_bun' ~/.zshrc || \
   echo '[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"'  >> ~/.zshrc
 
-# gogcli (gog) zsh completion
-# OpenCode zsh completion
-opencode completion > /opt/homebrew/share/zsh/site-functions/_opencode 2>/dev/null || true
+# OpenCode zsh completion (append to .zshrc — site-functions doesn't work with yargs completions)
+grep -q 'opencode-completions' ~/.zshrc || \
+  opencode completion >> ~/.zshrc
 
 # gogcli (gog) zsh completion
 gog completion zsh > /opt/homebrew/share/zsh/site-functions/_gog 2>/dev/null || true
