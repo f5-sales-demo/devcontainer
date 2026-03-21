@@ -1220,6 +1220,7 @@ COPY --chown=${USERNAME}:${USERNAME} configs/.tmux.conf /home/${USERNAME}/.tmux.
 COPY --chown=${USERNAME}:${USERNAME} configs/.nanorc /home/${USERNAME}/.nanorc
 COPY --chown=${USERNAME}:${USERNAME} configs/.lessfilter /home/${USERNAME}/.lessfilter
 COPY --chown=${USERNAME}:${USERNAME} configs/.digrc /home/${USERNAME}/.digrc
+COPY --chown=${USERNAME}:${USERNAME} configs/.aider.conf.yml /home/${USERNAME}/.aider.conf.yml
 RUN chmod +x /home/${USERNAME}/.lessfilter
 
 # ============================================================

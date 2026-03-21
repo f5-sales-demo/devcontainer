@@ -101,6 +101,7 @@ if [ -n "$LITELLM_API_KEY" ]; then
 fi
 if [ -n "$LITELLM_BASE_URL" ]; then
   export OPENAI_BASE_URL="${LITELLM_BASE_URL}/api/v1"
+  export OPENAI_API_BASE="${LITELLM_BASE_URL}/api/v1"
   export ANTHROPIC_BASE_URL="${LITELLM_BASE_URL}/anthropic"
 fi
 

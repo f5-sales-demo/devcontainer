@@ -216,6 +216,7 @@ brew_install go                # Go compiler (build terraform providers, CLI too
 brew_install terraform         # Infrastructure as Code for cloud resources
 brew_install neovim            # Terminal editor with LSP support
 brew_install uv                # Fast Python package manager (10-100x faster than pip)
+brew_install aider             # AI pair programming in your terminal
 brew_install dos2unix          # Convert Windows CRLF line endings to Unix LF
 
 # Cloud CLI
@@ -287,6 +288,7 @@ sslscan --version      # VERIFY: output contains "sslscan version"
 trufflehog --version   # VERIFY: output contains a version number
 ffmpeg -version        # VERIFY: output starts with "ffmpeg version"
 yt-dlp --version       # VERIFY: output contains a version string
+aider --version        # VERIFY: output contains a version number
 ```
 
 ---
@@ -946,6 +948,7 @@ cp configs/.nanorc ~/.nanorc
 cp configs/.lessfilter ~/.lessfilter
 chmod +x ~/.lessfilter
 touch ~/.hushlogin
+cp configs/.aider.conf.yml ~/.aider.conf.yml
 ```
 
 | File | Purpose |
@@ -956,6 +959,7 @@ touch ~/.hushlogin
 | `.lessfilter` | Syntax highlighting when viewing files with `less` |
 | `.nanorc` | Nano editor defaults |
 | `.hushlogin` | Suppress the "Last login" banner on new terminal sessions |
+| `.aider.conf.yml` | Aider AI pair programming defaults (model, dark mode) |
 
 ### Verify Terminal Environment
 
@@ -978,6 +982,7 @@ test -f ~/.inputrc && echo "OK: inputrc"                              # Expected
 test -x ~/.lessfilter && echo "OK: lessfilter (executable)"           # Expected: OK
 test -f ~/.nanorc && echo "OK: nanorc"                                # Expected: OK
 test -f ~/.hushlogin && echo "OK: hushlogin"                          # Expected: OK
+test -f ~/.aider.conf.yml && echo "OK: aider config"                  # Expected: OK
 ls ~/Library/Fonts/MesloLGS\ NF\ Regular.ttf                          # Expected: file exists (p10k font)
 ls ~/Library/Fonts/MesloLGSNerdFont-Regular.ttf 2>/dev/null \
   || ls ~/Library/Fonts/MesloLGLNerdFont-Regular.ttf                   # Expected: Nerd Font installed
