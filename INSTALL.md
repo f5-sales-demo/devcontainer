@@ -402,13 +402,29 @@ brew install --cask opencode-desktop
 
 ---
 
-## Step 4c — Configure macOS System Defaults
+## Step 4c — Install Google Antigravity
+
+Google Antigravity is a UI-based AI Coding Agent IDE. It runs only on macOS (not in the Linux container). Install via Homebrew Cask:
+
+```bash
+brew install --cask antigravity
+```
+
+VERIFY:
+
+```bash
+agy --version              # VERIFY: output contains a version number
+```
+
+---
+
+## Step 4d — Configure macOS System Defaults
 
 Configure macOS for developer workflows and long-running AI assistant tasks. These settings prevent sleep interruptions, speed up keyboard input, disable code-breaking text substitutions, and optimize the Finder and Dock for productivity.
 
 All commands are idempotent — `defaults write` overwrites existing values. Safe to re-run.
 
-### 4c.1 — Power and Sleep (prevents AI job interruptions)
+### 4d.1 — Power and Sleep (prevents AI job interruptions)
 
 > **MANUAL STEP**: Power management requires `sudo` which this guide does not use. Configure these settings through the GUI:
 >
@@ -418,7 +434,7 @@ All commands are idempotent — `defaults write` overwrites existing values. Saf
 >
 > This ensures long-running AI sessions, builds, and background tasks are never interrupted by sleep.
 
-### 4c.2 — Dock
+### 4d.2 — Dock
 
 ```bash
 echo "Configuring Dock..."
@@ -446,7 +462,7 @@ killall Dock
 echo "Dock configured and restarted."
 ```
 
-### 4c.3 — Finder
+### 4d.3 — Finder
 
 ```bash
 echo "Configuring Finder..."
@@ -477,7 +493,7 @@ killall Finder
 echo "Finder configured and restarted."
 ```
 
-### 4c.4 — Keyboard
+### 4d.4 — Keyboard
 
 These settings are critical for developers — smart quotes and dashes silently corrupt code when pasting, and slow key repeat wastes time navigating.
 
@@ -511,7 +527,7 @@ defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 echo "Keyboard configured."
 ```
 
-### 4c.5 — Trackpad
+### 4d.5 — Trackpad
 
 ```bash
 echo "Configuring trackpad..."
@@ -526,7 +542,7 @@ defaults write NSGlobalDomain com.apple.trackpad.scaling -float 2.5
 echo "Trackpad configured."
 ```
 
-### 4c.6 — Screenshots
+### 4d.6 — Screenshots
 
 ```bash
 echo "Configuring screenshots..."
@@ -541,7 +557,7 @@ defaults write com.apple.screencapture type -string "png"
 echo "Screenshots will save to ~/Screenshots as PNG."
 ```
 
-### 4c.7 — Miscellaneous
+### 4d.7 — Miscellaneous
 
 ```bash
 echo "Configuring miscellaneous settings..."
