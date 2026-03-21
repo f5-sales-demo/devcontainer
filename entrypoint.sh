@@ -53,7 +53,7 @@ if [ -n "$GOG_CREDENTIALS_JSON" ]; then
     echo "$GOG_TOKEN_JSON" | base64 -d >"$_gog_tmp"
     export GOG_KEYRING_BACKEND=file
     export GOG_KEYRING_PASSWORD="${GOG_KEYRING_PASSWORD:-gogcli-container}"
-    gog auth tokens import "$_gog_tmp" 2>/dev/null || true
+    gog auth tokens import "$_gog_tmp" >/dev/null 2>&1 || true
     rm -f "$_gog_tmp"
   fi
 fi
