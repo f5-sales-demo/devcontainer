@@ -222,6 +222,7 @@ brew_install dos2unix          # Convert Windows CRLF line endings to Unix LF
 brew_install azure-cli         # Azure resource management
 brew install --cask google-cloud-sdk  # Google Cloud CLI (gcloud, gsutil, bq)
 brew_install gogcli            # Google Suite CLI — Gmail, Calendar, Drive, Contacts, Tasks, Sheets (gog)
+brew_install signal-cli        # Signal Instant Messenger
 
 # Terraform ecosystem
 brew_install tflint            # Terraform linter (catches errors before plan)
@@ -316,6 +317,14 @@ npm install -g @typescript/native-preview     # Provides tsgo binary (TypeScript
 # Code formatters (mirrors devcontainer toolset)
 npm install -g prettier                       # Multi-language code formatter
 npm install -g @biomejs/biome                 # Fast JS/TS/JSON linter and formatter
+
+# Presentation and React tools
+npm install -g pptxgenjs                      # PowerPoint generation
+npm install -g react-icons                     # Icon library for React
+npm install -g react                          # React core
+npm install -g react-dom                      # React DOM
+npm install -g sharp                          # Image processing
+npm install -g markitdown                     # Markdown processing
 ```
 
 ### Verify npm Global Packages
@@ -522,6 +531,77 @@ fi
 
 Without this font, Powerlevel10k's prompt will display placeholder rectangles instead of icons and branch symbols.
 
+### 5.3a — Configure iTerm2 Developer Settings
+
+Configure sensible defaults for developer workflows. These settings are stored in the same plist modified by Step 5.3 and use the same PlistBuddy approach for profile-specific keys. The global appearance theme uses `defaults write` since it is an application-level (not profile-level) setting.
+
+**Prerequisites**: Step 5.3 must have run first — that step handles launching iTerm2 to generate the plist if needed, and quitting a running instance to avoid the in-memory overwrite race condition.
+
+| Setting | Key | Value | Why |
+| ------- | --- | ----- | --- |
+| Silence bell | `Silence Bell` | `true` | Stops the audible beep on tab completion miss, Ctrl+G, etc. |
+| Disable visual bell | `Visual Bell` | `false` | Screen flash is distracting; silence is enough |
+| Unlimited scrollback | `Unlimited Scrollback` | `true` | Never lose build output or long log tails |
+| Left Option as Esc+ | `Option Key Sends` | `2` | Enables Alt+B / Alt+F word navigation in the shell |
+| Right Option as Esc+ | `Right Option Key Sends` | `2` | Same for the right Option key |
+| Force dark theme | `TabStyleWithAutomaticOption` | `1` | Terminal stays dark regardless of macOS system appearance |
+
+**Option Key Sends values**: 0 = Normal, 1 = Meta, 2 = Esc+
+
+**TabStyleWithAutomaticOption values**: 0 = Light, 1 = Dark, 2 = Light High Contrast, 3 = Dark High Contrast, 4 = Automatic (follows system), 5 = Minimal
+
+```bash
+PLIST="$HOME/Library/Preferences/com.googlecode.iterm2.plist"
+
+if [ -f "$PLIST" ]; then
+  echo "Configuring iTerm2 developer settings..."
+
+  # --- Profile settings (New Bookmarks → default profile) ---
+  # Helper: idempotently set a key in the default profile.
+  # Falls back to Add if the key does not exist yet (fresh plist).
+  plist_profile_set() {
+    local key="$1" type="$2" val="$3"
+    local current
+    current="$(/usr/libexec/PlistBuddy -c "Print :\"New Bookmarks\":0:\"$key\"" "$PLIST" 2>/dev/null)"
+    if [ "$current" = "$val" ]; then
+      echo "  Kept:    $key (already $val)"
+    else
+      /usr/libexec/PlistBuddy -c "Set :\"New Bookmarks\":0:\"$key\" $val" "$PLIST" 2>/dev/null \
+        || /usr/libexec/PlistBuddy -c "Add :\"New Bookmarks\":0:\"$key\" $type $val" "$PLIST"
+      echo "  Updated: $key → $val"
+    fi
+  }
+
+  # Silence bell (no audible beep)
+  plist_profile_set "Silence Bell" bool true
+
+  # Disable visual bell flash
+  plist_profile_set "Visual Bell" bool false
+
+  # Unlimited scrollback buffer
+  plist_profile_set "Unlimited Scrollback" bool true
+
+  # Option keys send Esc+ (enables Alt+B, Alt+F word navigation)
+  plist_profile_set "Option Key Sends" integer 2
+  plist_profile_set "Right Option Key Sends" integer 2
+
+  # --- Global settings (application-level) ---
+  # Force dark theme (don't follow system appearance)
+  # Values: 0=Light, 1=Dark, 2=Light HC, 3=Dark HC, 4=Automatic, 5=Minimal
+  CURRENT_THEME="$(defaults read com.googlecode.iterm2 TabStyleWithAutomaticOption 2>/dev/null)"
+  if [ "$CURRENT_THEME" = "1" ]; then
+    echo "  Kept:    Theme (already Dark)"
+  else
+    defaults write com.googlecode.iterm2 TabStyleWithAutomaticOption -int 1
+    echo "  Updated: Theme → Dark"
+  fi
+
+  echo "iTerm2 developer settings configured."
+else
+  echo "iTerm2 plist not found — skipping settings (run Step 5.3 first)"
+fi
+```
+
 ### 5.4 — Install Zsh Plugins
 
 These plugins provide fish-shell-like autosuggestions and real-time syntax highlighting. Clone them into Oh My Zsh's custom plugins directory.
@@ -536,6 +616,11 @@ These plugins provide fish-shell-like autosuggestions and real-time syntax highl
 [ -d ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting ] || \
   git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
     ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+
+# Claude Code zsh completions (mirrors devcontainer Dockerfile)
+[ -d ~/.oh-my-zsh/custom/plugins/zsh-claudecode-completion ] || \
+  git clone --depth=1 https://github.com/wbingli/zsh-claudecode-completion.git \
+    ~/.oh-my-zsh/custom/plugins/zsh-claudecode-completion
 ```
 
 ### 5.5 — Configure `~/.zshrc` for Oh My Zsh
@@ -551,14 +636,14 @@ sed -i '' 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
 **Plugins** — replace the default `plugins=(git)` line:
 
 ```bash
-sed -i '' 's/^plugins=(.*/plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc
+sed -i '' 's/^plugins=(.*/plugins=(git z zsh-autosuggestions zsh-syntax-highlighting zsh-claudecode-completion)/' ~/.zshrc
 ```
 
 VERIFY both changes applied:
 
 ```bash
 grep '^ZSH_THEME=' ~/.zshrc    # VERIFY: output is ZSH_THEME="powerlevel10k/powerlevel10k"
-grep '^plugins=' ~/.zshrc       # VERIFY: output is plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)
+grep '^plugins=' ~/.zshrc       # VERIFY: output includes zsh-claudecode-completion
 ```
 
 | Plugin | What It Does |
@@ -567,6 +652,7 @@ grep '^plugins=' ~/.zshrc       # VERIFY: output is plugins=(git z zsh-autosugge
 | `z` | Frecency-based directory jumping (`z project` jumps to most-used matching path) |
 | `zsh-autosuggestions` | Fish-like inline suggestions from command history (accept with →) |
 | `zsh-syntax-highlighting` | Real-time color coding of commands as you type (green = valid, red = error) |
+| `zsh-claudecode-completion` | Tab completions for Claude Code CLI commands and flags |
 
 ### 5.6 — Configure Powerlevel10k Prompt
 
@@ -591,15 +677,54 @@ ls ~/Library/Fonts/MesloLGSNerdFont-Regular.ttf 2>/dev/null \
   || ls ~/Library/Fonts/MesloLGLNerdFont-Regular.ttf                   # Expected: Nerd Font installed
 /usr/libexec/PlistBuddy -c 'Print :"New Bookmarks":0:"Normal Font"' \
   ~/Library/Preferences/com.googlecode.iterm2.plist                    # Expected: MesloLGS-NF-Regular 13
+/usr/libexec/PlistBuddy -c 'Print :"New Bookmarks":0:"Silence Bell"' \
+  ~/Library/Preferences/com.googlecode.iterm2.plist                    # Expected: true
+/usr/libexec/PlistBuddy -c 'Print :"New Bookmarks":0:"Visual Bell"' \
+  ~/Library/Preferences/com.googlecode.iterm2.plist                    # Expected: false
+/usr/libexec/PlistBuddy -c 'Print :"New Bookmarks":0:"Unlimited Scrollback"' \
+  ~/Library/Preferences/com.googlecode.iterm2.plist                    # Expected: true
+/usr/libexec/PlistBuddy -c 'Print :"New Bookmarks":0:"Option Key Sends"' \
+  ~/Library/Preferences/com.googlecode.iterm2.plist                    # Expected: 2
+defaults read com.googlecode.iterm2 TabStyleWithAutomaticOption        # Expected: 1 (Dark)
 ```
 
 ---
 
-## Step 6 — Install Claude Code Plugins (Skills for Oh-My-OpenCode)
+### 5.7 — Install Claude Code (Native Binary)
 
-Oh-My-OpenCode scans `~/.claude/plugins/` for Claude Code plugins and loads their SKILL.md files as available skills. Claude Code itself does **not** need to be installed — only the plugin directory structure is required.
+Claude Code is installed as a native binary (not via npm). The native installer is idempotent — re-running it updates to the latest version. Claude Code requires an Anthropic Pro, Max, Teams, or Enterprise account.
 
-This step clones the official plugin marketplace, copies each enabled plugin into the cache directory, clones the superpowers framework separately, and generates the JSON registry files that oh-my-opencode reads at startup.
+```bash
+if command -v claude >/dev/null 2>&1; then
+  echo "Claude Code already installed: $(claude --version 2>/dev/null)"
+else
+  echo "Installing Claude Code native binary..."
+  curl -fsSL https://claude.ai/install.sh | bash
+fi
+
+# Verify
+claude --version
+# Expected: output contains "Claude Code" followed by a version number
+```
+
+After installation, the binary lives at `~/.local/bin/claude`. First-time users should run `claude` interactively to complete the browser-based OAuth login. The `~/.claude/` directory is created on first run.
+
+---
+
+## Step 6 — Install Claude Code Plugins and Settings
+
+The `~/.claude/` directory is the **single source of truth** for the plugin ecosystem shared by both Claude Code and OpenCode. Oh-My-OpenCode reads directly from Claude Code's plugin infrastructure:
+
+| File | What Oh-My-OpenCode reads |
+| ---- | ------------------------- |
+| `~/.claude/plugins/installed_plugins.json` | Plugin registry (discovers all installed plugins) |
+| `~/.claude/settings.json` → `enabledPlugins` | Which plugins are active |
+| `~/.claude/plugins/cache/<plugin>/.claude-plugin/plugin.json` | Plugin manifests (commands, agents, skills, hooks, MCP servers) |
+| `~/.claude/plugins/cache/<plugin>/skills/SKILL.md` | Skill definitions |
+
+There is **no separate plugin installation for OpenCode** — installing plugins here serves both tools. OpenCode's own config (`~/.config/opencode/`) handles agent routing and provider settings only, not plugins.
+
+This step clones the official plugin marketplace, copies each enabled plugin into the cache directory, clones the superpowers framework separately, generates the JSON registry files, and merges settings into `~/.claude/settings.json` and `~/.claude.json`.
 
 ### 6.1 — Clone the Official Plugin Marketplace
 
@@ -710,12 +835,34 @@ printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropi
 printf '{"fetchedAt":"%s","plugins":[]}' "$TIMESTAMP" > "${PLUGIN_BASE}/blocklist.json"
 ```
 
-### 6.4 — Write `~/.claude/settings.json`
+### 6.4 — Merge Container Settings into `~/.claude/settings.json`
 
-This tells oh-my-opencode which plugins are enabled. Write the file `~/.claude/settings.json`:
+This step idempotently merges the container's Claude Code settings (model, status line, permissions, env vars, plugins, accessibility) into the local `~/.claude/settings.json`. If the file already exists, **local values win on conflict** — any user-specific settings (like `voiceEnabled`) are preserved.
 
-```json
+**Shared settings note**: `~/.claude/settings.json` is read by **both** Claude Code and Oh-My-OpenCode. The `enabledPlugins` key controls which plugins are active for both tools. The other keys in this file (model, statusLine, permissions, env, preferences) are Claude Code-specific — OpenCode's equivalent settings live in `~/.config/opencode/opencode.json` (Step 9).
+
+The `jq -s '.[0] * .[1]'` pattern uses the container settings as the base (`.[0]`) and the local file as the override (`.[1]`), so existing local keys take precedence.
+
+```bash
+REPO_DIR="$(pwd)"
+
+# Container settings adapted for local laptop:
+# - statusLine.command points to ~/.claude/statusline.sh (not /opt/claude-config/)
+CONTAINER_SETTINGS="$(cat <<SETTINGS
 {
+  "statusLine": { "type": "command", "command": "${HOME}/.claude/statusline.sh" },
+  "model": "opus",
+  "spinnerTipsEnabled": false,
+  "terminalProgressBarEnabled": false,
+  "showTurnDuration": false,
+  "prefersReducedMotion": true,
+  "companyAnnouncements": [],
+  "teammateMode": "tmux",
+  "defaultMode": "bypassPermissions",
+  "skipDangerousModePermissionPrompt": true,
+  "permissions": {
+    "allow": ["Bash", "Edit", "Write", "mcp__*"]
+  },
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
@@ -731,11 +878,103 @@ This tells oh-my-opencode which plugins are enabled. Write the file `~/.claude/s
     "skill-creator@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "hookify@claude-plugins-official": true
-  }
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "ANTHROPIC_SMALL_FAST_MODEL": "claude-haiku-4-5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-6",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4-6"
+  },
+  "preferences": {
+    "tmuxSplitPanes": true
+  },
+  "autoUpdatesChannel": "latest"
 }
+SETTINGS
+)"
+
+LOCAL_FILE="$HOME/.claude/settings.json"
+mkdir -p "$HOME/.claude"
+
+if [ -f "$LOCAL_FILE" ]; then
+  # Deep merge: container as base, local overrides (local wins on conflict)
+  if jq -s '.[0] * .[1]' <(echo "$CONTAINER_SETTINGS") "$LOCAL_FILE" > "${LOCAL_FILE}.tmp" \
+     && [ -s "${LOCAL_FILE}.tmp" ]; then
+    mv "${LOCAL_FILE}.tmp" "$LOCAL_FILE"
+    echo "Merged container settings into existing $LOCAL_FILE (local values preserved)"
+  else
+    echo "ERROR: jq merge failed — $LOCAL_FILE left unchanged"
+    rm -f "${LOCAL_FILE}.tmp"
+  fi
+else
+  echo "$CONTAINER_SETTINGS" | jq . > "$LOCAL_FILE"
+  echo "Created $LOCAL_FILE from container defaults"
+fi
 ```
 
-### Verify Plugin Installation
+### 6.4a — Install Status Line Script
+
+The container runs a custom status line showing context window usage, Git branch, and working tree state. Install the same script locally so the `statusLine.command` in settings.json works:
+
+```bash
+REPO_DIR="$(pwd)"
+SRC="${REPO_DIR}/claude-config/statusline.sh"
+DEST="$HOME/.claude/statusline.sh"
+
+if [ -f "$SRC" ]; then
+  cp "$SRC" "$DEST"
+  chmod +x "$DEST"
+  echo "Installed statusline.sh to $DEST"
+else
+  echo "WARNING: ${SRC} not found — skipping statusline install"
+fi
+```
+
+### 6.5 — Merge MCP Servers into `~/.claude.json`
+
+Selectively merge container state into the local `~/.claude.json`. This does **not** overwrite user preferences (theme, tips history) or container-specific project paths. It only sets marketplace flags and adds the Chrome DevTools MCP server if not already present.
+
+```bash
+LOCAL_FILE="$HOME/.claude.json"
+
+if [ -f "$LOCAL_FILE" ]; then
+  if jq '
+    .hasCompletedOnboarding = true
+    | .autoUpdates = true
+    | .officialMarketplaceAutoInstallAttempted = true
+    | .officialMarketplaceAutoInstalled = true
+    | .mcpServers = ((.mcpServers // {}) + (
+        if (.mcpServers // {} | has("chrome-devtools")) then {}
+        else {"chrome-devtools": {"command":"npx","args":["-y","chrome-devtools-mcp@0.20.2","--browserUrl=http://localhost:9222"]}}
+        end
+      ))
+  ' "$LOCAL_FILE" > "${LOCAL_FILE}.tmp" && [ -s "${LOCAL_FILE}.tmp" ]; then
+    mv "${LOCAL_FILE}.tmp" "$LOCAL_FILE"
+    echo "Merged MCP servers and marketplace flags into $LOCAL_FILE"
+  else
+    echo "ERROR: jq merge failed — $LOCAL_FILE left unchanged"
+    rm -f "${LOCAL_FILE}.tmp"
+  fi
+else
+  echo "WARNING: $LOCAL_FILE does not exist — skipping (Claude Code creates this on first run)"
+fi
+```
+
+### 6.5a — Pre-cache Chrome DevTools MCP
+
+Pre-download the `chrome-devtools-mcp` package so the first MCP connection is instant. This matches the container's build-time caching:
+
+```bash
+echo "Pre-caching chrome-devtools-mcp..."
+if npx -y chrome-devtools-mcp@0.20.2 -- --version 2>&1; then
+  echo "chrome-devtools-mcp cached."
+else
+  echo "WARNING: Failed to pre-cache chrome-devtools-mcp — it will be downloaded on first use"
+fi
+```
+
+### Verify Plugin and Settings Installation
 
 ```bash
 # Check installed_plugins.json has all 14 plugins
@@ -746,8 +985,21 @@ jq 'length' ~/.claude/plugins/installed_plugins.json
 find ~/.claude/plugins/cache -name "SKILL.md" -type f | wc -l
 # Expected: 19 (5 from official plugins + 14 from superpowers)
 
+# Check settings.json has full container settings merged
+jq '.enabledPlugins | keys | length' ~/.claude/settings.json  # Expected: 14
+jq '.model' ~/.claude/settings.json                            # Expected: "opus"
+jq '.statusLine.type' ~/.claude/settings.json                  # Expected: "command"
+jq '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' ~/.claude/settings.json  # Expected: "1"
+
+# Check statusline.sh is installed and executable
+test -x ~/.claude/statusline.sh && echo "OK: statusline.sh" || echo "MISSING: statusline.sh"
+
+# Check .claude.json has chrome-devtools MCP
+jq '.mcpServers | has("chrome-devtools")' ~/.claude.json       # Expected: true
+
 # Check all files are user-owned
 ls -la ~/.claude/settings.json
+ls -la ~/.claude/statusline.sh
 ls -la ~/.claude/plugins/installed_plugins.json
 ```
 
@@ -946,10 +1198,117 @@ if [ -f "$OPENCODE_JSON" ]; then
   [ -n "$_OC_BASE_URL" ] && env_set LITELLM_BASE_URL "$_OC_BASE_URL"
 fi
 
-# --- gogcli (gog) credentials and token ---
+echo "Auto-detection complete."
+```
+
+### 8.3 — Google CLI Auth (gogcli + gws)
+
+This section handles bidirectional credential sync for `gogcli` (gog) and Google Workspace CLI (gws). It is idempotent and handles three scenarios per tool:
+
+| Local Auth | `.env` Credentials | Action |
+| ---------- | ----------------- | ------ |
+| Yes | Any | Export to `.env` (keep in sync) |
+| No | Yes | Import from `.env` to local config |
+| No | No | Print optional setup instructions |
+
+```bash
+REPO_DIR="$(pwd)"
+ENV_FILE="${REPO_DIR}/.env"
+
+# ── Helpers (re-defined for standalone execution of this code block) ──
+env_get() {
+  grep "^${1}=" "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2-
+}
+
+env_set() {
+  local key="$1" val="$2"
+  if [ -z "$val" ]; then return; fi
+  if grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
+    local current
+    current="$(grep "^${key}=" "$ENV_FILE" | head -1 | cut -d= -f2-)"
+    current="${current%\"}"
+    current="${current#\"}"
+    case "$current" in
+      ""|sk-example-api-key-here|you@example.com|"Example Name"|ghp_example-*|tskey-auth-example-*|https://proxy.example.com|https://proxy.example.com/*)
+        sed -i '' "s|^${key}=.*|${key}=${val}|" "$ENV_FILE"
+        echo "  Updated: ${key}"
+        ;;
+      *)
+        echo "  Kept:    ${key} (already set)"
+        ;;
+    esac
+  else
+    echo "${key}=${val}" >> "$ENV_FILE"
+    echo "  Added:   ${key}"
+  fi
+}
+
+brew_install() {
+  local pkg="$1"
+  brew install "$pkg" 2>&1 || {
+    echo "  Retrying $pkg install..."
+    brew untap homebrew/core 2>/dev/null; brew install "$pkg"
+  }
+}
+
+# =====================================================================
+# gogcli (gog) — ensure installed, authenticated, and .env populated
+# =====================================================================
+echo ""
+echo "── Google CLI: gogcli (gog) ──"
+
+if ! command -v gog >/dev/null 2>&1; then
+  echo "  Installing gogcli via Homebrew..."
+  brew_install gogcli
+fi
+
+_GOG_AUTHED=false
 if command -v gog >/dev/null 2>&1 && gog auth list --plain >/dev/null 2>&1; then
   _GOG_EMAIL="$(gog auth list --plain 2>/dev/null | head -1 | cut -f1)"
-  [ -n "$_GOG_EMAIL" ] && env_set GOG_ACCOUNT "$_GOG_EMAIL"
+  if [ -n "$_GOG_EMAIL" ]; then
+    _GOG_AUTHED=true
+    echo "  Authenticated: $_GOG_EMAIL"
+  fi
+fi
+
+if [ "$_GOG_AUTHED" = false ]; then
+  # Try to restore from .env
+  _ENV_GOG_CREDS="$(env_get GOG_CREDENTIALS_JSON)"
+  _ENV_GOG_TOKEN="$(env_get GOG_TOKEN_JSON)"
+
+  if [ -n "$_ENV_GOG_CREDS" ] && [ -n "$_ENV_GOG_TOKEN" ]; then
+    echo "  Not authenticated locally — restoring from .env..."
+    _GOG_TMP_CREDS="$(mktemp)"
+    _GOG_TMP_TOKEN="$(mktemp)"
+    echo "$_ENV_GOG_CREDS" | base64 -d > "$_GOG_TMP_CREDS"
+    echo "$_ENV_GOG_TOKEN" | base64 -d > "$_GOG_TMP_TOKEN"
+    gog auth credentials set "$_GOG_TMP_CREDS" 2>&1 \
+      || echo "  WARNING: gog auth credentials set failed"
+    gog auth tokens import "$_GOG_TMP_TOKEN" 2>&1 \
+      || echo "  WARNING: gog auth tokens import failed"
+    rm -f "$_GOG_TMP_CREDS" "$_GOG_TMP_TOKEN"
+
+    # Verify import succeeded
+    if gog auth list --plain >/dev/null 2>&1; then
+      _GOG_EMAIL="$(gog auth list --plain 2>/dev/null | head -1 | cut -f1)"
+      _GOG_AUTHED=true
+      echo "  Restored from .env: $_GOG_EMAIL"
+    else
+      echo "  WARNING: restore from .env failed — credentials may be expired."
+    fi
+  else
+    echo "  Not authenticated and no credentials in .env."
+    echo "  OPTIONAL: to enable gogcli, run:"
+    echo "    gog auth credentials set ~/Downloads/client_secret_*.json"
+    echo "    gog auth add you@gmail.com"
+    echo "  Then re-run this step."
+  fi
+fi
+
+# Export to .env if authenticated (idempotent — env_set skips existing values)
+if [ "$_GOG_AUTHED" = true ]; then
+  env_set GOG_ACCOUNT "$_GOG_EMAIL"
+  env_set GOG_KEYRING_PASSWORD "container"
 
   _GOG_CREDS_PATH="$HOME/Library/Application Support/gogcli/credentials.json"
   if [ -f "$_GOG_CREDS_PATH" ]; then
@@ -967,35 +1326,98 @@ if command -v gog >/dev/null 2>&1 && gog auth list --plain >/dev/null 2>&1; then
   fi
 fi
 
-# --- Google Workspace CLI (gws) credentials ---
+# =====================================================================
+# Google Workspace CLI (gws) — ensure installed, authenticated, .env populated
+# =====================================================================
+echo ""
+echo "── Google CLI: gws (Google Workspace CLI) ──"
+
+if ! command -v gws >/dev/null 2>&1; then
+  echo "  Installing @googleworkspace/cli via npm..."
+  npm install -g @googleworkspace/cli
+fi
+
+_GWS_AUTHED=false
 _GWS_CONFIG="$HOME/.config/gws"
-if [ -f "$_GWS_CONFIG/client_secret.json" ]; then
-  _GWS_CS_B64="$(base64 < "$_GWS_CONFIG/client_secret.json")"
-  [ -n "$_GWS_CS_B64" ] && env_set GWS_CLIENT_SECRET_JSON "$_GWS_CS_B64"
-fi
-if [ -f "$_GWS_CONFIG/credentials.enc" ]; then
-  _GWS_KEY="$(security find-generic-password -s "gws-cli" -w 2>/dev/null || cat "$_GWS_CONFIG/.encryption_key" 2>/dev/null)"
-  [ -n "$_GWS_KEY" ] && env_set GWS_ENCRYPTION_KEY "$_GWS_KEY"
-
-  _GWS_ENC_B64="$(base64 < "$_GWS_CONFIG/credentials.enc")"
-  [ -n "$_GWS_ENC_B64" ] && env_set GWS_CREDENTIALS_ENC "$_GWS_ENC_B64"
-fi
-if [ -f "$_GWS_CONFIG/token_cache.json" ]; then
-  _GWS_TC_B64="$(base64 < "$_GWS_CONFIG/token_cache.json")"
-  [ -n "$_GWS_TC_B64" ] && env_set GWS_TOKEN_CACHE "$_GWS_TC_B64"
+if command -v gws >/dev/null 2>&1 && [ -f "$_GWS_CONFIG/client_secret.json" ] && [ -f "$_GWS_CONFIG/credentials.enc" ]; then
+  _GWS_AUTHED=true
+  echo "  Authenticated (credentials.enc present)"
 fi
 
-echo "Auto-detection complete."
+if [ "$_GWS_AUTHED" = false ]; then
+  # Try to restore from .env
+  _ENV_GWS_CS="$(env_get GWS_CLIENT_SECRET_JSON)"
+  _ENV_GWS_KEY="$(env_get GWS_ENCRYPTION_KEY)"
+  _ENV_GWS_ENC="$(env_get GWS_CREDENTIALS_ENC)"
+
+  if [ -n "$_ENV_GWS_CS" ] && [ -n "$_ENV_GWS_KEY" ] && [ -n "$_ENV_GWS_ENC" ]; then
+    echo "  Not authenticated locally — restoring from .env..."
+    mkdir -p "$_GWS_CONFIG"
+    echo "$_ENV_GWS_CS" | base64 -d > "$_GWS_CONFIG/client_secret.json"
+    echo "$_ENV_GWS_KEY" > "$_GWS_CONFIG/.encryption_key"
+    echo "$_ENV_GWS_ENC" | base64 -d > "$_GWS_CONFIG/credentials.enc"
+    chmod 600 "$_GWS_CONFIG/client_secret.json" "$_GWS_CONFIG/.encryption_key" "$_GWS_CONFIG/credentials.enc"
+
+    # Restore token cache if available
+    _ENV_GWS_TC="$(env_get GWS_TOKEN_CACHE)"
+    if [ -n "$_ENV_GWS_TC" ]; then
+      echo "$_ENV_GWS_TC" | base64 -d > "$_GWS_CONFIG/token_cache.json"
+      chmod 600 "$_GWS_CONFIG/token_cache.json"
+    fi
+
+    _GWS_AUTHED=true
+    echo "  Restored from .env"
+  else
+    echo "  Not authenticated and no credentials in .env."
+    echo "  OPTIONAL: to enable gws, run:"
+    echo "    gws auth setup --login"
+    echo "  Then re-run this step."
+  fi
+fi
+
+# Export to .env if authenticated (idempotent — env_set skips existing values)
+if [ "$_GWS_AUTHED" = true ]; then
+  if [ -f "$_GWS_CONFIG/client_secret.json" ]; then
+    _GWS_CS_B64="$(base64 < "$_GWS_CONFIG/client_secret.json")"
+    [ -n "$_GWS_CS_B64" ] && env_set GWS_CLIENT_SECRET_JSON "$_GWS_CS_B64"
+  fi
+  if [ -f "$_GWS_CONFIG/credentials.enc" ]; then
+    _GWS_KEY="$(security find-generic-password -s "gws-cli" -w 2>/dev/null || cat "$_GWS_CONFIG/.encryption_key" 2>/dev/null)"
+    [ -n "$_GWS_KEY" ] && env_set GWS_ENCRYPTION_KEY "$_GWS_KEY"
+    _GWS_ENC_B64="$(base64 < "$_GWS_CONFIG/credentials.enc")"
+    [ -n "$_GWS_ENC_B64" ] && env_set GWS_CREDENTIALS_ENC "$_GWS_ENC_B64"
+  fi
+  if [ -f "$_GWS_CONFIG/token_cache.json" ]; then
+    _GWS_TC_B64="$(base64 < "$_GWS_CONFIG/token_cache.json")"
+    [ -n "$_GWS_TC_B64" ] && env_set GWS_TOKEN_CACHE "$_GWS_TC_B64"
+  fi
+fi
 ```
 
-### 8.3 — Prompt for Required Manual Variables
+### 8.4 — Prompt for Required Manual Variables
 
-The two AI proxy variables (`LITELLM_API_KEY`, `LITELLM_BASE_URL`) cannot be auto-detected from command-line tools. Step 8.2 already attempted to recover them from an existing `opencode.json`. If they are still missing or placeholders after that, the AI agent **must ask the user** for the values before proceeding.
+OpenCode supports two authentication modes:
+
+| Mode | Required Variables | What's Available |
+| ---- | ----------------- | ---------------- |
+| **LiteLLM proxy** | `LITELLM_API_KEY` + `LITELLM_BASE_URL` | Multiple providers (Anthropic, OpenAI, X.ai via proxy) |
+| **OAuth (direct)** | `CLAUDE_CODE_OAUTH_TOKEN` | Anthropic models only (Opus, Sonnet, Haiku) |
+
+At least one mode must be configured. If `CLAUDE_CODE_OAUTH_TOKEN` is already set, the LiteLLM variables are optional. Step 8.2 attempted to recover LiteLLM values from an existing `opencode.json`.
 
 ```bash
 REPO_DIR="$(pwd)"
 ENV_FILE="${REPO_DIR}/.env"
 
+# Check if OAuth token is set (alternative to LiteLLM proxy)
+_OAUTH="$(grep "^CLAUDE_CODE_OAUTH_TOKEN=" "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2-)"
+
+if [ -n "$_OAUTH" ]; then
+  echo "CLAUDE_CODE_OAUTH_TOKEN is set — OAuth mode available (Anthropic models only)"
+  echo "LiteLLM proxy variables are optional in this mode."
+fi
+
+# Check LiteLLM variables
 MISSING=""
 for VAR in LITELLM_API_KEY LITELLM_BASE_URL; do
   VAL="$(grep "^${VAR}=" "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2-)"
@@ -1004,20 +1426,24 @@ for VAR in LITELLM_API_KEY LITELLM_BASE_URL; do
   esac
 done
 
-if [ -n "$MISSING" ]; then
+if [ -n "$MISSING" ] && [ -z "$_OAUTH" ]; then
   echo "The following required variables are missing or have placeholder values in .env:"
   echo " $MISSING"
   echo ""
-  echo "These could not be auto-detected from command-line tools or an existing opencode.json."
-  echo "Ask the user for LITELLM_API_KEY and LITELLM_BASE_URL, then update .env before proceeding."
-  # AI agent: stop here and ask the user for the missing values.
-  # Use env_set to write each value to .env once provided.
+  echo "Neither LITELLM_API_KEY nor CLAUDE_CODE_OAUTH_TOKEN is configured."
+  echo "Set one of these authentication methods before proceeding."
+  echo ""
+  echo "Option 1 (LiteLLM proxy): Ask the user for LITELLM_API_KEY and LITELLM_BASE_URL"
+  echo "Option 2 (OAuth direct):  Set CLAUDE_CODE_OAUTH_TOKEN from Claude Code auth"
+  # AI agent: stop here and ask the user which auth method to use.
+elif [ -n "$MISSING" ]; then
+  echo "LiteLLM proxy not configured — Steps 9/10 will use OAuth mode (Anthropic models only)"
 else
-  echo "All required variables are set in .env"
+  echo "All variables are set — Steps 9/10 will use LiteLLM proxy mode (multi-provider)"
 fi
 ```
 
-### 8.4 — Source `.env` into the Current Shell Session
+### 8.5 — Source `.env` into the Current Shell Session
 
 After `.env` is populated, export all non-comment, non-empty lines so subsequent steps (Steps 9, 14) can reference the variables:
 
@@ -1034,7 +1460,15 @@ done < <(grep -v '^\s*#' "$ENV_FILE" | grep -v '^\s*$')
 set +a
 
 # VERIFY: spot-check critical variables
-echo "LITELLM_API_KEY=${LITELLM_API_KEY:0:10}..."  # VERIFY: starts with "sk-" (truncated for safety)
+if [ -n "$LITELLM_API_KEY" ]; then
+  echo "Mode: LiteLLM proxy"
+  echo "LITELLM_API_KEY=${LITELLM_API_KEY:0:10}..."
+elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+  echo "Mode: OAuth (Anthropic direct)"
+  echo "CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN:0:15}..."
+else
+  echo "WARNING: No auth configured"
+fi
 echo "TZ=$TZ"                                       # VERIFY: a valid IANA timezone
 echo "GIT_AUTHOR_EMAIL=$GIT_AUTHOR_EMAIL"           # VERIFY: an email address
 ```
@@ -1043,17 +1477,16 @@ echo "GIT_AUTHOR_EMAIL=$GIT_AUTHOR_EMAIL"           # VERIFY: an email address
 
 ## Step 9 — Write `opencode.json`
 
-This is the main OpenCode configuration file. Write the file `~/.config/opencode/opencode.json` with the following content.
+This is the main OpenCode configuration file. The configuration depends on which authentication mode is available:
 
-The environment variables `LITELLM_API_KEY` and `LITELLM_BASE_URL` were sourced from `.env` in Step 8.4 and should already be in the current shell session. Verify they are set:
+| Mode | Condition | Providers | Models |
+| ---- | --------- | --------- | ------ |
+| **LiteLLM proxy** | `LITELLM_API_KEY` is set | `anthropic-proxy` + `openai-proxy` | Opus, Sonnet, GPT-5.4, Grok |
+| **OAuth (direct)** | `CLAUDE_CODE_OAUTH_TOKEN` is set | `anthropic` (native) | Opus, Sonnet only |
 
-```bash
-[ -n "$LITELLM_API_KEY" ]    || { echo "ERROR: LITELLM_API_KEY is not set — re-run Step 8"; exit 1; }
-[ -n "$LITELLM_BASE_URL" ]   || { echo "ERROR: LITELLM_BASE_URL is not set — re-run Step 8"; exit 1; }
-echo "All required environment variables are set"
-```
+The script detects which mode to use and writes the appropriate config.
 
-**Base URL derivation**:
+**Base URL derivation** (proxy mode only):
 
 The script derives provider URLs from `LITELLM_BASE_URL` (domain only, no path suffix):
 
@@ -1072,10 +1505,14 @@ Do **not** include path suffixes in your `LITELLM_BASE_URL` `.env` value — the
 
 The remaining flags (`--no-first-run`, `--no-default-browser-check`, `--disable-extensions`, `--disable-background-timer-throttling`, `--disable-backgrounding-occluded-windows`) ensure a clean, automation-friendly Chrome session. No sandbox or GPU flags are needed on macOS — those are Linux container workarounds.
 
-Write the file using a heredoc that substitutes the environment variables (note: **not** a quoted heredoc — the `$` variables are intentionally expanded):
+Write the file using the appropriate mode. The proxy-mode heredoc substitutes environment variables (note: **not** a quoted heredoc — the `$` variables are intentionally expanded). The OAuth-mode heredoc uses a quoted heredoc (no substitution needed):
 
 ```bash
-cat > ~/.config/opencode/opencode.json << ENDOFJSON
+mkdir -p ~/.config/opencode
+
+if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
+  echo "Writing opencode.json (LiteLLM proxy mode — multi-provider)..."
+  cat > ~/.config/opencode/opencode.json << ENDOFJSON
 {
   "\$schema": "https://opencode.ai/config.json",
   "mcp": {
@@ -1165,104 +1602,127 @@ cat > ~/.config/opencode/opencode.json << ENDOFJSON
   },
   "model": "anthropic-proxy/claude-opus-4-6",
   "small_model": "anthropic-proxy/claude-sonnet-4-6",
-  "permission": {
-    "read": {
-      "*": "allow",
-      "*.env": "allow",
-      "*.env.*": "allow"
-    }
-  },
+  "permission": "allow",
   "plugin": [
     "@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"
-  ]
+  ],
+  "lsp": {
+    "marksman": { "command": ["marksman", "server"], "extensions": [".md", ".mdx"] },
+    "mdx": { "command": ["mdx-language-server", "--stdio"], "extensions": [".mdx"] },
+    "json": { "command": ["vscode-json-language-server", "--stdio"], "extensions": [".json", ".jsonc"] },
+    "css": { "command": ["vscode-css-language-server", "--stdio"], "extensions": [".css", ".less", ".scss"] },
+    "html": { "command": ["vscode-html-language-server", "--stdio"], "extensions": [".html", ".htm"] },
+    "toml": { "command": ["taplo", "lsp", "stdio"], "extensions": [".toml"] }
+  }
 }
 ENDOFJSON
+
+elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+  echo "Writing opencode.json (OAuth mode — Anthropic models only)..."
+  cat > ~/.config/opencode/opencode.json << 'ENDOFJSON'
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": "allow",
+  "model": "anthropic/claude-opus-4-6",
+  "small_model": "anthropic/claude-sonnet-4-6",
+  "plugin": ["@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"],
+  "mcp": {},
+  "lsp": {
+    "marksman": {
+      "command": ["marksman", "server"],
+      "extensions": [".md", ".mdx"]
+    },
+    "mdx": {
+      "command": ["mdx-language-server", "--stdio"],
+      "extensions": [".mdx"]
+    },
+    "json": {
+      "command": ["vscode-json-language-server", "--stdio"],
+      "extensions": [".json", ".jsonc"]
+    },
+    "css": {
+      "command": ["vscode-css-language-server", "--stdio"],
+      "extensions": [".css", ".less", ".scss"]
+    },
+    "html": {
+      "command": ["vscode-html-language-server", "--stdio"],
+      "extensions": [".html", ".htm"]
+    },
+    "toml": {
+      "command": ["taplo", "lsp", "stdio"],
+      "extensions": [".toml"]
+    }
+  }
+}
+ENDOFJSON
+
+  # OAuth mode also needs auth.json for OpenCode to authenticate with Anthropic.
+  # Use jq to safely escape any special characters in the OAuth token.
+  mkdir -p ~/.local/share/opencode
+  jq -n --arg token "$CLAUDE_CODE_OAUTH_TOKEN" \
+    '{"anthropic":{"type":"oauth","access":$token,"refresh":"","expires":9999999999999}}' \
+    > ~/.local/share/opencode/auth.json
+  echo "Wrote OpenCode auth.json for OAuth mode"
+
+else
+  echo "ERROR: Neither LITELLM_API_KEY nor CLAUDE_CODE_OAUTH_TOKEN is set."
+  echo "Re-run Step 8 to configure authentication before proceeding."
+  echo "Stopping — do not proceed to Step 10 without authentication configured."
+fi
 ```
 
-Verify the file was written with actual values (not placeholder strings):
+Verify the file was written correctly:
 
 ```bash
-grep -c 'YOUR_' ~/.config/opencode/opencode.json
-# VERIFY: output is 0 (no placeholder strings remain)
-jq '.provider["openai-proxy"].options.baseURL' ~/.config/opencode/opencode.json
-# VERIFY: output is your actual OpenAI proxy URL (not empty, not a placeholder)
+jq '.model' ~/.config/opencode/opencode.json
+# VERIFY: "anthropic-proxy/claude-opus-4-6" (proxy mode) or "anthropic/claude-opus-4-6" (OAuth mode)
+
+# Proxy mode only:
+if jq -e '.provider["openai-proxy"]' ~/.config/opencode/opencode.json >/dev/null 2>&1; then
+  jq '.provider["openai-proxy"].options.baseURL' ~/.config/opencode/opencode.json
+  # VERIFY: output is your actual OpenAI proxy URL (not empty, not a placeholder)
+fi
 ```
 
 ---
 
 ## Step 10 — Write `oh-my-opencode.json`
 
-This configures the Oh-My-OpenCode plugin — agent model assignments, task category routing, and background concurrency. Write the file `~/.config/opencode/oh-my-opencode.json`:
+This configures the Oh-My-OpenCode plugin — agent model assignments, task category routing, and background concurrency. The config depends on which authentication mode was detected in Step 9:
 
-```json
+- **LiteLLM proxy**: Agents use a mix of `anthropic-proxy/` and `openai-proxy/` models (GPT-5.4 for visual/frontend tasks, Grok for fast exploration)
+- **OAuth**: All agents use `anthropic/` models (Opus for heavy tasks, Sonnet for lighter ones)
+
+```bash
+if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
+  echo "Writing oh-my-opencode.json (proxy mode — multi-provider agents)..."
+  cat > ~/.config/opencode/oh-my-opencode.json << 'ENDOFJSON'
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "agents": {
-    "sisyphus": {
-      "model": "anthropic-proxy/claude-opus-4-6"
-    },
-    "oracle": {
-      "model": "anthropic-proxy/claude-opus-4-6"
-    },
-    "librarian": {
-      "model": "anthropic-proxy/claude-opus-4-6"
-    },
-    "explore": {
-      "model": "openai-proxy/grok-code-fast-1"
-    },
-    "multimodal-looker": {
-      "model": "anthropic-proxy/claude-opus-4-6"
-    },
-    "prometheus": {
-      "model": "anthropic-proxy/claude-opus-4-6"
-    },
-    "metis": {
-      "model": "anthropic-proxy/claude-opus-4-6"
-    },
-    "hephaestus": {
-      "model": "openai-proxy/gpt-5.4"
-    },
-    "momus": {
-      "model": "anthropic-proxy/claude-opus-4-6"
-    },
-    "atlas": {
-      "model": "anthropic-proxy/claude-sonnet-4-6"
-    },
-    "frontend-ui-ux-engineer": {
-      "model": "openai-proxy/gpt-5.4"
-    },
-    "document-writer": {
-      "model": "anthropic-proxy/claude-opus-4-6"
-    }
+    "sisyphus": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "oracle": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "librarian": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "explore": { "model": "openai-proxy/grok-code-fast-1" },
+    "multimodal-looker": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "prometheus": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "metis": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "hephaestus": { "model": "openai-proxy/gpt-5.4" },
+    "momus": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "atlas": { "model": "anthropic-proxy/claude-sonnet-4-6" },
+    "frontend-ui-ux-engineer": { "model": "openai-proxy/gpt-5.4" },
+    "document-writer": { "model": "anthropic-proxy/claude-opus-4-6" }
   },
   "categories": {
-    "visual-engineering": {
-      "model": "openai-proxy/gpt-5.4"
-    },
-    "business-logic": {
-      "model": "openai-proxy/gpt-5.4"
-    },
-    "ultrabrain": {
-      "model": "openai-proxy/gpt-5.4"
-    },
-    "deep": {
-      "model": "openai-proxy/gpt-5.4"
-    },
-    "artistry": {
-      "model": "openai-proxy/gpt-5.4"
-    },
-    "quick": {
-      "model": "anthropic-proxy/claude-sonnet-4-6"
-    },
-    "unspecified-low": {
-      "model": "anthropic-proxy/claude-opus-4-6"
-    },
-    "unspecified-high": {
-      "model": "anthropic-proxy/claude-opus-4-6"
-    },
-    "writing": {
-      "model": "anthropic-proxy/claude-opus-4-6"
-    }
+    "visual-engineering": { "model": "openai-proxy/gpt-5.4" },
+    "business-logic": { "model": "openai-proxy/gpt-5.4" },
+    "ultrabrain": { "model": "openai-proxy/gpt-5.4" },
+    "deep": { "model": "openai-proxy/gpt-5.4" },
+    "artistry": { "model": "openai-proxy/gpt-5.4" },
+    "quick": { "model": "anthropic-proxy/claude-sonnet-4-6" },
+    "unspecified-low": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "unspecified-high": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "writing": { "model": "anthropic-proxy/claude-opus-4-6" }
   },
   "background_task": {
     "defaultConcurrency": 5,
@@ -1270,8 +1730,65 @@ This configures the Oh-My-OpenCode plugin — agent model assignments, task cate
       "openai-proxy": 5,
       "anthropic-proxy": 5
     }
+  },
+  "claude_code": {
+    "plugins": true,
+    "skills": true,
+    "commands": true,
+    "agents": true,
+    "hooks": true,
+    "mcp": true
   }
 }
+ENDOFJSON
+
+else
+  echo "Writing oh-my-opencode.json (OAuth mode — Anthropic models only)..."
+  cat > ~/.config/opencode/oh-my-opencode.json << 'ENDOFJSON'
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "agents": {
+    "sisyphus": { "model": "anthropic/claude-opus-4-6" },
+    "oracle": { "model": "anthropic/claude-opus-4-6" },
+    "librarian": { "model": "anthropic/claude-opus-4-6" },
+    "explore": { "model": "anthropic/claude-sonnet-4-6" },
+    "multimodal-looker": { "model": "anthropic/claude-opus-4-6" },
+    "prometheus": { "model": "anthropic/claude-opus-4-6" },
+    "metis": { "model": "anthropic/claude-opus-4-6" },
+    "hephaestus": { "model": "anthropic/claude-opus-4-6" },
+    "momus": { "model": "anthropic/claude-opus-4-6" },
+    "atlas": { "model": "anthropic/claude-sonnet-4-6" },
+    "frontend-ui-ux-engineer": { "model": "anthropic/claude-opus-4-6" },
+    "document-writer": { "model": "anthropic/claude-opus-4-6" }
+  },
+  "categories": {
+    "visual-engineering": { "model": "anthropic/claude-opus-4-6" },
+    "business-logic": { "model": "anthropic/claude-opus-4-6" },
+    "ultrabrain": { "model": "anthropic/claude-opus-4-6" },
+    "deep": { "model": "anthropic/claude-opus-4-6" },
+    "artistry": { "model": "anthropic/claude-opus-4-6" },
+    "quick": { "model": "anthropic/claude-sonnet-4-6" },
+    "unspecified-low": { "model": "anthropic/claude-opus-4-6" },
+    "unspecified-high": { "model": "anthropic/claude-opus-4-6" },
+    "writing": { "model": "anthropic/claude-opus-4-6" }
+  },
+  "background_task": {
+    "defaultConcurrency": 5,
+    "providerConcurrency": {
+      "anthropic": 5
+    }
+  },
+  "claude_code": {
+    "plugins": true,
+    "skills": true,
+    "commands": true,
+    "agents": true,
+    "hooks": true,
+    "mcp": true
+  }
+}
+ENDOFJSON
+fi
 ```
 
 ---
@@ -1359,10 +1876,12 @@ done
 # Phase 2: Live smoke test — launch a separate opencode process from /tmp
 # This does NOT conflict with the current session. It spawns a one-shot
 # process that reads the config, sends one request, and exits.
+# Use --format json because default format requires a TTY and hangs in
+# non-interactive shells (e.g., when an AI agent runs this script).
 echo "Running OpenCode smoke test from /tmp..."
 cd /tmp
 SMOKE_OUT=$(mktemp)
-opencode run "Reply with exactly one word: OPENCODE_OK" > "$SMOKE_OUT" 2>&1 &
+opencode run --format json "Reply with exactly one word: OPENCODE_OK" > "$SMOKE_OUT" 2>&1 &
 OCPID=$!
 
 # Wait up to 120 seconds (first run may download MCP servers)
@@ -1375,7 +1894,11 @@ while kill -0 "$OCPID" 2>/dev/null; do
     wait "$OCPID" 2>/dev/null
     echo "ERROR: opencode run timed out after 120 seconds."
     echo "  This usually means the AI provider is unreachable."
-    echo "  Check LITELLM_API_KEY and LITELLM_BASE_URL in .env"
+    if [ -n "$LITELLM_API_KEY" ]; then
+      echo "  Check LITELLM_API_KEY and LITELLM_BASE_URL in .env"
+    else
+      echo "  Check CLAUDE_CODE_OAUTH_TOKEN in .env"
+    fi
     cat "$SMOKE_OUT"
     rm -f "$SMOKE_OUT"
     exit 1
@@ -1384,8 +1907,8 @@ done
 wait "$OCPID"
 OC_EXIT=$?
 
-# Strip ANSI escape codes and check for non-empty response
-CLEAN_OUT=$(sed 's/\x1b\[[0-9;]*m//g' "$SMOKE_OUT" | grep -v '^$' | grep -v '^>' | tail -1)
+# Extract the text response from JSON output
+CLEAN_OUT=$(jq -r 'select(.type=="text") | .part.text' "$SMOKE_OUT" 2>/dev/null | head -1)
 
 if [ "$OC_EXIT" -ne 0 ]; then
   echo "ERROR: opencode run exited with code $OC_EXIT"
@@ -1408,8 +1931,9 @@ cd - > /dev/null
 VERIFY: output ends with `Smoke test passed — OpenCode responded: ...` followed by a non-empty AI response. If the smoke test fails, check:
 
 1. **JSON syntax**: `jq . ~/.config/opencode/opencode.json` — any parse error means Step 9's heredoc expanded incorrectly (likely a special character in an API key or URL).
-2. **API connectivity**: `curl -s -o /dev/null -w "%{http_code}" "${LITELLM_BASE_URL}/api/v1/models" -H "Authorization: Bearer ${LITELLM_API_KEY}"` — should return `200`.
-3. **Plugin load failure**: `rm -rf ~/.cache/opencode/node_modules && opencode run "test"` — forces a clean plugin re-download.
+2. **API connectivity** (proxy mode): `curl -s -o /dev/null -w "%{http_code}" "${LITELLM_BASE_URL}/api/v1/models" -H "Authorization: Bearer ${LITELLM_API_KEY}"` — should return `200`.
+3. **OAuth auth.json** (OAuth mode): `cat ~/.local/share/opencode/auth.json | jq .` — should show a valid JSON with `anthropic.access` set.
+4. **Plugin load failure**: `rm -rf ~/.cache/opencode/node_modules && opencode run --format json "test"` — forces a clean plugin re-download.
 
 ---
 
@@ -1419,7 +1943,7 @@ Oh My Zsh (Step 5) created `~/.zshrc` with its own boilerplate. This step adds e
 
 **Idempotency strategy**: Each block below uses `grep -q` to check if the line already exists before appending. This makes the step safe to re-run without creating duplicate entries.
 
-**IMPORTANT**: The `LITELLM_API_KEY` line uses the `$LITELLM_API_KEY` environment variable sourced from `.env` in Step 8.4. That variable must still be set in the current shell session.
+**IMPORTANT**: The `LITELLM_API_KEY` line uses the `$LITELLM_API_KEY` environment variable sourced from `.env` in Step 8.5. That variable must still be set in the current shell session.
 
 ### 14.1 — Top of File: Powerlevel10k Instant Prompt
 
@@ -1486,9 +2010,12 @@ grep -q '\.local/bin' ~/.zshrc || \
 grep -q 'iTerm.app' ~/.zshrc || \
   echo 'export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"' >> ~/.zshrc
 
-# API key for AI proxy (sourced from .env in Step 8.4)
-grep -q 'LITELLM_API_KEY' ~/.zshrc || \
-  echo "export LITELLM_API_KEY=\"${LITELLM_API_KEY}\"" >> ~/.zshrc
+# API key for AI proxy (sourced from .env in Step 8.5)
+# Only write if LITELLM_API_KEY is actually set — in OAuth mode it's empty
+if [ -n "$LITELLM_API_KEY" ]; then
+  grep -q 'LITELLM_API_KEY' ~/.zshrc || \
+    echo "export LITELLM_API_KEY=\"${LITELLM_API_KEY}\"" >> ~/.zshrc
+fi
 
 ```
 
@@ -1651,7 +2178,7 @@ echo $BUN_INSTALL            # VERIFY: output is /Users/<username>/.bun (not emp
 echo $LITELLM_API_KEY        # VERIFY: output is your API key (not empty, not a placeholder)
 ```
 
-### 16.9 — Claude Code Plugins
+### 16.9 — Claude Code Plugins and Settings
 
 ```bash
 # Verify plugin count
@@ -1662,9 +2189,17 @@ jq 'length' ~/.claude/plugins/installed_plugins.json
 find ~/.claude/plugins/cache -name "SKILL.md" -type f | wc -l
 # Expected: 19
 
-# Verify settings.json
-jq '.enabledPlugins | keys | length' ~/.claude/settings.json
-# Expected: 14
+# Verify settings.json has full container settings
+jq '.enabledPlugins | keys | length' ~/.claude/settings.json    # Expected: 14
+jq '.model' ~/.claude/settings.json                              # Expected: "opus"
+jq '.statusLine.type' ~/.claude/settings.json                    # Expected: "command"
+jq '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' ~/.claude/settings.json  # Expected: "1"
+
+# Verify statusline.sh installed
+test -x ~/.claude/statusline.sh && echo "OK: statusline.sh" || echo "MISSING"  # Expected: OK
+
+# Verify MCP server configured
+jq '.mcpServers | has("chrome-devtools")' ~/.claude.json         # Expected: true
 ```
 
 ### 16.10 — Project Tooling (Podman, Docker Shim, pre-commit)
@@ -1686,9 +2221,19 @@ ls ~/.oh-my-zsh/oh-my-zsh.sh                                                    
 test -f ~/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme && echo "OK" # VERIFY: file exists
 ls ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh # VERIFY: file exists
 ls ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting                           # VERIFY: directory exists
+ls ~/.oh-my-zsh/custom/plugins/zsh-claudecode-completion                         # VERIFY: directory exists
 ls ~/Library/Fonts/MesloLGS\ NF\ Regular.ttf                                    # VERIFY: file exists (p10k font)
 grep "^ZSH_THEME" ~/.zshrc                                                      # VERIFY: output contains "powerlevel10k"
-grep "^plugins=" ~/.zshrc                                                        # VERIFY: output contains "zsh-autosuggestions zsh-syntax-highlighting"
+grep "^plugins=" ~/.zshrc                                                        # VERIFY: output includes "zsh-claudecode-completion"
+/usr/libexec/PlistBuddy -c 'Print :"New Bookmarks":0:"Silence Bell"' \
+  ~/Library/Preferences/com.googlecode.iterm2.plist                              # VERIFY: true
+/usr/libexec/PlistBuddy -c 'Print :"New Bookmarks":0:"Visual Bell"' \
+  ~/Library/Preferences/com.googlecode.iterm2.plist                              # VERIFY: false
+/usr/libexec/PlistBuddy -c 'Print :"New Bookmarks":0:"Unlimited Scrollback"' \
+  ~/Library/Preferences/com.googlecode.iterm2.plist                              # VERIFY: true
+/usr/libexec/PlistBuddy -c 'Print :"New Bookmarks":0:"Option Key Sends"' \
+  ~/Library/Preferences/com.googlecode.iterm2.plist                              # VERIFY: 2
+defaults read com.googlecode.iterm2 TabStyleWithAutomaticOption                  # VERIFY: 1 (Dark)
 ```
 
 ### 16.12 — Verify .env File

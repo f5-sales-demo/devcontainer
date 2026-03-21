@@ -37,5 +37,6 @@
   },
   "preferences": {
     "tmuxSplitPanes": true
-  }
+  },
+  "autoUpdatesChannel": "latest"
 }

@@ -131,6 +131,7 @@ fi
 OPENCODE_CONFIG_DIR="$HOME/.config/opencode"
 if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
   cp "$OPENCODE_CONFIG_DIR/opencode-anthropic.json" "$OPENCODE_CONFIG_DIR/opencode.json"
+  cp "$OPENCODE_CONFIG_DIR/oh-my-opencode-anthropic.json" "$OPENCODE_CONFIG_DIR/oh-my-opencode.json"
   cat >"$HOME/.local/share/opencode/auth.json" <<AUTHEOF
 {"anthropic":{"type":"oauth","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}
 AUTHEOF
