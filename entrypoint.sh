@@ -3,6 +3,9 @@
 # Configure user environment (env-var-dependent only)
 # ============================================================
 
+# Fall back to xterm-256color if no TERM inherited from host
+export TERM="${TERM:-xterm-256color}"
+
 if [ -n "$GIT_AUTHOR_NAME" ]; then
   git config --global user.name "$GIT_AUTHOR_NAME"
 fi
