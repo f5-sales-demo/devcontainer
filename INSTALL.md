@@ -716,7 +716,7 @@ After installation, the binary lives at `~/.local/bin/claude`. First-time users 
 The `~/.claude/` directory is the **single source of truth** for the plugin ecosystem shared by both Claude Code and OpenCode. Oh-My-OpenCode reads directly from Claude Code's plugin infrastructure:
 
 | File | What Oh-My-OpenCode reads |
-|------|--------------------------|
+| ---- | ------------------------- |
 | `~/.claude/plugins/installed_plugins.json` | Plugin registry (discovers all installed plugins) |
 | `~/.claude/settings.json` → `enabledPlugins` | Which plugins are active |
 | `~/.claude/plugins/cache/<plugin>/.claude-plugin/plugin.json` | Plugin manifests (commands, agents, skills, hooks, MCP servers) |
@@ -1206,7 +1206,7 @@ echo "Auto-detection complete."
 This section handles bidirectional credential sync for `gogcli` (gog) and Google Workspace CLI (gws). It is idempotent and handles three scenarios per tool:
 
 | Local Auth | `.env` Credentials | Action |
-|------------|-------------------|--------|
+| ---------- | ----------------- | ------ |
 | Yes | Any | Export to `.env` (keep in sync) |
 | No | Yes | Import from `.env` to local config |
 | No | No | Print optional setup instructions |
@@ -1399,7 +1399,7 @@ fi
 OpenCode supports two authentication modes:
 
 | Mode | Required Variables | What's Available |
-|------|-------------------|-----------------|
+| ---- | ----------------- | ---------------- |
 | **LiteLLM proxy** | `LITELLM_API_KEY` + `LITELLM_BASE_URL` | Multiple providers (Anthropic, OpenAI, X.ai via proxy) |
 | **OAuth (direct)** | `CLAUDE_CODE_OAUTH_TOKEN` | Anthropic models only (Opus, Sonnet, Haiku) |
 
@@ -1480,7 +1480,7 @@ echo "GIT_AUTHOR_EMAIL=$GIT_AUTHOR_EMAIL"           # VERIFY: an email address
 This is the main OpenCode configuration file. The configuration depends on which authentication mode is available:
 
 | Mode | Condition | Providers | Models |
-|------|-----------|-----------|--------|
+| ---- | --------- | --------- | ------ |
 | **LiteLLM proxy** | `LITELLM_API_KEY` is set | `anthropic-proxy` + `openai-proxy` | Opus, Sonnet, GPT-5.4, Grok |
 | **OAuth (direct)** | `CLAUDE_CODE_OAUTH_TOKEN` is set | `anthropic` (native) | Opus, Sonnet only |
 
