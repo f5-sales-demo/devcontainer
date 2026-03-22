@@ -861,6 +861,7 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     nodriver \
     browserforge \
     "markitdown[all]" \
+    python-pptx \
     progressbar2 \
     checkov \
     ansible-lint \
@@ -1078,6 +1079,13 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
     && /opt/claude-config/install-plugins.sh \
         "${PLUGIN_BASE}" /opt/claude-config/settings.json \
     && chown -R ${USERNAME}:${USERNAME} "${PLUGIN_BASE}"
+
+# 12m. Claude Code skills (git-cloned external skills)
+# hadolint ignore=DL3059
+RUN git clone --depth=1 --single-branch --branch main \
+      https://github.com/zarazhangrui/frontend-slides.git \
+      "/home/${USERNAME}/.claude/skills/frontend-slides" \
+    && chown -R ${USERNAME}:${USERNAME} "/home/${USERNAME}/.claude/skills"
 
 # ============================================================
 # 13. Playwright system dependencies (requires root for apt)
