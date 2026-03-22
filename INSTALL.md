@@ -751,6 +751,7 @@ Configure sensible defaults for developer workflows. These settings are stored i
 | Left Option as Esc+ | `Option Key Sends` | `2` | Enables Alt+B / Alt+F word navigation in the shell |
 | Right Option as Esc+ | `Right Option Key Sends` | `2` | Same for the right Option key |
 | Notification alerts | `BounceIconInDockEnabled` | `true` | Enables Notification Center alerts for escape sequences |
+| Shift+Enter binding | `Keyboard Map:0xd-0x20000-0x24` | `ESC[13;2u` | Sends CSI u sequence for Claude Code multi-line prompts in containers |
 | Force dark theme | `TabStyleWithAutomaticOption` | `1` | Terminal stays dark regardless of macOS system appearance |
 
 **Option Key Sends values**: 0 = Normal, 1 = Meta, 2 = Esc+
@@ -795,6 +796,23 @@ if [ -f "$PLIST" ]; then
   # Enable Notification Center alerts (required for Claude Code notifications in tmux)
   plist_profile_set "BounceIconInDockEnabled" bool true
 
+  # Shift+Enter → ESC[13;2u (CSI u) for Claude Code multi-line prompts
+  # Required for Shift+Enter in containers/SSH where /terminal-setup cannot run
+  SHIFT_ENTER_KEY="Keyboard Map:0xd-0x20000-0x24"
+  if /usr/libexec/PlistBuddy -c "Print :'New Bookmarks':0:'$SHIFT_ENTER_KEY':Action" "$PLIST" >/dev/null 2>&1; then
+    echo "  Kept:    Shift+Enter key binding (already configured)"
+  else
+    /usr/libexec/PlistBuddy \
+      -c "Add :'New Bookmarks':0:'Keyboard Map':'0xd-0x20000-0x24' dict" \
+      -c "Add :'New Bookmarks':0:'Keyboard Map':'0xd-0x20000-0x24':Version integer 2" \
+      -c "Add :'New Bookmarks':0:'Keyboard Map':'0xd-0x20000-0x24':'Apply Mode' integer 0" \
+      -c "Add :'New Bookmarks':0:'Keyboard Map':'0xd-0x20000-0x24':Action integer 10" \
+      -c "Add :'New Bookmarks':0:'Keyboard Map':'0xd-0x20000-0x24':Text string [13;2u" \
+      -c "Add :'New Bookmarks':0:'Keyboard Map':'0xd-0x20000-0x24':Escaping integer 2" \
+      "$PLIST"
+    echo "  Added:   Shift+Enter → ESC[13;2u"
+  fi
+
   # --- Global settings (application-level) ---
   # Force dark theme (don't follow system appearance)
   # Values: 0=Light, 1=Dark, 2=Light HC, 3=Dark HC, 4=Automatic, 5=Minimal
@@ -812,22 +830,11 @@ else
 fi
 ```
 
-> **MANUAL STEP — Shift+Enter for Claude Code**: Configure iTerm2 to send the CSI u escape sequence for Shift+Enter. This is required for multi-line prompts in Claude Code — especially when running inside containers or over SSH where `/terminal-setup` cannot run.
->
-> 1. Open **iTerm2 Settings** → **Profiles** → **Keys** → **Key Bindings**
-> 2. Click **+** to add a new binding
-> 3. **Keyboard Shortcut**: press **Shift+Enter**
-> 4. **Action**: select **"Send Escape Sequence"**
-> 5. **Esc+ value**: type `[13;2u`
->
-> This sends `ESC[13;2u` (CSI u encoded Shift+Enter) which Claude Code recognizes regardless of TERM type. The sequence passes through podman/docker and tmux to reach Claude Code.
->
-> **Notifications**: iTerm2 also requires settings for Claude Code notifications:
+> **MANUAL STEP — Notifications**: iTerm2 requires one additional setting for Claude Code notifications that cannot be set via plist:
 >
 > 1. Open **iTerm2 Settings** → **Profiles** → **Terminal**
-> 2. Enable **"Notification Center Alerts"**
-> 3. Click **"Filter Alerts"** and check **"Send escape sequence-generated alerts"**
-> 4. Verify iTerm2 has notification permissions in **System Settings** → **Notifications** → **iTerm2**
+> 2. Click **"Filter Alerts"** and check **"Send escape sequence-generated alerts"**
+> 3. Verify iTerm2 has notification permissions in **System Settings** → **Notifications** → **iTerm2**
 
 ### 5.4 — Install Zsh Plugins
 
