@@ -1243,6 +1243,7 @@ for KEY in \
   f5xc-docs-tools@f5xc-salesdemos-marketplace \
   f5xc-repo-governance@f5xc-salesdemos-marketplace \
   f5xc-docs-pipeline@f5xc-salesdemos-marketplace \
+  f5xc-brand@f5xc-salesdemos-marketplace \
 ; do
   NAME="$(echo "$KEY" | cut -d@ -f1)"
   MKT="$(echo "$KEY" | cut -d@ -f2)"
@@ -1335,7 +1336,26 @@ printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropi
 printf '{"fetchedAt":"%s","plugins":[]}' "$TIMESTAMP" > "${PLUGIN_BASE}/blocklist.json"
 ```
 
-### 6.4 — Merge Container Settings into `~/.claude/settings.json`
+### 6.4 — Install External Skills
+
+Some tools are installed as Claude Code skills (not marketplace
+plugins). These are git-cloned into `~/.claude/skills/`.
+
+```bash
+# frontend-slides — HTML presentation generator with visual styles
+git clone --depth=1 --single-branch --branch main \
+  https://github.com/zarazhangrui/frontend-slides.git \
+  ~/.claude/skills/frontend-slides
+```
+
+Invoke with `/frontend-slides` in Claude Code. For PowerPoint
+conversion, install the optional Python dependency:
+
+```bash
+pip install python-pptx
+```
+
+### 6.5 — Merge Container Settings into `~/.claude/settings.json`
 
 This step idempotently merges the container's Claude Code settings (model, status line, permissions, env vars, plugins, accessibility) into the local `~/.claude/settings.json`. If the file already exists, **local values win on conflict** — any user-specific settings (like `voiceEnabled`) are preserved.
 
@@ -1381,7 +1401,8 @@ CONTAINER_SETTINGS="$(cat <<SETTINGS
     "f5xc-sales-engineer@f5xc-salesdemos-marketplace": true,
     "f5xc-docs-tools@f5xc-salesdemos-marketplace": true,
     "f5xc-repo-governance@f5xc-salesdemos-marketplace": true,
-    "f5xc-docs-pipeline@f5xc-salesdemos-marketplace": true
+    "f5xc-docs-pipeline@f5xc-salesdemos-marketplace": true,
+    "f5xc-brand@f5xc-salesdemos-marketplace": true
   },
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
@@ -1481,19 +1502,19 @@ fi
 ### Verify Plugin and Settings Installation
 
 ```bash
-# Check installed_plugins.json has all 18 plugins
+# Check installed_plugins.json has all 19 plugins
 jq 'length' ~/.claude/plugins/installed_plugins.json
-# Expected: 18
+# Expected: 19
 
 # Check both marketplace caches exist
 ls ~/.claude/plugins/cache/claude-plugins-official/       # Expected: plugin directories
-ls ~/.claude/plugins/cache/f5xc-salesdemos-marketplace/   # Expected: f5xc-sales-engineer, f5xc-docs-tools, f5xc-repo-governance, f5xc-docs-pipeline
+ls ~/.claude/plugins/cache/f5xc-salesdemos-marketplace/   # Expected: f5xc-sales-engineer, f5xc-docs-tools, f5xc-repo-governance, f5xc-docs-pipeline, f5xc-brand
 
 # Check SKILL.md files were loaded
 find ~/.claude/plugins/cache -name "SKILL.md" -type f | wc -l
 
 # Check settings.json has full container settings merged
-jq '.enabledPlugins | keys | length' ~/.claude/settings.json  # Expected: 18
+jq '.enabledPlugins | keys | length' ~/.claude/settings.json  # Expected: 19
 jq '.model' ~/.claude/settings.json                            # Expected: "opus"
 jq '.statusLine.type' ~/.claude/settings.json                  # Expected: "command"
 jq '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' ~/.claude/settings.json  # Expected: "1"
@@ -2803,14 +2824,14 @@ echo $LITELLM_API_KEY        # VERIFY: output is your API key (not empty, not a 
 ```bash
 # Verify plugin count
 jq 'length' ~/.claude/plugins/installed_plugins.json
-# Expected: 18
+# Expected: 19
 
 # Verify SKILL.md files
 find ~/.claude/plugins/cache -name "SKILL.md" -type f | wc -l
 # Expected: 19
 
 # Verify settings.json has full container settings
-jq '.enabledPlugins | keys | length' ~/.claude/settings.json    # Expected: 18
+jq '.enabledPlugins | keys | length' ~/.claude/settings.json    # Expected: 19
 jq '.model' ~/.claude/settings.json                              # Expected: "opus"
 jq '.statusLine.type' ~/.claude/settings.json                    # Expected: "command"
 jq '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' ~/.claude/settings.json  # Expected: "1"
