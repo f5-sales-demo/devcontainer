@@ -994,9 +994,13 @@ sed -i '' 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
 
 **Plugins** — replace the default `plugins=(git)` line with the full plugin set (common plugins shared with the devcontainer, plus macOS-only `iterm2` at the end):
 
+<!-- markdownlint-disable MD013 -->
+
 ```bash
 sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux zsh-claudecode-completion dotenv emoji gcloud git pre-commit iterm2 macos podman)/' ~/.zshrc
 ```
+
+<!-- markdownlint-enable MD013 -->
 
 VERIFY both changes applied:
 
