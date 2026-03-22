@@ -209,6 +209,7 @@ brew_install eza               # Modern ls replacement with icons and git status
 brew_install fzf               # Fuzzy finder for files, history, and command output
 brew_install lsd               # ls replacement with color and icons (Nerd Font aware)
 brew_install yq                # YAML/JSON/XML processor (like jq for YAML)
+brew_install poppler           # PDF utilities (pdftotext, pdfinfo — used by AI tools for PDF processing)
 
 # Development runtimes and tools (mirrors devcontainer toolset)
 brew_install python            # Python 3.13 runtime (macOS ships an older system Python)
@@ -291,6 +292,7 @@ ffmpeg -version        # VERIFY: output starts with "ffmpeg version"
 yt-dlp --version       # VERIFY: output contains a version string
 aider --version        # VERIFY: output contains a version number
 playwright-cli --version  # VERIFY: output contains a version number
+pdftotext -v 2>&1 | head -1  # VERIFY: output contains "pdftotext version"
 ```
 
 ---

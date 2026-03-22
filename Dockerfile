@@ -795,6 +795,10 @@ RUN npm install -g \
     playwright \
     grammy \
     @whiskeysockets/baileys \
+    discord.js \
+    pdfjs-dist \
+    @napi-rs/canvas \
+    matrix-js-sdk \
     puppeteer \
     puppeteer-extra \
     puppeteer-extra-plugin-stealth \
