@@ -1049,11 +1049,12 @@ COPY claude-config/settings.json /opt/claude-config/settings.json
 RUN chmod +x /opt/claude-config/install-plugins.sh
 
 # ============================================================
-# 12l. Claude Code plugins (pre-install from marketplace)
-#      Clones the official marketplace, copies each enabled
-#      plugin into the cache, clones superpowers separately,
-#      and generates installed_plugins.json so Claude Code
-#      treats all plugins as fully installed at first launch.
+# 12l. Claude Code plugins (pre-install from marketplaces)
+#      Clones the official and f5xc-salesdemos marketplaces,
+#      copies each enabled plugin into the cache, clones
+#      superpowers separately, and generates
+#      installed_plugins.json so Claude Code treats all
+#      plugins as fully installed at first launch.
 # ============================================================
 # hadolint ignore=DL3059
 RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
@@ -1061,12 +1062,15 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
     && git clone --depth=1 --single-branch --branch main \
         https://github.com/anthropics/claude-plugins-official.git \
         "${PLUGIN_BASE}/marketplaces/claude-plugins-official" \
-    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s"}}' \
-        "${PLUGIN_BASE}/marketplaces/claude-plugins-official" \
-        "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
+    && git clone --depth=1 --single-branch --branch main \
+        https://github.com/f5xc-salesdemos/marketplace.git \
+        "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" \
+    && TS="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
+    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s"},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s"}}' \
+        "${PLUGIN_BASE}/marketplaces/claude-plugins-official" "$TS" \
+        "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" "$TS" \
         > "${PLUGIN_BASE}/known_marketplaces.json" \
-    && printf '{"fetchedAt":"%s","plugins":[]}' \
-        "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
+    && printf '{"fetchedAt":"%s","plugins":[]}' "$TS" \
         > "${PLUGIN_BASE}/blocklist.json" \
     && /opt/claude-config/install-plugins.sh \
         "${PLUGIN_BASE}" /opt/claude-config/settings.json \
