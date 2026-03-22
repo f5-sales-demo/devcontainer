@@ -2564,14 +2564,29 @@ grep '^COMPLETION_WAITING_DOTS="true"' ~/.zshrc              # VERIFY: line exis
 grep '^HIST_STAMPS="yyyy-mm-dd"' ~/.zshrc                    # VERIFY: line exists
 ```
 
-### 14.3 — After `source $ZSH/oh-my-zsh.sh`: User Configuration
+### 14.3 — Before `source $ZSH/oh-my-zsh.sh`: Homebrew PATH
+
+Homebrew's `shellenv` must run **before** oh-my-zsh sources
+so that `/opt/homebrew/share/zsh/site-functions` is in
+`$fpath` when `compinit` scans for completions. Insert it
+before the `source $ZSH/oh-my-zsh.sh` line:
+
+```bash
+# Homebrew (Apple Silicon) — must be BEFORE source $ZSH/oh-my-zsh.sh
+if grep -q 'brew shellenv' ~/.zshrc; then
+  # Already present — ensure it's before oh-my-zsh source
+  sed -i '' '/brew shellenv/d' ~/.zshrc
+fi
+sed -i '' '/^source \$ZSH\/oh-my-zsh.sh/i\
+eval $(/opt/homebrew/bin/brew shellenv)
+' ~/.zshrc
+```
+
+### 14.4 — After `source $ZSH/oh-my-zsh.sh`: User Configuration
 
 Append each line only if it is not already present. Each `grep -q` guard prevents duplicates on re-runs:
 
 ```bash
-# Homebrew (Apple Silicon)
-grep -q 'brew shellenv' ~/.zshrc || \
-  echo 'eval $(/opt/homebrew/bin/brew shellenv)' >> ~/.zshrc
 
 # Powerlevel10k config (installed in Step 5.6)
 grep -q 'p10k.zsh' ~/.zshrc || \
@@ -2618,6 +2633,10 @@ grep -q 'opencode-completions' ~/.zshrc || \
 # gogcli (gog) native zsh completion (generated from gog help-json schema)
 bash configs/generate-gog-completions.sh > /opt/homebrew/share/zsh/site-functions/_gog 2>/dev/null \
   || cp configs/_gog /opt/homebrew/share/zsh/site-functions/_gog
+# Also copy to oh-my-zsh custom completions (ensures compinit discovers it)
+mkdir -p "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/completions"
+cp /opt/homebrew/share/zsh/site-functions/_gog \
+  "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/completions/_gog"
 
 # User-local binaries (docker shim, etc.)
 grep -q '\.local/bin' ~/.zshrc || \
