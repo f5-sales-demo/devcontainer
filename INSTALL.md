@@ -217,6 +217,7 @@ brew_install terraform         # Infrastructure as Code for cloud resources
 brew_install neovim            # Terminal editor with LSP support
 brew_install uv                # Fast Python package manager (10-100x faster than pip)
 brew_install aider             # AI pair programming in your terminal
+brew_install playwright-cli    # Token-efficient browser automation CLI for AI agents
 brew_install dos2unix          # Convert Windows CRLF line endings to Unix LF
 
 # Cloud CLI
@@ -289,6 +290,7 @@ trufflehog --version   # VERIFY: output contains a version number
 ffmpeg -version        # VERIFY: output starts with "ffmpeg version"
 yt-dlp --version       # VERIFY: output contains a version string
 aider --version        # VERIFY: output contains a version number
+playwright-cli --version  # VERIFY: output contains a version number
 ```
 
 ---
@@ -1331,6 +1333,48 @@ ls -la ~/.claude/settings.json
 ls -la ~/.claude/statusline.sh
 ls -la ~/.claude/plugins/installed_plugins.json
 ```
+
+---
+
+## Step 6b — Install AI Tool Extensions
+
+### 6b.1 — NotebookLM MCP CLI
+
+Install the NotebookLM CLI and MCP server (provides Google NotebookLM access from Claude Code and other AI assistants):
+
+```bash
+uv tool install notebooklm-mcp-cli
+```
+
+Register as a Claude Code MCP server:
+
+```bash
+nlm setup add claude-code
+```
+
+VERIFY:
+
+```bash
+nlm --version              # VERIFY: output contains a version number
+```
+
+### 6b.2 — Playwright CLI Skills
+
+Install AI-discoverable skill definitions for Playwright CLI (already installed via Homebrew in Step 1):
+
+```bash
+playwright-cli install --skills
+```
+
+This copies SKILL.md documentation that Claude Code reads to understand available browser automation commands.
+
+### 6b.3 — CLI-Anything (Claude Code Plugin)
+
+> **INTERACTIVE STEP**: CLI-Anything is a Claude Code plugin marketplace that must be installed from within a Claude Code session:
+>
+> 1. Start Claude Code: `claude`
+> 2. Run: `/plugin marketplace add HKUDS/CLI-Anything`
+> 3. Run: `/plugin install cli-anything`
 
 ---
 
