@@ -28,6 +28,7 @@ check "firefox-esr installed" command -v firefox-esr
 check "claude CLI installed" command -v claude
 check "pi CLI installed" command -v pi
 check "aider CLI installed" command -v aider
+check "cursor agent CLI installed" command -v agent
 check "node installed" command -v node
 check "python installed" command -v python3
 check "git installed" command -v git

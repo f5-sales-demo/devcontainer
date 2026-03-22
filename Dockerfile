@@ -440,13 +440,16 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
 # hadolint ignore=DL3059
 RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
     && DPKG_ARCH=$(dpkg --print-architecture) \
-    # VS Code CLI (already latest)
+    # Visual Studio Code CLI (already latest)
     && if [ "$DPKG_ARCH" = "amd64" ]; then VSCODE_ARCH="x64"; else VSCODE_ARCH="arm64"; fi \
     && curl ${CURL_RETRY} -fsSL \
       "https://update.code.visualstudio.com/latest/cli-linux-${VSCODE_ARCH}/stable" \
       -o /tmp/vscode_cli.tar.gz \
     && tar -xzf /tmp/vscode_cli.tar.gz -C /usr/local/bin \
     && rm /tmp/vscode_cli.tar.gz \
+    # Cursor CLI (agent) — official installer detects arch automatically
+    && curl -fsSL https://cursor.com/install | bash \
+    && ln -sf /home/${USERNAME}/.local/bin/agent /usr/local/bin/agent \
     # oc (OpenShift CLI) — stable channel uses version-free filenames
     && if [ "$DPKG_ARCH" = "amd64" ]; then OC_ARCHIVE="openshift-client-linux.tar.gz"; else OC_ARCHIVE="openshift-client-linux-arm64.tar.gz"; fi \
     && curl ${CURL_RETRY} -fsSL \
