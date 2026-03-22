@@ -1231,7 +1231,7 @@ RUN mkdir -p "$HOME/.npm-global" \
     && "$HOME/.tfenv/bin/tfenv" use latest \
     && git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" \
     && SHELL=/bin/zsh opencode completion >> "$HOME/.zshrc" \
-    && gog completion zsh > /usr/local/share/zsh/site-functions/_gog \
+    && cp /opt/devcontainer/configs/_gog /usr/local/share/zsh/site-functions/_gog \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh /home/${USERNAME}/.p10k.zsh
