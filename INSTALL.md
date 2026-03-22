@@ -992,11 +992,15 @@ The Oh My Zsh installer creates a `~/.zshrc` with defaults. Two settings must be
 sed -i '' 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
 ```
 
-**Plugins** — replace the default `plugins=(git)` line with the full plugin set matching the devcontainer:
+**Plugins** — replace the default `plugins=(git)` line with the full plugin set (common plugins shared with the devcontainer, plus macOS-only `iterm2` at the end):
+
+<!-- markdownlint-disable MD013 -->
 
 ```bash
-sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl iterm2 kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux zsh-claudecode-completion)/' ~/.zshrc
+sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux zsh-claudecode-completion dotenv emoji gcloud git pre-commit iterm2 macos podman)/' ~/.zshrc
 ```
+
+<!-- markdownlint-enable MD013 -->
 
 VERIFY both changes applied:
 
@@ -1005,18 +1009,22 @@ grep '^ZSH_THEME=' ~/.zshrc    # VERIFY: output is ZSH_THEME="powerlevel10k/powe
 grep '^plugins=' ~/.zshrc       # VERIFY: output includes zsh-claudecode-completion
 ```
 
+#### Common plugins (both macOS and devcontainer)
+
 | Plugin | Source | What It Does |
 | ------ | ------ | ------------ |
 | `zsh-syntax-highlighting` | Custom clone | Real-time color coding of commands as you type |
 | `zsh-autosuggestions` | Custom clone | Fish-like inline suggestions from command history (accept with →) |
+| `zsh-claudecode-completion` | Custom clone | Tab completions for Claude Code CLI |
+| `conda-zsh-completion` | Custom clone | Conda environment and package completions |
+| `zsh-eza` | Custom clone | Enhanced `ls` using `eza` with icons and Git status |
+| `zsh-tfenv` | Custom clone | Terraform version manager completions |
+| `zsh-aliases-lsd` | Custom clone | Aliases that use `lsd` as a modern `ls` replacement |
+| `gh-clone-complete` | Custom (configs/) | Tab completion for GitHub repo names during `gh repo clone` |
 | `zsh-interactive-cd` | OMZ built-in | Interactive directory selection with fzf |
 | `jsontools` | OMZ built-in | JSON pretty-printing and manipulation (`pp_json`, `is_json`) |
 | `gh` | OMZ built-in | GitHub CLI completions |
-| `gh-clone-complete` | Custom (configs/) | Tab completion for GitHub repo names during `gh repo clone` |
 | `common-aliases` | OMZ built-in | Useful shell aliases (`ll`, `la`, `..`, etc.) |
-| `zsh-aliases-lsd` | Custom clone | Aliases that use `lsd` as a modern `ls` replacement |
-| `zsh-tfenv` | Custom clone | Terraform version manager completions |
-| `conda-zsh-completion` | Custom clone | Conda environment and package completions |
 | `z` | OMZ built-in | Frecency-based directory jumping (`z project`) |
 | `pip` | OMZ built-in | Python pip completions |
 | `terraform` | OMZ built-in | Terraform completions and aliases |
@@ -1025,7 +1033,6 @@ grep '^plugins=' ~/.zshrc       # VERIFY: output includes zsh-claudecode-complet
 | `git-auto-fetch` | OMZ built-in | Auto-fetches Git remotes in background |
 | `helm` | OMZ built-in | Helm completions |
 | `istioctl` | OMZ built-in | Istio CLI completions |
-| `iterm2` | OMZ built-in | iTerm2 shell integration |
 | `kube-ps1` | OMZ built-in | Kubernetes context/namespace in prompt |
 | `kubectl` | OMZ built-in | kubectl completions and aliases |
 | `sudo` | OMZ built-in | Press Escape twice to prepend `sudo` to current command |
@@ -1037,10 +1044,21 @@ grep '^plugins=' ~/.zshrc       # VERIFY: output includes zsh-claudecode-complet
 | `colored-man-pages` | OMZ built-in | Colorized man pages |
 | `command-not-found` | OMZ built-in | Suggests packages when a command is not found |
 | `tmux` | OMZ built-in | Tmux aliases and completions |
-| `zsh-claudecode-completion` | Custom clone | Tab completions for Claude Code CLI |
-| `zsh-eza` | Custom clone | Enhanced `ls` using `eza` with icons and Git status |
+| `dotenv` | OMZ built-in | Auto-loads `.env` files when entering a project directory |
+| `emoji` | OMZ built-in | Emoji variables and functions (`$emoji[name]`, `random_emoji`) |
+| `gcloud` | OMZ built-in | Google Cloud SDK completions |
+| `git` | OMZ built-in | Git aliases and functions (`ga`, `gc`, `gst`, `gp`, etc.) |
+| `pre-commit` | OMZ built-in | Pre-commit aliases (`prc`, `prcr`, `prcra`) |
 
-**Note**: The devcontainer also includes the `ubuntu` plugin which is Linux-only and not applicable to macOS.
+#### macOS-only plugins
+
+| Plugin | Source | What It Does |
+| ------ | ------ | ------------ |
+| `iterm2` | OMZ built-in | iTerm2 shell integration (macOS-only terminal app) |
+| `macos` | OMZ built-in | macOS utilities (Finder, Quick Look, `rmdsstore`, `btrestart`) |
+| `podman` | OMZ built-in | Podman aliases and completions (podman not in container for security) |
+
+**Note**: The devcontainer adds the `ubuntu` plugin (Linux-only package suggestions). macOS adds `iterm2`, `macos`, and `podman` (macOS-only). Platform-specific plugins appear at the end of each `plugins=()` line.
 
 ### 5.6 — Install Powerlevel10k Configuration
 
@@ -2564,6 +2582,10 @@ grep -q 'iTerm.app' ~/.zshrc || \
 # Oh My Zsh vscode plugin: use Cursor as default editor
 grep -q 'VSCODE=cursor' ~/.zshrc || \
   echo 'export VSCODE=cursor' >> ~/.zshrc
+
+# dotenv plugin: auto-source .env files without prompting
+grep -q 'ZSH_DOTENV_PROMPT' ~/.zshrc || \
+  echo 'export ZSH_DOTENV_PROMPT=false' >> ~/.zshrc
 
 # Claude Code plugin autoupdate
 grep -q 'FORCE_AUTOUPDATE_PLUGINS' ~/.zshrc || \

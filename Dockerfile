@@ -1201,7 +1201,8 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
       "${ZSH_CUSTOM}/themes/powerlevel10k" \
     && "${ZSH_CUSTOM}/themes/powerlevel10k/gitstatus/install" \
     && sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$HOME/.zshrc" \
-    && sed -i 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd ubuntu jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl iterm2 kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux zsh-claudecode-completion)/' \
+    # Plugin list: common set + ubuntu (Linux-only). macOS INSTALL.md adds iterm2, macos, podman instead.
+    && sed -i 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux zsh-claudecode-completion dotenv emoji gcloud git pre-commit ubuntu)/' \
       "$HOME/.zshrc" \
     && sed -i 's/^# HYPHEN_INSENSITIVE=.*/HYPHEN_INSENSITIVE="true"/' "$HOME/.zshrc" \
     && sed -i 's/^# COMPLETION_WAITING_DOTS=.*/COMPLETION_WAITING_DOTS="true"/' "$HOME/.zshrc" \
@@ -1216,7 +1217,8 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && echo 'export LESSOPEN="|~/.lessfilter %s"' >> "$HOME/.zshrc" \
     && echo 'export MANPAGER="sh -c '\''col -bx | bat -l man -p'\''"' >> "$HOME/.zshrc" \
     && echo 'export BAT_THEME="Coldark-Dark"' >> "$HOME/.zshrc" \
-    && echo 'export BROWSER="browsh"' >> "$HOME/.zshrc"
+    && echo 'export BROWSER="browsh"' >> "$HOME/.zshrc" \
+    && echo 'export ZSH_DOTENV_PROMPT=false' >> "$HOME/.zshrc"
 
 # ============================================================
 # 16. User shell bootstrap (baked in — eliminates runtime setup)
