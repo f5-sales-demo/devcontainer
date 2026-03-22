@@ -191,8 +191,8 @@ echo ""
 echo "8. Claude Code Plugins"
 check "enabledPlugins in settings.json" \
   jq -e '.enabledPlugins' "$HOME/.claude/settings.json"
-check "15 plugins configured" \
-  test "$(jq '.enabledPlugins | length' "$HOME/.claude/settings.json")" -eq 15
+check "18 plugins configured" \
+  test "$(jq '.enabledPlugins | length' "$HOME/.claude/settings.json")" -eq 18
 check "FORCE_AUTOUPDATE_PLUGINS set" test "$FORCE_AUTOUPDATE_PLUGINS" = "true"
 check "official marketplace cached" \
   test -d "$HOME/.claude/plugins/marketplaces/claude-plugins-official"
@@ -213,7 +213,7 @@ check "f5xc plugin cache populated" \
 check "superpowers pre-installed" \
   test -d "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers"
 check "all enabled plugins cached" \
-  test "$(jq 'length' "$HOME/.claude/plugins/installed_plugins.json")" -eq 15
+  test "$(jq 'length' "$HOME/.claude/plugins/installed_plugins.json")" -eq 18
 
 echo ""
 echo "9. Chrome DevTools MCP"
