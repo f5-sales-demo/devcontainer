@@ -812,11 +812,22 @@ else
 fi
 ```
 
-> **MANUAL STEP**: iTerm2 requires one additional setting for Claude Code notifications that cannot be set via plist:
+> **MANUAL STEP — Shift+Enter for Claude Code**: Configure iTerm2 to send the CSI u escape sequence for Shift+Enter. This is required for multi-line prompts in Claude Code — especially when running inside containers or over SSH where `/terminal-setup` cannot run.
+>
+> 1. Open **iTerm2 Settings** → **Profiles** → **Keys** → **Key Bindings**
+> 2. Click **+** to add a new binding
+> 3. **Keyboard Shortcut**: press **Shift+Enter**
+> 4. **Action**: select **"Send Escape Sequence"**
+> 5. **Esc+ value**: type `[13;2u`
+>
+> This sends `ESC[13;2u` (CSI u encoded Shift+Enter) which Claude Code recognizes regardless of TERM type. The sequence passes through podman/docker and tmux to reach Claude Code.
+>
+> **Notifications**: iTerm2 also requires settings for Claude Code notifications:
 >
 > 1. Open **iTerm2 Settings** → **Profiles** → **Terminal**
-> 2. Click **"Filter Alerts"** and check **"Send escape sequence-generated alerts"**
-> 3. Verify iTerm2 has notification permissions in **System Settings** → **Notifications** → **iTerm2**
+> 2. Enable **"Notification Center Alerts"**
+> 3. Click **"Filter Alerts"** and check **"Send escape sequence-generated alerts"**
+> 4. Verify iTerm2 has notification permissions in **System Settings** → **Notifications** → **iTerm2**
 
 ### 5.4 — Install Zsh Plugins
 
