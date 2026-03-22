@@ -492,10 +492,10 @@ zed --version                  # VERIFY: output contains a version number
 
 ## Step 4i — Install Alacritty
 
-Alacritty is a GPU-accelerated terminal emulator. Install via Homebrew Cask:
+Alacritty is a GPU-accelerated terminal emulator. The Homebrew cask is deprecated due to macOS Gatekeeper issues (deadline Sept 2026) and requires `--no-quarantine` to install correctly:
 
 ```bash
-[ -d "/Applications/Alacritty.app" ] || brew install --cask alacritty
+[ -d "/Applications/Alacritty.app" ] || HOMEBREW_CASK_OPTS="--no-quarantine" brew install --cask alacritty
 ```
 
 VERIFY:
