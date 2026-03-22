@@ -1002,11 +1002,21 @@ sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions z
 
 <!-- markdownlint-enable MD013 -->
 
-VERIFY both changes applied:
+**dotenv plugin config** — the `dotenv` plugin prompts before sourcing `.env` files. Disable the prompt by inserting `ZSH_DOTENV_PROMPT=false` **before** `source $ZSH/oh-my-zsh.sh` (the plugin reads this variable at load time, so appending to the end of `.zshrc` is too late):
+
+```bash
+grep -q 'ZSH_DOTENV_PROMPT' ~/.zshrc || \
+  sed -i '' '/^source \$ZSH\/oh-my-zsh.sh/i\
+export ZSH_DOTENV_PROMPT=false
+' ~/.zshrc
+```
+
+VERIFY all changes applied:
 
 ```bash
 grep '^ZSH_THEME=' ~/.zshrc    # VERIFY: output is ZSH_THEME="powerlevel10k/powerlevel10k"
 grep '^plugins=' ~/.zshrc       # VERIFY: output includes zsh-claudecode-completion
+grep 'ZSH_DOTENV_PROMPT' ~/.zshrc  # VERIFY: output is export ZSH_DOTENV_PROMPT=false (before source line)
 ```
 
 #### Common plugins (both macOS and devcontainer)
@@ -1261,6 +1271,7 @@ for KEY in \
   mkdir -p "$DEST"
 
   if [ -n "$SRC" ]; then
+    rm -rf "$DEST" && mkdir -p "$DEST"
     cp -a "${SRC}/." "$DEST/"
   elif [ "$NAME" = "superpowers" ]; then
     EXISTING="$(ls -d "${CACHE_DIR}/${NAME}"/*/. 2>/dev/null | head -1)"
@@ -2590,8 +2601,11 @@ grep -q 'VSCODE=cursor' ~/.zshrc || \
   echo 'export VSCODE=cursor' >> ~/.zshrc
 
 # dotenv plugin: auto-source .env files without prompting
+# Must appear BEFORE `source $ZSH/oh-my-zsh.sh` so the dotenv plugin sees it at load time
 grep -q 'ZSH_DOTENV_PROMPT' ~/.zshrc || \
-  echo 'export ZSH_DOTENV_PROMPT=false' >> ~/.zshrc
+  sed -i '' '/^source \$ZSH\/oh-my-zsh.sh/i\
+export ZSH_DOTENV_PROMPT=false
+' ~/.zshrc
 
 # Claude Code plugin autoupdate
 grep -q 'FORCE_AUTOUPDATE_PLUGINS' ~/.zshrc || \
