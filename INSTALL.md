@@ -444,7 +444,7 @@ code --version                 # VERIFY: output contains a version number
 
 ## Step 4f — Install Cursor
 
-Cursor is an AI-native code editor built on the VS Code platform. Install via Homebrew Cask:
+Cursor is an AI-native code editor built on the Visual Studio Code platform. Install via Homebrew Cask:
 
 ```bash
 [ -d "/Applications/Cursor.app" ] || brew install --cask cursor
