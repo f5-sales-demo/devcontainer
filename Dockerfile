@@ -447,6 +447,9 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
       -o /tmp/vscode_cli.tar.gz \
     && tar -xzf /tmp/vscode_cli.tar.gz -C /usr/local/bin \
     && rm /tmp/vscode_cli.tar.gz \
+    # Cursor CLI (agent) — official installer detects arch automatically
+    && curl -fsSL https://cursor.com/install | bash \
+    && ln -sf /home/${USERNAME}/.local/bin/agent /usr/local/bin/agent \
     # oc (OpenShift CLI) — stable channel uses version-free filenames
     && if [ "$DPKG_ARCH" = "amd64" ]; then OC_ARCHIVE="openshift-client-linux.tar.gz"; else OC_ARCHIVE="openshift-client-linux-arm64.tar.gz"; fi \
     && curl ${CURL_RETRY} -fsSL \

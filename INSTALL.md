@@ -424,6 +424,88 @@ agy --version              # VERIFY: output contains a version number
 
 ---
 
+## Step 4e — Install Visual Studio Code
+
+Visual Studio Code is a general-purpose code editor with extensive extension support. Install via Homebrew Cask:
+
+**Idempotency**: Guard with an existence check — `brew install --cask` can fail if the app already exists:
+
+```bash
+[ -d "/Applications/Visual Studio Code.app" ] || brew install --cask visual-studio-code
+```
+
+VERIFY:
+
+```bash
+code --version                 # VERIFY: output contains a version number
+```
+
+---
+
+## Step 4f — Install Cursor
+
+Cursor is an AI-native code editor built on the VS Code platform. Install via Homebrew Cask:
+
+```bash
+[ -d "/Applications/Cursor.app" ] || brew install --cask cursor
+```
+
+VERIFY:
+
+```bash
+cursor --version               # VERIFY: output contains a version number
+```
+
+---
+
+## Step 4g — Install Windsurf
+
+Windsurf is an AI-powered IDE by Codeium. Install via Homebrew Cask:
+
+```bash
+[ -d "/Applications/Windsurf.app" ] || brew install --cask windsurf
+```
+
+VERIFY:
+
+```bash
+windsurf --version             # VERIFY: output contains a version number
+```
+
+---
+
+## Step 4h — Install Zed
+
+Zed is a GPU-accelerated code editor with built-in AI assistant support. Install via Homebrew Cask:
+
+```bash
+[ -d "/Applications/Zed.app" ] || brew install --cask zed
+```
+
+VERIFY:
+
+```bash
+zed --version                  # VERIFY: output contains a version number
+```
+
+---
+
+## Step 4i — Install Alacritty
+
+Alacritty is a GPU-accelerated terminal emulator. Install via Homebrew Cask:
+
+```bash
+[ -d "/Applications/Alacritty.app" ] || brew install --cask alacritty
+```
+
+VERIFY:
+
+```bash
+alacritty --version            # VERIFY: output contains a version number
+```
+
+---
+
 ## Step 4d — Configure macOS System Defaults
 
 Configure macOS for developer workflows and long-running AI assistant tasks. These settings prevent sleep interruptions, speed up keyboard input, disable code-breaking text substitutions, and optimize the Finder and Dock for productivity.
@@ -2597,7 +2679,22 @@ VERIFY: all five packages appear in the output (exact versions may vary).
 
 VERIFY: output contains `Google Chrome` followed by a version number.
 
-### 16.5 — chrome-devtools-mcp
+### 16.5 — IDEs and Terminal
+
+```bash
+ls "/Applications/Visual Studio Code.app"   # VERIFY: directory exists
+code --version                               # VERIFY: output contains a version number
+ls "/Applications/Cursor.app"                # VERIFY: directory exists
+cursor --version                             # VERIFY: output contains a version number
+ls "/Applications/Windsurf.app"              # VERIFY: directory exists
+windsurf --version                           # VERIFY: output contains a version number
+ls "/Applications/Zed.app"                   # VERIFY: directory exists
+zed --version                                # VERIFY: output contains a version number
+ls "/Applications/Alacritty.app"             # VERIFY: directory exists
+alacritty --version                          # VERIFY: output contains a version number
+```
+
+### 16.6 — chrome-devtools-mcp
 
 ```bash
 npx -y chrome-devtools-mcp@latest --help
@@ -2605,7 +2702,7 @@ npx -y chrome-devtools-mcp@latest --help
 
 Expected: prints the CLI help with options like `--executablePath`, `--headless`, etc.
 
-### 16.6 — OpenCode Config Files
+### 16.7 — OpenCode Config Files
 
 ```bash
 ls -la ~/.config/opencode/opencode.json
@@ -2618,7 +2715,7 @@ ls -la ~/.config/opencode/node_modules/@opencode-ai/plugin/
 
 All files should exist and be owned by the current user.
 
-### 16.7 — OpenCode Runtime Cache
+### 16.8 — OpenCode Runtime Cache
 
 ```bash
 ls ~/.cache/opencode/node_modules/@robinmordasiewicz/oh-my-opencode/package.json  # Expected: file exists
@@ -2629,14 +2726,14 @@ ls ~/.cache/opencode/node_modules/opencode-anthropic-auth/package.json          
 
 All four runtime packages should be pre-installed. If any are missing, re-run `(cd ~/.cache/opencode && bun install)`.
 
-### 16.8 — Environment Variables
+### 16.9 — Environment Variables
 
 ```bash
 echo $BUN_INSTALL            # VERIFY: output is /Users/<username>/.bun (not empty)
 echo $LITELLM_API_KEY        # VERIFY: output is your API key (not empty, not a placeholder)
 ```
 
-### 16.9 — Claude Code Plugins and Settings
+### 16.10 — Claude Code Plugins and Settings
 
 ```bash
 # Verify plugin count
@@ -2660,7 +2757,7 @@ test -x ~/.claude/statusline.sh && echo "OK: statusline.sh" || echo "MISSING"  #
 jq '.mcpServers | has("chrome-devtools")' ~/.claude.json         # Expected: true
 ```
 
-### 16.10 — Project Tooling (Podman, Docker Shim, pre-commit)
+### 16.11 — Project Tooling (Podman, Docker Shim, pre-commit)
 
 ```bash
 podman --version                # VERIFY: output contains "podman version 5"
@@ -2670,7 +2767,7 @@ which docker                    # VERIFY: output is ~/.local/bin/docker
 pre-commit --version            # VERIFY: output contains "pre-commit 4"
 ```
 
-### 16.11 — Terminal Environment (iTerm2, Oh My Zsh, Theme, Plugins)
+### 16.12 — Terminal Environment (iTerm2, Oh My Zsh, Theme, Plugins)
 
 ```bash
 ls "/Applications/iTerm.app"                                                    # VERIFY: directory exists
@@ -2694,7 +2791,7 @@ grep "^plugins=" ~/.zshrc                                                       
 defaults read com.googlecode.iterm2 TabStyleWithAutomaticOption                  # VERIFY: 1 (Dark)
 ```
 
-### 16.12 — Verify .env File
+### 16.13 — Verify .env File
 
 ```bash
 REPO_DIR="$(pwd)"
@@ -2708,7 +2805,7 @@ grep -q '^GIT_AUTHOR_NAME=' "${REPO_DIR}/.env" && echo "OK: GIT_AUTHOR_NAME" || 
 
 VERIFY: All lines print "OK". Any "MISSING" line means Step 8 did not complete successfully.
 
-### 16.13 — Verify File Manifest
+### 16.14 — Verify File Manifest
 
 Confirm that all expected directories and files were created:
 
@@ -2737,7 +2834,7 @@ test -x ~/.local/bin/docker  && echo "OK: docker shim"  || echo "MISSING: docker
 
 VERIFY: All lines print "OK". Any "MISSING" line indicates a failed step — go back and re-run the corresponding step.
 
-### 16.14 — Launch OpenCode
+### 16.15 — Launch OpenCode
 
 ```bash
 opencode
@@ -2745,7 +2842,7 @@ opencode
 
 OpenCode should start without errors. The Oh-My-OpenCode plugin should load automatically (you will see the Sisyphus agent and multi-agent orchestration capabilities).
 
-### 16.15 — Verify Podman and Print Next Steps
+### 16.16 — Verify Podman and Print Next Steps
 
 Confirm that Podman and podman-compose are installed and the Podman machine is running, then print instructions for launching the devcontainer.
 
