@@ -1239,10 +1239,11 @@ RUN mkdir -p "$HOME/.npm-global" \
     && "$HOME/.tfenv/bin/tfenv" use latest \
     && git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" \
     && SHELL=/bin/zsh opencode completion >> "$HOME/.zshrc" \
-    && cp /opt/devcontainer/configs/_gog /usr/local/share/zsh/site-functions/_gog \
-    && mkdir -p "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/completions" \
-    && cp /opt/devcontainer/configs/_gog "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/completions/_gog" \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
+
+# gogcli (gog) native zsh completions (generated from gog help-json schema)
+COPY configs/_gog /usr/local/share/zsh/site-functions/_gog
+COPY --chown=${USERNAME}:${USERNAME} configs/_gog /home/${USERNAME}/.oh-my-zsh/custom/completions/_gog
 
 COPY --chown=${USERNAME}:${USERNAME} configs/.p10k.zsh /home/${USERNAME}/.p10k.zsh
 COPY --chown=${USERNAME}:${USERNAME} \
