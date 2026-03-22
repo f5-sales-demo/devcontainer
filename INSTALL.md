@@ -1342,18 +1342,22 @@ Some tools are installed as Claude Code skills (not marketplace
 plugins). These are git-cloned into `~/.claude/skills/`.
 
 ```bash
+mkdir -p ~/.claude/skills
+
 # frontend-slides — HTML presentation generator with visual styles
-git clone --depth=1 --single-branch --branch main \
-  https://github.com/zarazhangrui/frontend-slides.git \
-  ~/.claude/skills/frontend-slides
-```
+if [ -d ~/.claude/skills/frontend-slides/.git ]; then
+  git -C ~/.claude/skills/frontend-slides pull --ff-only
+else
+  git clone --depth=1 --single-branch --branch main \
+    https://github.com/zarazhangrui/frontend-slides.git \
+    ~/.claude/skills/frontend-slides
+fi
 
-Invoke with `/frontend-slides` in Claude Code. For PowerPoint
-conversion, install the optional Python dependency:
-
-```bash
+# python-pptx — required for PowerPoint conversion in frontend-slides
 pip install python-pptx
 ```
+
+Invoke with `/frontend-slides` in Claude Code.
 
 ### 6.5 — Merge Container Settings into `~/.claude/settings.json`
 
@@ -1510,8 +1514,11 @@ jq 'length' ~/.claude/plugins/installed_plugins.json
 ls ~/.claude/plugins/cache/claude-plugins-official/       # Expected: plugin directories
 ls ~/.claude/plugins/cache/f5xc-salesdemos-marketplace/   # Expected: f5xc-sales-engineer, f5xc-docs-tools, f5xc-repo-governance, f5xc-docs-pipeline, f5xc-brand
 
-# Check SKILL.md files were loaded
+# Check SKILL.md files were loaded (plugins)
 find ~/.claude/plugins/cache -name "SKILL.md" -type f | wc -l
+
+# Check external skills installed
+test -f ~/.claude/skills/frontend-slides/SKILL.md && echo "OK: frontend-slides" || echo "MISSING: frontend-slides"
 
 # Check settings.json has full container settings merged
 jq '.enabledPlugins | keys | length' ~/.claude/settings.json  # Expected: 19
@@ -2826,9 +2833,12 @@ echo $LITELLM_API_KEY        # VERIFY: output is your API key (not empty, not a 
 jq 'length' ~/.claude/plugins/installed_plugins.json
 # Expected: 19
 
-# Verify SKILL.md files
+# Verify SKILL.md files (plugins)
 find ~/.claude/plugins/cache -name "SKILL.md" -type f | wc -l
 # Expected: 19
+
+# Verify external skills
+test -f ~/.claude/skills/frontend-slides/SKILL.md && echo "OK" || echo "MISSING"  # Expected: OK
 
 # Verify settings.json has full container settings
 jq '.enabledPlugins | keys | length' ~/.claude/settings.json    # Expected: 19
