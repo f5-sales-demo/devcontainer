@@ -14,8 +14,14 @@
 # Requirements: gog, jq
 set -euo pipefail
 
-command -v gog >/dev/null 2>&1 || { echo "ERROR: gog not found in PATH" >&2; exit 1; }
-command -v jq  >/dev/null 2>&1 || { echo "ERROR: jq not found in PATH" >&2; exit 1; }
+command -v gog >/dev/null 2>&1 || {
+  echo "ERROR: gog not found in PATH" >&2
+  exit 1
+}
+command -v jq >/dev/null 2>&1 || {
+  echo "ERROR: jq not found in PATH" >&2
+  exit 1
+}
 
 SCHEMA=$(gog help-json 2>/dev/null)
 GOG_VERSION=$(echo "$SCHEMA" | jq -r '.build')
@@ -24,7 +30,7 @@ GOG_VERSION=$(echo "$SCHEMA" | jq -r '.build')
 JQ_FILTER=$(mktemp)
 trap 'rm -f "$JQ_FILTER"' EXIT
 
-cat > "$JQ_FILTER" <<'JQEOF'
+cat >"$JQ_FILTER" <<'JQEOF'
 # Escape special chars for zsh completion strings
 def zsh_escape:
   gsub("'"; "'\\''")
@@ -37,8 +43,8 @@ def zsh_escape:
 #   '(-f --flag)'{-f,--flag}'=[help]:value: '  (string)
 def flag_spec:
   (if (.type == "bool" or .type == "*bool" or
-       .type == "kong.helpFlag" or .type == "kong.VersionFlag")
-   then false else true end) as $takes_arg |
+      .type == "kong.helpFlag" or .type == "kong.VersionFlag")
+    then false else true end) as $takes_arg |
   ((.help // "") | split("\n")[0] | zsh_escape) as $help |
   (.short // "") as $short |
   if $takes_arg then

@@ -320,6 +320,7 @@ npm install -g @typescript/native-preview     # Provides tsgo binary (TypeScript
 
 # Linters and formatters (mirrors devcontainer toolset)
 npm install -g markdownlint-cli2              # Markdown linter (used by super-linter CI)
+npm install -g editorconfig-checker           # EditorConfig validation
 npm install -g prettier                       # Multi-language code formatter
 npm install -g @biomejs/biome                 # Fast JS/TS/JSON linter and formatter
 
