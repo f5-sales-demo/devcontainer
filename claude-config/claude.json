@@ -9,6 +9,7 @@
   },
   "officialMarketplaceAutoInstallAttempted": true,
   "officialMarketplaceAutoInstalled": true,
+  "autoUpdates": true,
   "cachedChromeExtensionInstalled": false,
   "mcpServers": {
     "chrome-devtools": {

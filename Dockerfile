@@ -1066,7 +1066,7 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
         https://github.com/f5xc-salesdemos/marketplace.git \
         "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" \
     && TS="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
-    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s"},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s"}}' \
+    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true}}' \
         "${PLUGIN_BASE}/marketplaces/claude-plugins-official" "$TS" \
         "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" "$TS" \
         > "${PLUGIN_BASE}/known_marketplaces.json" \
@@ -1162,6 +1162,7 @@ RUN if [ -f ~/.config/opencode/oh-my-opencode.json ]; then \
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 ENV HOMEBREW_NO_AUTO_UPDATE=1
+ENV FORCE_AUTOUPDATE_PLUGINS=true
 ENV PATH="/home/vscode/.local/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
 # AI assistant deps + formatters (no APT packages available)

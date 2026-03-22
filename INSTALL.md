@@ -1192,7 +1192,7 @@ PLUGIN_BASE="$HOME/.claude/plugins"
 TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
 
 # Marketplace registry (both marketplaces)
-printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s"},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s"}}' \
+printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true}}' \
   "${PLUGIN_BASE}/marketplaces/claude-plugins-official" \
   "$TIMESTAMP" \
   "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" \
@@ -2463,6 +2463,10 @@ grep -q '\.local/bin' ~/.zshrc || \
 grep -q 'iTerm.app' ~/.zshrc || \
   echo 'export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"' >> ~/.zshrc
 
+# Claude Code plugin autoupdate
+grep -q 'FORCE_AUTOUPDATE_PLUGINS' ~/.zshrc || \
+  echo 'export FORCE_AUTOUPDATE_PLUGINS=true' >> ~/.zshrc
+
 # API key for AI proxy (sourced from .env in Step 8.5)
 # Only write if LITELLM_API_KEY is actually set — in OAuth mode it's empty
 if [ -n "$LITELLM_API_KEY" ]; then
@@ -2479,6 +2483,7 @@ Do **not** run `source ~/.zshrc` — it will fail in a non-interactive shell con
 ```bash
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$HOME/.local/bin:/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
+export FORCE_AUTOUPDATE_PLUGINS=true
 eval $(/opt/homebrew/bin/brew shellenv)
 ```
 
