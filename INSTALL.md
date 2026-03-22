@@ -821,8 +821,8 @@ fi
 > 5. **Esc+ value**: type `[13;2u`
 >
 > This sends `ESC[13;2u` (CSI u encoded Shift+Enter) which Claude Code recognizes regardless of TERM type. The sequence passes through podman/docker and tmux to reach Claude Code.
-
-> **MANUAL STEP — Notifications**: iTerm2 requires additional settings for Claude Code notifications:
+>
+> **Notifications**: iTerm2 also requires settings for Claude Code notifications:
 >
 > 1. Open **iTerm2 Settings** → **Profiles** → **Terminal**
 > 2. Enable **"Notification Center Alerts"**
