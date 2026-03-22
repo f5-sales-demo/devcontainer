@@ -1059,12 +1059,14 @@ There is **no separate plugin installation for OpenCode** — installing plugins
 
 This step clones the official plugin marketplace, copies each enabled plugin into the cache directory, clones the superpowers framework separately, generates the JSON registry files, and merges settings into `~/.claude/settings.json` and `~/.claude.json`.
 
-### 6.1 — Clone the Official Plugin Marketplace
+### 6.1 — Clone Plugin Marketplaces
 
-`git clone` fails with exit code 128 if the target directory already exists. Guard with an existence check. If the directory exists, pull the latest changes instead:
+Clone both the official Anthropic marketplace and the f5xc-salesdemos marketplace. `git clone` fails with exit code 128 if the target directory already exists — pull instead:
 
 ```bash
 mkdir -p ~/.claude/plugins/marketplaces
+
+# Official Anthropic marketplace
 if [ -d ~/.claude/plugins/marketplaces/claude-plugins-official/.git ]; then
   git -C ~/.claude/plugins/marketplaces/claude-plugins-official pull --ff-only
 else
@@ -1072,30 +1074,62 @@ else
     https://github.com/anthropics/claude-plugins-official.git \
     ~/.claude/plugins/marketplaces/claude-plugins-official
 fi
+
+# f5xc-salesdemos marketplace
+if [ -d ~/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace/.git ]; then
+  git -C ~/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace pull --ff-only
+else
+  git clone --depth=1 --single-branch --branch main \
+    https://github.com/f5xc-salesdemos/marketplace.git \
+    ~/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace
+fi
 ```
 
 ### 6.2 — Install Each Plugin into the Cache
 
-Run the following script. It copies each enabled plugin from the marketplace clone into the versioned cache directory, clones the external superpowers plugin from GitHub, and builds the `installed_plugins.json` registry.
+Run the following script. It mirrors the container's `install-plugins.sh` — parses each `name@marketplace` key, looks up the plugin in the correct marketplace directory, copies it to the versioned cache, and builds `installed_plugins.json`. Supports multiple marketplaces.
 
 ```bash
 PLUGIN_BASE="$HOME/.claude/plugins"
-MARKETPLACE="${PLUGIN_BASE}/marketplaces/claude-plugins-official"
-CACHE="${PLUGIN_BASE}/cache/claude-plugins-official"
 TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
-GIT_SHA="$(cd "$MARKETPLACE" && git rev-parse HEAD)"
-
-mkdir -p "$CACHE"
 
 printf '[' > "${PLUGIN_BASE}/installed_plugins.json"
 FIRST=true
 
-for NAME in frontend-design superpowers code-review code-simplifier feature-dev ralph-loop typescript-lsp commit-commands security-guidance claude-md-management pr-review-toolkit skill-creator claude-code-setup hookify; do
+for KEY in \
+  frontend-design@claude-plugins-official \
+  superpowers@claude-plugins-official \
+  code-review@claude-plugins-official \
+  code-simplifier@claude-plugins-official \
+  feature-dev@claude-plugins-official \
+  ralph-loop@claude-plugins-official \
+  typescript-lsp@claude-plugins-official \
+  commit-commands@claude-plugins-official \
+  security-guidance@claude-plugins-official \
+  claude-md-management@claude-plugins-official \
+  pr-review-toolkit@claude-plugins-official \
+  skill-creator@claude-plugins-official \
+  claude-code-setup@claude-plugins-official \
+  hookify@claude-plugins-official \
+  f5xc-sales-engineer@f5xc-salesdemos-marketplace \
+; do
+  NAME="$(echo "$KEY" | cut -d@ -f1)"
+  MKT="$(echo "$KEY" | cut -d@ -f2)"
+  MKT_DIR="${PLUGIN_BASE}/marketplaces/${MKT}"
+  CACHE_DIR="${PLUGIN_BASE}/cache/${MKT}"
+
+  mkdir -p "$CACHE_DIR"
+
+  GIT_SHA=""
+  if [ -d "$MKT_DIR/.git" ]; then
+    GIT_SHA="$(cd "$MKT_DIR" && git rev-parse HEAD)"
+  fi
+
   SRC=""
-  if [ -d "${MARKETPLACE}/plugins/${NAME}" ]; then
-    SRC="${MARKETPLACE}/plugins/${NAME}"
-  elif [ -d "${MARKETPLACE}/external_plugins/${NAME}" ]; then
-    SRC="${MARKETPLACE}/external_plugins/${NAME}"
+  if [ -d "${MKT_DIR}/plugins/${NAME}" ]; then
+    SRC="${MKT_DIR}/plugins/${NAME}"
+  elif [ -d "${MKT_DIR}/external_plugins/${NAME}" ]; then
+    SRC="${MKT_DIR}/external_plugins/${NAME}"
   fi
 
   VERSION="0.0.0"
@@ -1104,14 +1138,13 @@ for NAME in frontend-design superpowers code-review code-simplifier feature-dev 
     [ -n "$V" ] && VERSION="$V"
   fi
 
-  DEST="${CACHE}/${NAME}/${VERSION}"
+  DEST="${CACHE_DIR}/${NAME}/${VERSION}"
   mkdir -p "$DEST"
 
   if [ -n "$SRC" ]; then
     cp -a "${SRC}/." "$DEST/"
   elif [ "$NAME" = "superpowers" ]; then
-    # Check if any version is already cached (avoids re-cloning on every run)
-    EXISTING="$(ls -d "${CACHE}/${NAME}"/*/. 2>/dev/null | head -1)"
+    EXISTING="$(ls -d "${CACHE_DIR}/${NAME}"/*/. 2>/dev/null | head -1)"
     if [ -n "$EXISTING" ]; then
       DEST="${EXISTING%/}"
       VERSION="$(basename "$DEST")"
@@ -1122,7 +1155,7 @@ for NAME in frontend-design superpowers code-review code-simplifier feature-dev 
         V="$(jq -r '.version // empty' "${DEST}/.claude-plugin/plugin.json")"
         if [ -n "$V" ]; then
           VERSION="$V"
-          NEW_DEST="${CACHE}/${NAME}/${VERSION}"
+          NEW_DEST="${CACHE_DIR}/${NAME}/${VERSION}"
           if [ "$DEST" != "$NEW_DEST" ]; then
             mkdir -p "$NEW_DEST"
             cp -a "${DEST}/." "$NEW_DEST/"
@@ -1133,8 +1166,8 @@ for NAME in frontend-design superpowers code-review code-simplifier feature-dev 
       fi
     fi
   else
-    echo "WARNING: no source found for plugin '$NAME', skipping"
-    rm -rf "${CACHE}/${NAME}"
+    echo "WARNING: no source found for plugin '$NAME' in marketplace '$MKT', skipping"
+    rm -rf "${CACHE_DIR}/${NAME}"
     continue
   fi
 
@@ -1144,8 +1177,8 @@ for NAME in frontend-design superpowers code-review code-simplifier feature-dev 
     printf ',\n' >> "${PLUGIN_BASE}/installed_plugins.json"
   fi
 
-  printf '  {\n    "name": "%s",\n    "marketplace": "claude-plugins-official",\n    "scope": "user",\n    "version": "%s",\n    "installPath": "%s",\n    "lastUpdated": "%s",\n    "gitCommitSha": "%s"\n  }' \
-    "$NAME" "$VERSION" "$DEST" "$TIMESTAMP" "$GIT_SHA" \
+  printf '  {\n    "name": "%s",\n    "marketplace": "%s",\n    "scope": "user",\n    "version": "%s",\n    "installPath": "%s",\n    "lastUpdated": "%s",\n    "gitCommitSha": "%s"\n  }' \
+    "$NAME" "$MKT" "$VERSION" "$DEST" "$TIMESTAMP" "$GIT_SHA" \
     >> "${PLUGIN_BASE}/installed_plugins.json"
 done
 
@@ -1158,9 +1191,11 @@ printf '\n]\n' >> "${PLUGIN_BASE}/installed_plugins.json"
 PLUGIN_BASE="$HOME/.claude/plugins"
 TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
 
-# Marketplace registry
-printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s"}}' \
+# Marketplace registry (both marketplaces)
+printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s"},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s"}}' \
   "${PLUGIN_BASE}/marketplaces/claude-plugins-official" \
+  "$TIMESTAMP" \
+  "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" \
   "$TIMESTAMP" \
   > "${PLUGIN_BASE}/known_marketplaces.json"
 
@@ -1210,7 +1245,8 @@ CONTAINER_SETTINGS="$(cat <<SETTINGS
     "pr-review-toolkit@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true
+    "hookify@claude-plugins-official": true,
+    "f5xc-sales-engineer@f5xc-salesdemos-marketplace": true
   },
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
@@ -1310,16 +1346,19 @@ fi
 ### Verify Plugin and Settings Installation
 
 ```bash
-# Check installed_plugins.json has all 14 plugins
+# Check installed_plugins.json has all 15 plugins
 jq 'length' ~/.claude/plugins/installed_plugins.json
-# Expected: 14
+# Expected: 15
+
+# Check both marketplace caches exist
+ls ~/.claude/plugins/cache/claude-plugins-official/       # Expected: plugin directories
+ls ~/.claude/plugins/cache/f5xc-salesdemos-marketplace/   # Expected: f5xc-sales-engineer directory
 
 # Check SKILL.md files were loaded
 find ~/.claude/plugins/cache -name "SKILL.md" -type f | wc -l
-# Expected: 19 (5 from official plugins + 14 from superpowers)
 
 # Check settings.json has full container settings merged
-jq '.enabledPlugins | keys | length' ~/.claude/settings.json  # Expected: 14
+jq '.enabledPlugins | keys | length' ~/.claude/settings.json  # Expected: 15
 jq '.model' ~/.claude/settings.json                            # Expected: "opus"
 jq '.statusLine.type' ~/.claude/settings.json                  # Expected: "command"
 jq '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' ~/.claude/settings.json  # Expected: "1"
