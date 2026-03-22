@@ -922,6 +922,22 @@ fi
 > 2. Click **"Filter Alerts"** and check **"Send escape sequence-generated alerts"**
 > 3. Verify iTerm2 has notification permissions in **System Settings** → **Notifications** → **iTerm2**
 
+### 5.3b — Install it2 (iTerm2 Python CLI)
+
+it2 is a CLI utility that programmatically controls iTerm2 through its Python API, enabling automation of sessions, windows, tabs, profiles, and monitoring. This complements the standalone shell utilities (`imgcat`, `it2dl`) already on PATH.
+
+**Prerequisites**: iTerm2 3.3.0+ must be installed (Step 5.1). Enable the Python API in iTerm2 Settings → General → Magic → Enable Python API.
+
+```bash
+uv tool install it2
+```
+
+VERIFY:
+
+```bash
+it2 --help                     # VERIFY: output shows available commands (send, session, window, tab, profile, app, monitor)
+```
+
 ### 5.4 — Install Zsh Plugins
 
 Clone third-party plugins into Oh My Zsh's custom plugins directory. These mirror the plugins installed in the devcontainer Dockerfile.
@@ -2545,6 +2561,10 @@ grep -q '\.local/bin' ~/.zshrc || \
 grep -q 'iTerm.app' ~/.zshrc || \
   echo 'export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"' >> ~/.zshrc
 
+# Oh My Zsh vscode plugin: use Cursor as default editor
+grep -q 'VSCODE=cursor' ~/.zshrc || \
+  echo 'export VSCODE=cursor' >> ~/.zshrc
+
 # Claude Code plugin autoupdate
 grep -q 'FORCE_AUTOUPDATE_PLUGINS' ~/.zshrc || \
   echo 'export FORCE_AUTOUPDATE_PLUGINS=true' >> ~/.zshrc
@@ -2789,6 +2809,7 @@ grep "^plugins=" ~/.zshrc                                                       
 /usr/libexec/PlistBuddy -c 'Print :"New Bookmarks":0:"Option Key Sends"' \
   ~/Library/Preferences/com.googlecode.iterm2.plist                              # VERIFY: 2
 defaults read com.googlecode.iterm2 TabStyleWithAutomaticOption                  # VERIFY: 1 (Dark)
+it2 --help                                                                       # VERIFY: output shows it2 commands
 ```
 
 ### 16.13 — Verify .env File
