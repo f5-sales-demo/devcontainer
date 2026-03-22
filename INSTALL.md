@@ -318,7 +318,8 @@ npm install -g @googleworkspace/cli           # Google Workspace admin CLI (gws)
 # TypeScript native compiler (tsgo — 10x faster type checking)
 npm install -g @typescript/native-preview     # Provides tsgo binary (TypeScript 7 Go port)
 
-# Code formatters (mirrors devcontainer toolset)
+# Linters and formatters (mirrors devcontainer toolset)
+npm install -g markdownlint-cli2              # Markdown linter (used by super-linter CI)
 npm install -g prettier                       # Multi-language code formatter
 npm install -g @biomejs/biome                 # Fast JS/TS/JSON linter and formatter
 
@@ -2585,8 +2586,9 @@ grep -q '_bun' ~/.zshrc || \
 grep -q 'opencode-completions' ~/.zshrc || \
   opencode completion >> ~/.zshrc
 
-# gogcli (gog) zsh completion
-gog completion zsh > /opt/homebrew/share/zsh/site-functions/_gog 2>/dev/null || true
+# gogcli (gog) native zsh completion (generated from gog help-json schema)
+bash configs/generate-gog-completions.sh > /opt/homebrew/share/zsh/site-functions/_gog 2>/dev/null \
+  || cp configs/_gog /opt/homebrew/share/zsh/site-functions/_gog
 
 # User-local binaries (docker shim, etc.)
 grep -q '\.local/bin' ~/.zshrc || \
@@ -3108,13 +3110,24 @@ dig +short <domain> @8.8.8.8
 # 4. After the negative cache expires (~30 minutes), remove the flag and restart opencode
 ```
 
-**Prevention**: Ensure DNS records are created and propagated **before** Chrome first attempts to load the domain. If your workflow creates DNS records programmatically (e.g., via API), restart opencode after DNS creation to launch Chrome with a clean resolver cache.
+**Prevention**: Ensure DNS records are created and propagated
+**before** Chrome first attempts to load the domain. If your
+workflow creates DNS records programmatically (e.g., via API),
+restart opencode after DNS creation to launch Chrome with a
+clean resolver cache.
 
-**Note**: `dscacheutil -flushcache` does not reliably clear the `mDNSResponder` negative cache on macOS. The `killall -HUP mDNSResponder` command that would clear it requires elevated privileges, which are not available on corporate workstations.
+**Note**: `dscacheutil -flushcache` does not reliably clear
+the `mDNSResponder` negative cache on macOS. The
+`killall -HUP mDNSResponder` command that would clear it
+requires elevated privileges, which are not available on
+corporate workstations.
 
 ### Reset to Clean State
 
-If the installation is in a broken state and you need to start over, remove all generated files and directories. Homebrew packages are left in place (they are managed separately).
+If the installation is in a broken state and you need to
+start over, remove all generated files and directories.
+Homebrew packages are left in place (they are managed
+separately).
 
 ```bash
 # Remove OpenCode config and cache
@@ -3137,7 +3150,9 @@ rm -rf ~/.npm/_npx
 rm -rf ~/.cache/chrome-devtools-mcp
 ```
 
-After cleanup, re-run this document from Step 3 onward (Homebrew packages from Steps 1-2 persist and do not need re-installation).
+After cleanup, re-run this document from Step 3 onward
+(Homebrew packages from Steps 1-2 persist and do not need
+re-installation).
 
 ---
 
