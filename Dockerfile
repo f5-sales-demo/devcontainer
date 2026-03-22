@@ -791,7 +791,10 @@ RUN npm install -g \
     @devcontainers/cli \
     @googleworkspace/cli \
     html2canvas \
+    @playwright/cli \
     playwright \
+    grammy \
+    @whiskeysockets/baileys \
     puppeteer \
     puppeteer-extra \
     puppeteer-extra-plugin-stealth \
@@ -898,8 +901,18 @@ RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install --python python3.12 aider-chat@latest \
       --with aider-chat[browser] \
       --with aider-chat[help] \
-      --with aider-chat[playwright]
+      --with aider-chat[playwright] \
+    && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    uv tool install notebooklm-mcp-cli
 
+# signal-cli (Signal messenger CLI — Java application)
+# hadolint ignore=DL3059
+RUN SIGNAL_CLI_VERSION="0.14.1" \
+    && curl -fsSL "https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}.tar.gz" \
+      -o /tmp/signal-cli.tar.gz \
+    && sudo tar xf /tmp/signal-cli.tar.gz -C /opt \
+    && sudo ln -sf "/opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli" /usr/local/bin/signal-cli \
+    && rm /tmp/signal-cli.tar.gz
 
 # ============================================================
 # 12c. Ruby linters (rubocop + extensions)
@@ -1097,7 +1110,8 @@ RUN npx playwright install \
     && CHROME_BIN="$(find ~/.cache/ms-playwright \
         -name chrome -path '*/chromium-*/chrome-linux*/chrome' -print -quit)" \
     && sudo mkdir -p /opt/google/chrome \
-    && sudo ln -sf "$CHROME_BIN" /opt/google/chrome/chrome
+    && sudo ln -sf "$CHROME_BIN" /opt/google/chrome/chrome \
+    && playwright-cli install --skills || true
 
 # Chrome DevTools MCP: pre-cache the package (runs as vscode so npm caches
 # to ~/.npm/_npx; --headless is passed via .mcp.json args in each content repo)
