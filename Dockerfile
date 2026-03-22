@@ -440,7 +440,7 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
 # hadolint ignore=DL3059
 RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
     && DPKG_ARCH=$(dpkg --print-architecture) \
-    # VS Code CLI (already latest)
+    # Visual Studio Code CLI (already latest)
     && if [ "$DPKG_ARCH" = "amd64" ]; then VSCODE_ARCH="x64"; else VSCODE_ARCH="arm64"; fi \
     && curl ${CURL_RETRY} -fsSL \
       "https://update.code.visualstudio.com/latest/cli-linux-${VSCODE_ARCH}/stable" \
