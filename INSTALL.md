@@ -1228,6 +1228,9 @@ for KEY in \
   claude-code-setup@claude-plugins-official \
   hookify@claude-plugins-official \
   f5xc-sales-engineer@f5xc-salesdemos-marketplace \
+  f5xc-docs-tools@f5xc-salesdemos-marketplace \
+  f5xc-repo-governance@f5xc-salesdemos-marketplace \
+  f5xc-docs-pipeline@f5xc-salesdemos-marketplace \
 ; do
   NAME="$(echo "$KEY" | cut -d@ -f1)"
   MKT="$(echo "$KEY" | cut -d@ -f2)"
@@ -1362,7 +1365,10 @@ CONTAINER_SETTINGS="$(cat <<SETTINGS
     "skill-creator@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "hookify@claude-plugins-official": true,
-    "f5xc-sales-engineer@f5xc-salesdemos-marketplace": true
+    "f5xc-sales-engineer@f5xc-salesdemos-marketplace": true,
+    "f5xc-docs-tools@f5xc-salesdemos-marketplace": true,
+    "f5xc-repo-governance@f5xc-salesdemos-marketplace": true,
+    "f5xc-docs-pipeline@f5xc-salesdemos-marketplace": true
   },
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
@@ -1462,19 +1468,19 @@ fi
 ### Verify Plugin and Settings Installation
 
 ```bash
-# Check installed_plugins.json has all 15 plugins
+# Check installed_plugins.json has all 18 plugins
 jq 'length' ~/.claude/plugins/installed_plugins.json
-# Expected: 15
+# Expected: 18
 
 # Check both marketplace caches exist
 ls ~/.claude/plugins/cache/claude-plugins-official/       # Expected: plugin directories
-ls ~/.claude/plugins/cache/f5xc-salesdemos-marketplace/   # Expected: f5xc-sales-engineer directory
+ls ~/.claude/plugins/cache/f5xc-salesdemos-marketplace/   # Expected: f5xc-sales-engineer, f5xc-docs-tools, f5xc-repo-governance, f5xc-docs-pipeline
 
 # Check SKILL.md files were loaded
 find ~/.claude/plugins/cache -name "SKILL.md" -type f | wc -l
 
 # Check settings.json has full container settings merged
-jq '.enabledPlugins | keys | length' ~/.claude/settings.json  # Expected: 15
+jq '.enabledPlugins | keys | length' ~/.claude/settings.json  # Expected: 18
 jq '.model' ~/.claude/settings.json                            # Expected: "opus"
 jq '.statusLine.type' ~/.claude/settings.json                  # Expected: "command"
 jq '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' ~/.claude/settings.json  # Expected: "1"
@@ -2780,14 +2786,14 @@ echo $LITELLM_API_KEY        # VERIFY: output is your API key (not empty, not a 
 ```bash
 # Verify plugin count
 jq 'length' ~/.claude/plugins/installed_plugins.json
-# Expected: 14
+# Expected: 18
 
 # Verify SKILL.md files
 find ~/.claude/plugins/cache -name "SKILL.md" -type f | wc -l
 # Expected: 19
 
 # Verify settings.json has full container settings
-jq '.enabledPlugins | keys | length' ~/.claude/settings.json    # Expected: 14
+jq '.enabledPlugins | keys | length' ~/.claude/settings.json    # Expected: 18
 jq '.model' ~/.claude/settings.json                              # Expected: "opus"
 jq '.statusLine.type' ~/.claude/settings.json                    # Expected: "command"
 jq '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' ~/.claude/settings.json  # Expected: "1"
