@@ -190,23 +190,29 @@ echo ""
 echo "8. Claude Code Plugins"
 check "enabledPlugins in settings.json" \
   jq -e '.enabledPlugins' "$HOME/.claude/settings.json"
-check "14 plugins configured" \
-  test "$(jq '.enabledPlugins | length' "$HOME/.claude/settings.json")" -eq 14
+check "15 plugins configured" \
+  test "$(jq '.enabledPlugins | length' "$HOME/.claude/settings.json")" -eq 15
 check "FORCE_AUTOUPDATE_PLUGINS set" test "$FORCE_AUTOUPDATE_PLUGINS" = "true"
-check "plugin marketplace cached" \
+check "official marketplace cached" \
   test -d "$HOME/.claude/plugins/marketplaces/claude-plugins-official"
-check "marketplace.json in cache" \
+check "official marketplace.json in cache" \
   test -f "$HOME/.claude/plugins/marketplaces/claude-plugins-official/.claude-plugin/marketplace.json"
+check "f5xc marketplace cached" \
+  test -d "$HOME/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace"
+check "f5xc marketplace.json in cache" \
+  test -f "$HOME/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace/.claude-plugin/marketplace.json"
 check "known_marketplaces.json exists" \
   test -f "$HOME/.claude/plugins/known_marketplaces.json"
 check "installed_plugins.json exists" \
   test -f "$HOME/.claude/plugins/installed_plugins.json"
-check "plugin cache populated" \
+check "official plugin cache populated" \
   test -d "$HOME/.claude/plugins/cache/claude-plugins-official"
+check "f5xc plugin cache populated" \
+  test -d "$HOME/.claude/plugins/cache/f5xc-salesdemos-marketplace"
 check "superpowers pre-installed" \
   test -d "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers"
 check "all enabled plugins cached" \
-  test "$(jq 'length' "$HOME/.claude/plugins/installed_plugins.json")" -eq 14
+  test "$(jq 'length' "$HOME/.claude/plugins/installed_plugins.json")" -eq 15
 
 echo ""
 echo "9. Chrome DevTools MCP"

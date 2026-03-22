@@ -1,33 +1,43 @@
 #!/usr/bin/env bash
 # Pre-install Claude Code plugins into the cache directory.
-# Called from Dockerfile section 12l after the marketplace clone.
+# Called from Dockerfile section 12l after marketplace clones.
+# Supports multiple marketplaces — reads the @marketplace suffix
+# from each enabledPlugins key in settings.json.
 set -euo pipefail
 
 PLUGIN_BASE="$1" # e.g. /home/vscode/.claude/plugins
 SETTINGS="$2"    # e.g. /opt/claude-config/settings.json
-MARKETPLACE="${PLUGIN_BASE}/marketplaces/claude-plugins-official"
-CACHE="${PLUGIN_BASE}/cache/claude-plugins-official"
 INSTALLED_JSON="${PLUGIN_BASE}/installed_plugins.json"
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
-GIT_SHA=$(cd "$MARKETPLACE" && git rev-parse HEAD)
-
-mkdir -p "$CACHE"
 
 # Start building installed_plugins.json
 echo '[' >"$INSTALLED_JSON"
 FIRST=true
 
-# Read enabled plugin names from settings.json
-# Format: "name@claude-plugins-official" -> extract "name"
-PLUGINS=$(jq -r '.enabledPlugins | keys[] | split("@")[0]' "$SETTINGS")
+# Read enabled plugin keys from settings.json
+# Format: "name@marketplace-name"
+KEYS=$(jq -r '.enabledPlugins | keys[]' "$SETTINGS")
 
-for NAME in $PLUGINS; do
+for KEY in $KEYS; do
+  NAME=$(echo "$KEY" | cut -d@ -f1)
+  MKT=$(echo "$KEY" | cut -d@ -f2)
+  MKT_DIR="${PLUGIN_BASE}/marketplaces/${MKT}"
+  CACHE_DIR="${PLUGIN_BASE}/cache/${MKT}"
+
+  mkdir -p "$CACHE_DIR"
+
+  # Get git SHA for this marketplace (if it exists)
+  GIT_SHA=""
+  if [ -d "$MKT_DIR/.git" ]; then
+    GIT_SHA=$(cd "$MKT_DIR" && git rev-parse HEAD)
+  fi
+
   # Determine source path in marketplace
   SRC=""
-  if [ -d "${MARKETPLACE}/plugins/${NAME}" ]; then
-    SRC="${MARKETPLACE}/plugins/${NAME}"
-  elif [ -d "${MARKETPLACE}/external_plugins/${NAME}" ]; then
-    SRC="${MARKETPLACE}/external_plugins/${NAME}"
+  if [ -d "${MKT_DIR}/plugins/${NAME}" ]; then
+    SRC="${MKT_DIR}/plugins/${NAME}"
+  elif [ -d "${MKT_DIR}/external_plugins/${NAME}" ]; then
+    SRC="${MKT_DIR}/external_plugins/${NAME}"
   fi
 
   # Read version from plugin.json (default 0.0.0)
@@ -41,7 +51,7 @@ for NAME in $PLUGINS; do
     [ -n "$V" ] && VERSION="$V"
   fi
 
-  DEST="${CACHE}/${NAME}/${VERSION}"
+  DEST="${CACHE_DIR}/${NAME}/${VERSION}"
   mkdir -p "$DEST"
 
   if [ -n "$SRC" ]; then
@@ -52,7 +62,7 @@ for NAME in $PLUGINS; do
     git clone --depth=1 --single-branch --branch main \
       https://github.com/obra/superpowers.git "$DEST"
   else
-    echo "WARNING: no source found for plugin '$NAME', skipping"
+    echo "WARNING: no source found for plugin '${NAME}' in marketplace '${MKT}', skipping"
     rm -rf "$DEST"
     continue
   fi
@@ -67,7 +77,7 @@ for NAME in $PLUGINS; do
   cat >>"$INSTALLED_JSON" <<ENTRY
   {
     "name": "${NAME}",
-    "marketplace": "claude-plugins-official",
+    "marketplace": "${MKT}",
     "scope": "user",
     "version": "${VERSION}",
     "installPath": "${DEST}",
