@@ -1172,6 +1172,43 @@ After installation, the binary lives at `~/.local/bin/claude`. First-time users 
 
 ---
 
+### 5.9 — Install Codex CLI
+
+Codex is OpenAI's coding agent CLI. Install the macOS binary directly from GitHub releases (architecture-aware — Apple Silicon and Intel both supported). The binary self-updates at runtime.
+
+```bash
+if [ "$(uname -m)" = "arm64" ]; then CODEX_ARCH="aarch64"; else CODEX_ARCH="x86_64"; fi
+if command -v codex >/dev/null 2>&1; then
+  echo "Codex already installed: $(codex --version 2>/dev/null)"
+else
+  mkdir -p ~/.local/bin
+  curl -fsSL \
+    "https://github.com/openai/codex/releases/latest/download/codex-${CODEX_ARCH}-apple-darwin.tar.gz" \
+    | tar -xz -C ~/.local/bin
+  mv ~/.local/bin/codex-${CODEX_ARCH}-apple-darwin ~/.local/bin/codex 2>/dev/null || true
+  chmod +x ~/.local/bin/codex
+fi
+```
+
+Write the Codex config (selects the model):
+
+```bash
+mkdir -p ~/.codex
+cat > ~/.codex/config.toml <<'EOF'
+model = "gpt-5.2-codex"
+EOF
+```
+
+VERIFY:
+
+```bash
+codex --version            # VERIFY: output contains a version number
+```
+
+The binary lives at `~/.local/bin/codex` (already on PATH — same directory as Claude Code). First-time users should run `codex` interactively to complete the OAuth login with an OpenAI account.
+
+---
+
 ## Step 6 — Install Claude Code Plugins and Settings
 
 The `~/.claude/` directory is the **single source of truth** for the plugin ecosystem shared by both Claude Code and OpenCode. Oh-My-OpenCode reads directly from Claude Code's plugin infrastructure:
