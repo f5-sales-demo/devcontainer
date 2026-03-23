@@ -59,7 +59,6 @@ echo "6. Super-Linter Tools"
 # Binary tools
 check "shfmt installed" command -v shfmt
 check "gitleaks installed" command -v gitleaks
-check "trivy installed" command -v trivy
 check "editorconfig-checker installed" command -v editorconfig-checker
 check "golangci-lint installed" command -v golangci-lint
 check "kubeconform installed" command -v kubeconform
