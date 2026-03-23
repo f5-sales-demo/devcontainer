@@ -277,7 +277,7 @@ eza --version          # VERIFY: output starts with "v"
 fzf --version          # VERIFY: output contains a version number
 lsd --version          # VERIFY: output starts with "lsd"
 yq --version           # VERIFY: output contains "yq" followed by a version number
-python3 --version      # VERIFY: output starts with "Python 3.13"
+python3 --version      # VERIFY: output starts with "Python 3."
 go version             # VERIFY: output contains "go1."
 terraform --version    # VERIFY: output contains "Terraform v1"
 nvim --version         # VERIFY: output contains "NVIM v"
@@ -1552,8 +1552,8 @@ fi
 ### Verify Plugin and Settings Installation
 
 ```bash
-# Check installed_plugins.json has all 19 plugins
-jq 'length' ~/.claude/plugins/installed_plugins.json
+# Check installed_plugins.json has all 19 plugins (v2 format uses .plugins object)
+jq '.plugins | length' ~/.claude/plugins/installed_plugins.json
 # Expected: 19
 
 # Check both marketplace caches exist
