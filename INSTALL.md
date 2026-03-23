@@ -237,6 +237,11 @@ brew_install gitleaks          # Secret scanner (catches leaked credentials pre-
 brew_install trivy             # Vulnerability scanner for containers and code
 brew_install sslscan           # TLS/SSL configuration scanner
 brew_install trufflehog        # Deep git history secret scanner
+brew_install actionlint        # GitHub Actions workflow linter (syntax + logic)
+brew_install yamllint          # YAML linter (used by pre-commit hooks)
+brew_install codespell         # Source code spell checker
+brew_install checkov           # IaC / GitHub Actions security scanner
+brew_install zizmor            # GitHub Actions supply-chain security scanner
 
 # Media tools
 brew_install ffmpeg            # Video/audio processing (convert, extract, transcode)
@@ -288,6 +293,11 @@ gitleaks version       # VERIFY: output contains a version number
 trivy --version        # VERIFY: output starts with "Version:"
 sslscan --version      # VERIFY: output contains "sslscan version"
 trufflehog --version   # VERIFY: output contains a version number
+actionlint -version    # VERIFY: output contains a version number
+yamllint --version     # VERIFY: output starts with "yamllint"
+codespell --version    # VERIFY: output starts with "codespell"
+checkov --version      # VERIFY: output contains a version number
+zizmor --version       # VERIFY: output contains a version number
 ffmpeg -version        # VERIFY: output starts with "ffmpeg version"
 yt-dlp --version       # VERIFY: output contains a version string
 aider --version        # VERIFY: output contains a version number
