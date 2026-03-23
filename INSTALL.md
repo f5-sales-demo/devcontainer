@@ -133,7 +133,7 @@ OpenCode will read this document and execute Steps 1–16 sequentially. The `"pe
 
 These are the brew packages required by OpenCode and its LSP/tooling ecosystem. Homebrew is idempotent — running `brew install` on an already-installed package prints a warning and exits with code 0. No pre-checks are needed.
 
-**Known issue — stale Cellar directories**: Some packages (notably `trivy`) can leave behind
+**Known issue — stale Cellar directories**: Some packages can leave behind
 a Cellar directory from a previous version after an upgrade or partial uninstall. When
 Homebrew tries to pour a newer bottle, it fails with
 `Error: /opt/homebrew/Cellar/<pkg>/<version> is not a directory` because a directory for a
@@ -143,8 +143,7 @@ re-link. A helper function below handles this automatically for all packages.
 ```bash
 # Helper function: install a brew package with stale-Cellar recovery.
 # On re-runs, Homebrew may fail to pour a new bottle version if an old
-# Cellar directory from a previous version still exists (commonly seen
-# with trivy, but can affect any package). This function:
+# Cellar directory from a previous version still exists. This function:
 #   1. Attempts a normal `brew install`.
 #   2. If that fails, removes the stale Cellar directory and retries.
 #   3. If the retry also fails, forces a re-link of whatever version
@@ -234,7 +233,6 @@ brew_install terraform-docs    # Auto-generate Terraform module documentation
 # Linting and security scanning
 brew_install hadolint          # Dockerfile linter (best practices enforcement)
 brew_install gitleaks          # Secret scanner (catches leaked credentials pre-commit)
-brew_install trivy             # Vulnerability scanner for containers and code
 brew_install sslscan           # TLS/SSL configuration scanner
 brew_install trufflehog        # Deep git history secret scanner
 brew_install actionlint        # GitHub Actions workflow linter (syntax + logic)
@@ -290,7 +288,6 @@ tflint --version       # VERIFY: output starts with "TFLint version"
 terraform-docs --version # VERIFY: output contains a version number
 hadolint --version     # VERIFY: output contains "Haskell Dockerfile Linter"
 gitleaks version       # VERIFY: output contains a version number
-trivy --version        # VERIFY: output starts with "Version:"
 sslscan --version      # VERIFY: output contains "sslscan version"
 trufflehog --version   # VERIFY: output contains a version number
 actionlint -version    # VERIFY: output contains a version number
@@ -3094,7 +3091,7 @@ echo "==========================================================="
 Error: /opt/homebrew/Cellar/<pkg>/<version> is not a directory
 ```
 
-**Cause**: A previous version's Cellar directory survived an upgrade or partial uninstall. Homebrew refuses to pour a new bottle version when an old version directory already exists. This is commonly seen with `trivy` but can affect any package. Running `brew uninstall --force` does not always remove the stale directory.
+**Cause**: A previous version's Cellar directory survived an upgrade or partial uninstall. Homebrew refuses to pour a new bottle version when an old version directory already exists. Running `brew uninstall --force` does not always remove the stale directory.
 
 **Fix**:
 
