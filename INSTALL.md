@@ -1220,9 +1220,7 @@ Run the following script. It mirrors the container's `install-plugins.sh` — pa
 ```bash
 PLUGIN_BASE="$HOME/.claude/plugins"
 TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
-
-printf '[' > "${PLUGIN_BASE}/installed_plugins.json"
-FIRST=true
+ENTRIES="[]"
 
 for KEY in \
   frontend-design@claude-plugins-official \
@@ -1264,7 +1262,7 @@ for KEY in \
     SRC="${MKT_DIR}/external_plugins/${NAME}"
   fi
 
-  VERSION="0.0.0"
+  VERSION="${GIT_SHA:-0.0.0}"
   if [ -n "$SRC" ] && [ -f "${SRC}/.claude-plugin/plugin.json" ]; then
     V="$(jq -r '.version // empty' "${SRC}/.claude-plugin/plugin.json")"
     [ -n "$V" ] && VERSION="$V"
@@ -1279,43 +1277,44 @@ for KEY in \
   elif [ "$NAME" = "superpowers" ]; then
     EXISTING="$(ls -d "${CACHE_DIR}/${NAME}"/*/. 2>/dev/null | head -1)"
     if [ -n "$EXISTING" ]; then
-      DEST="${EXISTING%/}"
+      DEST="${EXISTING%/.}"
       VERSION="$(basename "$DEST")"
     else
       git clone --depth=1 --single-branch --branch main \
         https://github.com/obra/superpowers.git "$DEST"
       if [ -f "${DEST}/.claude-plugin/plugin.json" ]; then
-        V="$(jq -r '.version // empty' "${DEST}/.claude-plugin/plugin.json")"
-        if [ -n "$V" ]; then
+        V="$(jq -r '.version // empty' \
+          "${DEST}/.claude-plugin/plugin.json")"
+        if [ -n "$V" ] && [ "$V" != "$VERSION" ]; then
+          NEW_DEST="${CACHE_DIR}/${NAME}/${V}"
+          mkdir -p "$NEW_DEST"
+          cp -a "${DEST}/." "$NEW_DEST/"
+          rm -rf "$DEST"
+          DEST="$NEW_DEST"
           VERSION="$V"
-          NEW_DEST="${CACHE_DIR}/${NAME}/${VERSION}"
-          if [ "$DEST" != "$NEW_DEST" ]; then
-            mkdir -p "$NEW_DEST"
-            cp -a "${DEST}/." "$NEW_DEST/"
-            rm -rf "$DEST"
-            DEST="$NEW_DEST"
-          fi
         fi
       fi
     fi
   else
-    echo "WARNING: no source found for plugin '$NAME' in marketplace '$MKT', skipping"
+    echo "WARNING: no source for '$NAME' in '$MKT', skipping"
     rm -rf "${CACHE_DIR}/${NAME}"
     continue
   fi
 
-  if [ "$FIRST" = true ]; then
-    FIRST=false
-  else
-    printf ',\n' >> "${PLUGIN_BASE}/installed_plugins.json"
-  fi
-
-  printf '  {\n    "name": "%s",\n    "marketplace": "%s",\n    "scope": "user",\n    "version": "%s",\n    "installPath": "%s",\n    "lastUpdated": "%s",\n    "gitCommitSha": "%s"\n  }' \
-    "$NAME" "$MKT" "$VERSION" "$DEST" "$TIMESTAMP" "$GIT_SHA" \
-    >> "${PLUGIN_BASE}/installed_plugins.json"
+  ENTRIES=$(echo "$ENTRIES" | jq \
+    --arg key "$KEY" --arg scope "user" \
+    --arg path "$DEST" --arg ver "$VERSION" \
+    --arg ts "$TIMESTAMP" --arg sha "$GIT_SHA" \
+    '. + [{"key":$key,"scope":$scope,"installPath":$path,
+      "version":$ver,"installedAt":$ts,
+      "lastUpdated":$ts,"gitCommitSha":$sha}]')
 done
 
-printf '\n]\n' >> "${PLUGIN_BASE}/installed_plugins.json"
+# Write v2 format (matches Claude Code native format)
+echo "$ENTRIES" | jq '{
+  version: 2,
+  plugins: (reduce .[] as $e ({}; .[$e.key] = [($e | del(.key))]))
+}' > "${PLUGIN_BASE}/installed_plugins.json"
 ```
 
 ### 6.3 — Create Supporting Registry Files
