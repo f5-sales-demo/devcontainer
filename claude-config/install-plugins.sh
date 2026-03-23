@@ -3,6 +3,9 @@
 # Called from Dockerfile section 12l after marketplace clones.
 # Supports multiple marketplaces — reads the @marketplace suffix
 # from each enabledPlugins key in settings.json.
+#
+# Generates installed_plugins.json in v2 format:
+#   {"version":2,"plugins":{"name@mkt":[{scope,installPath,...}],...}}
 set -euo pipefail
 
 PLUGIN_BASE="$1" # e.g. /home/vscode/.claude/plugins
@@ -10,9 +13,9 @@ SETTINGS="$2"    # e.g. /opt/claude-config/settings.json
 INSTALLED_JSON="${PLUGIN_BASE}/installed_plugins.json"
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
 
-# Start building installed_plugins.json
-echo '[' >"$INSTALLED_JSON"
-FIRST=true
+# Build installed_plugins.json using jq for correct JSON
+# Collect entries as a JSON array, then reshape to v2 format
+ENTRIES="[]"
 
 # Read enabled plugin keys from settings.json
 # Format: "name@marketplace-name"
@@ -40,8 +43,8 @@ for KEY in $KEYS; do
     SRC="${MKT_DIR}/external_plugins/${NAME}"
   fi
 
-  # Read version from plugin.json (default 0.0.0)
-  VERSION="0.0.0"
+  # Read version from plugin.json (default to git SHA or 0.0.0)
+  VERSION="${GIT_SHA:-0.0.0}"
   PJSON=""
   if [ -n "$SRC" ]; then
     PJSON="${SRC}/.claude-plugin/plugin.json"
@@ -58,33 +61,47 @@ for KEY in $KEYS; do
     # Local marketplace plugin -- copy
     cp -a "${SRC}/." "$DEST/"
   elif [ "$NAME" = "superpowers" ]; then
-    # External URL plugin -- clone at build time
-    git clone --depth=1 --single-branch --branch main \
-      https://github.com/obra/superpowers.git "$DEST"
+    # External URL plugin — use existing cache or clone fresh
+    EXISTING=$(find "${CACHE_DIR}/${NAME}" -name "plugin.json" -path "*/.claude-plugin/*" 2>/dev/null | head -1)
+    if [ -n "$EXISTING" ]; then
+      DEST=$(dirname "$(dirname "$EXISTING")")
+      VERSION=$(basename "$DEST")
+    else
+      git clone --depth=1 --single-branch --branch main \
+        https://github.com/obra/superpowers.git "$DEST"
+      if [ -f "${DEST}/.claude-plugin/plugin.json" ]; then
+        V=$(jq -r '.version // empty' "${DEST}/.claude-plugin/plugin.json")
+        if [ -n "$V" ] && [ "$V" != "$VERSION" ]; then
+          VERSION="$V"
+          NEW_DEST="${CACHE_DIR}/${NAME}/${VERSION}"
+          if [ "$DEST" != "$NEW_DEST" ]; then
+            mkdir -p "$NEW_DEST"
+            cp -a "${DEST}/." "$NEW_DEST/"
+            rm -rf "$DEST"
+            DEST="$NEW_DEST"
+          fi
+        fi
+      fi
+    fi
   else
     echo "WARNING: no source found for plugin '${NAME}' in marketplace '${MKT}', skipping"
     rm -rf "$DEST"
     continue
   fi
 
-  # Append entry to installed_plugins.json
-  if [ "$FIRST" = true ]; then
-    FIRST=false
-  else
-    echo ',' >>"$INSTALLED_JSON"
-  fi
-
-  cat >>"$INSTALLED_JSON" <<ENTRY
-  {
-    "name": "${NAME}",
-    "marketplace": "${MKT}",
-    "scope": "user",
-    "version": "${VERSION}",
-    "installPath": "${DEST}",
-    "lastUpdated": "${TIMESTAMP}",
-    "gitCommitSha": "${GIT_SHA}"
-  }
-ENTRY
+  # Add entry to collection
+  ENTRIES=$(echo "$ENTRIES" | jq \
+    --arg key "$KEY" \
+    --arg scope "user" \
+    --arg path "$DEST" \
+    --arg ver "$VERSION" \
+    --arg ts "$TIMESTAMP" \
+    --arg sha "$GIT_SHA" \
+    '. + [{"key": $key, "scope": $scope, "installPath": $path, "version": $ver, "installedAt": $ts, "lastUpdated": $ts, "gitCommitSha": $sha}]')
 done
 
-echo ']' >>"$INSTALLED_JSON"
+# Write v2 format: {"version":2,"plugins":{"key":[{entry}],...}}
+echo "$ENTRIES" | jq '{
+  version: 2,
+  plugins: (reduce .[] as $e ({}; .[$e.key] = [($e | del(.key))]))
+}' >"$INSTALLED_JSON"
