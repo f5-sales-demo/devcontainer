@@ -1283,7 +1283,7 @@ for KEY in \
   hookify@claude-plugins-official \
   f5xc-sales-engineer@f5xc-salesdemos-marketplace \
   f5xc-docs-tools@f5xc-salesdemos-marketplace \
-  f5xc-repo-governance@f5xc-salesdemos-marketplace \
+  f5xc-github-ops@f5xc-salesdemos-marketplace \
   f5xc-docs-pipeline@f5xc-salesdemos-marketplace \
   f5xc-brand@f5xc-salesdemos-marketplace \
 ; do
@@ -1447,7 +1447,7 @@ CONTAINER_SETTINGS="$(cat <<SETTINGS
     "hookify@claude-plugins-official": true,
     "f5xc-sales-engineer@f5xc-salesdemos-marketplace": true,
     "f5xc-docs-tools@f5xc-salesdemos-marketplace": true,
-    "f5xc-repo-governance@f5xc-salesdemos-marketplace": true,
+    "f5xc-github-ops@f5xc-salesdemos-marketplace": true,
     "f5xc-docs-pipeline@f5xc-salesdemos-marketplace": true,
     "f5xc-brand@f5xc-salesdemos-marketplace": true
   },
@@ -1555,7 +1555,7 @@ jq '.plugins | length' ~/.claude/plugins/installed_plugins.json
 
 # Check both marketplace caches exist
 ls ~/.claude/plugins/cache/claude-plugins-official/       # Expected: plugin directories
-ls ~/.claude/plugins/cache/f5xc-salesdemos-marketplace/   # Expected: f5xc-sales-engineer, f5xc-docs-tools, f5xc-repo-governance, f5xc-docs-pipeline, f5xc-brand
+ls ~/.claude/plugins/cache/f5xc-salesdemos-marketplace/   # Expected: f5xc-sales-engineer, f5xc-docs-tools, f5xc-github-ops, f5xc-docs-pipeline, f5xc-brand
 
 # Check SKILL.md files were loaded (plugins)
 find ~/.claude/plugins/cache -name "SKILL.md" -type f | wc -l

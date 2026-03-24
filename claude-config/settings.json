@@ -28,7 +28,7 @@
     "hookify@claude-plugins-official": true,
     "f5xc-sales-engineer@f5xc-salesdemos-marketplace": true,
     "f5xc-docs-tools@f5xc-salesdemos-marketplace": true,
-    "f5xc-repo-governance@f5xc-salesdemos-marketplace": true,
+    "f5xc-github-ops@f5xc-salesdemos-marketplace": true,
     "f5xc-docs-pipeline@f5xc-salesdemos-marketplace": true,
     "f5xc-brand@f5xc-salesdemos-marketplace": true
   },
