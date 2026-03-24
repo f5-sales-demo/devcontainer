@@ -148,6 +148,7 @@ run a structured self-diagnosis:
    diff /etc/claude-code/CLAUDE.md /tmp/devcontainer-audit/claude-config/CLAUDE.md
    diff ~/.claude/CLAUDE.md /tmp/devcontainer-audit/claude-config/user-CLAUDE.md
    diff ~/.claude/settings.json /tmp/devcontainer-audit/claude-config/settings.json
+   diff ~/.claude.json /tmp/devcontainer-audit/claude-config/claude.json
    ```
 
 3. **Tool accuracy** — verify that tool names and capabilities

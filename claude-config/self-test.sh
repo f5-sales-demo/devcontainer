@@ -18,6 +18,18 @@ check() {
   fi
 }
 
+warn() {
+  local desc="$1"
+  shift
+  if "$@" >/dev/null 2>&1; then
+    echo "  PASS: $desc"
+    PASS=$((PASS + 1))
+  else
+    echo "  WARN: $desc"
+    WARN=$((WARN + 1))
+  fi
+}
+
 echo "=== Claude Code Container Self-Test ==="
 echo ""
 
@@ -250,6 +262,27 @@ check "playwright-stealth installed (pip)" python3 -c "import playwright_stealth
 check "undetected-chromedriver installed (pip)" python3 -c "import undetected_chromedriver"
 check "nodriver installed (pip)" python3 -c "import nodriver"
 check "browserforge installed (pip)" python3 -c "import browserforge"
+
+echo ""
+echo "11. Resource Health"
+DISK_PCT=$(df / --output=pcent | tail -1 | tr -d ' %')
+warn "disk usage below 90% (currently ${DISK_PCT}%)" test "$DISK_PCT" -lt 90
+MEM_AVAIL_MB=$(awk '/MemAvailable/ {printf "%d", $2/1024}' /proc/meminfo)
+warn "available memory above 512MB (currently ${MEM_AVAIL_MB}MB)" test "$MEM_AVAIL_MB" -gt 512
+
+echo ""
+echo "12. Source Drift"
+AUDIT_DIR="/tmp/devcontainer-audit"
+if [ -d "$AUDIT_DIR" ]; then
+  warn "managed CLAUDE.md matches source" \
+    diff -q /etc/claude-code/CLAUDE.md "$AUDIT_DIR/claude-config/CLAUDE.md"
+  warn "user CLAUDE.md matches source" \
+    diff -q "$HOME/.claude/CLAUDE.md" "$AUDIT_DIR/claude-config/user-CLAUDE.md"
+  warn "settings.json matches source (ignoring runtime state)" \
+    diff -q "$HOME/.claude/settings.json" "$AUDIT_DIR/claude-config/settings.json"
+else
+  echo "  SKIP: source repo not cloned (run: gh repo clone f5xc-salesdemos/devcontainer $AUDIT_DIR)"
+fi
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $WARN warnings ==="
