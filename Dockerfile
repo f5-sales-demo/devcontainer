@@ -861,8 +861,6 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     "markitdown[all]" \
     python-pptx \
     progressbar2 \
-    "pydantic>=2.0" \
-    checkov \
     ansible-lint \
     cfn-lint \
     cpplint \
@@ -910,7 +908,10 @@ RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
       --with aider-chat[help] \
       --with aider-chat[playwright] \
     && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    uv tool install notebooklm-mcp-cli
+    uv tool install notebooklm-mcp-cli \
+    && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    uv tool install --python python3.12 checkov \
+    # checkov requires Python <3.13 (FileType.JSON AttributeError on 3.13)
 
 # signal-cli (Signal messenger CLI — Java application)
 # hadolint ignore=DL3059
