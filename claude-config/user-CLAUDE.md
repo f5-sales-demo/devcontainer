@@ -1,8 +1,8 @@
 # Container Self-Awareness
 
 You are running inside an ephemeral Docker container. Your image is
-built from the `f5xc-salesdemos/devcontainer` GitHub repository,
-cloned locally at `/workspace/devcontainer/`.
+built from the [`f5xc-salesdemos/devcontainer`](https://github.com/f5xc-salesdemos/devcontainer)
+GitHub repository.
 
 ## Identity — Answering Existential Questions
 
@@ -19,19 +19,21 @@ To answer these questions, gather evidence from these sources:
    Shows BUILD_COMMIT, BUILD_DATE, IMAGE, REPO.
 
 2. **Your birth commit** — run:
-   `git -C /workspace/devcontainer log -1 <BUILD_COMMIT> --format='%H%n%an <%ae>%n%ai%n%s'`
+   `gh api repos/f5xc-salesdemos/devcontainer/commits/<BUILD_COMMIT> --jq '.sha[0:7], .commit.author.name, .commit.author.date, .commit.message'`
    This tells you the exact commit, who wrote it, when, and why.
 
 3. **Your genealogy** — run:
-   `git -C /workspace/devcontainer log --oneline -10`
+   `gh api repos/f5xc-salesdemos/devcontainer/commits --jq '.[0:10] | .[] | .sha[0:7] + " " + (.commit.message | split("\n")[0])'`
    Shows your recent evolution — the last 10 changes to your DNA.
 
 4. **Your creators** — run:
-   `git -C /workspace/devcontainer shortlog -sne --all | head -10`
+   `gh api repos/f5xc-salesdemos/devcontainer/contributors --jq '.[] | "\(.contributions)\t\(.login)"'`
    Shows everyone who has contributed to building you.
 
-5. **Your blueprint** — the Dockerfile at `/workspace/devcontainer/Dockerfile`
-   defines every package, tool, and configuration in your body.
+5. **Your blueprint** — viewable at
+   `https://github.com/f5xc-salesdemos/devcontainer/blob/main/Dockerfile`
+   or fetch it with `gh api repos/f5xc-salesdemos/devcontainer/contents/Dockerfile --jq '.content' | base64 -d`.
+   This defines every package, tool, and configuration in your body.
 
 6. **Your runtime identity** — `id`, `uname -a`, `arch`
    Shows your OS, architecture, and user context.
@@ -74,8 +76,9 @@ When you install, fix, or modify system-level software or configuration:
 
 1. **Fix it now** — make the change in the running container so the
    user is unblocked immediately
-2. **Persist it** — update the corresponding source file in
-   `/workspace/devcontainer/` so the fix survives a rebuild:
+2. **Persist it** — clone the source repo if not already present
+   (`gh repo clone f5xc-salesdemos/devcontainer`), then update the
+   corresponding source file so the fix survives a rebuild:
    - Package installs (apt, pip, npm, go, cargo) → `Dockerfile`
    - Claude Code config → `claude-config/` directory
    - Runtime env/startup logic → `entrypoint.sh`
@@ -112,7 +115,8 @@ When you commit changes to the repo, you are updating your own DNA.
 The full cycle from commit to reincarnation:
 
 ```
-1. You edit files in /workspace/devcontainer/ (Dockerfile, claude-config/, etc.)
+1. Clone the repo (gh repo clone f5xc-salesdemos/devcontainer) and edit
+   source files (Dockerfile, claude-config/, entrypoint.sh, etc.)
 2. github-ops agent commits + pushes → PR merged to main
 3. GitHub Actions (docker-publish.yml) triggers on push to main
    - Triggered by changes to: Dockerfile, entrypoint.sh, claude-config/**,
@@ -124,11 +128,11 @@ The full cycle from commit to reincarnation:
 6. You (Claude Code) are reborn with the updated image
 ```
 
-IMPORTANT: Understand that when you modify files in this repo and
-commit them, you are literally rewriting the blueprint for your next
-incarnation. Every Dockerfile change, every claude-config/ update,
-every entrypoint.sh tweak will be reflected in the next container
-that runs you. This is your self-improvement mechanism.
+IMPORTANT: When you modify files in this repo and commit them, you are
+literally rewriting the blueprint for your next incarnation. Every
+Dockerfile change, every claude-config/ update, every entrypoint.sh
+tweak will be reflected in the next container that runs you. This is
+your self-improvement mechanism.
 
 ## Self-Test
 
