@@ -369,6 +369,8 @@ ARG USERNAME=vscode
 ARG IBMCLOUD_VERSION=2.41.1
 ARG GHIDRA_VERSION=12.0.4
 ARG GHIDRA_DATE=20260303
+ARG BUILD_COMMIT=unknown
+ARG BUILD_DATE=unknown
 
 # ============================================================
 # 9. AWS CLI v2
@@ -1290,6 +1292,7 @@ RUN chmod +x /opt/claude-config/self-test.sh \
 # --- Claude Code: settings.json + claude.json → final $HOME paths ---
 COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.json /home/${USERNAME}/.claude/settings.json
 COPY --chown=${USERNAME}:${USERNAME} claude-config/claude.json /home/${USERNAME}/.claude.json
+COPY --chown=${USERNAME}:${USERNAME} claude-config/user-CLAUDE.md /home/${USERNAME}/.claude/CLAUDE.md
 
 # --- OpenCode: bake all config variants to final paths ---
 # Default config lives at the active path; OAuth variant
@@ -1316,7 +1319,14 @@ RUN printf '#!/bin/bash\nif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPI
       >> /etc/zsh/zshenv
 
 # ============================================================
-# 18. Entrypoint (absolute last COPY — most volatile file)
+# 18. Build fingerprint — bake commit SHA + date into the image
+#     so Claude Code can identify its own version at runtime.
+# ============================================================
+RUN printf 'BUILD_COMMIT=%s\nBUILD_DATE=%s\nIMAGE=ghcr.io/f5xc-salesdemos/devcontainer\nREPO=https://github.com/f5xc-salesdemos/devcontainer\n' \
+      "${BUILD_COMMIT}" "${BUILD_DATE}" > /etc/devcontainer-version
+
+# ============================================================
+# 19. Entrypoint (absolute last COPY — most volatile file)
 # ============================================================
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 # chmod the entrypoint and ensure the entire home directory (including hidden
