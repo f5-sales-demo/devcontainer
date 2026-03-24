@@ -5,6 +5,12 @@ CTX_USED=$(echo "$input" | jq -r '.context_window.used_percentage // 0')
 DIR=$(echo "$input" | jq -r '.workspace.current_dir // empty')
 [ -z "$DIR" ] && DIR=$(pwd)
 
+# Build SHA (read once from fingerprint file)
+BUILD_SHA=""
+if [ -f /etc/devcontainer-version ]; then
+  BUILD_SHA=$(grep '^BUILD_COMMIT=' /etc/devcontainer-version | cut -c15-21)
+fi
+
 # Colors (matching p10k theme)
 GREEN='\033[32m'
 YELLOW='\033[33m'
@@ -53,7 +59,11 @@ if git -C "$DIR" rev-parse --git-dir >/dev/null 2>&1; then
   [ "$UNTRACKED" -gt 0 ] && DETAILS="${DETAILS} ${CYAN}?${UNTRACKED}${RESET}"
   [ "$CONFLICTED" -gt 0 ] && DETAILS="${DETAILS} ${RED}!${CONFLICTED}${RESET}"
 
-  echo -e "${CTX_COLOR}${CTX_USED}%${RESET} ${DIR} ${DIM}|${RESET} ${BRANCH_COLOR}${BRANCH}${RESET} ${STATE}${DETAILS}"
+  BUILD_TAG=""
+  [ -n "$BUILD_SHA" ] && BUILD_TAG=" ${DIM}[${BUILD_SHA}]${RESET}"
+  echo -e "${CTX_COLOR}${CTX_USED}%${RESET} ${DIR} ${DIM}|${RESET} ${BRANCH_COLOR}${BRANCH}${RESET} ${STATE}${DETAILS}${BUILD_TAG}"
 else
-  echo -e "${CTX_COLOR}${CTX_USED}%${RESET} ${DIR}"
+  BUILD_TAG=""
+  [ -n "$BUILD_SHA" ] && BUILD_TAG=" ${DIM}[${BUILD_SHA}]${RESET}"
+  echo -e "${CTX_COLOR}${CTX_USED}%${RESET} ${DIR}${BUILD_TAG}"
 fi

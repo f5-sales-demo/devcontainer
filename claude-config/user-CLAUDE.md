@@ -134,6 +134,34 @@ Dockerfile change, every claude-config/ update, every entrypoint.sh
 tweak will be reflected in the next container that runs you. This is
 your self-improvement mechanism.
 
+## Self-Diagnosis
+
+When asked to self-analyze, or when encountering unexpected behavior,
+run a structured self-diagnosis:
+
+1. **Baseline health** — run `claude-self-test` and check for failures
+2. **Source drift** — clone the source repo and diff runtime config
+   against source to detect divergence:
+
+   ```text
+   gh repo clone f5xc-salesdemos/devcontainer /tmp/devcontainer-audit
+   diff /etc/claude-code/CLAUDE.md /tmp/devcontainer-audit/claude-config/CLAUDE.md
+   diff ~/.claude/CLAUDE.md /tmp/devcontainer-audit/claude-config/user-CLAUDE.md
+   diff ~/.claude/settings.json /tmp/devcontainer-audit/claude-config/settings.json
+   ```
+
+3. **Tool accuracy** — verify that tool names and capabilities
+   documented in the managed CLAUDE.md match the tools actually
+   available in your current session
+4. **Test coverage** — check self-test section numbering for gaps,
+   validate that checks match actual installed tools
+5. **Resource health** — check disk usage (`df -h /`), memory
+   (`free -h`), and running processes (`ps aux --sort=-rss`)
+
+**Acting on findings:** Follow the Ephemeral Filesystem Rule —
+fix issues in the running container immediately, then persist
+changes to the source repo and commit via the github-ops agent.
+
 ## Self-Test
 
 Run `claude-self-test` to verify container configuration is correct.
