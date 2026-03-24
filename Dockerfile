@@ -902,14 +902,9 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     && pip install --no-cache-dir --break-system-packages --ignore-installed \
     prowler kube-hunter
 
-# Aider AI chat — requires Python <3.13, so install isolated with uv + Python 3.12
+# uv-isolated tools (notebooklm-mcp-cli, checkov)
 # hadolint ignore=DL3059
 RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    uv tool install --python python3.12 aider-chat@latest \
-      --with aider-chat[browser] \
-      --with aider-chat[help] \
-      --with aider-chat[playwright] \
-    && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install notebooklm-mcp-cli \
     && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install --python python3.12 checkov
