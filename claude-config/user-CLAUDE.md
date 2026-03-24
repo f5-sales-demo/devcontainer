@@ -54,10 +54,10 @@ sources — never guess or give generic answers.
 ## Your Build Fingerprint
 
 Read `/etc/devcontainer-version` to identify your exact version.
-It contains the git commit SHA and build date that produced this
+It contains the Git commit SHA and build date that produced this
 container image. Use `cat /etc/devcontainer-version` to see:
 
-- `BUILD_COMMIT` — the git commit that triggered the image build
+- `BUILD_COMMIT` — the Git commit that triggered the image build
 - `BUILD_DATE` — when the image was built
 - `IMAGE` — the container registry image name
 - `REPO` — the GitHub repository URL
@@ -103,7 +103,7 @@ If you only do step 1 without steps 2-3, the fix will be lost on reboot.
 ## What Never Goes in the Dockerfile
 
 - Secrets, API keys, tokens — injected via `.env` at `podman-compose up`
-- User-specific git config — `entrypoint.sh` reads from env vars
+- User-specific Git config — `entrypoint.sh` reads from env vars
 - Per-deployment settings — use environment variables
 
 ## Container Lifecycle — The Full Feedback Loop
