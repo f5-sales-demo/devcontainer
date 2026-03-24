@@ -912,7 +912,7 @@ RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install notebooklm-mcp-cli \
     && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    uv tool install --python python3.12 checkov \
+    uv tool install --python python3.12 checkov
     # checkov requires Python <3.13 (FileType.JSON AttributeError on 3.13)
 
 # signal-cli (Signal messenger CLI — Java application)
