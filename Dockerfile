@@ -861,6 +861,7 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     "markitdown[all]" \
     python-pptx \
     progressbar2 \
+    "pydantic>=2.0" \
     checkov \
     ansible-lint \
     cfn-lint \
