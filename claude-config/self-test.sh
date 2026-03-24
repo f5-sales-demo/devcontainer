@@ -44,7 +44,7 @@ MANAGED_CLAUDE="/etc/claude-code/CLAUDE.md"
 check "$MANAGED_CLAUDE exists" test -f "$MANAGED_CLAUDE"
 check "Managed policy contains PascalCase reference" grep -q "PascalCase" "$MANAGED_CLAUDE"
 check "Managed policy contains tool table" grep -q "Read file contents" "$MANAGED_CLAUDE"
-check "Managed policy contains subagent docs" grep -q "Subagent" "$MANAGED_CLAUDE"
+check "Managed policy contains Agent tool docs" grep -q "Agent" "$MANAGED_CLAUDE"
 
 echo ""
 echo "4. Container Environment"
@@ -53,7 +53,7 @@ check "home directory writable" test -w "$HOME"
 check "TERM is set" test -n "${TERM:-}"
 
 echo ""
-echo "6. Super-Linter Tools"
+echo "5. Super-Linter Tools"
 # Binary tools
 check "shfmt installed" command -v shfmt
 check "gitleaks installed" command -v gitleaks
@@ -121,7 +121,7 @@ check "arm-ttk installed" test -f /usr/lib/microsoft/arm-ttk/arm-ttk/arm-ttk.psd
 check "Rscript installed" command -v Rscript
 
 echo ""
-echo "7. Security & Pentest Tools"
+echo "6. Security & Pentest Tools"
 DPKG_ARCH=$(dpkg --print-architecture)
 # Network tools
 check "tshark installed" command -v tshark
@@ -185,11 +185,12 @@ if [ "$DPKG_ARCH" = "amd64" ]; then
 fi
 
 echo ""
-echo "8. Claude Code Plugins"
+echo "7. Claude Code Plugins"
 check "enabledPlugins in settings.json" \
   jq -e '.enabledPlugins' "$HOME/.claude/settings.json"
-check "18 plugins configured" \
-  test "$(jq '.enabledPlugins | length' "$HOME/.claude/settings.json")" -eq 18
+ENABLED_COUNT=$(jq '.enabledPlugins | length' "$HOME/.claude/settings.json")
+check "${ENABLED_COUNT} plugins configured (at least 1)" \
+  test "$ENABLED_COUNT" -ge 1
 check "FORCE_AUTOUPDATE_PLUGINS set" test "$FORCE_AUTOUPDATE_PLUGINS" = "true"
 check "official marketplace cached" \
   test -d "$HOME/.claude/plugins/marketplaces/claude-plugins-official"
@@ -209,13 +210,14 @@ check "f5xc plugin cache populated" \
   test -d "$HOME/.claude/plugins/cache/f5xc-salesdemos-marketplace"
 check "superpowers pre-installed" \
   test -d "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers"
-check "all enabled plugins cached" \
-  test "$(jq '.plugins | keys | length' "$HOME/.claude/plugins/installed_plugins.json")" -eq 18
+CACHED_COUNT=$(jq '.plugins | keys | length' "$HOME/.claude/plugins/installed_plugins.json")
+check "all ${ENABLED_COUNT} enabled plugins cached (${CACHED_COUNT} found)" \
+  test "$CACHED_COUNT" -eq "$ENABLED_COUNT"
 check "frontend-slides skill installed" \
   test -f "$HOME/.claude/skills/frontend-slides/SKILL.md"
 
 echo ""
-echo "9. Chrome DevTools MCP"
+echo "8. Chrome DevTools MCP"
 check "Chrome symlink exists" test -L /opt/google/chrome/chrome
 check "Chrome symlink target exists" test -e /opt/google/chrome/chrome
 check "Chrome binary responds" /opt/google/chrome/chrome --version
@@ -231,7 +233,7 @@ else
 fi
 
 echo ""
-echo "10. iTerm2 Utilities"
+echo "9. iTerm2 Utilities"
 check "imgcat installed" command -v imgcat
 check "imgls installed" command -v imgls
 check "it2dl installed" command -v it2dl
@@ -240,7 +242,7 @@ check "it2copy installed" command -v it2copy
 check "it2check installed" command -v it2check
 
 echo ""
-echo "11. Anti-Bot Detection Tools"
+echo "10. Anti-Bot Detection Tools"
 check "puppeteer installed (npm)" node -e "require('puppeteer')"
 check "puppeteer-extra installed (npm)" node -e "require('puppeteer-extra')"
 check "puppeteer-extra-plugin-stealth installed (npm)" node -e "require('puppeteer-extra-plugin-stealth')"

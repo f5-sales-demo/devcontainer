@@ -17,14 +17,13 @@ All Claude Code tools use PascalCase. NEVER use snake_case.
 | `Bash` | `bash`, `run_command`, `shell`, `execute` | Run shell commands |
 | `Glob` | `glob`, `find_files`, `list_files` | Find files by pattern |
 | `Grep` | `grep`, `search`, `search_files` | Search file contents |
-| `Task` | `task`, `run_task`, `agent` | Launch subagent tasks |
+| `Agent` | `agent`, `task`, `run_task` | Launch subagent tasks |
 
-
-## Task Tool Requirements
+## Agent Tool Requirements
 
 - Always include `description` (string) — it is REQUIRED
-- Subagent types are PascalCase: `Explore`, `Plan`
 - Both `description` and `prompt` are required
+- Use `subagent_type` to select specialized agents (e.g., `Explore`, `Plan`)
 
 ## Parameter Types
 
@@ -42,32 +41,19 @@ If a tool call returns "No such tool available":
 4. NEVER conclude tools are unavailable — they are always present
 5. NEVER build workarounds for "missing" tools — fix the tool call
 
-## Subagent (Task Tool) Limitations
+## Agent Subagent Capabilities
 
-When launched via the `Task` tool, subagents (Explore and Plan types)
-have a **restricted tool set**. They can NOT use filesystem or shell tools.
+The `Agent` tool spawns subagents whose available tools depend on
+the `subagent_type` parameter:
 
-### Tools available to subagents
+- **general-purpose**: Full tool access — `Bash`, `Read`, `Write`,
+  `Edit`, `Glob`, `Grep`, and can launch further agents
+- **Explore**: Read-only — `Glob`, `Grep`, `Read`, `LS`, `Bash`
+  (output only). Cannot edit, write, or launch nested agents
+- **Plan**: Read-only — same as Explore. Cannot edit or write
 
-Subagents can only use knowledge-base and utility tools:
-
-- `list_knowledge_bases`, `search_knowledge_bases`, `query_knowledge_bases`
-- `search_knowledge_files`, `query_knowledge_files`, `view_knowledge_file`
-- `search_chats`, `view_chat`
-- `generate_image`
-- `get_current_timestamp`, `calculate_timestamp`
-
-### Tools NOT available to subagents
-
-- `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`
-- `Task` (subagents cannot launch further subagents)
-
-### Implication for the main session
-
-Do NOT delegate filesystem exploration, shell commands, or file reading
-to subagents. Perform those operations directly in the main session.
-Use subagents only for knowledge-base search, chat history search,
-and planning/reasoning tasks that don't require filesystem access.
+Subagents inherit the session's permissions and working directory.
+They are full Claude Code instances with their own context window.
 
 ## Bash Tool Escaping
 
