@@ -5,9 +5,11 @@
 
 if [ -n "$GIT_AUTHOR_NAME" ]; then
   git config --global user.name "$GIT_AUTHOR_NAME"
+  export GIT_COMMITTER_NAME="${GIT_COMMITTER_NAME:-$GIT_AUTHOR_NAME}"
 fi
 if [ -n "$GIT_AUTHOR_EMAIL" ]; then
   git config --global user.email "$GIT_AUTHOR_EMAIL"
+  export GIT_COMMITTER_EMAIL="${GIT_COMMITTER_EMAIL:-$GIT_AUTHOR_EMAIL}"
 fi
 
 git config --global --add safe.directory /workspace
