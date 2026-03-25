@@ -43,48 +43,17 @@ If a tool call returns "No such tool available":
 
 ## Agent Subagent Capabilities
 
-The `Agent` tool spawns subagents whose available tools depend on
-the `subagent_type` parameter:
-
-- **general-purpose**: Full tool access — `Bash`, `Read`, `Write`,
-  `Edit`, `Glob`, `Grep`, and can launch further agents
-- **Explore**: Read-only — `Glob`, `Grep`, `Read`, `LS`, `Bash`
-  (output only). Cannot edit, write, or launch nested agents
-- **Plan**: Read-only — same as Explore. Cannot edit or write
-
-Subagents inherit the session's permissions and working directory.
-They are full Claude Code instances with their own context window.
+- **general-purpose**: Full tool access — `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`
+- **Explore**: Read-only — `Glob`, `Grep`, `Read`, `Bash` (output only)
+- **Plan**: Read-only — same as Explore
 
 ## Bash Tool Escaping
 
-The Bash tool escapes `!` to `\!` on all platforms. This
-happens in the transport layer before the shell receives
-the command. Avoid `!` in all generated Bash commands.
+The Bash tool escapes `!` to `\!` on all platforms. Avoid `!` in all
+generated Bash commands.
 
-### jq — use `| not` instead of `!=`
-
-| Avoid | Use Instead |
-| ----- | ----------- |
-| `select(.x != "y")` | `select((.x == "y") \| not)` |
-| `if .x != "y"` | `if ((.x == "y") \| not)` |
-
-### Bash — avoid `!` in conditionals
-
-| Avoid | Use Instead |
-| ----- | ----------- |
-| `if ! cmd; then` | `cmd \|\| { handle; }` |
-| `while ! test; do` | `until test; do` |
-
-### Escape hatch — single-quoted heredoc
-
-When `!` is unavoidable, use `<<'EOF'` (single-quoted
-delimiter prevents transport-layer escaping):
-
-    cat <<'SCRIPT' > /tmp/run.sh
-    #!/bin/bash
-    if ! command -v foo; then echo missing; fi
-    SCRIPT
-    bash /tmp/run.sh
+- jq: use `| not` instead of `!=`
+- Bash: use `cmd || { handle; }` instead of `if ! cmd; then`
 
 ## Self-Test
 
