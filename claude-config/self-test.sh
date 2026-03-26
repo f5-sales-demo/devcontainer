@@ -231,6 +231,15 @@ NON_EXEC_SCRIPTS=$(find "$HOME/.claude/plugins" -name "*.sh" -type f \
   ! -perm -u+x 2>/dev/null | wc -l)
 check "all plugin scripts executable (${NON_EXEC_SCRIPTS} non-executable)" \
   test "$NON_EXEC_SCRIPTS" -eq 0
+# Track upstream workaround — warn when issue #648 is closed so the
+# entrypoint chmod sweep can be reviewed for removal
+ISSUE_STATE=$(gh issue view 648 --repo f5xc-salesdemos/devcontainer \
+  --json state --jq '.state' 2>/dev/null || echo "UNKNOWN")
+if [ "$ISSUE_STATE" = "CLOSED" ]; then
+  warn "workaround for #648 may be removable — issue is closed, review entrypoint.sh" false
+elif [ "$ISSUE_STATE" = "UNKNOWN" ]; then
+  echo "  SKIP: could not check issue #648 status (no GH_TOKEN or network)"
+fi
 
 echo ""
 echo "8. Chrome DevTools MCP"
