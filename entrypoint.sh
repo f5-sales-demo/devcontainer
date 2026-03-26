@@ -219,12 +219,29 @@ if [ "${ENABLE_VNC:-false}" = "true" ]; then
 fi
 
 # ============================================================
-# Fix plugin script permissions (workaround for #648)
-# FORCE_AUTOUPDATE_PLUGINS causes runtime marketplace syncs
-# that overwrite build-time chmod from install-plugins.sh.
-# Remove this block when upstream issue #648 is resolved.
+# Fix plugin script permissions (issue #648)
+# Two-layer fix:
+#   1. Immediate chmod sweep for non-session contexts (self-test)
+#   2. SessionStart hook injected into settings.json so Claude
+#      Code re-applies chmod AFTER its plugin sync overwrites
+#      build-time permissions.
+# Remove both when upstream issue #648 is resolved.
 # ============================================================
 find "${HOME}/.claude/plugins" -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
+
+# Inject SessionStart hook into runtime settings.json if missing
+SETTINGS="${HOME}/.claude/settings.json"
+if [ -f "$SETTINGS" ] && command -v python3 >/dev/null 2>&1; then
+  python3 -c "
+import json, sys
+p = '${SETTINGS}'
+with open(p) as f: s = json.load(f)
+hook = [{'matcher':'','hooks':[{'type':'command','command':\"find ~/.claude/plugins -name '*.sh' -type f ! -perm -u+x -exec chmod +x {} +\",'timeout':10}]}]
+if s.get('hooks',{}).get('SessionStart') == hook: sys.exit(0)
+s.setdefault('hooks',{})['SessionStart'] = hook
+with open(p,'w') as f: json.dump(s, f, indent=2)
+" 2>/dev/null || true
+fi
 
 # ============================================================
 # Shared Chrome browser (remote debugging on port 9222)

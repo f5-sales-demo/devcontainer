@@ -45,5 +45,19 @@
   "preferences": {
     "tmuxSplitPanes": true
   },
-  "autoUpdatesChannel": "latest"
+  "autoUpdatesChannel": "latest",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "find ~/.claude/plugins -name '*.sh' -type f ! -perm -u+x -exec chmod +x {} +",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
 }

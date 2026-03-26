@@ -227,16 +227,22 @@ check "all ${ENABLED_COUNT} enabled plugins cached (${CACHED_COUNT} found)" \
   test "$CACHED_COUNT" -eq "$ENABLED_COUNT"
 check "frontend-slides skill installed" \
   test -f "$HOME/.claude/skills/frontend-slides/SKILL.md"
-NON_EXEC_SCRIPTS=$(find "$HOME/.claude/plugins" -name "*.sh" -type f \
+# Check permissions by marketplace to pinpoint source (issue #648)
+NON_EXEC_OFFICIAL=$(find "$HOME/.claude/plugins" \
+  -path "*/claude-plugins-official/*" -name "*.sh" -type f \
   ! -perm -u+x 2>/dev/null | wc -l)
-check "all plugin scripts executable (${NON_EXEC_SCRIPTS} non-executable)" \
-  test "$NON_EXEC_SCRIPTS" -eq 0
+NON_EXEC_F5XC=$(find "$HOME/.claude/plugins" \
+  -path "*/f5xc-salesdemos-marketplace/*" -name "*.sh" -type f \
+  ! -perm -u+x 2>/dev/null | wc -l)
+NON_EXEC_TOTAL=$((NON_EXEC_OFFICIAL + NON_EXEC_F5XC))
+check "all plugin scripts executable (${NON_EXEC_TOTAL} non-exec: ${NON_EXEC_OFFICIAL} official, ${NON_EXEC_F5XC} f5xc)" \
+  test "$NON_EXEC_TOTAL" -eq 0
 # Track upstream workaround — warn when issue #648 is closed so the
-# entrypoint chmod sweep can be reviewed for removal
+# SessionStart hook and entrypoint chmod sweep can be reviewed for removal
 ISSUE_STATE=$(gh issue view 648 --repo f5xc-salesdemos/devcontainer \
   --json state --jq '.state' 2>/dev/null || echo "UNKNOWN")
 if [ "$ISSUE_STATE" = "CLOSED" ]; then
-  warn "workaround for #648 may be removable — issue is closed, review entrypoint.sh" false
+  warn "workaround for #648 may be removable — issue is closed, review settings.json hook and entrypoint.sh" false
 elif [ "$ISSUE_STATE" = "UNKNOWN" ]; then
   echo "  SKIP: could not check issue #648 status (no GH_TOKEN or network)"
 fi
