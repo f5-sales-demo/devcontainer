@@ -219,6 +219,14 @@ if [ "${ENABLE_VNC:-false}" = "true" ]; then
 fi
 
 # ============================================================
+# Fix plugin script permissions (workaround for #648)
+# FORCE_AUTOUPDATE_PLUGINS causes runtime marketplace syncs
+# that overwrite build-time chmod from install-plugins.sh.
+# Remove this block when upstream issue #648 is resolved.
+# ============================================================
+find "${HOME}/.claude/plugins" -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
+
+# ============================================================
 # Shared Chrome browser (remote debugging on port 9222)
 # ============================================================
 start_chrome_browser
