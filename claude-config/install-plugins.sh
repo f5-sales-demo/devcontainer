@@ -89,6 +89,10 @@ for KEY in $KEYS; do
     continue
   fi
 
+  # Fix script permissions — cp -a preserves source perms which
+  # may lack execute bits on .sh files from marketplace repos
+  find "$DEST" -name "*.sh" -type f -exec chmod +x {} +
+
   # Add entry to collection
   ENTRIES=$(echo "$ENTRIES" | jq \
     --arg key "$KEY" \
@@ -105,3 +109,8 @@ echo "$ENTRIES" | jq '{
   version: 2,
   plugins: (reduce .[] as $e ({}; .[$e.key] = [($e | del(.key))]))
 }' >"$INSTALLED_JSON"
+
+# Final sweep: ensure all .sh files across marketplaces and cache
+# are executable — catches any scripts missed by per-plugin fixups
+find "${PLUGIN_BASE}/marketplaces" "${PLUGIN_BASE}/cache" \
+  -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true

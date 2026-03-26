@@ -227,6 +227,10 @@ check "all ${ENABLED_COUNT} enabled plugins cached (${CACHED_COUNT} found)" \
   test "$CACHED_COUNT" -eq "$ENABLED_COUNT"
 check "frontend-slides skill installed" \
   test -f "$HOME/.claude/skills/frontend-slides/SKILL.md"
+NON_EXEC_SCRIPTS=$(find "$HOME/.claude/plugins" -name "*.sh" -type f \
+  ! -perm -u+x 2>/dev/null | wc -l)
+check "all plugin scripts executable (${NON_EXEC_SCRIPTS} non-executable)" \
+  test "$NON_EXEC_SCRIPTS" -eq 0
 
 echo ""
 echo "8. Chrome DevTools MCP"
