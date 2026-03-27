@@ -1083,7 +1083,7 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
 RUN CMEM_PKG=$(find /home/${USERNAME}/.claude/plugins/cache/thedotmack/claude-mem \
       -name "package.json" -not -path "*/node_modules/*" -maxdepth 3 -print -quit 2>/dev/null) \
     && if [ -n "$CMEM_PKG" ]; then \
-        cd "$(dirname "$CMEM_PKG")" && bun install; \
+        cd "$(dirname "$CMEM_PKG")" && npm install; \
     fi
 
 # 12m. Claude Code skills (git-cloned external skills)
