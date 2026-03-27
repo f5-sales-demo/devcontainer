@@ -220,25 +220,32 @@ fi
 
 # ============================================================
 # Fix plugin script permissions (issue #648)
-# Two-layer fix:
+# Three-layer fix:
 #   1. Immediate chmod sweep for non-session contexts (self-test)
 #   2. SessionStart hook injected into settings.json so Claude
 #      Code re-applies chmod AFTER its plugin sync overwrites
 #      build-time permissions.
-# Remove both when upstream issue #648 is resolved.
+#   3. PostToolUse hook (matcher: Skill) catches mid-session
+#      plugin reloads via /reload-plugins that arrive after
+#      SessionStart has already fired.
+# Remove all three when upstream issue #648 is resolved.
 # ============================================================
 find "${HOME}/.claude/plugins" -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
 
-# Inject SessionStart hook into runtime settings.json if missing
+# Inject SessionStart + PostToolUse hooks into runtime settings.json if missing
 SETTINGS="${HOME}/.claude/settings.json"
 if [ -f "$SETTINGS" ] && command -v python3 >/dev/null 2>&1; then
   python3 -c "
 import json, sys
 p = '${SETTINGS}'
 with open(p) as f: s = json.load(f)
-hook = [{'matcher':'','hooks':[{'type':'command','command':\"find ~/.claude/plugins -name '*.sh' -type f ! -perm -u+x -exec chmod +x {} +\",'timeout':10}]}]
-if s.get('hooks',{}).get('SessionStart') == hook: sys.exit(0)
-s.setdefault('hooks',{})['SessionStart'] = hook
+cmd = \"find ~/.claude/plugins -name '*.sh' -type f ! -perm -u+x -exec chmod +x {} +\"
+session_hook = [{'matcher':'','hooks':[{'type':'command','command':cmd,'timeout':10}]}]
+skill_hook = [{'matcher':'Skill','hooks':[{'type':'command','command':cmd,'timeout':10}]}]
+h = s.get('hooks',{})
+if h.get('SessionStart') == session_hook and h.get('PostToolUse') == skill_hook: sys.exit(0)
+s.setdefault('hooks',{})['SessionStart'] = session_hook
+s['hooks']['PostToolUse'] = skill_hook
 with open(p,'w') as f: json.dump(s, f, indent=2)
 " 2>/dev/null || true
 fi

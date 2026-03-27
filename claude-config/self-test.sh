@@ -237,12 +237,16 @@ NON_EXEC_F5XC=$(find "$HOME/.claude/plugins" \
 NON_EXEC_TOTAL=$((NON_EXEC_OFFICIAL + NON_EXEC_F5XC))
 check "all plugin scripts executable (${NON_EXEC_TOTAL} non-exec: ${NON_EXEC_OFFICIAL} official, ${NON_EXEC_F5XC} f5xc)" \
   test "$NON_EXEC_TOTAL" -eq 0
+check "SessionStart chmod hook present" \
+  jq -e '.hooks.SessionStart[0].hooks[0].command | test("chmod.*\\+x")' "$HOME/.claude/settings.json"
+check "PostToolUse Skill chmod hook present" \
+  jq -e '.hooks.PostToolUse[0].matcher == "Skill" and (.hooks.PostToolUse[0].hooks[0].command | test("chmod.*\\+x"))' "$HOME/.claude/settings.json"
 # Track upstream workaround — warn when issue #648 is closed so the
-# SessionStart hook and entrypoint chmod sweep can be reviewed for removal
+# SessionStart hook, PostToolUse hook, and entrypoint chmod sweep can be reviewed for removal
 ISSUE_STATE=$(gh issue view 648 --repo f5xc-salesdemos/devcontainer \
   --json state --jq '.state' 2>/dev/null || echo "UNKNOWN")
 if [ "$ISSUE_STATE" = "CLOSED" ]; then
-  warn "workaround for #648 may be removable — issue is closed, review settings.json hook and entrypoint.sh" false
+  warn "workaround for #648 may be removable — issue is closed, review settings.json hooks and entrypoint.sh" false
 elif [ "$ISSUE_STATE" = "UNKNOWN" ]; then
   echo "  SKIP: could not check issue #648 status (no GH_TOKEN or network)"
 fi
