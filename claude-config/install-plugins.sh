@@ -139,3 +139,22 @@ echo "$ENTRIES" | jq '{
 # are executable — catches any scripts missed by per-plugin fixups
 find "${PLUGIN_BASE}/marketplaces" "${PLUGIN_BASE}/cache" \
   -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
+
+# Neutralize hooks from non-enabled marketplace plugins (cc#40013)
+# Claude Code fires hooks from ALL installed plugins, not just enabled ones.
+# Replace hooks.json with {} for plugins not in enabledPlugins.
+for MKT_DIR in "${PLUGIN_BASE}/marketplaces"/*/; do
+  [ -d "$MKT_DIR" ] || continue
+  MKT_NAME=$(basename "$MKT_DIR")
+  for PLUGIN in "${MKT_DIR}plugins"/*/; do
+    [ -d "$PLUGIN" ] || continue
+    PLUGIN_NAME=$(basename "$PLUGIN")
+    KEY="${PLUGIN_NAME}@${MKT_NAME}"
+    HOOKS_FILE="${PLUGIN}hooks/hooks.json"
+    [ -f "$HOOKS_FILE" ] || continue
+    if jq -e --arg k "$KEY" '.enabledPlugins[$k]' "$SETTINGS" >/dev/null 2>&1; then
+      continue
+    fi
+    echo '{}' >"$HOOKS_FILE"
+  done
+done

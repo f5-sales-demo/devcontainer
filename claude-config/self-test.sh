@@ -241,6 +241,23 @@ check "SessionStart chmod hook present" \
   jq -e '.hooks.SessionStart[0].hooks[0].command | test("chmod.*\\+x")' "$HOME/.claude/settings.json"
 check "PostToolUse Skill chmod hook present" \
   jq -e '.hooks.PostToolUse[0].matcher == "Skill" and (.hooks.PostToolUse[0].hooks[0].command | test("chmod.*\\+x"))' "$HOME/.claude/settings.json"
+# Check for hooks from non-enabled plugins (cc#40013)
+NON_ENABLED_HOOKS=0
+for hf in "$HOME/.claude/plugins/marketplaces"/*/plugins/*/hooks/hooks.json; do
+  [ -f "$hf" ] || continue
+  PNAME=$(basename "$(dirname "$(dirname "$hf")")")
+  MNAME=$(basename "$(dirname "$(dirname "$(dirname "$(dirname "$hf")")")")")
+  KEY="${PNAME}@${MNAME}"
+  if jq -e --arg k "$KEY" '.enabledPlugins[$k]' "$HOME/.claude/settings.json" >/dev/null 2>&1; then
+    continue
+  fi
+  CONTENT=$(cat "$hf")
+  if [ "$CONTENT" != "{}" ]; then
+    NON_ENABLED_HOOKS=$((NON_ENABLED_HOOKS + 1))
+  fi
+done
+check "no active hooks from non-enabled plugins (${NON_ENABLED_HOOKS} found)" \
+  test "$NON_ENABLED_HOOKS" -eq 0
 # Track upstream workaround — warn when issue #648 is closed so the
 # SessionStart hook, PostToolUse hook, and entrypoint chmod sweep can be reviewed for removal
 ISSUE_STATE=$(gh issue view 648 --repo f5xc-salesdemos/devcontainer \
