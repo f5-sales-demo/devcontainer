@@ -294,7 +294,29 @@ MEM_AVAIL_MB=$(awk '/MemAvailable/ {printf "%d", $2/1024}' /proc/meminfo)
 warn "available memory above 512MB (currently ${MEM_AVAIL_MB}MB)" test "$MEM_AVAIL_MB" -gt 512
 
 echo ""
-echo "12. Source Drift"
+echo "12. claude-mem Plugin"
+CMEM_ROOT=$(find "$HOME/.claude/plugins/cache/thedotmack/claude-mem" \
+  -name "plugin.json" -path "*/.claude-plugin/*" -print -quit 2>/dev/null || true)
+if [ -n "$CMEM_ROOT" ]; then
+  CMEM_DIR=$(dirname "$(dirname "$CMEM_ROOT")")
+  check "claude-mem plugin.json exists" test -f "$CMEM_ROOT"
+  check "claude-mem hooks.json exists" test -f "$CMEM_DIR/hooks/hooks.json"
+  check "claude-mem mcp-server.cjs exists" test -f "$CMEM_DIR/scripts/mcp-server.cjs"
+  check "claude-mem worker-service.cjs exists" test -f "$CMEM_DIR/scripts/worker-service.cjs"
+  check "claude-mem node_modules installed" test -d "$CMEM_DIR/node_modules"
+  check "claude-mem enabled in settings" \
+    jq -e '.enabledPlugins["claude-mem@thedotmack"]' "$HOME/.claude/settings.json"
+  check "claude-mem in installed_plugins" \
+    jq -e '.plugins["claude-mem@thedotmack"]' "$HOME/.claude/plugins/installed_plugins.json"
+  NON_EXEC_CMEM=$(find "$CMEM_DIR" -name "*.sh" -type f ! -perm -u+x 2>/dev/null | wc -l)
+  check "claude-mem scripts executable (${NON_EXEC_CMEM} non-exec)" \
+    test "$NON_EXEC_CMEM" -eq 0
+else
+  echo "  SKIP: claude-mem not installed"
+fi
+
+echo ""
+echo "13. Source Drift"
 AUDIT_DIR="/tmp/devcontainer-audit"
 if [ -d "$AUDIT_DIR" ]; then
   warn "managed CLAUDE.md matches source" \
