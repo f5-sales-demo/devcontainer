@@ -61,6 +61,7 @@ start_chrome_browser() {
     --disable-background-timer-throttling
     --disable-backgrounding-occluded-windows
     --disable-dev-shm-usage
+    --disable-background-networking
   )
 
   # Conditional GPU support
