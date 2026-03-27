@@ -224,17 +224,33 @@ fi
 
 # ============================================================
 # Fix plugin script permissions (issue #648)
-# Three-layer fix:
-#   1. Immediate chmod sweep for non-session contexts (self-test)
-#   2. SessionStart hook injected into settings.json so Claude
-#      Code re-applies chmod AFTER its plugin sync overwrites
-#      build-time permissions.
-#   3. PostToolUse hook (matcher: Skill) catches mid-session
-#      plugin reloads via /reload-plugins that arrive after
-#      SessionStart has already fired.
-# Remove all three when upstream issue #648 is resolved.
+# Claude Code performs TWO plugin syncs during session init
+# (~10s apart). The SessionStart hook only fires after the
+# first sync, so the second sync re-introduces 644 perms.
+#
+# Four-layer fix:
+#   1. Immediate chmod sweep (self-test, non-session contexts)
+#   2. Background polling daemon for the first 60s of container
+#      life — catches all syncs regardless of timing
+#   3. SessionStart hook with delayed background chmod — catches
+#      the second sync even when the daemon has expired
+#   4. PostToolUse hook (matcher: Skill) for mid-session
+#      /reload-plugins
+#
+# Remove all four when upstream issue #648 is resolved.
 # ============================================================
 find "${HOME}/.claude/plugins" -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
+
+# Background daemon: poll every 2s for 60s to catch all plugin syncs
+(
+  elapsed=0
+  while [ "$elapsed" -lt 60 ]; do
+    sleep 2
+    find "${HOME}/.claude/plugins" -name "*.sh" -type f \
+      ! -perm -u+x -exec chmod +x {} + 2>/dev/null
+    elapsed=$((elapsed + 2))
+  done
+) &
 
 # Inject SessionStart + PostToolUse hooks into runtime settings.json if missing
 SETTINGS="${HOME}/.claude/settings.json"
@@ -243,9 +259,16 @@ if [ -f "$SETTINGS" ] && command -v python3 >/dev/null 2>&1; then
 import json, sys
 p = '${SETTINGS}'
 with open(p) as f: s = json.load(f)
-cmd = \"find ~/.claude/plugins -name '*.sh' -type f ! -perm -u+x -exec chmod +x {} +\"
+# Immediate chmod + delayed background chmod 15s later to catch second sync
+cmd = (
+    \"find ~/.claude/plugins -name '*.sh' -type f\"
+    \" ! -perm -u+x -exec chmod +x {} + ;\"
+    \" (sleep 15 && find ~/.claude/plugins -name '*.sh' -type f\"
+    \" ! -perm -u+x -exec chmod +x {} +) &\"
+)
 session_hook = [{'matcher':'','hooks':[{'type':'command','command':cmd,'timeout':10}]}]
-skill_hook = [{'matcher':'Skill','hooks':[{'type':'command','command':cmd,'timeout':10}]}]
+skill_cmd = \"find ~/.claude/plugins -name '*.sh' -type f ! -perm -u+x -exec chmod +x {} +\"
+skill_hook = [{'matcher':'Skill','hooks':[{'type':'command','command':skill_cmd,'timeout':10}]}]
 h = s.get('hooks',{})
 if h.get('SessionStart') == session_hook and h.get('PostToolUse') == skill_hook: sys.exit(0)
 s.setdefault('hooks',{})['SessionStart'] = session_hook
