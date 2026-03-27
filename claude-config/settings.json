@@ -58,6 +58,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "find ~/.claude/plugins -name '*.sh' -type f ! -perm -u+x -exec chmod +x {} +",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }
