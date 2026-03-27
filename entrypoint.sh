@@ -279,7 +279,7 @@ neutralize_non_enabled_hooks() {
         continue
       fi
       # Neutralize hooks for non-enabled plugin
-      echo '{}' > "$hooks_file"
+      echo '{}' >"$hooks_file"
     done
   done
 }
@@ -309,8 +309,8 @@ if [ -f "$SETTINGS" ] && [ -f "$TEMPLATE" ] && command -v jq >/dev/null 2>&1; th
   if [ -n "$TEMPLATE_HOOKS" ] && [ "$TEMPLATE_HOOKS" != "null" ]; then
     CURRENT_HOOKS=$(jq '.hooks' "$SETTINGS" 2>/dev/null)
     if [ "$CURRENT_HOOKS" != "$TEMPLATE_HOOKS" ]; then
-      jq --argjson hooks "$TEMPLATE_HOOKS" '.hooks = $hooks' "$SETTINGS" > "${SETTINGS}.tmp" \
-        && mv "${SETTINGS}.tmp" "$SETTINGS"
+      jq --argjson hooks "$TEMPLATE_HOOKS" '.hooks = $hooks' "$SETTINGS" >"${SETTINGS}.tmp" &&
+        mv "${SETTINGS}.tmp" "$SETTINGS"
     fi
   fi
 fi

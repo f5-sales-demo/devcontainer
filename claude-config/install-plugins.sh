@@ -155,6 +155,6 @@ for MKT_DIR in "${PLUGIN_BASE}/marketplaces"/*/; do
     if jq -e --arg k "$KEY" '.enabledPlugins[$k]' "$SETTINGS" >/dev/null 2>&1; then
       continue
     fi
-    echo '{}' > "$HOOKS_FILE"
+    echo '{}' >"$HOOKS_FILE"
   done
 done
