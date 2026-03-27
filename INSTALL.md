@@ -224,7 +224,6 @@ brew_install dos2unix          # Convert Windows CRLF line endings to Unix LF
 brew_install azure-cli         # Azure resource management
 brew install --cask google-cloud-sdk  # Google Cloud CLI (gcloud, gsutil, bq)
 brew_install gogcli            # Google Suite CLI — Gmail, Calendar, Drive, Contacts, Tasks, Sheets (gog)
-brew_install signal-cli        # Signal Instant Messenger
 
 # Terraform ecosystem
 brew_install tflint            # Terraform linter (catches errors before plan)
@@ -232,9 +231,6 @@ brew_install terraform-docs    # Auto-generate Terraform module documentation
 
 # Linting and security scanning
 brew_install hadolint          # Dockerfile linter (best practices enforcement)
-brew_install gitleaks          # Secret scanner (catches leaked credentials pre-commit)
-brew_install sslscan           # TLS/SSL configuration scanner
-brew_install trufflehog        # Deep git history secret scanner
 brew_install actionlint        # GitHub Actions workflow linter (syntax + logic)
 brew_install yamllint          # YAML linter (used by pre-commit hooks)
 brew_install codespell         # Source code spell checker
@@ -287,9 +283,6 @@ gog --version          # VERIFY: output contains a version number (gogcli)
 tflint --version       # VERIFY: output starts with "TFLint version"
 terraform-docs --version # VERIFY: output contains a version number
 hadolint --version     # VERIFY: output contains "Haskell Dockerfile Linter"
-gitleaks version       # VERIFY: output contains a version number
-sslscan --version      # VERIFY: output contains "sslscan version"
-trufflehog --version   # VERIFY: output contains a version number
 actionlint -version    # VERIFY: output contains a version number
 yamllint --version     # VERIFY: output starts with "yamllint"
 codespell --version    # VERIFY: output starts with "codespell"
@@ -362,24 +355,18 @@ VERIFY: All nine packages appear in the output (exact versions may differ):
 
 ## Step 3 — Install Bun
 
-Bun is used by OpenCode internally for plugin management. Install it to `~/.bun` (user-space, no sudo).
+Bun is used by OpenCode internally for plugin management. Install via Homebrew (safe, verified, no arbitrary script execution).
 
-**Idempotency**: The bun installer always re-downloads the binary even if already installed. The guard below skips the download when bun is already on PATH.
+**Idempotency**: `brew install` is idempotent — safe to re-run.
 
 ```bash
-if ! command -v bun &>/dev/null; then
-  curl -fsSL https://bun.sh/install | bash
-fi
+brew_install bun
 ```
 
 ### Verify Bun
 
-After installing bun, add it to the current shell's PATH so subsequent steps can use it. Do **not** run `source ~/.zshrc` — it will fail in a non-interactive shell context (Oh My Zsh and Powerlevel10k require a TTY).
-
 ```bash
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-which bun       # VERIFY: output is ~/.bun/bin/bun
+which bun       # VERIFY: output is /opt/homebrew/bin/bun
 bun --version   # VERIFY: output starts with "1." (1.3.x+)
 ```
 
@@ -467,22 +454,6 @@ cursor --version               # VERIFY: output contains a version number
 
 ---
 
-## Step 4g — Install Windsurf
-
-Windsurf is an AI-powered IDE by Codeium. Install via Homebrew Cask:
-
-```bash
-[ -d "/Applications/Windsurf.app" ] || brew install --cask windsurf
-```
-
-VERIFY:
-
-```bash
-windsurf --version             # VERIFY: output contains a version number
-```
-
----
-
 ## Step 4h — Install Zed
 
 Zed is a GPU-accelerated code editor with built-in AI assistant support. Install via Homebrew Cask:
@@ -495,22 +466,6 @@ VERIFY:
 
 ```bash
 zed --version                  # VERIFY: output contains a version number
-```
-
----
-
-## Step 4i — Install Alacritty
-
-Alacritty is a GPU-accelerated terminal emulator. The Homebrew cask is deprecated due to macOS Gatekeeper issues (deadline Sept 2026) and requires `--no-quarantine` to install correctly:
-
-```bash
-[ -d "/Applications/Alacritty.app" ] || HOMEBREW_CASK_OPTS="--no-quarantine" brew install --cask alacritty
-```
-
-VERIFY:
-
-```bash
-alacritty --version            # VERIFY: output contains a version number
 ```
 
 ---
@@ -727,11 +682,14 @@ made explicit in `~/.zshrc` (see Step 14).
 
 Oh My Zsh is a framework for managing Zsh configuration, plugins, and themes. The installer creates `~/.zshrc` from a template — any prior `.zshrc` is backed up automatically.
 
-**IMPORTANT**: The Oh My Zsh installer exits with code 1 if `~/.oh-my-zsh` already exists. The `--unattended` flag does NOT bypass this check — it only disables shell switching and confirmation prompts. Always guard with an existence check:
+**IMPORTANT**: The Oh My Zsh installer exits with code 1 if `~/.oh-my-zsh` already exists. Always guard with an existence check.
+
+We clone the repository directly instead of piping from the web — this avoids arbitrary remote script execution and is safer for corporate EDR environments:
 
 ```bash
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh
+  RUNZSH=no CHSH=no ~/.oh-my-zsh/tools/install.sh --unattended
 fi
 ```
 
@@ -1158,43 +1116,29 @@ defaults read com.googlecode.iterm2 TabStyleWithAutomaticOption        # Expecte
 
 ---
 
-### 5.8 — Install Claude Code (Native Binary)
+### 5.8 — Install Claude Code
 
-Claude Code is installed as a native binary (not via npm). The native installer is idempotent — re-running it updates to the latest version. Claude Code requires an Anthropic Pro, Max, Teams, or Enterprise account.
+Claude Code is installed via Homebrew. Claude Code requires an Anthropic Pro, Max, Teams, or Enterprise account.
 
 ```bash
-if command -v claude >/dev/null 2>&1; then
-  echo "Claude Code already installed: $(claude --version 2>/dev/null)"
-else
-  echo "Installing Claude Code native binary..."
-  curl -fsSL https://claude.ai/install.sh | bash
-fi
+brew_install claude-code
+```
 
-# Verify
+```bash
 claude --version
 # Expected: output contains "Claude Code" followed by a version number
 ```
 
-After installation, the binary lives at `~/.local/bin/claude`. First-time users should run `claude` interactively to complete the browser-based OAuth login. The `~/.claude/` directory is created on first run.
+First-time users should run `claude` interactively to complete the browser-based OAuth login. The `~/.claude/` directory is created on first run.
 
 ---
 
 ### 5.9 — Install Codex CLI
 
-Codex is OpenAI's coding agent CLI. Install the macOS binary directly from GitHub releases (architecture-aware — Apple Silicon and Intel both supported). The binary self-updates at runtime.
+Codex is OpenAI's coding agent CLI. Install via npm (safer than downloading binaries from GitHub releases directly).
 
 ```bash
-if [ "$(uname -m)" = "arm64" ]; then CODEX_ARCH="aarch64"; else CODEX_ARCH="x86_64"; fi
-if command -v codex >/dev/null 2>&1; then
-  echo "Codex already installed: $(codex --version 2>/dev/null)"
-else
-  mkdir -p ~/.local/bin
-  curl -fsSL \
-    "https://github.com/openai/codex/releases/latest/download/codex-${CODEX_ARCH}-apple-darwin.tar.gz" \
-    | tar -xz -C ~/.local/bin
-  mv ~/.local/bin/codex-${CODEX_ARCH}-apple-darwin ~/.local/bin/codex 2>/dev/null || true
-  chmod +x ~/.local/bin/codex
-fi
+npm install -g @openai/codex
 ```
 
 Write the Codex config (selects the model):
@@ -1212,7 +1156,7 @@ VERIFY:
 codex --version            # VERIFY: output contains a version number
 ```
 
-The binary lives at `~/.local/bin/codex` (already on PATH — same directory as Claude Code). First-time users should run `codex` interactively to complete the OAuth login with an OpenAI account.
+First-time users should run `codex` interactively to complete the OAuth login with an OpenAI account.
 
 ---
 
@@ -2659,15 +2603,7 @@ grep -q 'MANPAGER' ~/.zshrc || \
 grep -q 'BAT_THEME' ~/.zshrc || \
   echo 'export BAT_THEME="Coldark-Dark"' >> ~/.zshrc
 
-# Bun
-grep -q 'BUN_INSTALL' ~/.zshrc || \
-  echo 'export BUN_INSTALL="$HOME/.bun"' >> ~/.zshrc
-grep -q 'BUN_INSTALL/bin' ~/.zshrc || \
-  echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> ~/.zshrc
-
-# Bun completions
-grep -q '_bun' ~/.zshrc || \
-  echo '[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"'  >> ~/.zshrc
+# Bun (installed via Homebrew — no PATH entry needed, brew manages it)
 
 # OpenCode zsh completion (append to .zshrc — site-functions doesn't work with yargs completions)
 grep -q 'opencode-completions' ~/.zshrc || \
@@ -2718,8 +2654,7 @@ fi
 Do **not** run `source ~/.zshrc` — it will fail in a non-interactive shell context (Oh My Zsh and Powerlevel10k require a TTY). Instead, export the critical variables for the current session:
 
 ```bash
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$HOME/.local/bin:/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
+export PATH="$HOME/.local/bin:/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
 export FORCE_AUTOUPDATE_PLUGINS=true
 eval $(/opt/homebrew/bin/brew shellenv)
 ```
@@ -2841,12 +2776,8 @@ ls "/Applications/Visual Studio Code.app"   # VERIFY: directory exists
 code --version                               # VERIFY: output contains a version number
 ls "/Applications/Cursor.app"                # VERIFY: directory exists
 cursor --version                             # VERIFY: output contains a version number
-ls "/Applications/Windsurf.app"              # VERIFY: directory exists
-windsurf --version                           # VERIFY: output contains a version number
 ls "/Applications/Zed.app"                   # VERIFY: directory exists
 zed --version                                # VERIFY: output contains a version number
-ls "/Applications/Alacritty.app"             # VERIFY: directory exists
-alacritty --version                          # VERIFY: output contains a version number
 ```
 
 ### 16.6 — chrome-devtools-mcp
@@ -2884,7 +2815,7 @@ All four runtime packages should be pre-installed. If any are missing, re-run `(
 ### 16.9 — Environment Variables
 
 ```bash
-echo $BUN_INSTALL            # VERIFY: output is /Users/<username>/.bun (not empty)
+which bun                    # VERIFY: output is /opt/homebrew/bin/bun
 echo $LITELLM_API_KEY        # VERIFY: output is your API key (not empty, not a placeholder)
 ```
 
@@ -3149,14 +3080,12 @@ If `/opt/homebrew/bin` is not in the output, ensure `eval $(/opt/homebrew/bin/br
 ### Bun not found
 
 ```bash
-# Verify bun is installed
-ls ~/.bun/bin/bun
-
-# Verify PATH includes bun
-echo $PATH | tr ':' '\n' | grep bun
+# Verify bun is installed via Homebrew
+which bun
+bun --version
 ```
 
-If missing, re-run: `curl -fsSL https://bun.sh/install | bash` and then `export PATH="$HOME/.bun/bin:$PATH"`.
+If missing, re-run: `brew install bun`.
 
 ---
 
