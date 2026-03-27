@@ -83,6 +83,31 @@ for KEY in $KEYS; do
         fi
       fi
     fi
+  elif [ "$NAME" = "claude-mem" ]; then
+    # External plugin — clone repo, copy only the plugin/ subdirectory
+    EXISTING=$(find "${CACHE_DIR}/${NAME}" -name "plugin.json" -path "*/.claude-plugin/*" 2>/dev/null | head -1)
+    if [ -n "$EXISTING" ]; then
+      DEST=$(dirname "$(dirname "$EXISTING")")
+      VERSION=$(basename "$DEST")
+    else
+      git clone --depth=1 --single-branch --branch main \
+        https://github.com/thedotmack/claude-mem.git /tmp/claude-mem-clone
+      cp -a /tmp/claude-mem-clone/plugin/. "$DEST/"
+      rm -rf /tmp/claude-mem-clone
+      if [ -f "${DEST}/.claude-plugin/plugin.json" ]; then
+        V=$(jq -r '.version // empty' "${DEST}/.claude-plugin/plugin.json")
+        if [ -n "$V" ] && [ "$V" != "$VERSION" ]; then
+          VERSION="$V"
+          NEW_DEST="${CACHE_DIR}/${NAME}/${VERSION}"
+          if [ "$DEST" != "$NEW_DEST" ]; then
+            mkdir -p "$NEW_DEST"
+            cp -a "${DEST}/." "$NEW_DEST/"
+            rm -rf "$DEST"
+            DEST="$NEW_DEST"
+          fi
+        fi
+      fi
+    fi
   else
     echo "WARNING: no source found for plugin '${NAME}' in marketplace '${MKT}', skipping"
     rm -rf "$DEST"

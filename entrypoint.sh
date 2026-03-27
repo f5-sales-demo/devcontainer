@@ -97,6 +97,10 @@ fi
 if [ -n "$LITELLM_API_KEY" ]; then
   export OPENAI_API_KEY="$LITELLM_API_KEY"
   export ANTHROPIC_API_KEY="$LITELLM_API_KEY"
+  # claude-mem strips ANTHROPIC_API_KEY from process.env for security;
+  # it only reads the key from its own ~/.claude-mem/.env file.
+  mkdir -p "$HOME/.claude-mem"
+  printf 'ANTHROPIC_API_KEY=%s\n' "$LITELLM_API_KEY" > "$HOME/.claude-mem/.env"
 fi
 if [ -n "$LITELLM_BASE_URL" ]; then
   export OPENAI_BASE_URL="${LITELLM_BASE_URL}/api/v1"
