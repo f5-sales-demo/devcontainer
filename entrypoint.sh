@@ -41,6 +41,9 @@ if [ -n "$GH_TOKEN" ]; then
   gh auth setup-git 2>/dev/null || true
 fi
 
+# Ensure Homebrew npm global directory exists (issue #677)
+mkdir -p "${HOME}/.npm-global/lib" 2>/dev/null || true
+
 # ============================================================
 # gogcli (gog) — restore OAuth credentials and refresh token
 # ============================================================
@@ -220,6 +223,15 @@ if [ "${ENABLE_VNC:-false}" = "true" ]; then
     fi
 
   ) &
+fi
+
+# ============================================================
+# Clean up stale processes on claude-mem worker port (issue #676)
+# Prevents port 37777 conflict when SessionStart hook triggers
+# the claude-mem worker before a previous instance has released.
+# ============================================================
+if command -v fuser >/dev/null 2>&1; then
+  fuser -k 37777/tcp >/dev/null 2>&1 || true
 fi
 
 # ============================================================
