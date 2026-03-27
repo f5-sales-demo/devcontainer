@@ -240,7 +240,7 @@ fi
 # (~10s apart). The SessionStart hook only fires after the
 # first sync, so the second sync re-introduces 644 perms.
 #
-# Four-layer fix:
+# Five-layer fix:
 #   1. Immediate chmod sweep (self-test, non-session contexts)
 #   2. Background polling daemon for the first 60s of container
 #      life — catches all syncs regardless of timing
@@ -248,10 +248,44 @@ fi
 #      the second sync even when the daemon has expired
 #   4. PostToolUse hook (matcher: Skill) for mid-session
 #      /reload-plugins
+#   5. Neutralize hooks.json for non-enabled marketplace plugins
+#      (cc#40013: Claude Code fires hooks from ALL installed
+#      plugins, not just enabled ones)
 #
-# Remove all four when upstream issue #648 is resolved.
+# Remove all five when upstream issues #648 and cc#40013 are resolved.
 # ============================================================
+
+# Neutralize hooks from non-enabled marketplace plugins (cc#40013)
+# Claude Code loads hooks from ALL installed plugins, not just enabled ones.
+# Replace hooks.json with {} for any plugin not in enabledPlugins.
+neutralize_non_enabled_hooks() {
+  local settings="${HOME}/.claude/settings.json"
+  [ -f "$settings" ] || return 0
+  for mkt_dir in "${HOME}/.claude/plugins/marketplaces"/*/; do
+    [ -d "$mkt_dir" ] || continue
+    local mkt_name
+    mkt_name=$(basename "$mkt_dir")
+    local plugin_dir="${mkt_dir}plugins"
+    [ -d "$plugin_dir" ] || continue
+    for plugin in "$plugin_dir"/*/; do
+      [ -d "$plugin" ] || continue
+      local plugin_name
+      plugin_name=$(basename "$plugin")
+      local key="${plugin_name}@${mkt_name}"
+      local hooks_file="${plugin}hooks/hooks.json"
+      [ -f "$hooks_file" ] || continue
+      # Skip if plugin is enabled
+      if jq -e --arg k "$key" '.enabledPlugins[$k]' "$settings" >/dev/null 2>&1; then
+        continue
+      fi
+      # Neutralize hooks for non-enabled plugin
+      echo '{}' > "$hooks_file"
+    done
+  done
+}
+
 find "${HOME}/.claude/plugins" -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
+neutralize_non_enabled_hooks
 
 # Background daemon: poll every 2s for 60s to catch all plugin syncs
 (
@@ -260,33 +294,25 @@ find "${HOME}/.claude/plugins" -name "*.sh" -type f -exec chmod +x {} + 2>/dev/n
     sleep 2
     find "${HOME}/.claude/plugins" -name "*.sh" -type f \
       ! -perm -u+x -exec chmod +x {} + 2>/dev/null
+    neutralize_non_enabled_hooks
     elapsed=$((elapsed + 2))
   done
 ) &
 
-# Inject SessionStart + PostToolUse hooks into runtime settings.json if missing
+# Inject SessionStart + PostToolUse hooks from template into runtime settings.json
+# The template at /opt/claude-config/settings.json has the canonical hook definitions.
+# This ensures runtime hooks stay in sync without fragile Python string escaping.
 SETTINGS="${HOME}/.claude/settings.json"
-if [ -f "$SETTINGS" ] && command -v python3 >/dev/null 2>&1; then
-  python3 -c "
-import json, sys
-p = '${SETTINGS}'
-with open(p) as f: s = json.load(f)
-# Immediate chmod + delayed background chmod 15s later to catch second sync
-cmd = (
-    \"find ~/.claude/plugins -name '*.sh' -type f\"
-    \" ! -perm -u+x -exec chmod +x {} + ;\"
-    \" (sleep 15 && find ~/.claude/plugins -name '*.sh' -type f\"
-    \" ! -perm -u+x -exec chmod +x {} +) &\"
-)
-session_hook = [{'matcher':'','hooks':[{'type':'command','command':cmd,'timeout':10}]}]
-skill_cmd = \"find ~/.claude/plugins -name '*.sh' -type f ! -perm -u+x -exec chmod +x {} +\"
-skill_hook = [{'matcher':'Skill','hooks':[{'type':'command','command':skill_cmd,'timeout':10}]}]
-h = s.get('hooks',{})
-if h.get('SessionStart') == session_hook and h.get('PostToolUse') == skill_hook: sys.exit(0)
-s.setdefault('hooks',{})['SessionStart'] = session_hook
-s['hooks']['PostToolUse'] = skill_hook
-with open(p,'w') as f: json.dump(s, f, indent=2)
-" 2>/dev/null || true
+TEMPLATE="/opt/claude-config/settings.json"
+if [ -f "$SETTINGS" ] && [ -f "$TEMPLATE" ] && command -v jq >/dev/null 2>&1; then
+  TEMPLATE_HOOKS=$(jq '.hooks' "$TEMPLATE" 2>/dev/null)
+  if [ -n "$TEMPLATE_HOOKS" ] && [ "$TEMPLATE_HOOKS" != "null" ]; then
+    CURRENT_HOOKS=$(jq '.hooks' "$SETTINGS" 2>/dev/null)
+    if [ "$CURRENT_HOOKS" != "$TEMPLATE_HOOKS" ]; then
+      jq --argjson hooks "$TEMPLATE_HOOKS" '.hooks = $hooks' "$SETTINGS" > "${SETTINGS}.tmp" \
+        && mv "${SETTINGS}.tmp" "$SETTINGS"
+    fi
+  fi
 fi
 
 # ============================================================
