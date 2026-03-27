@@ -1116,23 +1116,6 @@ defaults read com.googlecode.iterm2 TabStyleWithAutomaticOption        # Expecte
 
 ---
 
-### 5.8 — Install Claude Code
-
-Claude Code is installed via Homebrew. Claude Code requires an Anthropic Pro, Max, Teams, or Enterprise account.
-
-```bash
-brew_install claude-code
-```
-
-```bash
-claude --version
-# Expected: output contains "Claude Code" followed by a version number
-```
-
-First-time users should run `claude` interactively to complete the browser-based OAuth login. The `~/.claude/` directory is created on first run.
-
----
-
 ### 5.9 — Install Codex CLI
 
 Codex is OpenAI's coding agent CLI. Install via npm (safer than downloading binaries from GitHub releases directly).
@@ -1535,12 +1518,6 @@ Install the NotebookLM CLI and MCP server (provides Google NotebookLM access fro
 
 ```bash
 uv tool install notebooklm-mcp-cli
-```
-
-Register as a Claude Code MCP server:
-
-```bash
-nlm setup add claude-code
 ```
 
 VERIFY:
