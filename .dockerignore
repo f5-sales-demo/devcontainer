@@ -5,4 +5,5 @@
 !codex-config/
 !pi-config/
 !.devcontainer/scripts/
+!scripts/
 !configs/
