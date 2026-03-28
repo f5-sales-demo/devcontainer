@@ -124,7 +124,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     graphviz \
     imagemagick \
     jq \
-    lsd \
     mtr-tiny \
     shellcheck \
     unzip \
@@ -835,7 +834,7 @@ RUN npm install -g \
     react \
     react-dom \
     sharp \
-    markitdown
+    opencode-claude-auth
 
 # Ensure Node.js can resolve globally-installed packages at the system prefix
 # even after npm prefix is changed to $HOME/.npm-global later.
@@ -1162,7 +1161,7 @@ RUN OPENCODE_CACHE="$HOME/.cache/opencode" \
     && printf '21' > "$OPENCODE_CACHE/version" \
     && printf '{"dependencies":{}}\n' > "$OPENCODE_CACHE/package.json" \
     && bun add --cwd "$OPENCODE_CACHE" --force --exact \
-        @robinmordasiewicz/oh-my-opencode@3.11.0-fork.1 \
+        @robinmordasiewicz/oh-my-opencode@3.11.0-fork.2 \
         @ai-sdk/anthropic \
         @ai-sdk/openai-compatible \
         opencode-anthropic-auth@0.0.13
@@ -1208,8 +1207,6 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
       "${ZSH_CUSTOM}/plugins/zsh-eza" \
     && git clone --depth=1 https://github.com/cda0/zsh-tfenv.git \
       "${ZSH_CUSTOM}/plugins/zsh-tfenv" \
-    && git clone --depth=1 https://github.com/yuhonas/zsh-aliases-lsd.git \
-      "${ZSH_CUSTOM}/plugins/zsh-aliases-lsd" \
     && mkdir -p "${ZSH_CUSTOM}/plugins/gh-clone-complete" \
     && git clone --depth=1 https://github.com/wbingli/zsh-claudecode-completion.git \
       "${ZSH_CUSTOM}/plugins/zsh-claudecode-completion" \
@@ -1218,7 +1215,7 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && "${ZSH_CUSTOM}/themes/powerlevel10k/gitstatus/install" \
     && sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$HOME/.zshrc" \
     # Plugin list: common set + ubuntu (Linux-only). macOS INSTALL.md adds iterm2, macos, podman instead.
-    && sed -i 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux zsh-claudecode-completion dotenv emoji gcloud git pre-commit ubuntu)/' \
+    && sed -i 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux zsh-claudecode-completion dotenv emoji gcloud git pre-commit ubuntu)/' \
       "$HOME/.zshrc" \
     && sed -i 's/^# HYPHEN_INSENSITIVE=.*/HYPHEN_INSENSITIVE="true"/' "$HOME/.zshrc" \
     && sed -i 's/^# COMPLETION_WAITING_DOTS=.*/COMPLETION_WAITING_DOTS="true"/' "$HOME/.zshrc" \

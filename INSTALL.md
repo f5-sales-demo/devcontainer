@@ -206,7 +206,6 @@ brew_install tree              # Directory tree viewer
 brew_install bat               # cat with syntax highlighting and git integration
 brew_install eza               # Modern ls replacement with icons and git status
 brew_install fzf               # Fuzzy finder for files, history, and command output
-brew_install lsd               # ls replacement with color and icons (Nerd Font aware)
 brew_install yq                # YAML/JSON/XML processor (like jq for YAML)
 brew_install poppler           # PDF utilities (pdftotext, pdfinfo — used by AI tools for PDF processing)
 
@@ -277,7 +276,6 @@ tree --version         # VERIFY: output contains "tree v"
 bat --version          # VERIFY: output starts with "bat"
 eza --version          # VERIFY: output starts with "v"
 fzf --version          # VERIFY: output contains a version number
-lsd --version          # VERIFY: output starts with "lsd"
 yq --version           # VERIFY: output contains "yq" followed by a version number
 python3 --version      # VERIFY: output starts with "Python 3."
 go version             # VERIFY: output contains "go1."
@@ -337,7 +335,6 @@ npm install -g react-icons                     # Icon library for React
 npm install -g react                          # React core
 npm install -g react-dom                      # React DOM
 npm install -g sharp                          # Image processing
-npm install -g markitdown                     # Markdown processing
 ```
 
 ### Verify npm Global Packages
@@ -359,18 +356,18 @@ VERIFY: All four LSP servers and supporting packages appear in the output (exact
 
 ## Step 3 — Install Bun
 
-Bun is used by OpenCode internally for plugin management. Install via Homebrew (safe, verified, no arbitrary script execution).
+Bun is used by OpenCode internally for plugin management. Install via npm (safe, checksummed, no arbitrary script execution). Bun was previously available as a Homebrew formula (`oven-sh/bun`) but that tap has been deprecated.
 
-**Idempotency**: `brew install` is idempotent — safe to re-run.
+**Idempotency**: `npm install -g` overwrites the existing version — safe to re-run.
 
 ```bash
-brew_install bun
+npm install -g bun
 ```
 
 ### Verify Bun
 
 ```bash
-which bun       # VERIFY: output is /opt/homebrew/bin/bun
+which bun       # VERIFY: output contains "bun" (e.g. /opt/homebrew/bin/bun or ~/.bun/bin/bun)
 bun --version   # VERIFY: output starts with "1." (1.3.x+)
 ```
 
@@ -395,16 +392,6 @@ Chrome auto-updates itself after installation. No `sudo` is required — Homebre
 ```
 
 VERIFY: output contains `Google Chrome` followed by a version number.
-
----
-
-## Step 4b — Install OpenCode Desktop
-
-OpenCode Desktop is the GUI companion for OpenCode. Install via Homebrew Cask:
-
-```bash
-brew install --cask opencode-desktop
-```
 
 ---
 
@@ -862,24 +849,31 @@ ln -sf "$(brew --prefix)/share/zsh-syntax-highlighting" \
 
 Clone plugins that have no Homebrew formula:
 
-**IMPORTANT**: `git clone` fails with exit code 128 if the target directory already exists. Always guard with an existence check:
+**IMPORTANT**: `git clone` fails with exit code 128 if the target directory already exists. Always guard with an existence check.
+
+**Security**: Community plugins are pinned to audited commit SHAs. To update, verify the new HEAD manually, then replace the SHA below. Review quarterly.
+
+<!-- PINNED_DEPS_LAST_AUDITED: 2026-03-28 — next review: 2026-06-28 -->
 
 ```bash
-[ -d ~/.oh-my-zsh/custom/plugins/conda-zsh-completion ] || \
-  git clone --depth=1 https://github.com/conda-incubator/conda-zsh-completion.git \
-    ~/.oh-my-zsh/custom/plugins/conda-zsh-completion
+pin_clone() {
+  local url="$1" dest="$2" sha="$3"
+  if [ -d "$dest" ]; then return; fi
+  git clone --depth=50 "$url" "$dest"
+  git -C "$dest" checkout "$sha"
+}
 
-[ -d ~/.oh-my-zsh/custom/plugins/zsh-eza ] || \
-  git clone --depth=1 https://github.com/z-shell/zsh-eza.git \
-    ~/.oh-my-zsh/custom/plugins/zsh-eza
+pin_clone https://github.com/conda-incubator/conda-zsh-completion.git \
+  ~/.oh-my-zsh/custom/plugins/conda-zsh-completion \
+  632655aab6e147b90f75cf3d195ae2b48e7beec9
 
-[ -d ~/.oh-my-zsh/custom/plugins/zsh-tfenv ] || \
-  git clone --depth=1 https://github.com/cda0/zsh-tfenv.git \
-    ~/.oh-my-zsh/custom/plugins/zsh-tfenv
+pin_clone https://github.com/z-shell/zsh-eza.git \
+  ~/.oh-my-zsh/custom/plugins/zsh-eza \
+  717b2312f7dab9809869f07d5fa905dad0a8f959
 
-[ -d ~/.oh-my-zsh/custom/plugins/zsh-aliases-lsd ] || \
-  git clone --depth=1 https://github.com/yuhonas/zsh-aliases-lsd.git \
-    ~/.oh-my-zsh/custom/plugins/zsh-aliases-lsd
+pin_clone https://github.com/cda0/zsh-tfenv.git \
+  ~/.oh-my-zsh/custom/plugins/zsh-tfenv \
+  f456a47c5e45f80913041eb7c4fa4159b46810db
 ```
 
 Copy the custom `gh-clone-complete` plugin from this repo:
@@ -905,7 +899,7 @@ sed -i '' 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
 <!-- markdownlint-disable MD013 -->
 
 ```bash
-sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo aws fzf docker history colored-man-pages command-not-found tmux dotenv emoji gcloud git pre-commit iterm2 macos podman)/' ~/.zshrc
+sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo aws fzf docker history colored-man-pages command-not-found tmux dotenv emoji gcloud git pre-commit iterm2 macos podman)/' ~/.zshrc
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -936,7 +930,6 @@ grep 'ZSH_DOTENV_PROMPT' ~/.zshrc  # VERIFY: output is export ZSH_DOTENV_PROMPT=
 | `conda-zsh-completion` | Custom clone | Conda environment and package completions |
 | `zsh-eza` | Custom clone | Enhanced `ls` using `eza` with icons and Git status |
 | `zsh-tfenv` | Custom clone | Terraform version manager completions |
-| `zsh-aliases-lsd` | Custom clone | Aliases that use `lsd` as a modern `ls` replacement |
 | `gh-clone-complete` | Custom (configs/) | Tab completion for GitHub repo names during `gh repo clone` |
 | `zsh-interactive-cd` | OMZ built-in | Interactive directory selection with fzf |
 | `jsontools` | OMZ built-in | JSON pretty-printing and manipulation (`pp_json`, `is_json`) |
@@ -1025,7 +1018,6 @@ ls ~/.oh-my-zsh/custom/plugins/zsh-claudecode-completion               # Expecte
 ls ~/.oh-my-zsh/custom/plugins/conda-zsh-completion                    # Expected: directory exists
 ls ~/.oh-my-zsh/custom/plugins/zsh-eza                                 # Expected: directory exists
 ls ~/.oh-my-zsh/custom/plugins/zsh-tfenv                               # Expected: directory exists
-ls ~/.oh-my-zsh/custom/plugins/zsh-aliases-lsd                         # Expected: directory exists
 ls ~/.oh-my-zsh/custom/plugins/gh-clone-complete                       # Expected: directory exists
 test -f ~/.p10k.zsh && echo "OK: p10k config"                         # Expected: OK
 test -f ~/.tmux.conf && echo "OK: tmux config"                        # Expected: OK
@@ -1095,13 +1087,18 @@ else
 fi
 
 # thedotmack/claude-mem — persistent memory plugin (no auto-update)
+# Pinned to audited commit SHA. Review quarterly.
+# PINNED_DEPS_LAST_AUDITED: 2026-03-28 — next review: 2026-06-28
+CLAUDE_MEM_SHA="a656af2bff0fb8bb413a2ad8da1b9f1b4a6d2eb6"
 if [ -d ~/.claude/plugins/marketplaces/thedotmack/.git ]; then
-  git -C ~/.claude/plugins/marketplaces/thedotmack pull --ff-only
+  git -C ~/.claude/plugins/marketplaces/thedotmack fetch origin
+  git -C ~/.claude/plugins/marketplaces/thedotmack checkout "$CLAUDE_MEM_SHA"
 else
   rm -rf ~/.claude/plugins/marketplaces/thedotmack
-  git clone --depth=1 --single-branch --branch main \
+  git clone --depth=50 --single-branch --branch main \
     https://github.com/thedotmack/claude-mem.git \
     ~/.claude/plugins/marketplaces/thedotmack
+  git -C ~/.claude/plugins/marketplaces/thedotmack checkout "$CLAUDE_MEM_SHA"
 fi
 ```
 
@@ -1262,16 +1259,21 @@ plugins). These are git-cloned into `~/.claude/skills/`.
 mkdir -p ~/.claude/skills
 
 # frontend-slides — HTML presentation generator with visual styles
+# Pinned to audited commit SHA. Review quarterly.
+# PINNED_DEPS_LAST_AUDITED: 2026-03-28 — next review: 2026-06-28
+FRONTEND_SLIDES_SHA="fbf2c17fa4356e7802b055a3626c7dd6a5d509ea"
 if [ -d ~/.claude/skills/frontend-slides/.git ]; then
-  git -C ~/.claude/skills/frontend-slides pull --ff-only
+  git -C ~/.claude/skills/frontend-slides fetch origin
+  git -C ~/.claude/skills/frontend-slides checkout "$FRONTEND_SLIDES_SHA"
 else
-  git clone --depth=1 --single-branch --branch main \
+  git clone --depth=50 --single-branch --branch main \
     https://github.com/zarazhangrui/frontend-slides.git \
     ~/.claude/skills/frontend-slides
+  git -C ~/.claude/skills/frontend-slides checkout "$FRONTEND_SLIDES_SHA"
 fi
 
 # python-pptx — required for PowerPoint conversion in frontend-slides
-pip install --break-system-packages python-pptx
+uv pip install --system --break-system-packages python-pptx
 ```
 
 Invoke with `/frontend-slides` in Claude Code.
@@ -1396,7 +1398,7 @@ if [ -f "$LOCAL_FILE" ]; then
     | .officialMarketplaceAutoInstalled = true
     | .mcpServers = ((.mcpServers // {}) + (
         if (.mcpServers // {} | has("chrome-devtools")) then {}
-        else {"chrome-devtools": {"command":"npx","args":["-y","chrome-devtools-mcp@0.20.2","--browserUrl=http://localhost:9222"]}}
+        else {"chrome-devtools": {"command":"npx","args":["-y","chrome-devtools-mcp@^0.20.2","--executablePath","/Applications/Google Chrome.app/Contents/MacOS/Google Chrome","--chromeArg=--disable-features=HttpsFirstBalancedModeAutoEnable,HttpsUpgrades,HttpsFirstModeV2","--chromeArg=--no-first-run","--chromeArg=--no-default-browser-check","--chromeArg=--disable-extensions","--chromeArg=--disable-background-timer-throttling","--chromeArg=--disable-backgrounding-occluded-windows"]}}
         end
       ))
   ' "$LOCAL_FILE" > "${LOCAL_FILE}.tmp" && [ -s "${LOCAL_FILE}.tmp" ]; then
@@ -1417,7 +1419,7 @@ Pre-download the `chrome-devtools-mcp` package so the first MCP connection is in
 
 ```bash
 echo "Pre-caching chrome-devtools-mcp..."
-if npx -y chrome-devtools-mcp@0.20.2 -- --version 2>&1; then
+if npx -y chrome-devtools-mcp@^0.20.2 -- --version 2>&1; then
   echo "chrome-devtools-mcp cached."
 else
   echo "WARNING: Failed to pre-cache chrome-devtools-mcp — it will be downloaded on first use"
@@ -1468,7 +1470,7 @@ ls -la ~/.claude/plugins/installed_plugins.json
 Install the NotebookLM CLI and MCP server (provides Google NotebookLM access from Claude Code and other AI assistants):
 
 ```bash
-uv tool install notebooklm-mcp-cli
+uv tool install 'notebooklm-mcp-cli>=0.5.2,<1.0'
 ```
 
 VERIFY:
@@ -1505,12 +1507,12 @@ OpenCode uses a `package.json` in its config directory for local plugin SDK depe
 mkdir -p ~/.config/opencode
 ```
 
-Write the file `~/.config/opencode/package.json` with the following content (versions last verified 2026-03-19):
+Write the file `~/.config/opencode/package.json` with the following content (versions last verified 2026-03-28):
 
 ```json
 {
   "dependencies": {
-    "@opencode-ai/plugin": "1.2.20"
+    "@opencode-ai/plugin": "^1.3.3"
   }
 }
 ```
@@ -1545,14 +1547,14 @@ printf '21' > ~/.cache/opencode/version
 
 The version marker (`21`) tells OpenCode's BunProc that the cache is current — without it, OpenCode re-downloads all packages on every launch.
 
-Write the file `~/.cache/opencode/package.json` with the following content (versions last verified 2026-03-19):
+Write the file `~/.cache/opencode/package.json` with the following content (versions last verified 2026-03-28):
 
 ```json
 {
   "dependencies": {
-    "@robinmordasiewicz/oh-my-opencode": "3.11.0-fork.1",
-    "@ai-sdk/anthropic": "*",
-    "@ai-sdk/openai-compatible": "*",
+    "@robinmordasiewicz/oh-my-opencode": "3.11.0-fork.2",
+    "@ai-sdk/anthropic": "^3.0.64",
+    "@ai-sdk/openai-compatible": "^2.0.37",
     "opencode-anthropic-auth": "0.0.13"
   }
 }
@@ -2016,7 +2018,7 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
       "command": [
         "npx",
         "-y",
-        "chrome-devtools-mcp@latest",
+        "chrome-devtools-mcp@^0.20.2",
         "--executablePath",
         "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
         "--chromeArg=--disable-features=HttpsFirstBalancedModeAutoEnable,HttpsUpgrades,HttpsFirstModeV2",
@@ -2099,7 +2101,7 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
   "small_model": "anthropic-proxy/claude-sonnet-4-6",
   "permission": "allow",
   "plugin": [
-    "@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"
+    "@robinmordasiewicz/oh-my-opencode@3.11.0-fork.2"
   ],
   "lsp": {
     "marksman": { "command": ["marksman", "server"], "extensions": [".md", ".mdx"] },
@@ -2120,8 +2122,54 @@ elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
   "permission": "allow",
   "model": "anthropic/claude-opus-4-6",
   "small_model": "anthropic/claude-sonnet-4-6",
-  "plugin": ["@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"],
-  "mcp": {},
+  "provider": {
+    "anthropic": {
+      "name": "Anthropic (OAuth)",
+      "models": {
+        "claude-opus-4-6": {
+          "name": "Claude Opus 4.6",
+          "modalities": {
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        },
+        "claude-sonnet-4-6": {
+          "name": "Claude Sonnet 4.6",
+          "modalities": {
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        }
+      }
+    }
+  },
+  "plugin": ["opencode-claude-auth", "@robinmordasiewicz/oh-my-opencode@3.11.0-fork.2"],
+  "mcp": {
+    "chrome-devtools": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@^0.20.2",
+        "--executablePath",
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "--chromeArg=--disable-features=HttpsFirstBalancedModeAutoEnable,HttpsUpgrades,HttpsFirstModeV2",
+        "--chromeArg=--no-first-run",
+        "--chromeArg=--no-default-browser-check",
+        "--chromeArg=--disable-extensions",
+        "--chromeArg=--disable-background-timer-throttling",
+        "--chromeArg=--disable-backgrounding-occluded-windows"
+      ]
+    }
+  },
   "lsp": {
     "marksman": {
       "command": ["marksman", "server"],
@@ -2151,13 +2199,10 @@ elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
 }
 ENDOFJSON
 
-  # OAuth mode also needs auth.json for OpenCode to authenticate with Anthropic.
-  # Use jq to safely escape any special characters in the OAuth token.
-  mkdir -p ~/.local/share/opencode
-  jq -n --arg token "$CLAUDE_CODE_OAUTH_TOKEN" \
-    '{"anthropic":{"type":"oauth","access":$token,"refresh":"","expires":9999999999999}}' \
-    > ~/.local/share/opencode/auth.json
-  echo "Wrote OpenCode auth.json for OAuth mode"
+  # OAuth mode: Install opencode-claude-auth plugin to automatically use Claude Code credentials.
+  # The plugin handles OAuth authentication - no manual auth.json needed.
+  npm install -g opencode-claude-auth
+  echo "Installed opencode-claude-auth for OAuth mode"
 
 else
   echo "ERROR: Neither LITELLM_API_KEY nor CLAUDE_CODE_OAUTH_TOKEN is set."
@@ -2176,6 +2221,12 @@ jq '.model' ~/.config/opencode/opencode.json
 if jq -e '.provider["openai-proxy"]' ~/.config/opencode/opencode.json >/dev/null 2>&1; then
   jq '.provider["openai-proxy"].options.baseURL' ~/.config/opencode/opencode.json
   # VERIFY: output is your actual OpenAI proxy URL (not empty, not a placeholder)
+fi
+
+# OAuth mode only (verifies oh-my-opencode provider config exists):
+if jq -e '.provider.anthropic' ~/.config/opencode/opencode.json >/dev/null 2>&1; then
+  jq '.provider.anthropic.models | keys' ~/.config/opencode/opencode.json
+  # VERIFY: output shows ["claude-opus-4-6","claude-sonnet-4-6"]
 fi
 ```
 
@@ -2699,7 +2750,7 @@ VERIFY: output contains `Google Chrome` followed by a version number.
 ### 16.5 — chrome-devtools-mcp
 
 ```bash
-npx -y chrome-devtools-mcp@latest --help
+npx -y chrome-devtools-mcp@^0.20.2 --help
 ```
 
 Expected: prints the CLI help with options like `--executablePath`, `--headless`, etc.
