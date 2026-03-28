@@ -1235,6 +1235,7 @@ for KEY in \
   f5xc-brand@f5xc-salesdemos-marketplace \
   f5xc-devcontainer@f5xc-salesdemos-marketplace \
   f5xc-platform@f5xc-salesdemos-marketplace \
+  f5xc-meddpicc@f5xc-salesdemos-marketplace \
   claude-mem@thedotmack \
 ; do
   NAME="$(echo "$KEY" | cut -d@ -f1)"
@@ -1424,6 +1425,7 @@ CONTAINER_SETTINGS="$(cat <<SETTINGS
     "f5xc-brand@f5xc-salesdemos-marketplace": true,
     "f5xc-devcontainer@f5xc-salesdemos-marketplace": true,
     "f5xc-platform@f5xc-salesdemos-marketplace": true,
+    "f5xc-meddpicc@f5xc-salesdemos-marketplace": true,
     "claude-mem@thedotmack": true
   },
   "env": {
