@@ -1286,11 +1286,13 @@ COPY claude-config/chrome-browser.sh /usr/local/lib/chrome-browser.sh
 COPY claude-config/statusline.sh /opt/claude-config/statusline.sh
 COPY claude-config/api-key-helper.sh /opt/claude-config/api-key-helper.sh
 COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
+COPY claude-config/neutralize-hooks.sh /opt/claude-config/neutralize-hooks.sh
 COPY .devcontainer/scripts/post-start.sh /opt/devcontainer/post-start.sh
 RUN chmod +x /opt/claude-config/self-test.sh \
       /usr/local/lib/chrome-browser.sh \
       /opt/claude-config/statusline.sh /opt/claude-config/api-key-helper.sh \
       /opt/claude-config/install-plugins.sh \
+      /opt/claude-config/neutralize-hooks.sh \
       /opt/devcontainer/post-start.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
     && mkdir -p /etc/claude-code/.claude/rules

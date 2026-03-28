@@ -257,6 +257,36 @@ fi
 # Remove all when upstream issues #648 and cc#40013 are resolved.
 # ============================================================
 
+# Ensure every enabled cached plugin has a marketplace directory entry.
+# Claude Code resolves plugin paths from marketplaces/<mkt>/plugins/<name>/
+# Plugins installed from external sources (GitHub clones) only exist in
+# cache — create marketplace symlinks so Claude Code can find them.
+ensure_marketplace_dirs() {
+  local settings="${HOME}/.claude/settings.json"
+  [ -f "$settings" ] || return 0
+  local plugin_base="${HOME}/.claude/plugins"
+
+  local key name mkt mkt_dir cache_entry
+  while IFS= read -r key; do
+    [ -n "$key" ] || continue
+    name="${key%%@*}"
+    mkt="${key#*@}"
+    mkt_dir="${plugin_base}/marketplaces/${mkt}/plugins/${name}"
+
+    # Skip if marketplace dir already exists
+    [ -d "$mkt_dir" ] && continue
+
+    # Find the cache entry for this plugin (use first version found)
+    cache_entry=$(find "${plugin_base}/cache/${mkt}/${name}" \
+      -maxdepth 1 -mindepth 1 -type d 2>/dev/null | head -1)
+    [ -n "$cache_entry" ] || continue
+
+    # Create parent dir and symlink
+    mkdir -p "$(dirname "$mkt_dir")" 2>/dev/null || true
+    ln -sf "$cache_entry" "$mkt_dir" 2>/dev/null || true
+  done < <(jq -r '.enabledPlugins | keys[]' "$settings" 2>/dev/null)
+}
+
 # Neutralize hooks from non-enabled marketplace plugins (cc#40013)
 # Claude Code loads hooks from ALL installed plugins, not just enabled ones.
 # Replace hooks.json with {} for any plugin not in enabledPlugins.
@@ -279,13 +309,21 @@ neutralize_non_enabled_hooks() {
       [ -f "$hooks_file" ] || continue
       if jq -e --arg k "$key" '.enabledPlugins[$k]' "$settings" >/dev/null 2>&1; then
         # Enabled plugin: restore normal permissions (handles disable->enable)
-        chmod 755 "$hooks_dir" 2>/dev/null
-        chmod 644 "$hooks_file" 2>/dev/null
+        chmod 755 "$hooks_dir" 2>/dev/null || true
+        chmod 644 "$hooks_file" 2>/dev/null || true
+        continue
+      fi
+      # Skip if already neutralized (idempotent)
+      local current
+      current=$(cat "$hooks_file" 2>/dev/null || true)
+      if [ "$current" = "{}" ]; then
+        chmod 444 "$hooks_file" 2>/dev/null || true
+        chmod 555 "$hooks_dir" 2>/dev/null || true
         continue
       fi
       # Non-enabled plugin: neutralize and lock with chmod
-      chmod 755 "$hooks_dir" 2>/dev/null
-      chmod 644 "$hooks_file" 2>/dev/null
+      chmod 755 "$hooks_dir" 2>/dev/null || true
+      chmod 644 "$hooks_file" 2>/dev/null || true
       echo '{}' >"$hooks_file"
       chmod 444 "$hooks_file"
       chmod 555 "$hooks_dir"
@@ -293,37 +331,46 @@ neutralize_non_enabled_hooks() {
   done
 }
 
+ensure_marketplace_dirs
 find "${HOME}/.claude/plugins" -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
 neutralize_non_enabled_hooks
 
 # Persistent background daemon (Layer 1)
-# Phase 1: poll every 2s for 60s (catches initial dual plugin syncs)
-# Phase 2: inotifywait or 30s polling indefinitely (catches plugin
+# Phase 1: poll every 1-2s for 60s (catches initial dual plugin syncs
+#   and staging marketplace creation)
+# Phase 2: inotifywait or 10s polling indefinitely (catches plugin
 #   re-syncs when new sessions start in long-lived containers)
 (
-  # Phase 1: aggressive polling for initial syncs
+  # Phase 1: aggressive polling — 1s for first 10s, then 2s for 50s
   elapsed=0
   while [ "$elapsed" -lt 60 ]; do
-    sleep 2
+    if [ "$elapsed" -lt 10 ]; then
+      sleep 1
+    else
+      sleep 2
+    fi
+    ensure_marketplace_dirs
     find "${HOME}/.claude/plugins" -name "*.sh" -type f \
       ! -perm -u+x -exec chmod +x {} + 2>/dev/null
     neutralize_non_enabled_hooks
-    elapsed=$((elapsed + 2))
+    elapsed=$((elapsed + $([ "$elapsed" -lt 10 ] && echo 1 || echo 2)))
   done
 
   # Phase 2: event-driven watch (falls back to polling if inotifywait unavailable)
   if command -v inotifywait >/dev/null 2>&1; then
     while true; do
-      inotifywait -qq -r -e modify,create,moved_to \
+      inotifywait -qq -r -e modify,create,moved_to,moved_from \
         "${HOME}/.claude/plugins/marketplaces" 2>/dev/null
-      sleep 1
+      # No sleep — neutralize IMMEDIATELY after filesystem event
+      ensure_marketplace_dirs
       find "${HOME}/.claude/plugins" -name "*.sh" -type f \
         ! -perm -u+x -exec chmod +x {} + 2>/dev/null
       neutralize_non_enabled_hooks
     done
   else
     while true; do
-      sleep 30
+      sleep 10
+      ensure_marketplace_dirs
       find "${HOME}/.claude/plugins" -name "*.sh" -type f \
         ! -perm -u+x -exec chmod +x {} + 2>/dev/null
       neutralize_non_enabled_hooks

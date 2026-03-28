@@ -237,10 +237,24 @@ NON_EXEC_F5XC=$(find "$HOME/.claude/plugins" \
 NON_EXEC_TOTAL=$((NON_EXEC_OFFICIAL + NON_EXEC_F5XC))
 check "all plugin scripts executable (${NON_EXEC_TOTAL} non-exec: ${NON_EXEC_OFFICIAL} official, ${NON_EXEC_F5XC} f5xc)" \
   test "$NON_EXEC_TOTAL" -eq 0
-check "SessionStart chmod hook present" \
-  jq -e '.hooks.SessionStart[0].hooks[0].command | test("chmod.*\\+x")' "$HOME/.claude/settings.json"
-check "PostToolUse Skill chmod hook present" \
-  jq -e '.hooks.PostToolUse[0].matcher == "Skill" and (.hooks.PostToolUse[0].hooks[0].command | test("chmod.*\\+x"))' "$HOME/.claude/settings.json"
+check "neutralize-hooks.sh installed" test -x /opt/claude-config/neutralize-hooks.sh
+check "SessionStart hook references neutralize-hooks.sh" \
+  jq -e '.hooks.SessionStart[0].hooks[0].command | test("neutralize-hooks")' "$HOME/.claude/settings.json"
+check "PostToolUse Skill hook references neutralize-hooks.sh" \
+  jq -e '.hooks.PostToolUse[0].matcher == "Skill" and (.hooks.PostToolUse[0].hooks[0].command | test("neutralize-hooks"))' "$HOME/.claude/settings.json"
+# Check that all enabled plugins have marketplace directories
+MISSING_MKT_DIRS=0
+while IFS= read -r KEY; do
+  PNAME="${KEY%%@*}"
+  MNAME="${KEY#*@}"
+  MKT_DIR="$HOME/.claude/plugins/marketplaces/${MNAME}/plugins/${PNAME}"
+  if [ -d "$MKT_DIR" ] || [ -L "$MKT_DIR" ]; then
+    continue
+  fi
+  MISSING_MKT_DIRS=$((MISSING_MKT_DIRS + 1))
+done < <(jq -r '.enabledPlugins | keys[]' "$HOME/.claude/settings.json" 2>/dev/null)
+check "all enabled plugins have marketplace directories (${MISSING_MKT_DIRS} missing)" \
+  test "$MISSING_MKT_DIRS" -eq 0
 # Check for hooks from non-enabled plugins (cc#40013)
 NON_ENABLED_HOOKS=0
 for hf in "$HOME/.claude/plugins/marketplaces"/*/plugins/*/hooks/hooks.json; do
