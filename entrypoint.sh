@@ -275,13 +275,20 @@ neutralize_non_enabled_hooks() {
       plugin_name=$(basename "$plugin")
       local key="${plugin_name}@${mkt_name}"
       local hooks_file="${plugin}hooks/hooks.json"
+      local hooks_dir="${plugin}hooks"
       [ -f "$hooks_file" ] || continue
-      # Skip if plugin is enabled
       if jq -e --arg k "$key" '.enabledPlugins[$k]' "$settings" >/dev/null 2>&1; then
+        # Enabled plugin: restore normal permissions (handles disable->enable)
+        chmod 755 "$hooks_dir" 2>/dev/null
+        chmod 644 "$hooks_file" 2>/dev/null
         continue
       fi
-      # Neutralize hooks for non-enabled plugin
+      # Non-enabled plugin: neutralize and lock with chmod
+      chmod 755 "$hooks_dir" 2>/dev/null
+      chmod 644 "$hooks_file" 2>/dev/null
       echo '{}' >"$hooks_file"
+      chmod 444 "$hooks_file"
+      chmod 555 "$hooks_dir"
     done
   done
 }
@@ -307,7 +314,7 @@ neutralize_non_enabled_hooks
   # Phase 2: event-driven watch (falls back to polling if inotifywait unavailable)
   if command -v inotifywait >/dev/null 2>&1; then
     while true; do
-      inotifywait -q -r -e modify,create,moved_to \
+      inotifywait -qq -r -e modify,create,moved_to \
         "${HOME}/.claude/plugins/marketplaces" 2>/dev/null
       sleep 1
       find "${HOME}/.claude/plugins" -name "*.sh" -type f \
@@ -322,7 +329,7 @@ neutralize_non_enabled_hooks
       neutralize_non_enabled_hooks
     done
   fi
-) &
+) >/dev/null 2>&1 &
 
 # Inject SessionStart + PostToolUse hooks from template into runtime settings.json
 # The template at /opt/claude-config/settings.json has the canonical hook definitions.
