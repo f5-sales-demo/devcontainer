@@ -70,5 +70,56 @@ for hf in "$PLUGIN_BASE"/marketplaces/*/plugins/*/hooks/hooks.json; do
   chmod 555 "$hd" 2>/dev/null || true
 done
 
+# ── 4. Neutralize non-standard-path hooks.json (monorepo marketplaces) ────
+# Some marketplaces (e.g. thedotmack) have hooks.json at non-standard paths
+# like <mkt>/cursor-hooks/hooks.json instead of <mkt>/plugins/<name>/hooks/.
+# These are missed by the glob in step 3. Find them and neutralize unless
+# they are part of an enabled plugin's standard directory.
+while IFS= read -r hf; do
+  [ -f "$hf" ] || continue
+  # Skip files already handled by the standard glob in step 3
+  echo "$hf" | grep -q '/marketplaces/[^/]*/plugins/[^/]*/hooks/hooks.json$' && continue
+  hd=$(dirname "$hf")
+
+  # Check if this hooks.json is inside a directory that an enabled plugin
+  # symlinks to (e.g. thedotmack/plugin/ -> cache/thedotmack/claude-mem/)
+  hf_parent=$(dirname "$hd")
+  hf_parent_real=$(readlink -f "$hf_parent" 2>/dev/null || echo "$hf_parent")
+  skip=false
+  for link in "$PLUGIN_BASE"/marketplaces/*/plugins/*/; do
+    [ -L "${link%/}" ] || continue
+    link_target=$(readlink -f "${link%/}" 2>/dev/null || true)
+    [ -n "$link_target" ] || continue
+    # Check if enabled plugin symlink target matches this hooks.json location
+    if [ "$hf_parent_real" = "$link_target" ]; then
+      # Verify the symlinked plugin is actually enabled
+      link_name=$(basename "${link%/}")
+      link_mkt=$(basename "$(dirname "$(dirname "${link%/}")")")
+      if jq -e --arg k "${link_name}@${link_mkt}" '.enabledPlugins[$k]' "$SETTINGS" >/dev/null 2>&1; then
+        skip=true
+        break
+      fi
+    fi
+  done
+  if [ "$skip" = true ]; then
+    continue
+  fi
+
+  # Skip if already neutralized
+  current=$(cat "$hf" 2>/dev/null || true)
+  if [ "$current" = "{}" ]; then
+    chmod 444 "$hf" 2>/dev/null || true
+    chmod 555 "$hd" 2>/dev/null || true
+    continue
+  fi
+
+  # Neutralize and lock
+  chmod 755 "$hd" 2>/dev/null || true
+  chmod 644 "$hf" 2>/dev/null || true
+  echo '{}' >"$hf" 2>/dev/null || true
+  chmod 444 "$hf" 2>/dev/null || true
+  chmod 555 "$hd" 2>/dev/null || true
+done < <(find "$PLUGIN_BASE/marketplaces" -name "hooks.json" 2>/dev/null)
+
 # ALWAYS exit 0 — never cause "hook error" display
 exit 0

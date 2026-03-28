@@ -193,3 +193,42 @@ for MKT_DIR in "${PLUGIN_BASE}/marketplaces"/*/; do
     chmod 555 "$(dirname "$HOOKS_FILE")"
   done
 done
+
+# Second pass: neutralize hooks.json at non-standard paths (monorepo marketplaces)
+# e.g. thedotmack/cursor-hooks/hooks.json (not under plugins/)
+while IFS= read -r HF; do
+  [ -f "$HF" ] || continue
+  # Skip files already handled by the standard loop above
+  echo "$HF" | grep -q '/marketplaces/[^/]*/plugins/[^/]*/hooks/hooks.json$' && continue
+  HD=$(dirname "$HF")
+  HF_PARENT=$(dirname "$HD")
+  HF_PARENT_REAL=$(readlink -f "$HF_PARENT" 2>/dev/null || echo "$HF_PARENT")
+  SKIP=false
+  for LINK in "${PLUGIN_BASE}/marketplaces"/*/plugins/*/; do
+    [ -L "${LINK%/}" ] || continue
+    LINK_TARGET=$(readlink -f "${LINK%/}" 2>/dev/null || true)
+    [ -n "$LINK_TARGET" ] || continue
+    if [ "$HF_PARENT_REAL" = "$LINK_TARGET" ]; then
+      LINK_NAME=$(basename "${LINK%/}")
+      LINK_MKT=$(basename "$(dirname "$(dirname "${LINK%/}")")")
+      if jq -e --arg k "${LINK_NAME}@${LINK_MKT}" '.enabledPlugins[$k]' "$SETTINGS" >/dev/null 2>&1; then
+        SKIP=true
+        break
+      fi
+    fi
+  done
+  if [ "$SKIP" = true ]; then
+    continue
+  fi
+  CURRENT=$(cat "$HF" 2>/dev/null || true)
+  if [ "$CURRENT" = "{}" ]; then
+    chmod 444 "$HF" 2>/dev/null || true
+    chmod 555 "$HD" 2>/dev/null || true
+    continue
+  fi
+  chmod 755 "$HD" 2>/dev/null || true
+  chmod 644 "$HF" 2>/dev/null || true
+  echo '{}' >"$HF" 2>/dev/null || true
+  chmod 444 "$HF" 2>/dev/null || true
+  chmod 555 "$HD" 2>/dev/null || true
+done < <(find "${PLUGIN_BASE}/marketplaces" -name "hooks.json" 2>/dev/null)
