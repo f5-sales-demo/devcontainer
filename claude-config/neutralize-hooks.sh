@@ -57,8 +57,8 @@ for hf in "$PLUGIN_BASE"/marketplaces/*/plugins/*/hooks/hooks.json; do
   # Skip if already neutralized (idempotent)
   current=$(cat "$hf" 2>/dev/null || true)
   if [ "$current" = "{}" ]; then
+    chmod 755 "$hd" 2>/dev/null || true
     chmod 444 "$hf" 2>/dev/null || true
-    chmod 555 "$hd" 2>/dev/null || true
     continue
   fi
 
@@ -67,7 +67,6 @@ for hf in "$PLUGIN_BASE"/marketplaces/*/plugins/*/hooks/hooks.json; do
   chmod 644 "$hf" 2>/dev/null || true
   echo '{}' >"$hf" 2>/dev/null || true
   chmod 444 "$hf" 2>/dev/null || true
-  chmod 555 "$hd" 2>/dev/null || true
 done
 
 # ── 4. Neutralize non-standard-path hooks.json (monorepo marketplaces) ────
@@ -108,8 +107,8 @@ while IFS= read -r hf; do
   # Skip if already neutralized
   current=$(cat "$hf" 2>/dev/null || true)
   if [ "$current" = "{}" ]; then
+    chmod 755 "$hd" 2>/dev/null || true
     chmod 444 "$hf" 2>/dev/null || true
-    chmod 555 "$hd" 2>/dev/null || true
     continue
   fi
 
@@ -118,7 +117,6 @@ while IFS= read -r hf; do
   chmod 644 "$hf" 2>/dev/null || true
   echo '{}' >"$hf" 2>/dev/null || true
   chmod 444 "$hf" 2>/dev/null || true
-  chmod 555 "$hd" 2>/dev/null || true
 done < <(find "$PLUGIN_BASE/marketplaces" -name "hooks.json" 2>/dev/null)
 
 # ALWAYS exit 0 — never cause "hook error" display

@@ -317,8 +317,8 @@ neutralize_non_enabled_hooks() {
       local current
       current=$(cat "$hooks_file" 2>/dev/null || true)
       if [ "$current" = "{}" ]; then
+        chmod 755 "$hooks_dir" 2>/dev/null || true
         chmod 444 "$hooks_file" 2>/dev/null || true
-        chmod 555 "$hooks_dir" 2>/dev/null || true
         continue
       fi
       # Non-enabled plugin: neutralize and lock with chmod
@@ -326,7 +326,6 @@ neutralize_non_enabled_hooks() {
       chmod 644 "$hooks_file" 2>/dev/null || true
       echo '{}' >"$hooks_file"
       chmod 444 "$hooks_file"
-      chmod 555 "$hooks_dir"
     done
   done
 
@@ -359,15 +358,14 @@ neutralize_non_enabled_hooks() {
     fi
     current=$(cat "$hf" 2>/dev/null || true)
     if [ "$current" = "{}" ]; then
+      chmod 755 "$hd" 2>/dev/null || true
       chmod 444 "$hf" 2>/dev/null || true
-      chmod 555 "$hd" 2>/dev/null || true
       continue
     fi
     chmod 755 "$hd" 2>/dev/null || true
     chmod 644 "$hf" 2>/dev/null || true
     echo '{}' >"$hf" 2>/dev/null || true
     chmod 444 "$hf" 2>/dev/null || true
-    chmod 555 "$hd" 2>/dev/null || true
   done < <(find "$plugin_base/marketplaces" -name "hooks.json" 2>/dev/null)
 }
 
