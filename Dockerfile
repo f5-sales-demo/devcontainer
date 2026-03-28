@@ -1093,7 +1093,7 @@ RUN CMEM_PKG=$(find /home/${USERNAME}/.claude/plugins/cache/thedotmack/claude-me
 RUN git clone --depth=1 --single-branch --branch main \
       https://github.com/zarazhangrui/frontend-slides.git \
       "/home/${USERNAME}/.claude/skills/frontend-slides" \
-    && chown -R ${USERNAME}:${USERNAME} "/home/${USERNAME}/.claude/skills"
+    && chown -R ${USERNAME}:${USERNAME} "/home/${USERNAME}/.claude"
 
 # ============================================================
 # 13. Playwright system dependencies (requires root for apt)
