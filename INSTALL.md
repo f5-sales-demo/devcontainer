@@ -4,7 +4,7 @@
 > Launch `opencode`, paste the URL to this file, and OpenCode will execute each step.
 >
 > **Platform**: macOS on Apple Silicon (arm64). Homebrew is already installed.
-> OpenCode is already installed via `brew install opencode`.
+> OpenCode is already installed via `brew tap f5xc-salesdemos/tap && brew install f5xc-salesdemos/tap/opencode`.
 >
 > **First-time setup**: If this is a fresh OpenCode install, you **must** complete Step 0 manually
 > before running `opencode run`. Step 0 grants the AI agent permission to access directories

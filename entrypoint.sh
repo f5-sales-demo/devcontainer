@@ -44,6 +44,8 @@ fi
 # Ensure Homebrew npm global directory exists (issue #677)
 mkdir -p "${HOME}/.npm-global/lib" 2>/dev/null || true
 
+sudo cron 2>/dev/null || true
+
 # ============================================================
 # gogcli (gog) — restore OAuth credentials and refresh token
 # ============================================================

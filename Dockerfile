@@ -96,6 +96,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Tailscale VPN
     tailscale \
     # Shell tools
+    cron \
     bat bubblewrap fd-find ripgrep htop tree tmux file xxd \
     # Filesystem event watcher (plugin hook neutralization daemon)
     inotify-tools \
@@ -430,10 +431,10 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
       "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${NVIM_ARCH}.tar.gz" \
       | tar -xz -C /opt \
     && ln -s "/opt/nvim-linux-${NVIM_ARCH}/bin/nvim" /usr/local/bin/nvim \
-    # opencode (already latest)
-    && if [ "$UNAME_ARCH" = "x86_64" ]; then OC_ARCH="x64"; else OC_ARCH="arm64"; fi \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/anomalyco/opencode/releases/latest/download/opencode-linux-${OC_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin opencode
+    # opencode (f5xc fork — install script handles arch detection)
+    && curl ${CURL_RETRY} -fsSL "https://raw.githubusercontent.com/f5xc-salesdemos/opencode/dev/install" \
+      | bash -s -- --no-modify-path \
+    && ln -sf "$HOME/.opencode/bin/opencode" /usr/local/bin/opencode
 
 # ============================================================
 # 10b. Additional binary tools (code CLI, oc, yq, terragrunt,
@@ -1110,7 +1111,7 @@ RUN mkdir -p /home/linuxbrew/.linuxbrew \
 USER $USERNAME
 WORKDIR /home/$USERNAME
 
-RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.config/nvim \
+RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
     ~/.config/opencode \
     ~/.local/share/opencode \
     ~/.config/gogcli \
@@ -1285,14 +1286,18 @@ COPY claude-config/api-key-helper.sh /opt/claude-config/api-key-helper.sh
 COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
 COPY claude-config/neutralize-hooks.sh /opt/claude-config/neutralize-hooks.sh
 COPY .devcontainer/scripts/post-start.sh /opt/devcontainer/post-start.sh
+COPY scripts/nightly-update.sh /opt/devcontainer/nightly-update.sh
 RUN chmod +x /opt/claude-config/self-test.sh \
       /usr/local/lib/chrome-browser.sh \
       /opt/claude-config/statusline.sh /opt/claude-config/api-key-helper.sh \
       /opt/claude-config/install-plugins.sh \
       /opt/claude-config/neutralize-hooks.sh \
       /opt/devcontainer/post-start.sh \
+      /opt/devcontainer/nightly-update.sh \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
-    && mkdir -p /etc/claude-code/.claude/rules
+    && mkdir -p /etc/claude-code/.claude/rules \
+    && echo "0 3 * * * /opt/devcontainer/nightly-update.sh" \
+      | crontab -u ${USERNAME} -
 
 # --- Claude Code: settings.json + claude.json → final $HOME paths ---
 COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.json /home/${USERNAME}/.claude/settings.json
