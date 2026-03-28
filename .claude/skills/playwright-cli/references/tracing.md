@@ -44,14 +44,14 @@ When you start tracing, Playwright creates a `traces/` directory with several fi
 ### `resources/`
 
 **Resources directory** - Cached resources:
-- Images, fonts, stylesheets, scripts
+- Images, fonts, style sheets, scripts
 - Response bodies for replay
 - Assets needed to reconstruct page state
 
 ## What Traces Capture
 
 | Category | Details |
-|----------|---------|
+| -------- | ------- |
 | **Actions** | Clicks, fills, hovers, keyboard input, navigations |
 | **DOM** | Full DOM snapshot before/after each action |
 | **Screenshots** | Visual state at each step |
@@ -103,7 +103,7 @@ playwright-cli tracing-stop
 ## Trace vs Video vs Screenshot
 
 | Feature | Trace | Video | Screenshot |
-|---------|-------|-------|------------|
+| ------- | ----- | ----- | ---------- |
 | **Format** | .trace file | .webm video | .png/.jpeg image |
 | **DOM inspection** | Yes | No | No |
 | **Network details** | Yes | No | No |
