@@ -329,6 +329,46 @@ neutralize_non_enabled_hooks() {
       chmod 555 "$hooks_dir"
     done
   done
+
+  # Second pass: neutralize hooks.json at non-standard paths (monorepo marketplaces)
+  # e.g. thedotmack/cursor-hooks/hooks.json (not under plugins/)
+  local plugin_base="${HOME}/.claude/plugins"
+  local hf hd hf_parent hf_parent_real skip link link_target link_name link_mkt current
+  while IFS= read -r hf; do
+    [ -f "$hf" ] || continue
+    echo "$hf" | grep -q '/marketplaces/[^/]*/plugins/[^/]*/hooks/hooks.json$' && continue
+    hd=$(dirname "$hf")
+    hf_parent=$(dirname "$hd")
+    hf_parent_real=$(readlink -f "$hf_parent" 2>/dev/null || echo "$hf_parent")
+    skip=false
+    for link in "$plugin_base"/marketplaces/*/plugins/*/; do
+      [ -L "${link%/}" ] || continue
+      link_target=$(readlink -f "${link%/}" 2>/dev/null || true)
+      [ -n "$link_target" ] || continue
+      if [ "$hf_parent_real" = "$link_target" ]; then
+        link_name=$(basename "${link%/}")
+        link_mkt=$(basename "$(dirname "$(dirname "${link%/}")")")
+        if jq -e --arg k "${link_name}@${link_mkt}" '.enabledPlugins[$k]' "$settings" >/dev/null 2>&1; then
+          skip=true
+          break
+        fi
+      fi
+    done
+    if [ "$skip" = true ]; then
+      continue
+    fi
+    current=$(cat "$hf" 2>/dev/null || true)
+    if [ "$current" = "{}" ]; then
+      chmod 444 "$hf" 2>/dev/null || true
+      chmod 555 "$hd" 2>/dev/null || true
+      continue
+    fi
+    chmod 755 "$hd" 2>/dev/null || true
+    chmod 644 "$hf" 2>/dev/null || true
+    echo '{}' >"$hf" 2>/dev/null || true
+    chmod 444 "$hf" 2>/dev/null || true
+    chmod 555 "$hd" 2>/dev/null || true
+  done < <(find "$plugin_base/marketplaces" -name "hooks.json" 2>/dev/null)
 }
 
 ensure_marketplace_dirs

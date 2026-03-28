@@ -323,12 +323,70 @@ else
   FAIL=$((FAIL + 1))
 fi
 
+echo ""
+echo "6. Non-Standard Plugin Paths"
+
+# Test 20: hooks.json at non-standard path (not under plugins/) gets neutralized
+setup_mock_env
+# Create a monorepo-style marketplace with hooks NOT under plugins/
+mkdir -p "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/cursor-hooks"
+echo '{"hooks":{"beforeSubmitPrompt":[{"command":"./session-init.sh"}]}}' \
+  >"${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/cursor-hooks/hooks.json"
+# Run the standalone script (which has the broader scan)
+SCRIPT="$(dirname "$0")/../claude-config/neutralize-hooks.sh"
+if [ -f "$SCRIPT" ]; then
+  HOME="$MOCK_HOME" bash "$SCRIPT" 2>/dev/null
+  CONTENT=$(cat "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/cursor-hooks/hooks.json" 2>/dev/null)
+  check "non-standard path hooks.json neutralized" test "$CONTENT" = "{}"
+else
+  echo "  FAIL: neutralize-hooks.sh not found"
+  FAIL=$((FAIL + 1))
+fi
+teardown_mock_env
+
+# Test 21: hooks.json at non-standard path that is a symlink target of enabled plugin is preserved
+setup_mock_env
+create_mock_cache_plugin "test-mkt" "alpha" "1.0.0" '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo ok"}]}]}}'
+# Create symlink: plugins/alpha -> cache entry (simulates ensure_marketplace_dirs)
+source_ensure_dirs_fn || true
+HOME="$MOCK_HOME" ensure_marketplace_dirs 2>/dev/null || true
+# Now the non-standard path (cache target) has hooks.json — should be preserved via the standard path check
+ORIG_HOOKS='{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo ok"}]}]}}'
+if [ -f "$SCRIPT" ]; then
+  HOME="$MOCK_HOME" bash "$SCRIPT" 2>/dev/null
+  # The standard plugins/alpha/hooks/hooks.json (symlink to cache) should be preserved
+  CONTENT=$(cat "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/alpha/hooks/hooks.json" 2>/dev/null)
+  check "enabled plugin hooks preserved through symlink" test "$CONTENT" = "$ORIG_HOOKS"
+else
+  echo "  FAIL: neutralize-hooks.sh not found"
+  FAIL=$((FAIL + 1))
+fi
+teardown_mock_env
+
+# Test 22: multiple non-standard paths in same marketplace all neutralized
+setup_mock_env
+mkdir -p "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/subdir-a/hooks"
+mkdir -p "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/subdir-b/hooks"
+echo '{"hooks":{"Stop":[]}}' >"${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/subdir-a/hooks/hooks.json"
+echo '{"hooks":{"Stop":[]}}' >"${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/subdir-b/hooks/hooks.json"
+if [ -f "$SCRIPT" ]; then
+  HOME="$MOCK_HOME" bash "$SCRIPT" 2>/dev/null
+  CONTENT_A=$(cat "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/subdir-a/hooks/hooks.json" 2>/dev/null)
+  CONTENT_B=$(cat "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/subdir-b/hooks/hooks.json" 2>/dev/null)
+  check "non-standard path A neutralized" test "$CONTENT_A" = "{}"
+  check "non-standard path B neutralized" test "$CONTENT_B" = "{}"
+else
+  echo "  FAIL: neutralize-hooks.sh not found"
+  FAIL=$((FAIL + 2))
+fi
+teardown_mock_env
+
 if [ "$UNIT_ONLY" = true ]; then
   echo ""
   echo "── Skipping E2E tests (--unit-only) ──"
 else
   echo ""
-  echo "6. End-to-End (Container)"
+  echo "7. End-to-End (Container)"
 
   # Test 17: every enabled plugin has a marketplace directory
   PLUGIN_BASE="$HOME/.claude/plugins"
@@ -372,7 +430,53 @@ else
   check "no active hooks from non-enabled plugins (${NON_ENABLED_HOOKS} found)" \
     test "$NON_ENABLED_HOOKS" -eq 0
 
-  # Test 19: self-test hook checks pass
+  # Test 19: all enabled plugins have cache entries
+  MISSING_CACHE=0
+  while IFS= read -r key; do
+    name="${key%%@*}"
+    mkt="${key#*@}"
+    cache_dir="${PLUGIN_BASE}/cache/${mkt}/${name}"
+    if [ -d "$cache_dir" ] || [ -L "$cache_dir" ]; then
+      : # ok
+    else
+      echo "    MISSING CACHE: $cache_dir (for $key)"
+      MISSING_CACHE=$((MISSING_CACHE + 1))
+    fi
+  done < <(jq -r '.enabledPlugins | keys[]' "$SETTINGS" 2>/dev/null)
+  check "all enabled plugins have cache entries (${MISSING_CACHE} missing)" \
+    test "$MISSING_CACHE" -eq 0
+
+  # Test 20e: non-standard path hooks.json files are neutralized unless they
+  # belong to an enabled plugin's directory (e.g., thedotmack/plugin/ is claude-mem)
+  NON_STD_ACTIVE=0
+  while IFS= read -r hf; do
+    [ -f "$hf" ] || continue
+    # Skip standard paths (already tested above)
+    echo "$hf" | grep -q '/plugins/[^/]*/hooks/hooks.json$' && continue
+    # Skip if the hooks.json's parent structure is a symlink target for an enabled plugin
+    hf_real=$(readlink -f "$(dirname "$(dirname "$hf")")")
+    is_enabled_target=false
+    for link in "$PLUGIN_BASE/marketplaces"/*/plugins/*/; do
+      [ -L "${link%/}" ] || continue
+      link_target=$(readlink -f "${link%/}")
+      if [ "$hf_real" = "$link_target" ] || echo "$hf_real" | grep -q "^${link_target}"; then
+        is_enabled_target=true
+        break
+      fi
+    done
+    if [ "$is_enabled_target" = true ]; then
+      continue
+    fi
+    CONTENT=$(cat "$hf" 2>/dev/null)
+    if [ "$CONTENT" != "{}" ]; then
+      echo "    ACTIVE NON-STD: $hf"
+      NON_STD_ACTIVE=$((NON_STD_ACTIVE + 1))
+    fi
+  done < <(find "$PLUGIN_BASE/marketplaces" -name "hooks.json" 2>/dev/null)
+  check "no active hooks from non-standard unlinked paths (${NON_STD_ACTIVE} found)" \
+    test "$NON_STD_ACTIVE" -eq 0
+
+  # Test: self-test hook checks pass
   if command -v claude-self-test >/dev/null 2>&1; then
     SELF_TEST_OUTPUT=$(claude-self-test 2>&1 || true)
     HOOK_FAILS=$(echo "$SELF_TEST_OUTPUT" | grep -c "FAIL:.*hook\|FAIL:.*plugin\|FAIL:.*chmod" || true)
