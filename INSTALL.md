@@ -2840,26 +2840,22 @@ All four runtime packages should be pre-installed. If any are missing, re-run `(
 ### 16.9 — Environment Variables
 
 ```bash
-which bun                    # VERIFY: output is /opt/homebrew/bin/bun
+which bun                    # VERIFY: /opt/homebrew/bin/bun or ~/.bun/bin/bun
 echo $LITELLM_API_KEY        # VERIFY: output is your API key (not empty, not a placeholder)
 ```
 
 ### 16.10 — Claude Code Plugins and Settings
 
 ```bash
-# Verify plugin count
-jq 'length' ~/.claude/plugins/installed_plugins.json
-# Expected: 19
-
-# Verify SKILL.md files (plugins)
-find ~/.claude/plugins/cache -name "SKILL.md" -type f | wc -l
-# Expected: 19
+# Verify plugin count (v2 format: query .plugins not top-level length)
+jq '.plugins | length' ~/.claude/plugins/installed_plugins.json
+# Expected: 23
 
 # Verify external skills
 test -f ~/.claude/skills/frontend-slides/SKILL.md && echo "OK" || echo "MISSING"  # Expected: OK
 
 # Verify settings.json has full container settings
-jq '.enabledPlugins | keys | length' ~/.claude/settings.json    # Expected: 19
+jq '.enabledPlugins | keys | length' ~/.claude/settings.json    # Expected: 23
 jq '.model' ~/.claude/settings.json                              # Expected: "opus"
 jq '.statusLine.type' ~/.claude/settings.json                    # Expected: "command"
 jq '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' ~/.claude/settings.json  # Expected: "1"
