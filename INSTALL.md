@@ -1190,6 +1190,15 @@ else
     https://github.com/f5xc-salesdemos/marketplace.git \
     ~/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace
 fi
+
+# thedotmack/claude-mem — persistent memory plugin (no auto-update)
+if [ -d ~/.claude/plugins/marketplaces/thedotmack/.git ]; then
+  git -C ~/.claude/plugins/marketplaces/thedotmack pull --ff-only
+else
+  git clone --depth=1 --single-branch --branch main \
+    https://github.com/thedotmack/claude-mem.git \
+    ~/.claude/plugins/marketplaces/thedotmack
+fi
 ```
 
 ### 6.2 — Install Each Plugin into the Cache
@@ -1221,6 +1230,9 @@ for KEY in \
   f5xc-github-ops@f5xc-salesdemos-marketplace \
   f5xc-docs-pipeline@f5xc-salesdemos-marketplace \
   f5xc-brand@f5xc-salesdemos-marketplace \
+  f5xc-devcontainer@f5xc-salesdemos-marketplace \
+  f5xc-platform@f5xc-salesdemos-marketplace \
+  claude-mem@thedotmack \
 ; do
   NAME="$(echo "$KEY" | cut -d@ -f1)"
   MKT="$(echo "$KEY" | cut -d@ -f2)"
@@ -1239,6 +1251,9 @@ for KEY in \
     SRC="${MKT_DIR}/plugins/${NAME}"
   elif [ -d "${MKT_DIR}/external_plugins/${NAME}" ]; then
     SRC="${MKT_DIR}/external_plugins/${NAME}"
+  elif [ "$NAME" = "claude-mem" ] && [ -d "${MKT_DIR}/plugin" ]; then
+    # thedotmack/claude-mem repo: plugin lives in the root plugin/ subdir
+    SRC="${MKT_DIR}/plugin"
   fi
 
   VERSION="${GIT_SHA:-0.0.0}"
@@ -1294,6 +1309,13 @@ echo "$ENTRIES" | jq '{
   version: 2,
   plugins: (reduce .[] as $e ({}; .[$e.key] = [($e | del(.key))]))
 }' > "${PLUGIN_BASE}/installed_plugins.json"
+
+# claude-mem runtime dependencies (tree-sitter native parsers + worker)
+CMEM_PKG=$(find ~/.claude/plugins/cache/thedotmack/claude-mem \
+  -name "package.json" -not -path "*/node_modules/*" -maxdepth 3 -print -quit 2>/dev/null)
+if [ -n "$CMEM_PKG" ]; then
+  (cd "$(dirname "$CMEM_PKG")" && npm install)
+fi
 ```
 
 ### 6.3 — Create Supporting Registry Files
@@ -1302,13 +1324,25 @@ echo "$ENTRIES" | jq '{
 PLUGIN_BASE="$HOME/.claude/plugins"
 TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
 
-# Marketplace registry (both marketplaces)
-printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true}}' \
-  "${PLUGIN_BASE}/marketplaces/claude-plugins-official" \
-  "$TIMESTAMP" \
-  "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" \
-  "$TIMESTAMP" \
-  > "${PLUGIN_BASE}/known_marketplaces.json"
+# Marketplace registry (all three marketplaces)
+jq -n \
+  --arg cl "${PLUGIN_BASE}/marketplaces/claude-plugins-official" \
+  --arg f5 "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" \
+  --arg td "${PLUGIN_BASE}/marketplaces/thedotmack" \
+  --arg ts "$TIMESTAMP" '{
+  "claude-plugins-official": {
+    "source": {"source":"github","repo":"anthropics/claude-plugins-official"},
+    "installLocation": $cl, "lastUpdated": $ts, "autoUpdate": true
+  },
+  "f5xc-salesdemos-marketplace": {
+    "source": {"source":"github","repo":"f5xc-salesdemos/marketplace"},
+    "installLocation": $f5, "lastUpdated": $ts, "autoUpdate": true
+  },
+  "thedotmack": {
+    "source": {"source":"github","repo":"thedotmack/claude-mem"},
+    "installLocation": $td, "lastUpdated": $ts, "autoUpdate": false
+  }
+}' > "${PLUGIN_BASE}/known_marketplaces.json"
 
 # Empty blocklist
 printf '{"fetchedAt":"%s","plugins":[]}' "$TIMESTAMP" > "${PLUGIN_BASE}/blocklist.json"
@@ -1384,7 +1418,10 @@ CONTAINER_SETTINGS="$(cat <<SETTINGS
     "f5xc-docs-tools@f5xc-salesdemos-marketplace": true,
     "f5xc-github-ops@f5xc-salesdemos-marketplace": true,
     "f5xc-docs-pipeline@f5xc-salesdemos-marketplace": true,
-    "f5xc-brand@f5xc-salesdemos-marketplace": true
+    "f5xc-brand@f5xc-salesdemos-marketplace": true,
+    "f5xc-devcontainer@f5xc-salesdemos-marketplace": true,
+    "f5xc-platform@f5xc-salesdemos-marketplace": true,
+    "claude-mem@thedotmack": true
   },
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
@@ -1593,11 +1630,14 @@ The four packages are:
 | `@ai-sdk/openai-compatible` | Vercel AI SDK provider for OpenAI-compatible proxy endpoints |
 | `opencode-anthropic-auth` | Authentication module for Anthropic API access |
 
-Create the cache directory and write its `package.json`:
+Create the cache directory, write the version marker, and write its `package.json`:
 
 ```bash
 mkdir -p ~/.cache/opencode
+printf '21' > ~/.cache/opencode/version
 ```
+
+The version marker (`21`) tells OpenCode's BunProc that the cache is current — without it, OpenCode re-downloads all packages on every launch.
 
 Write the file `~/.cache/opencode/package.json` with the following content (versions last verified 2026-03-19):
 
