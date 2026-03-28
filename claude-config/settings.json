@@ -1,5 +1,8 @@
 {
-  "statusLine": { "type": "command", "command": "/opt/claude-config/statusline.sh" },
+  "statusLine": {
+    "type": "command",
+    "command": "/opt/claude-config/statusline.sh"
+  },
   "model": "opus",
   "spinnerTipsEnabled": false,
   "terminalProgressBarEnabled": false,
@@ -31,7 +34,9 @@
     "f5xc-github-ops@f5xc-salesdemos-marketplace": true,
     "f5xc-docs-pipeline@f5xc-salesdemos-marketplace": true,
     "f5xc-brand@f5xc-salesdemos-marketplace": true,
-    "f5xc-devcontainer@f5xc-salesdemos-marketplace": true
+    "f5xc-devcontainer@f5xc-salesdemos-marketplace": true,
+    "f5xc-console@f5xc-salesdemos-marketplace": true,
+    "claude-mem@thedotmack": true
   },
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
@@ -44,5 +49,31 @@
   "preferences": {
     "tmuxSplitPanes": true
   },
-  "autoUpdatesChannel": "latest"
+  "autoUpdatesChannel": "latest",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/opt/claude-config/neutralize-hooks.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/opt/claude-config/neutralize-hooks.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -227,6 +227,60 @@ check "all ${ENABLED_COUNT} enabled plugins cached (${CACHED_COUNT} found)" \
   test "$CACHED_COUNT" -eq "$ENABLED_COUNT"
 check "frontend-slides skill installed" \
   test -f "$HOME/.claude/skills/frontend-slides/SKILL.md"
+# Check permissions by marketplace to pinpoint source (issue #648)
+NON_EXEC_OFFICIAL=$(find "$HOME/.claude/plugins" \
+  -path "*/claude-plugins-official/*" -name "*.sh" -type f \
+  ! -perm -u+x 2>/dev/null | wc -l)
+NON_EXEC_F5XC=$(find "$HOME/.claude/plugins" \
+  -path "*/f5xc-salesdemos-marketplace/*" -name "*.sh" -type f \
+  ! -perm -u+x 2>/dev/null | wc -l)
+NON_EXEC_TOTAL=$((NON_EXEC_OFFICIAL + NON_EXEC_F5XC))
+check "all plugin scripts executable (${NON_EXEC_TOTAL} non-exec: ${NON_EXEC_OFFICIAL} official, ${NON_EXEC_F5XC} f5xc)" \
+  test "$NON_EXEC_TOTAL" -eq 0
+check "neutralize-hooks.sh installed" test -x /opt/claude-config/neutralize-hooks.sh
+check "SessionStart hook references neutralize-hooks.sh" \
+  jq -e '.hooks.SessionStart[0].hooks[0].command | test("neutralize-hooks")' "$HOME/.claude/settings.json"
+check "PostToolUse Skill hook references neutralize-hooks.sh" \
+  jq -e '.hooks.PostToolUse[0].matcher == "Skill" and (.hooks.PostToolUse[0].hooks[0].command | test("neutralize-hooks"))' "$HOME/.claude/settings.json"
+# Check that all enabled plugins have marketplace directories
+MISSING_MKT_DIRS=0
+while IFS= read -r KEY; do
+  PNAME="${KEY%%@*}"
+  MNAME="${KEY#*@}"
+  MKT_DIR="$HOME/.claude/plugins/marketplaces/${MNAME}/plugins/${PNAME}"
+  if [ -d "$MKT_DIR" ] || [ -L "$MKT_DIR" ]; then
+    continue
+  fi
+  MISSING_MKT_DIRS=$((MISSING_MKT_DIRS + 1))
+done < <(jq -r '.enabledPlugins | keys[]' "$HOME/.claude/settings.json" 2>/dev/null)
+check "all enabled plugins have marketplace directories (${MISSING_MKT_DIRS} missing)" \
+  test "$MISSING_MKT_DIRS" -eq 0
+# Check for hooks from non-enabled plugins (cc#40013)
+NON_ENABLED_HOOKS=0
+for hf in "$HOME/.claude/plugins/marketplaces"/*/plugins/*/hooks/hooks.json; do
+  [ -f "$hf" ] || continue
+  PNAME=$(basename "$(dirname "$(dirname "$hf")")")
+  MNAME=$(basename "$(dirname "$(dirname "$(dirname "$(dirname "$hf")")")")")
+  KEY="${PNAME}@${MNAME}"
+  if jq -e --arg k "$KEY" '.enabledPlugins[$k]' "$HOME/.claude/settings.json" >/dev/null 2>&1; then
+    continue
+  fi
+  CONTENT=$(cat "$hf")
+  if [ "$CONTENT" != "{}" ]; then
+    NON_ENABLED_HOOKS=$((NON_ENABLED_HOOKS + 1))
+  fi
+done
+check "no active hooks from non-enabled plugins (${NON_ENABLED_HOOKS} found)" \
+  test "$NON_ENABLED_HOOKS" -eq 0
+# Track upstream workaround — warn when issue #648 is closed so the
+# SessionStart hook, PostToolUse hook, and entrypoint chmod sweep can be reviewed for removal
+ISSUE_STATE=$(gh issue view 648 --repo f5xc-salesdemos/devcontainer \
+  --json state --jq '.state' 2>/dev/null || echo "UNKNOWN")
+if [ "$ISSUE_STATE" = "CLOSED" ]; then
+  warn "workaround for #648 may be removable — issue is closed, review settings.json hooks and entrypoint.sh" false
+elif [ "$ISSUE_STATE" = "UNKNOWN" ]; then
+  echo "  SKIP: could not check issue #648 status (no GH_TOKEN or network)"
+fi
 
 echo ""
 echo "8. Chrome DevTools MCP"
@@ -271,7 +325,29 @@ MEM_AVAIL_MB=$(awk '/MemAvailable/ {printf "%d", $2/1024}' /proc/meminfo)
 warn "available memory above 512MB (currently ${MEM_AVAIL_MB}MB)" test "$MEM_AVAIL_MB" -gt 512
 
 echo ""
-echo "12. Source Drift"
+echo "12. claude-mem Plugin"
+CMEM_ROOT=$(find "$HOME/.claude/plugins/cache/thedotmack/claude-mem" \
+  -name "plugin.json" -path "*/.claude-plugin/*" -print -quit 2>/dev/null || true)
+if [ -n "$CMEM_ROOT" ]; then
+  CMEM_DIR=$(dirname "$(dirname "$CMEM_ROOT")")
+  check "claude-mem plugin.json exists" test -f "$CMEM_ROOT"
+  check "claude-mem hooks.json exists" test -f "$CMEM_DIR/hooks/hooks.json"
+  check "claude-mem mcp-server.cjs exists" test -f "$CMEM_DIR/scripts/mcp-server.cjs"
+  check "claude-mem worker-service.cjs exists" test -f "$CMEM_DIR/scripts/worker-service.cjs"
+  check "claude-mem node_modules installed" test -d "$CMEM_DIR/node_modules"
+  check "claude-mem enabled in settings" \
+    jq -e '.enabledPlugins["claude-mem@thedotmack"]' "$HOME/.claude/settings.json"
+  check "claude-mem in installed_plugins" \
+    jq -e '.plugins["claude-mem@thedotmack"]' "$HOME/.claude/plugins/installed_plugins.json"
+  NON_EXEC_CMEM=$(find "$CMEM_DIR" -name "*.sh" -type f ! -perm -u+x 2>/dev/null | wc -l)
+  check "claude-mem scripts executable (${NON_EXEC_CMEM} non-exec)" \
+    test "$NON_EXEC_CMEM" -eq 0
+else
+  echo "  SKIP: claude-mem not installed"
+fi
+
+echo ""
+echo "13. Source Drift"
 AUDIT_DIR="/tmp/devcontainer-audit"
 if [ -d "$AUDIT_DIR" ]; then
   warn "managed CLAUDE.md matches source" \

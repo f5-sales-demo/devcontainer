@@ -14,3 +14,10 @@ The `f5xc-devcontainer` plugin handles all container awareness:
 - Self-diagnosis and health checks → `container-introspector` agent
 - Tool installation and maintenance → `container-maintainer` agent
 - Catalog drift detection → `tool-auditor` agent
+
+## claude-mem (Persistent Memory Plugin)
+
+claude-mem stores session memory in `~/.claude-mem/` using SQLite. Since this
+container is ephemeral, memory data is lost on container restart. This is
+acceptable — claude-mem reinitializes cleanly on each new session. The worker
+service starts automatically via SessionStart hooks on port 37777.

@@ -83,11 +83,40 @@ for KEY in $KEYS; do
         fi
       fi
     fi
+  elif [ "$NAME" = "claude-mem" ]; then
+    # External plugin — clone repo, copy only the plugin/ subdirectory
+    EXISTING=$(find "${CACHE_DIR}/${NAME}" -name "plugin.json" -path "*/.claude-plugin/*" 2>/dev/null | head -1)
+    if [ -n "$EXISTING" ]; then
+      DEST=$(dirname "$(dirname "$EXISTING")")
+      VERSION=$(basename "$DEST")
+    else
+      git clone --depth=1 --single-branch --branch main \
+        https://github.com/thedotmack/claude-mem.git /tmp/claude-mem-clone
+      cp -a /tmp/claude-mem-clone/plugin/. "$DEST/"
+      rm -rf /tmp/claude-mem-clone
+      if [ -f "${DEST}/.claude-plugin/plugin.json" ]; then
+        V=$(jq -r '.version // empty' "${DEST}/.claude-plugin/plugin.json")
+        if [ -n "$V" ] && [ "$V" != "$VERSION" ]; then
+          VERSION="$V"
+          NEW_DEST="${CACHE_DIR}/${NAME}/${VERSION}"
+          if [ "$DEST" != "$NEW_DEST" ]; then
+            mkdir -p "$NEW_DEST"
+            cp -a "${DEST}/." "$NEW_DEST/"
+            rm -rf "$DEST"
+            DEST="$NEW_DEST"
+          fi
+        fi
+      fi
+    fi
   else
     echo "WARNING: no source found for plugin '${NAME}' in marketplace '${MKT}', skipping"
     rm -rf "$DEST"
     continue
   fi
+
+  # Fix script permissions — cp -a preserves source perms which
+  # may lack execute bits on .sh files from marketplace repos
+  find "$DEST" -name "*.sh" -type f -exec chmod +x {} +
 
   # Add entry to collection
   ENTRIES=$(echo "$ENTRIES" | jq \
@@ -105,3 +134,62 @@ echo "$ENTRIES" | jq '{
   version: 2,
   plugins: (reduce .[] as $e ({}; .[$e.key] = [($e | del(.key))]))
 }' >"$INSTALLED_JSON"
+
+# Final sweep: ensure all .sh files across marketplaces and cache
+# are executable — catches any scripts missed by per-plugin fixups
+find "${PLUGIN_BASE}/marketplaces" "${PLUGIN_BASE}/cache" \
+  -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
+
+# Ensure every enabled cached plugin has a marketplace directory entry.
+# Claude Code resolves plugin paths from marketplaces/<mkt>/plugins/<name>/
+# Plugins installed from external sources (GitHub clones like superpowers,
+# claude-mem) only exist in cache — create marketplace symlinks so Claude
+# Code can find them and run their hooks without "Plugin directory does not
+# exist" errors.
+for KEY in $KEYS; do
+  NAME=$(echo "$KEY" | cut -d@ -f1)
+  MKT=$(echo "$KEY" | cut -d@ -f2)
+  MKT_PLUGIN_DIR="${PLUGIN_BASE}/marketplaces/${MKT}/plugins/${NAME}"
+
+  # Skip if marketplace dir already exists
+  [ -d "$MKT_PLUGIN_DIR" ] && continue
+
+  # Find the cache entry for this plugin (use first version found)
+  CACHE_ENTRY=$(find "${PLUGIN_BASE}/cache/${MKT}/${NAME}" \
+    -maxdepth 1 -mindepth 1 -type d 2>/dev/null | head -1)
+  [ -n "$CACHE_ENTRY" ] || continue
+
+  # Create parent dir and symlink
+  mkdir -p "$(dirname "$MKT_PLUGIN_DIR")"
+  ln -sf "$CACHE_ENTRY" "$MKT_PLUGIN_DIR"
+done
+
+# Neutralize hooks from non-enabled marketplace plugins (cc#40013)
+# Claude Code fires hooks from ALL installed plugins, not just enabled ones.
+# Replace hooks.json with {} for plugins not in enabledPlugins.
+for MKT_DIR in "${PLUGIN_BASE}/marketplaces"/*/; do
+  [ -d "$MKT_DIR" ] || continue
+  MKT_NAME=$(basename "$MKT_DIR")
+  for PLUGIN in "${MKT_DIR}plugins"/*/; do
+    [ -d "$PLUGIN" ] || continue
+    PLUGIN_NAME=$(basename "$PLUGIN")
+    KEY="${PLUGIN_NAME}@${MKT_NAME}"
+    HOOKS_FILE="${PLUGIN}hooks/hooks.json"
+    [ -f "$HOOKS_FILE" ] || continue
+    if jq -e --arg k "$KEY" '.enabledPlugins[$k]' "$SETTINGS" >/dev/null 2>&1; then
+      continue
+    fi
+    # Skip if already neutralized (idempotent)
+    CURRENT=$(cat "$HOOKS_FILE" 2>/dev/null || true)
+    if [ "$CURRENT" = "{}" ]; then
+      chmod 444 "$HOOKS_FILE" 2>/dev/null || true
+      chmod 555 "$(dirname "$HOOKS_FILE")" 2>/dev/null || true
+      continue
+    fi
+    chmod 755 "$(dirname "$HOOKS_FILE")" 2>/dev/null || true
+    chmod 644 "$HOOKS_FILE" 2>/dev/null || true
+    echo '{}' >"$HOOKS_FILE"
+    chmod 444 "$HOOKS_FILE"
+    chmod 555 "$(dirname "$HOOKS_FILE")"
+  done
+done
