@@ -52,7 +52,6 @@ SETTINGS
 teardown_mock_env() {
   if [ -n "$MOCK_HOME" ]; then
     # Unlock any chmod-locked files before removal
-    find "$MOCK_HOME" -type d -perm 555 -exec chmod 755 {} + 2>/dev/null || true
     find "$MOCK_HOME" -type f -perm 444 -exec chmod 644 {} + 2>/dev/null || true
     rm -rf "$MOCK_HOME"
   fi
@@ -169,8 +168,8 @@ check "non-enabled plugin hooks.json neutralized to {}" \
   test "$CONTENT" = "{}"
 check "non-enabled plugin hooks.json perms 444" \
   test "$FPERMS" = "444"
-check "non-enabled plugin hooks dir perms 555" \
-  test "$DPERMS" = "555"
+check "non-enabled plugin hooks dir perms 755" \
+  test "$DPERMS" = "755"
 teardown_mock_env
 
 # Test 6: enabled plugin hooks.json preserved with 644/755 perms
@@ -191,7 +190,7 @@ teardown_mock_env
 setup_mock_env
 create_mock_mkt_plugin "test-mkt" "gamma" '{}'
 chmod 444 "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks/hooks.json"
-chmod 555 "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks"
+chmod 755 "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks"
 source_neutralize_fn
 STDERR_OUTPUT=$(HOME="$MOCK_HOME" neutralize_non_enabled_hooks 2>&1 || true)
 CONTENT=$(cat "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks/hooks.json")
@@ -256,7 +255,7 @@ echo "4. Settings.json Hook Command"
 setup_mock_env
 create_mock_mkt_plugin "test-mkt" "gamma" '{}'
 chmod 444 "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks/hooks.json"
-chmod 555 "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks"
+chmod 755 "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks"
 SCRIPT="$(dirname "$0")/../claude-config/neutralize-hooks.sh"
 if [ -f "$SCRIPT" ]; then
   HOME="$MOCK_HOME" bash "$SCRIPT" 2>/dev/null
@@ -378,6 +377,67 @@ if [ -f "$SCRIPT" ]; then
 else
   echo "  FAIL: neutralize-hooks.sh not found"
   FAIL=$((FAIL + 2))
+fi
+teardown_mock_env
+
+echo ""
+echo "8. Marketplace Sync Compatibility"
+
+# Test 23: rm -rf succeeds on marketplace with neutralized plugins
+setup_mock_env
+create_mock_mkt_plugin "test-mkt" "gamma" '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo bad"}]}]}}'
+create_mock_mkt_plugin "test-mkt" "delta" '{"hooks":{"PreToolUse":[]}}'
+SCRIPT="$(dirname "$0")/../claude-config/neutralize-hooks.sh"
+if [ -f "$SCRIPT" ]; then
+  HOME="$MOCK_HOME" bash "$SCRIPT" 2>/dev/null
+  rm -rf "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt" 2>/dev/null
+  check "rm -rf succeeds on marketplace with neutralized plugins" \
+    test -z "$(ls -d "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt" 2>/dev/null)"
+else
+  echo "  FAIL: neutralize-hooks.sh not found"
+  FAIL=$((FAIL + 1))
+fi
+teardown_mock_env
+
+# Test 24: neutralized hooks directory has 755 not 555
+setup_mock_env
+create_mock_mkt_plugin "test-mkt" "gamma" '{"hooks":{"SessionStart":[]}}'
+if [ -f "$SCRIPT" ]; then
+  HOME="$MOCK_HOME" bash "$SCRIPT" 2>/dev/null
+  DPERMS=$(stat -c '%a' "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks" 2>/dev/null)
+  check "neutralized hooks dir has 755 (not 555)" test "$DPERMS" = "755"
+else
+  echo "  FAIL: neutralize-hooks.sh not found"
+  FAIL=$((FAIL + 1))
+fi
+teardown_mock_env
+
+# Test 25: hooks.json still protected at 444 after neutralization
+setup_mock_env
+create_mock_mkt_plugin "test-mkt" "gamma" '{"hooks":{"SessionStart":[]}}'
+if [ -f "$SCRIPT" ]; then
+  HOME="$MOCK_HOME" bash "$SCRIPT" 2>/dev/null
+  FPERMS=$(stat -c '%a' "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks/hooks.json" 2>/dev/null)
+  check "hooks.json still protected at 444" test "$FPERMS" = "444"
+else
+  echo "  FAIL: neutralize-hooks.sh not found"
+  FAIL=$((FAIL + 1))
+fi
+teardown_mock_env
+
+# Test 26: staging marketplace removable after neutralization
+setup_mock_env
+mkdir -p "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt.staging/plugins"
+create_mock_mkt_plugin "test-mkt.staging" "gamma" '{"hooks":{"SessionStart":[]}}'
+create_mock_mkt_plugin "test-mkt.staging" "delta" '{"hooks":{"PreToolUse":[]}}'
+if [ -f "$SCRIPT" ]; then
+  HOME="$MOCK_HOME" bash "$SCRIPT" 2>/dev/null
+  rm -rf "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt.staging" 2>/dev/null
+  check "staging marketplace removable after neutralization" \
+    test -z "$(ls -d "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt.staging" 2>/dev/null)"
+else
+  echo "  FAIL: neutralize-hooks.sh not found"
+  FAIL=$((FAIL + 1))
 fi
 teardown_mock_env
 

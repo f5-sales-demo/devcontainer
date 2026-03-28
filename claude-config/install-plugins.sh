@@ -182,15 +182,14 @@ for MKT_DIR in "${PLUGIN_BASE}/marketplaces"/*/; do
     # Skip if already neutralized (idempotent)
     CURRENT=$(cat "$HOOKS_FILE" 2>/dev/null || true)
     if [ "$CURRENT" = "{}" ]; then
+      chmod 755 "$(dirname "$HOOKS_FILE")" 2>/dev/null || true
       chmod 444 "$HOOKS_FILE" 2>/dev/null || true
-      chmod 555 "$(dirname "$HOOKS_FILE")" 2>/dev/null || true
       continue
     fi
     chmod 755 "$(dirname "$HOOKS_FILE")" 2>/dev/null || true
     chmod 644 "$HOOKS_FILE" 2>/dev/null || true
     echo '{}' >"$HOOKS_FILE"
     chmod 444 "$HOOKS_FILE"
-    chmod 555 "$(dirname "$HOOKS_FILE")"
   done
 done
 
@@ -222,13 +221,12 @@ while IFS= read -r HF; do
   fi
   CURRENT=$(cat "$HF" 2>/dev/null || true)
   if [ "$CURRENT" = "{}" ]; then
+    chmod 755 "$HD" 2>/dev/null || true
     chmod 444 "$HF" 2>/dev/null || true
-    chmod 555 "$HD" 2>/dev/null || true
     continue
   fi
   chmod 755 "$HD" 2>/dev/null || true
   chmod 644 "$HF" 2>/dev/null || true
   echo '{}' >"$HF" 2>/dev/null || true
   chmod 444 "$HF" 2>/dev/null || true
-  chmod 555 "$HD" 2>/dev/null || true
 done < <(find "${PLUGIN_BASE}/marketplaces" -name "hooks.json" 2>/dev/null)
