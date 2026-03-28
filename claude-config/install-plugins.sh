@@ -140,6 +140,30 @@ echo "$ENTRIES" | jq '{
 find "${PLUGIN_BASE}/marketplaces" "${PLUGIN_BASE}/cache" \
   -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
 
+# Ensure every enabled cached plugin has a marketplace directory entry.
+# Claude Code resolves plugin paths from marketplaces/<mkt>/plugins/<name>/
+# Plugins installed from external sources (GitHub clones like superpowers,
+# claude-mem) only exist in cache — create marketplace symlinks so Claude
+# Code can find them and run their hooks without "Plugin directory does not
+# exist" errors.
+for KEY in $KEYS; do
+  NAME=$(echo "$KEY" | cut -d@ -f1)
+  MKT=$(echo "$KEY" | cut -d@ -f2)
+  MKT_PLUGIN_DIR="${PLUGIN_BASE}/marketplaces/${MKT}/plugins/${NAME}"
+
+  # Skip if marketplace dir already exists
+  [ -d "$MKT_PLUGIN_DIR" ] && continue
+
+  # Find the cache entry for this plugin (use first version found)
+  CACHE_ENTRY=$(find "${PLUGIN_BASE}/cache/${MKT}/${NAME}" \
+    -maxdepth 1 -mindepth 1 -type d 2>/dev/null | head -1)
+  [ -n "$CACHE_ENTRY" ] || continue
+
+  # Create parent dir and symlink
+  mkdir -p "$(dirname "$MKT_PLUGIN_DIR")"
+  ln -sf "$CACHE_ENTRY" "$MKT_PLUGIN_DIR"
+done
+
 # Neutralize hooks from non-enabled marketplace plugins (cc#40013)
 # Claude Code fires hooks from ALL installed plugins, not just enabled ones.
 # Replace hooks.json with {} for plugins not in enabledPlugins.
@@ -155,6 +179,17 @@ for MKT_DIR in "${PLUGIN_BASE}/marketplaces"/*/; do
     if jq -e --arg k "$KEY" '.enabledPlugins[$k]' "$SETTINGS" >/dev/null 2>&1; then
       continue
     fi
+    # Skip if already neutralized (idempotent)
+    CURRENT=$(cat "$HOOKS_FILE" 2>/dev/null || true)
+    if [ "$CURRENT" = "{}" ]; then
+      chmod 444 "$HOOKS_FILE" 2>/dev/null || true
+      chmod 555 "$(dirname "$HOOKS_FILE")" 2>/dev/null || true
+      continue
+    fi
+    chmod 755 "$(dirname "$HOOKS_FILE")" 2>/dev/null || true
+    chmod 644 "$HOOKS_FILE" 2>/dev/null || true
     echo '{}' >"$HOOKS_FILE"
+    chmod 444 "$HOOKS_FILE"
+    chmod 555 "$(dirname "$HOOKS_FILE")"
   done
 done

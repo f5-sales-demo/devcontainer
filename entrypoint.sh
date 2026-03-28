@@ -235,25 +235,57 @@ if command -v fuser >/dev/null 2>&1; then
 fi
 
 # ============================================================
-# Fix plugin script permissions (issue #648)
-# Claude Code performs TWO plugin syncs during session init
-# (~10s apart). The SessionStart hook only fires after the
-# first sync, so the second sync re-introduces 644 perms.
+# Fix plugin script permissions and neutralize disabled hooks
 #
-# Five-layer fix:
-#   1. Immediate chmod sweep (self-test, non-session contexts)
-#   2. Background polling daemon for the first 60s of container
-#      life — catches all syncs regardless of timing
-#   3. SessionStart hook with delayed background chmod — catches
-#      the second sync even when the daemon has expired
-#   4. PostToolUse hook (matcher: Skill) for mid-session
+# Two upstream bugs require workarounds:
+#   - Issue #648: Plugin syncs reset .sh permissions to 644
+#   - cc#40013: Claude Code fires hooks from ALL plugins, not
+#     just enabled ones (causes SessionStart errors)
+#
+# Three-layer fix:
+#   1. Persistent background daemon (inotifywait or polling)
+#      watches for plugin syncs and immediately re-applies
+#      chmod +x and neutralizes non-enabled plugin hooks
+#   2. SessionStart hook — immediate chmod + neutralize when
+#      a new session starts (concurrent with plugin hooks)
+#   3. PostToolUse hook (matcher: Skill) — catches mid-session
 #      /reload-plugins
-#   5. Neutralize hooks.json for non-enabled marketplace plugins
-#      (cc#40013: Claude Code fires hooks from ALL installed
-#      plugins, not just enabled ones)
 #
-# Remove all five when upstream issues #648 and cc#40013 are resolved.
+# Build-time: install-plugins.sh also sets permissions and
+# neutralizes at image build time (baseline state).
+#
+# Remove all when upstream issues #648 and cc#40013 are resolved.
 # ============================================================
+
+# Ensure every enabled cached plugin has a marketplace directory entry.
+# Claude Code resolves plugin paths from marketplaces/<mkt>/plugins/<name>/
+# Plugins installed from external sources (GitHub clones) only exist in
+# cache — create marketplace symlinks so Claude Code can find them.
+ensure_marketplace_dirs() {
+  local settings="${HOME}/.claude/settings.json"
+  [ -f "$settings" ] || return 0
+  local plugin_base="${HOME}/.claude/plugins"
+
+  local key name mkt mkt_dir cache_entry
+  while IFS= read -r key; do
+    [ -n "$key" ] || continue
+    name="${key%%@*}"
+    mkt="${key#*@}"
+    mkt_dir="${plugin_base}/marketplaces/${mkt}/plugins/${name}"
+
+    # Skip if marketplace dir already exists
+    [ -d "$mkt_dir" ] && continue
+
+    # Find the cache entry for this plugin (use first version found)
+    cache_entry=$(find "${plugin_base}/cache/${mkt}/${name}" \
+      -maxdepth 1 -mindepth 1 -type d 2>/dev/null | head -1)
+    [ -n "$cache_entry" ] || continue
+
+    # Create parent dir and symlink
+    mkdir -p "$(dirname "$mkt_dir")" 2>/dev/null || true
+    ln -sf "$cache_entry" "$mkt_dir" 2>/dev/null || true
+  done < <(jq -r '.enabledPlugins | keys[]' "$settings" 2>/dev/null)
+}
 
 # Neutralize hooks from non-enabled marketplace plugins (cc#40013)
 # Claude Code loads hooks from ALL installed plugins, not just enabled ones.
@@ -273,31 +305,78 @@ neutralize_non_enabled_hooks() {
       plugin_name=$(basename "$plugin")
       local key="${plugin_name}@${mkt_name}"
       local hooks_file="${plugin}hooks/hooks.json"
+      local hooks_dir="${plugin}hooks"
       [ -f "$hooks_file" ] || continue
-      # Skip if plugin is enabled
       if jq -e --arg k "$key" '.enabledPlugins[$k]' "$settings" >/dev/null 2>&1; then
+        # Enabled plugin: restore normal permissions (handles disable->enable)
+        chmod 755 "$hooks_dir" 2>/dev/null || true
+        chmod 644 "$hooks_file" 2>/dev/null || true
         continue
       fi
-      # Neutralize hooks for non-enabled plugin
+      # Skip if already neutralized (idempotent)
+      local current
+      current=$(cat "$hooks_file" 2>/dev/null || true)
+      if [ "$current" = "{}" ]; then
+        chmod 444 "$hooks_file" 2>/dev/null || true
+        chmod 555 "$hooks_dir" 2>/dev/null || true
+        continue
+      fi
+      # Non-enabled plugin: neutralize and lock with chmod
+      chmod 755 "$hooks_dir" 2>/dev/null || true
+      chmod 644 "$hooks_file" 2>/dev/null || true
       echo '{}' >"$hooks_file"
+      chmod 444 "$hooks_file"
+      chmod 555 "$hooks_dir"
     done
   done
 }
 
+ensure_marketplace_dirs
 find "${HOME}/.claude/plugins" -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
 neutralize_non_enabled_hooks
 
-# Background daemon: poll every 2s for 60s to catch all plugin syncs
+# Persistent background daemon (Layer 1)
+# Phase 1: poll every 1-2s for 60s (catches initial dual plugin syncs
+#   and staging marketplace creation)
+# Phase 2: inotifywait or 10s polling indefinitely (catches plugin
+#   re-syncs when new sessions start in long-lived containers)
 (
+  # Phase 1: aggressive polling — 1s for first 10s, then 2s for 50s
   elapsed=0
   while [ "$elapsed" -lt 60 ]; do
-    sleep 2
+    if [ "$elapsed" -lt 10 ]; then
+      sleep 1
+    else
+      sleep 2
+    fi
+    ensure_marketplace_dirs
     find "${HOME}/.claude/plugins" -name "*.sh" -type f \
       ! -perm -u+x -exec chmod +x {} + 2>/dev/null
     neutralize_non_enabled_hooks
-    elapsed=$((elapsed + 2))
+    elapsed=$((elapsed + $([ "$elapsed" -lt 10 ] && echo 1 || echo 2)))
   done
-) &
+
+  # Phase 2: event-driven watch (falls back to polling if inotifywait unavailable)
+  if command -v inotifywait >/dev/null 2>&1; then
+    while true; do
+      inotifywait -qq -r -e modify,create,moved_to,moved_from \
+        "${HOME}/.claude/plugins/marketplaces" 2>/dev/null
+      # No sleep — neutralize IMMEDIATELY after filesystem event
+      ensure_marketplace_dirs
+      find "${HOME}/.claude/plugins" -name "*.sh" -type f \
+        ! -perm -u+x -exec chmod +x {} + 2>/dev/null
+      neutralize_non_enabled_hooks
+    done
+  else
+    while true; do
+      sleep 10
+      ensure_marketplace_dirs
+      find "${HOME}/.claude/plugins" -name "*.sh" -type f \
+        ! -perm -u+x -exec chmod +x {} + 2>/dev/null
+      neutralize_non_enabled_hooks
+    done
+  fi
+) >/dev/null 2>&1 &
 
 # Inject SessionStart + PostToolUse hooks from template into runtime settings.json
 # The template at /opt/claude-config/settings.json has the canonical hook definitions.
