@@ -216,7 +216,6 @@ brew_install go                # Go compiler (build terraform providers, CLI too
 brew_install terraform         # Infrastructure as Code for cloud resources
 brew_install neovim            # Terminal editor with LSP support
 brew_install uv                # Fast Python package manager (10-100x faster than pip)
-brew_install aider             # AI pair programming in your terminal
 brew_install playwright-cli    # Token-efficient browser automation CLI for AI agents
 brew_install dos2unix          # Convert Windows CRLF line endings to Unix LF
 
@@ -304,7 +303,6 @@ ec --version           # VERIFY: output contains a version number (editorconfig-
 taplo --version        # VERIFY: output contains a version number
 ffmpeg -version        # VERIFY: output starts with "ffmpeg version"
 yt-dlp --version       # VERIFY: output contains a version string
-aider --version        # VERIFY: output contains a version number
 playwright-cli --version  # VERIFY: output contains a version number
 pdftotext -v 2>&1 | head -1  # VERIFY: output contains "pdftotext version"
 ```
@@ -954,7 +952,7 @@ Copy the custom `gh-clone-complete` plugin from this repo:
 
 ```bash
 mkdir -p ~/.oh-my-zsh/custom/plugins/gh-clone-complete
-cp configs/gh-clone-complete.plugin.zsh \
+\cp -f configs/gh-clone-complete.plugin.zsh \
   ~/.oh-my-zsh/custom/plugins/gh-clone-complete/gh-clone-complete.plugin.zsh
 ```
 
@@ -1050,7 +1048,7 @@ grep 'ZSH_DOTENV_PROMPT' ~/.zshrc  # VERIFY: output is export ZSH_DOTENV_PROMPT=
 Copy the pre-built Powerlevel10k configuration from this repo. This is the same config installed in the devcontainer (rainbow theme, 2-line prompt, Nerdfont icons, transient prompt):
 
 ```bash
-cp configs/.p10k.zsh ~/.p10k.zsh
+\cp -f configs/.p10k.zsh ~/.p10k.zsh
 ```
 
 To customize the prompt style later, run `p10k configure` in iTerm2.
@@ -1060,18 +1058,17 @@ To customize the prompt style later, run `p10k configure` in iTerm2.
 Copy shell environment dotfiles from this repo to match the devcontainer setup:
 
 ```bash
-cp configs/.tmux.conf ~/.tmux.conf
+\cp -f configs/.tmux.conf ~/.tmux.conf
 
 # Install Tmux Plugin Manager (tpm) — required by .tmux.conf
 [ -d ~/.tmux/plugins/tpm ] || \
   git clone --depth=1 https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-cp configs/.digrc ~/.digrc
-cp configs/.inputrc ~/.inputrc
-cp configs/.nanorc ~/.nanorc
-cp configs/.lessfilter ~/.lessfilter
+\cp -f configs/.digrc ~/.digrc
+\cp -f configs/.inputrc ~/.inputrc
+\cp -f configs/.nanorc ~/.nanorc
+\cp -f configs/.lessfilter ~/.lessfilter
 chmod +x ~/.lessfilter
 touch ~/.hushlogin
-cp configs/.aider.conf.yml ~/.aider.conf.yml
 ```
 
 | File | Purpose |
@@ -1082,7 +1079,6 @@ cp configs/.aider.conf.yml ~/.aider.conf.yml
 | `.lessfilter` | Syntax highlighting when viewing files with `less` |
 | `.nanorc` | Nano editor defaults |
 | `.hushlogin` | Suppress the "Last login" banner on new terminal sessions |
-| `.aider.conf.yml` | Aider AI pair programming defaults (model, dark mode) |
 
 ### Verify Terminal Environment
 
@@ -1105,7 +1101,6 @@ test -f ~/.inputrc && echo "OK: inputrc"                              # Expected
 test -x ~/.lessfilter && echo "OK: lessfilter (executable)"           # Expected: OK
 test -f ~/.nanorc && echo "OK: nanorc"                                # Expected: OK
 test -f ~/.hushlogin && echo "OK: hushlogin"                          # Expected: OK
-test -f ~/.aider.conf.yml && echo "OK: aider config"                  # Expected: OK
 ls ~/Library/Fonts/MesloLGS\ NF\ Regular.ttf                          # Expected: file exists (p10k font)
 ls ~/Library/Fonts/MesloLGSNerdFont-Regular.ttf 2>/dev/null \
   || ls ~/Library/Fonts/MesloLGLNerdFont-Regular.ttf                   # Expected: Nerd Font installed
@@ -1472,7 +1467,7 @@ SRC="${REPO_DIR}/claude-config/statusline.sh"
 DEST="$HOME/.claude/statusline.sh"
 
 if [ -f "$SRC" ]; then
-  cp "$SRC" "$DEST"
+  \cp -f "$SRC" "$DEST"
   chmod +x "$DEST"
   echo "Installed statusline.sh to $DEST"
 else
@@ -2641,10 +2636,10 @@ grep -q 'opencode-completions' ~/.zshrc || \
 
 # gogcli (gog) native zsh completion (generated from gog help-json schema)
 bash configs/generate-gog-completions.sh > /opt/homebrew/share/zsh/site-functions/_gog 2>/dev/null \
-  || cp configs/_gog /opt/homebrew/share/zsh/site-functions/_gog
+  || \cp -f configs/_gog /opt/homebrew/share/zsh/site-functions/_gog
 # Also copy to oh-my-zsh custom completions (ensures compinit discovers it)
 mkdir -p "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/completions"
-cp /opt/homebrew/share/zsh/site-functions/_gog \
+\cp -f /opt/homebrew/share/zsh/site-functions/_gog \
   "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/completions/_gog"
 
 # User-local binaries (docker shim, etc.)
