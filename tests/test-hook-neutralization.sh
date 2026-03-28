@@ -39,7 +39,7 @@ setup_mock_env() {
   mkdir -p "${plugins}/cache/test-mkt"
 
   # Minimal settings.json with one enabled plugin
-  cat > "${MOCK_HOME}/.claude/settings.json" <<'SETTINGS'
+  cat >"${MOCK_HOME}/.claude/settings.json" <<'SETTINGS'
 {
   "enabledPlugins": {
     "alpha@test-mkt": true,
@@ -65,9 +65,9 @@ create_mock_mkt_plugin() {
   local mkt="$1" name="$2" hooks_content="$3"
   local plugin_dir="${MOCK_HOME}/.claude/plugins/marketplaces/${mkt}/plugins/${name}"
   mkdir -p "${plugin_dir}/hooks"
-  echo "$hooks_content" > "${plugin_dir}/hooks/hooks.json"
+  echo "$hooks_content" >"${plugin_dir}/hooks/hooks.json"
   # Add a dummy .sh file for permission tests
-  echo '#!/bin/bash' > "${plugin_dir}/hooks/run.sh"
+  echo '#!/bin/bash' >"${plugin_dir}/hooks/run.sh"
 }
 
 # Create a mock plugin in the cache directory
@@ -77,8 +77,8 @@ create_mock_cache_plugin() {
   local cache_dir="${MOCK_HOME}/.claude/plugins/cache/${mkt}/${name}/${ver}"
   mkdir -p "${cache_dir}/hooks"
   mkdir -p "${cache_dir}/.claude-plugin"
-  echo "$hooks_content" > "${cache_dir}/hooks/hooks.json"
-  echo "{\"version\": \"${ver}\"}" > "${cache_dir}/.claude-plugin/plugin.json"
+  echo "$hooks_content" >"${cache_dir}/hooks/hooks.json"
+  echo "{\"version\": \"${ver}\"}" >"${cache_dir}/.claude-plugin/plugin.json"
 }
 
 # Source the neutralize function from entrypoint.sh with HOME overridden
@@ -132,8 +132,8 @@ HOME="$MOCK_HOME" ensure_marketplace_dirs 2>/dev/null || true
 # Should not be a symlink — original dir preserved
 check "ensure_marketplace_dirs preserves existing marketplace dir" \
   test -d "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/alpha" -a \
-    \( -L "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/alpha" -o \
-      -d "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/alpha" \)
+  \( -L "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/alpha" -o \
+  -d "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/alpha" \)
 teardown_mock_env
 
 # Test 3: symlink points to valid target

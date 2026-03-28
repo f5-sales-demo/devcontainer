@@ -65,7 +65,7 @@ for hf in "$PLUGIN_BASE"/marketplaces/*/plugins/*/hooks/hooks.json; do
   # Neutralize and lock
   chmod 755 "$hd" 2>/dev/null || true
   chmod 644 "$hf" 2>/dev/null || true
-  echo '{}' > "$hf" 2>/dev/null || true
+  echo '{}' >"$hf" 2>/dev/null || true
   chmod 444 "$hf" 2>/dev/null || true
   chmod 555 "$hd" 2>/dev/null || true
 done
