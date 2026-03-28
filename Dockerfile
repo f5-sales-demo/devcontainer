@@ -431,8 +431,8 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
       "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${NVIM_ARCH}.tar.gz" \
       | tar -xz -C /opt \
     && ln -s "/opt/nvim-linux-${NVIM_ARCH}/bin/nvim" /usr/local/bin/nvim \
-    # opencode (f5xc fork — install script handles arch detection)
-    && curl ${CURL_RETRY} -fsSL "https://raw.githubusercontent.com/f5xc-salesdemos/opencode/dev/install" \
+    # opencode (official upstream — install script handles arch detection)
+    && curl ${CURL_RETRY} -fsSL "https://opencode.ai/install" \
       | bash -s -- --no-modify-path \
     && ln -sf "$HOME/.opencode/bin/opencode" /usr/local/bin/opencode
 
@@ -1146,8 +1146,8 @@ RUN npx playwright install \
 RUN npm exec chrome-devtools-mcp@0.20.2 -- --version 2>/dev/null || true
 
 # oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
-# Build-time install uses upstream oh-my-opencode (needs platform binaries).
-# The forked runtime plugin is pre-installed so opencode skips download.
+# Build-time install uses upstream oh-my-opencode for config scaffolding.
+# The f5xc fork runtime plugin is pre-installed so opencode skips download.
 # hadolint ignore=DL3059
 RUN npx -y oh-my-opencode install --no-tui \
     --claude=max20 --openai=no --gemini=no --copilot=no \
@@ -1162,7 +1162,7 @@ RUN OPENCODE_CACHE="$HOME/.cache/opencode" \
     && printf '21' > "$OPENCODE_CACHE/version" \
     && printf '{"dependencies":{}}\n' > "$OPENCODE_CACHE/package.json" \
     && bun add --cwd "$OPENCODE_CACHE" --force --exact \
-        @robinmordasiewicz/oh-my-opencode@3.11.0-fork.3 \
+        @f5xc-salesdemos/oh-my-openagent@3.14.0-f5xc.5 \
         @ai-sdk/anthropic \
         @ai-sdk/openai-compatible \
         opencode-anthropic-auth@0.0.13

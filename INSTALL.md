@@ -4,7 +4,7 @@
 > Launch `opencode`, paste the URL to this file, and OpenCode will execute each step.
 >
 > **Platform**: macOS on Apple Silicon (arm64). Homebrew is already installed.
-> OpenCode is already installed via `brew tap f5xc-salesdemos/tap && brew install f5xc-salesdemos/tap/opencode`.
+> OpenCode is already installed via `brew install anomalyco/tap/opencode`.
 >
 > **First-time setup**: If this is a fresh OpenCode install, you **must** complete Step 0 manually
 > before running `opencode run`. Step 0 grants the AI agent permission to access directories
@@ -1533,7 +1533,7 @@ The four packages are:
 
 | Package | Purpose |
 | ------- | ------- |
-| `@robinmordasiewicz/oh-my-opencode` | Oh-My-OpenCode plugin — multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.) |
+| `@f5xc-salesdemos/oh-my-openagent` | Oh-My-OpenCode plugin — multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.) |
 | `@ai-sdk/anthropic` | Vercel AI SDK provider for Anthropic models (Claude) |
 | `@ai-sdk/openai-compatible` | Vercel AI SDK provider for OpenAI-compatible proxy endpoints |
 | `opencode-anthropic-auth` | Authentication module for Anthropic API access |
@@ -1552,7 +1552,7 @@ Write the file `~/.cache/opencode/package.json` with the following content (vers
 ```json
 {
   "dependencies": {
-    "@robinmordasiewicz/oh-my-opencode": "3.11.0-fork.3",
+    "@f5xc-salesdemos/oh-my-openagent": "3.14.0-f5xc.5",
     "@ai-sdk/anthropic": "^3.0.64",
     "@ai-sdk/openai-compatible": "^2.0.37",
     "opencode-anthropic-auth": "0.0.13"
@@ -1571,7 +1571,7 @@ This populates `~/.cache/opencode/node_modules/` with the plugin and AI provider
 ### Verify Runtime Cache
 
 ```bash
-ls ~/.cache/opencode/node_modules/@robinmordasiewicz/oh-my-opencode/   # Expected: directory exists
+ls ~/.cache/opencode/node_modules/@f5xc-salesdemos/oh-my-openagent/     # Expected: directory exists
 ls ~/.cache/opencode/node_modules/@ai-sdk/anthropic/                   # Expected: directory exists
 ls ~/.cache/opencode/node_modules/@ai-sdk/openai-compatible/           # Expected: directory exists
 ls ~/.cache/opencode/node_modules/opencode-anthropic-auth/             # Expected: directory exists
@@ -2103,7 +2103,7 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
   "small_model": "anthropic-proxy/claude-sonnet-4-6",
   "permission": "allow",
   "plugin": [
-    "@robinmordasiewicz/oh-my-opencode@3.11.0-fork.3"
+    "@f5xc-salesdemos/oh-my-openagent@3.14.0-f5xc.5"
   ],
   "lsp": {
     "marksman": { "command": ["marksman", "server"], "extensions": [".md", ".mdx"] },
@@ -2153,7 +2153,7 @@ elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
       }
     }
   },
-  "plugin": ["opencode-claude-auth", "@robinmordasiewicz/oh-my-opencode@3.11.0-fork.3"],
+  "plugin": ["opencode-claude-auth", "@f5xc-salesdemos/oh-my-openagent@3.14.0-f5xc.5"],
   "mcp": {
     "chrome-devtools": {
       "type": "local",
@@ -2246,7 +2246,7 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
   echo "Writing oh-my-opencode.json (proxy mode — multi-provider agents)..."
   cat > ~/.config/opencode/oh-my-opencode.json << 'ENDOFJSON'
 {
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": { "model": "anthropic-proxy/claude-opus-4-6" },
     "oracle": { "model": "anthropic-proxy/claude-opus-4-6" },
@@ -2294,7 +2294,7 @@ else
   echo "Writing oh-my-opencode.json (OAuth mode — Anthropic models only)..."
   cat > ~/.config/opencode/oh-my-opencode.json << 'ENDOFJSON'
 {
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": { "model": "anthropic/claude-opus-4-6" },
     "oracle": { "model": "anthropic/claude-opus-4-6" },
@@ -2773,7 +2773,7 @@ All files should exist and be owned by the current user.
 ### 16.8 — OpenCode Runtime Cache
 
 ```bash
-ls ~/.cache/opencode/node_modules/@robinmordasiewicz/oh-my-opencode/package.json  # Expected: file exists
+ls ~/.cache/opencode/node_modules/@f5xc-salesdemos/oh-my-openagent/package.json  # Expected: file exists
 ls ~/.cache/opencode/node_modules/@ai-sdk/anthropic/package.json                  # Expected: file exists
 ls ~/.cache/opencode/node_modules/@ai-sdk/openai-compatible/package.json          # Expected: file exists
 ls ~/.cache/opencode/node_modules/opencode-anthropic-auth/package.json            # Expected: file exists
