@@ -2033,6 +2033,7 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
   "provider": {
     "openai-proxy": {
       "name": "OpenAI Proxy",
+      "npm": "@ai-sdk/openai-compatible",
       "options": {
         "baseURL": "${LITELLM_BASE_URL}/api/v1",
         "apiKey": "${LITELLM_API_KEY}"
@@ -2067,6 +2068,7 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
     },
     "anthropic-proxy": {
       "name": "Anthropic Proxy",
+      "npm": "@ai-sdk/anthropic",
       "options": {
         "baseURL": "${LITELLM_BASE_URL}/anthropic/v1",
         "apiKey": "${LITELLM_API_KEY}"
