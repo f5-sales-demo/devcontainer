@@ -71,7 +71,7 @@
   },
   "model": "anthropic-proxy/claude-opus-4-6",
   "small_model": "anthropic-proxy/claude-sonnet-4-6",
-  "plugin": ["@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"],
+  "plugin": ["@robinmordasiewicz/oh-my-opencode@3.11.0-fork.3"],
   "mcp": {},
   "lsp": {
     "marksman": {
