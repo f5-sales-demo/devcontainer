@@ -224,22 +224,27 @@ brew_install dos2unix          # Convert Windows CRLF line endings to Unix LF
 brew_install azure-cli         # Azure resource management
 brew install --cask google-cloud-sdk  # Google Cloud CLI (gcloud, gsutil, bq)
 brew_install gogcli            # Google Suite CLI — Gmail, Calendar, Drive, Contacts, Tasks, Sheets (gog)
-brew_install signal-cli        # Signal Instant Messenger
 
 # Terraform ecosystem
 brew_install tflint            # Terraform linter (catches errors before plan)
 brew_install terraform-docs    # Auto-generate Terraform module documentation
 
-# Linting and security scanning
+# Linting, formatting, and security scanning
 brew_install hadolint          # Dockerfile linter (best practices enforcement)
-brew_install gitleaks          # Secret scanner (catches leaked credentials pre-commit)
-brew_install sslscan           # TLS/SSL configuration scanner
-brew_install trufflehog        # Deep git history secret scanner
 brew_install actionlint        # GitHub Actions workflow linter (syntax + logic)
 brew_install yamllint          # YAML linter (used by pre-commit hooks)
 brew_install codespell         # Source code spell checker
 brew_install checkov           # IaC / GitHub Actions security scanner
 brew_install zizmor            # GitHub Actions supply-chain security scanner
+brew_install prettier          # Multi-language code formatter
+brew_install biome             # Fast JS/TS/JSON linter and formatter
+brew_install markdownlint-cli2 # Markdown linter (used by super-linter CI)
+brew_install editorconfig-checker # EditorConfig validation
+brew_install taplo             # TOML formatter and language server
+
+# Zsh plugins (via brew — checksummed, controlled install; symlinked into oh-my-zsh in Step 5.4)
+brew_install zsh-autosuggestions    # Fish-like inline history suggestions
+brew_install zsh-syntax-highlighting # Real-time command syntax highlighting
 
 # Media tools
 brew_install ffmpeg            # Video/audio processing (convert, extract, transcode)
@@ -287,14 +292,16 @@ gog --version          # VERIFY: output contains a version number (gogcli)
 tflint --version       # VERIFY: output starts with "TFLint version"
 terraform-docs --version # VERIFY: output contains a version number
 hadolint --version     # VERIFY: output contains "Haskell Dockerfile Linter"
-gitleaks version       # VERIFY: output contains a version number
-sslscan --version      # VERIFY: output contains "sslscan version"
-trufflehog --version   # VERIFY: output contains a version number
 actionlint -version    # VERIFY: output contains a version number
 yamllint --version     # VERIFY: output starts with "yamllint"
 codespell --version    # VERIFY: output starts with "codespell"
 checkov --version      # VERIFY: output contains a version number
 zizmor --version       # VERIFY: output contains a version number
+prettier --version     # VERIFY: output contains a version number
+biome --version        # VERIFY: output contains a version number
+markdownlint-cli2 --version  # VERIFY: output contains a version number
+ec --version           # VERIFY: output contains a version number (editorconfig-checker)
+taplo --version        # VERIFY: output contains a version number
 ffmpeg -version        # VERIFY: output starts with "ffmpeg version"
 yt-dlp --version       # VERIFY: output contains a version string
 aider --version        # VERIFY: output contains a version number
@@ -308,6 +315,8 @@ pdftotext -v 2>&1 | head -1  # VERIFY: output contains "pdftotext version"
 
 These are language servers that OpenCode discovers on `PATH` via `which()`. When found, OpenCode uses the brew/npm-installed version instead of auto-downloading its own copy.
 
+Linters and formatters that have Homebrew formulas (prettier, biome, markdownlint-cli2, editorconfig-checker, taplo) are installed via brew in Step 1 — only packages with no brew alternative are listed here.
+
 **Important**: Because Node.js is installed via Homebrew, `npm install -g` writes to `/opt/homebrew/lib` which is user-owned. No `sudo` required.
 
 **Note**: Unlike `brew install`, `npm install -g` always re-downloads even if the package is already installed. This is safe but adds ~30 seconds of network I/O on re-runs.
@@ -317,19 +326,12 @@ npm install -g vscode-langservers-extracted   # HTML, CSS, JSON, ESLint LSP serv
 npm install -g bash-language-server           # Bash/Zsh/Shell LSP
 npm install -g yaml-language-server           # YAML LSP
 npm install -g @mdx-js/language-server        # MDX LSP
-npm install -g @taplo/cli                     # TOML LSP (taplo)
 
 # Google Workspace CLI (mirrors devcontainer toolset)
 npm install -g @googleworkspace/cli           # Google Workspace admin CLI (gws)
 
 # TypeScript native compiler (tsgo — 10x faster type checking)
 npm install -g @typescript/native-preview     # Provides tsgo binary (TypeScript 7 Go port)
-
-# Linters and formatters (mirrors devcontainer toolset)
-npm install -g markdownlint-cli2              # Markdown linter (used by super-linter CI)
-npm install -g editorconfig-checker           # EditorConfig validation
-npm install -g prettier                       # Multi-language code formatter
-npm install -g @biomejs/biome                 # Fast JS/TS/JSON linter and formatter
 
 # Presentation and React tools
 npm install -g pptxgenjs                      # PowerPoint generation
@@ -343,18 +345,15 @@ npm install -g markitdown                     # Markdown processing
 ### Verify npm Global Packages
 
 ```bash
-npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|taplo|prettier|biome|googleworkspace|native-preview)"
+npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|googleworkspace|native-preview)"
 ```
 
-VERIFY: All nine packages appear in the output (exact versions may differ):
+VERIFY: All four LSP servers and supporting packages appear in the output (exact versions may differ):
 
-- `@biomejs/biome`
 - `@googleworkspace/cli`
 - `@mdx-js/language-server`
-- `@taplo/cli`
 - `@typescript/native-preview`
 - `bash-language-server`
-- `prettier`
 - `vscode-langservers-extracted`
 - `yaml-language-server`
 
@@ -362,24 +361,18 @@ VERIFY: All nine packages appear in the output (exact versions may differ):
 
 ## Step 3 — Install Bun
 
-Bun is used by OpenCode internally for plugin management. Install it to `~/.bun` (user-space, no sudo).
+Bun is used by OpenCode internally for plugin management. Install via Homebrew (safe, verified, no arbitrary script execution).
 
-**Idempotency**: The bun installer always re-downloads the binary even if already installed. The guard below skips the download when bun is already on PATH.
+**Idempotency**: `brew install` is idempotent — safe to re-run.
 
 ```bash
-if ! command -v bun &>/dev/null; then
-  curl -fsSL https://bun.sh/install | bash
-fi
+brew_install bun
 ```
 
 ### Verify Bun
 
-After installing bun, add it to the current shell's PATH so subsequent steps can use it. Do **not** run `source ~/.zshrc` — it will fail in a non-interactive shell context (Oh My Zsh and Powerlevel10k require a TTY).
-
 ```bash
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-which bun       # VERIFY: output is ~/.bun/bin/bun
+which bun       # VERIFY: output is /opt/homebrew/bin/bun
 bun --version   # VERIFY: output starts with "1." (1.3.x+)
 ```
 
@@ -467,22 +460,6 @@ cursor --version               # VERIFY: output contains a version number
 
 ---
 
-## Step 4g — Install Windsurf
-
-Windsurf is an AI-powered IDE by Codeium. Install via Homebrew Cask:
-
-```bash
-[ -d "/Applications/Windsurf.app" ] || brew install --cask windsurf
-```
-
-VERIFY:
-
-```bash
-windsurf --version             # VERIFY: output contains a version number
-```
-
----
-
 ## Step 4h — Install Zed
 
 Zed is a GPU-accelerated code editor with built-in AI assistant support. Install via Homebrew Cask:
@@ -495,22 +472,6 @@ VERIFY:
 
 ```bash
 zed --version                  # VERIFY: output contains a version number
-```
-
----
-
-## Step 4i — Install Alacritty
-
-Alacritty is a GPU-accelerated terminal emulator. The Homebrew cask is deprecated due to macOS Gatekeeper issues (deadline Sept 2026) and requires `--no-quarantine` to install correctly:
-
-```bash
-[ -d "/Applications/Alacritty.app" ] || HOMEBREW_CASK_OPTS="--no-quarantine" brew install --cask alacritty
-```
-
-VERIFY:
-
-```bash
-alacritty --version            # VERIFY: output contains a version number
 ```
 
 ---
@@ -727,11 +688,14 @@ made explicit in `~/.zshrc` (see Step 14).
 
 Oh My Zsh is a framework for managing Zsh configuration, plugins, and themes. The installer creates `~/.zshrc` from a template — any prior `.zshrc` is backed up automatically.
 
-**IMPORTANT**: The Oh My Zsh installer exits with code 1 if `~/.oh-my-zsh` already exists. The `--unattended` flag does NOT bypass this check — it only disables shell switching and confirmation prompts. Always guard with an existence check:
+**IMPORTANT**: The Oh My Zsh installer exits with code 1 if `~/.oh-my-zsh` already exists. Always guard with an existence check.
+
+We clone the repository directly instead of piping from the web — this avoids arbitrary remote script execution and is safer for corporate EDR environments:
 
 ```bash
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh
+  RUNZSH=no CHSH=no ~/.oh-my-zsh/tools/install.sh --unattended
 fi
 ```
 
@@ -949,23 +913,26 @@ it2 --help                     # VERIFY: output shows available commands (send, 
 
 ### 5.4 — Install Zsh Plugins
 
-Clone third-party plugins into Oh My Zsh's custom plugins directory. These mirror the plugins installed in the devcontainer Dockerfile.
+Link brew-managed plugins into Oh My Zsh's custom plugins directory, then clone
+the remaining plugins that have no Homebrew formula.
+
+`zsh-autosuggestions` and `zsh-syntax-highlighting` are installed via brew in Step 1.
+Symlinking them here makes Oh My Zsh's plugin loader find them without a separate clone.
+The `-sf` flag makes this idempotent.
+
+```bash
+mkdir -p ~/.oh-my-zsh/custom/plugins
+ln -sf "$(brew --prefix)/share/zsh-autosuggestions" \
+  ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+ln -sf "$(brew --prefix)/share/zsh-syntax-highlighting" \
+  ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+```
+
+Clone plugins that have no Homebrew formula:
 
 **IMPORTANT**: `git clone` fails with exit code 128 if the target directory already exists. Always guard with an existence check:
 
 ```bash
-[ -d ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions ] || \
-  git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
-    ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
-
-[ -d ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting ] || \
-  git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
-    ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
-
-[ -d ~/.oh-my-zsh/custom/plugins/zsh-claudecode-completion ] || \
-  git clone --depth=1 https://github.com/wbingli/zsh-claudecode-completion.git \
-    ~/.oh-my-zsh/custom/plugins/zsh-claudecode-completion
-
 [ -d ~/.oh-my-zsh/custom/plugins/conda-zsh-completion ] || \
   git clone --depth=1 https://github.com/conda-incubator/conda-zsh-completion.git \
     ~/.oh-my-zsh/custom/plugins/conda-zsh-completion
@@ -1006,7 +973,7 @@ sed -i '' 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
 <!-- markdownlint-disable MD013 -->
 
 ```bash
-sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux zsh-claudecode-completion dotenv emoji gcloud git pre-commit iterm2 macos podman)/' ~/.zshrc
+sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux dotenv emoji gcloud git pre-commit iterm2 macos podman)/' ~/.zshrc
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -1024,7 +991,7 @@ VERIFY all changes applied:
 
 ```bash
 grep '^ZSH_THEME=' ~/.zshrc    # VERIFY: output is ZSH_THEME="powerlevel10k/powerlevel10k"
-grep '^plugins=' ~/.zshrc       # VERIFY: output includes zsh-claudecode-completion
+grep '^plugins=' ~/.zshrc       # VERIFY: output includes zsh-autosuggestions and zsh-syntax-highlighting
 grep 'ZSH_DOTENV_PROMPT' ~/.zshrc  # VERIFY: output is export ZSH_DOTENV_PROMPT=false (before source line)
 ```
 
@@ -1032,9 +999,8 @@ grep 'ZSH_DOTENV_PROMPT' ~/.zshrc  # VERIFY: output is export ZSH_DOTENV_PROMPT=
 
 | Plugin | Source | What It Does |
 | ------ | ------ | ------------ |
-| `zsh-syntax-highlighting` | Custom clone | Real-time color coding of commands as you type |
-| `zsh-autosuggestions` | Custom clone | Fish-like inline suggestions from command history (accept with →) |
-| `zsh-claudecode-completion` | Custom clone | Tab completions for Claude Code CLI |
+| `zsh-syntax-highlighting` | Homebrew | Real-time color coding of commands as you type |
+| `zsh-autosuggestions` | Homebrew | Fish-like inline suggestions from command history (accept with →) |
 | `conda-zsh-completion` | Custom clone | Conda environment and package completions |
 | `zsh-eza` | Custom clone | Enhanced `ls` using `eza` with icons and Git status |
 | `zsh-tfenv` | Custom clone | Terraform version manager completions |
@@ -1158,43 +1124,12 @@ defaults read com.googlecode.iterm2 TabStyleWithAutomaticOption        # Expecte
 
 ---
 
-### 5.8 — Install Claude Code (Native Binary)
-
-Claude Code is installed as a native binary (not via npm). The native installer is idempotent — re-running it updates to the latest version. Claude Code requires an Anthropic Pro, Max, Teams, or Enterprise account.
-
-```bash
-if command -v claude >/dev/null 2>&1; then
-  echo "Claude Code already installed: $(claude --version 2>/dev/null)"
-else
-  echo "Installing Claude Code native binary..."
-  curl -fsSL https://claude.ai/install.sh | bash
-fi
-
-# Verify
-claude --version
-# Expected: output contains "Claude Code" followed by a version number
-```
-
-After installation, the binary lives at `~/.local/bin/claude`. First-time users should run `claude` interactively to complete the browser-based OAuth login. The `~/.claude/` directory is created on first run.
-
----
-
 ### 5.9 — Install Codex CLI
 
-Codex is OpenAI's coding agent CLI. Install the macOS binary directly from GitHub releases (architecture-aware — Apple Silicon and Intel both supported). The binary self-updates at runtime.
+Codex is OpenAI's coding agent CLI. Install via Homebrew Cask (checksummed, IT-controlled installer — preferred over npm or GitHub binary downloads).
 
 ```bash
-if [ "$(uname -m)" = "arm64" ]; then CODEX_ARCH="aarch64"; else CODEX_ARCH="x86_64"; fi
-if command -v codex >/dev/null 2>&1; then
-  echo "Codex already installed: $(codex --version 2>/dev/null)"
-else
-  mkdir -p ~/.local/bin
-  curl -fsSL \
-    "https://github.com/openai/codex/releases/latest/download/codex-${CODEX_ARCH}-apple-darwin.tar.gz" \
-    | tar -xz -C ~/.local/bin
-  mv ~/.local/bin/codex-${CODEX_ARCH}-apple-darwin ~/.local/bin/codex 2>/dev/null || true
-  chmod +x ~/.local/bin/codex
-fi
+brew install --cask codex
 ```
 
 Write the Codex config (selects the model):
@@ -1212,7 +1147,7 @@ VERIFY:
 codex --version            # VERIFY: output contains a version number
 ```
 
-The binary lives at `~/.local/bin/codex` (already on PATH — same directory as Claude Code). First-time users should run `codex` interactively to complete the OAuth login with an OpenAI account.
+First-time users should run `codex` interactively to complete the OAuth login with an OpenAI account.
 
 ---
 
@@ -1591,12 +1526,6 @@ Install the NotebookLM CLI and MCP server (provides Google NotebookLM access fro
 
 ```bash
 uv tool install notebooklm-mcp-cli
-```
-
-Register as a Claude Code MCP server:
-
-```bash
-nlm setup add claude-code
 ```
 
 VERIFY:
@@ -2659,15 +2588,7 @@ grep -q 'MANPAGER' ~/.zshrc || \
 grep -q 'BAT_THEME' ~/.zshrc || \
   echo 'export BAT_THEME="Coldark-Dark"' >> ~/.zshrc
 
-# Bun
-grep -q 'BUN_INSTALL' ~/.zshrc || \
-  echo 'export BUN_INSTALL="$HOME/.bun"' >> ~/.zshrc
-grep -q 'BUN_INSTALL/bin' ~/.zshrc || \
-  echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> ~/.zshrc
-
-# Bun completions
-grep -q '_bun' ~/.zshrc || \
-  echo '[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"'  >> ~/.zshrc
+# Bun (installed via Homebrew — no PATH entry needed, brew manages it)
 
 # OpenCode zsh completion (append to .zshrc — site-functions doesn't work with yargs completions)
 grep -q 'opencode-completions' ~/.zshrc || \
@@ -2718,8 +2639,7 @@ fi
 Do **not** run `source ~/.zshrc` — it will fail in a non-interactive shell context (Oh My Zsh and Powerlevel10k require a TTY). Instead, export the critical variables for the current session:
 
 ```bash
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$HOME/.local/bin:/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
+export PATH="$HOME/.local/bin:/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
 export FORCE_AUTOUPDATE_PLUGINS=true
 eval $(/opt/homebrew/bin/brew shellenv)
 ```
@@ -2841,12 +2761,8 @@ ls "/Applications/Visual Studio Code.app"   # VERIFY: directory exists
 code --version                               # VERIFY: output contains a version number
 ls "/Applications/Cursor.app"                # VERIFY: directory exists
 cursor --version                             # VERIFY: output contains a version number
-ls "/Applications/Windsurf.app"              # VERIFY: directory exists
-windsurf --version                           # VERIFY: output contains a version number
 ls "/Applications/Zed.app"                   # VERIFY: directory exists
 zed --version                                # VERIFY: output contains a version number
-ls "/Applications/Alacritty.app"             # VERIFY: directory exists
-alacritty --version                          # VERIFY: output contains a version number
 ```
 
 ### 16.6 — chrome-devtools-mcp
@@ -2884,7 +2800,7 @@ All four runtime packages should be pre-installed. If any are missing, re-run `(
 ### 16.9 — Environment Variables
 
 ```bash
-echo $BUN_INSTALL            # VERIFY: output is /Users/<username>/.bun (not empty)
+which bun                    # VERIFY: output is /opt/homebrew/bin/bun
 echo $LITELLM_API_KEY        # VERIFY: output is your API key (not empty, not a placeholder)
 ```
 
@@ -3149,14 +3065,12 @@ If `/opt/homebrew/bin` is not in the output, ensure `eval $(/opt/homebrew/bin/br
 ### Bun not found
 
 ```bash
-# Verify bun is installed
-ls ~/.bun/bin/bun
-
-# Verify PATH includes bun
-echo $PATH | tr ':' '\n' | grep bun
+# Verify bun is installed via Homebrew
+which bun
+bun --version
 ```
 
-If missing, re-run: `curl -fsSL https://bun.sh/install | bash` and then `export PATH="$HOME/.bun/bin:$PATH"`.
+If missing, re-run: `brew install bun`.
 
 ---
 
