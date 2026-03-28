@@ -1177,6 +1177,7 @@ mkdir -p ~/.claude/plugins/marketplaces
 if [ -d ~/.claude/plugins/marketplaces/claude-plugins-official/.git ]; then
   git -C ~/.claude/plugins/marketplaces/claude-plugins-official pull --ff-only
 else
+  rm -rf ~/.claude/plugins/marketplaces/claude-plugins-official
   git clone --depth=1 --single-branch --branch main \
     https://github.com/anthropics/claude-plugins-official.git \
     ~/.claude/plugins/marketplaces/claude-plugins-official
@@ -1186,6 +1187,7 @@ fi
 if [ -d ~/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace/.git ]; then
   git -C ~/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace pull --ff-only
 else
+  rm -rf ~/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace
   git clone --depth=1 --single-branch --branch main \
     https://github.com/f5xc-salesdemos/marketplace.git \
     ~/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace
@@ -1195,6 +1197,7 @@ fi
 if [ -d ~/.claude/plugins/marketplaces/thedotmack/.git ]; then
   git -C ~/.claude/plugins/marketplaces/thedotmack pull --ff-only
 else
+  rm -rf ~/.claude/plugins/marketplaces/thedotmack
   git clone --depth=1 --single-branch --branch main \
     https://github.com/thedotmack/claude-mem.git \
     ~/.claude/plugins/marketplaces/thedotmack
@@ -1366,7 +1369,7 @@ else
 fi
 
 # python-pptx — required for PowerPoint conversion in frontend-slides
-pip install python-pptx
+pip install --break-system-packages python-pptx
 ```
 
 Invoke with `/frontend-slides` in Claude Code.
@@ -1445,7 +1448,7 @@ if [ -f "$LOCAL_FILE" ]; then
   # Deep merge: container as base, local overrides (local wins on conflict)
   if jq -s '.[0] * .[1]' <(echo "$CONTAINER_SETTINGS") "$LOCAL_FILE" > "${LOCAL_FILE}.tmp" \
      && [ -s "${LOCAL_FILE}.tmp" ]; then
-    mv "${LOCAL_FILE}.tmp" "$LOCAL_FILE"
+    mv -f "${LOCAL_FILE}.tmp" "$LOCAL_FILE"
     echo "Merged container settings into existing $LOCAL_FILE (local values preserved)"
   else
     echo "ERROR: jq merge failed — $LOCAL_FILE left unchanged"
@@ -1494,7 +1497,7 @@ if [ -f "$LOCAL_FILE" ]; then
         end
       ))
   ' "$LOCAL_FILE" > "${LOCAL_FILE}.tmp" && [ -s "${LOCAL_FILE}.tmp" ]; then
-    mv "${LOCAL_FILE}.tmp" "$LOCAL_FILE"
+    mv -f "${LOCAL_FILE}.tmp" "$LOCAL_FILE"
     echo "Merged MCP servers and marketplace flags into $LOCAL_FILE"
   else
     echo "ERROR: jq merge failed — $LOCAL_FILE left unchanged"
@@ -2552,7 +2555,7 @@ fi
 
 INSTANT_PROMPT
   cat ~/.zshrc >> "$TMPFILE"
-  mv "$TMPFILE" ~/.zshrc
+  mv -f "$TMPFILE" ~/.zshrc
 fi
 ```
 
