@@ -229,13 +229,22 @@ brew_install gogcli            # Google Suite CLI — Gmail, Calendar, Drive, Co
 brew_install tflint            # Terraform linter (catches errors before plan)
 brew_install terraform-docs    # Auto-generate Terraform module documentation
 
-# Linting and security scanning
+# Linting, formatting, and security scanning
 brew_install hadolint          # Dockerfile linter (best practices enforcement)
 brew_install actionlint        # GitHub Actions workflow linter (syntax + logic)
 brew_install yamllint          # YAML linter (used by pre-commit hooks)
 brew_install codespell         # Source code spell checker
 brew_install checkov           # IaC / GitHub Actions security scanner
 brew_install zizmor            # GitHub Actions supply-chain security scanner
+brew_install prettier          # Multi-language code formatter
+brew_install biome             # Fast JS/TS/JSON linter and formatter
+brew_install markdownlint-cli2 # Markdown linter (used by super-linter CI)
+brew_install editorconfig-checker # EditorConfig validation
+brew_install taplo             # TOML formatter and language server
+
+# Zsh plugins (via brew — checksummed, controlled install; symlinked into oh-my-zsh in Step 5.4)
+brew_install zsh-autosuggestions    # Fish-like inline history suggestions
+brew_install zsh-syntax-highlighting # Real-time command syntax highlighting
 
 # Media tools
 brew_install ffmpeg            # Video/audio processing (convert, extract, transcode)
@@ -288,6 +297,11 @@ yamllint --version     # VERIFY: output starts with "yamllint"
 codespell --version    # VERIFY: output starts with "codespell"
 checkov --version      # VERIFY: output contains a version number
 zizmor --version       # VERIFY: output contains a version number
+prettier --version     # VERIFY: output contains a version number
+biome --version        # VERIFY: output contains a version number
+markdownlint-cli2 --version  # VERIFY: output contains a version number
+ec --version           # VERIFY: output contains a version number (editorconfig-checker)
+taplo --version        # VERIFY: output contains a version number
 ffmpeg -version        # VERIFY: output starts with "ffmpeg version"
 yt-dlp --version       # VERIFY: output contains a version string
 aider --version        # VERIFY: output contains a version number
@@ -301,6 +315,8 @@ pdftotext -v 2>&1 | head -1  # VERIFY: output contains "pdftotext version"
 
 These are language servers that OpenCode discovers on `PATH` via `which()`. When found, OpenCode uses the brew/npm-installed version instead of auto-downloading its own copy.
 
+Linters and formatters that have Homebrew formulas (prettier, biome, markdownlint-cli2, editorconfig-checker, taplo) are installed via brew in Step 1 — only packages with no brew alternative are listed here.
+
 **Important**: Because Node.js is installed via Homebrew, `npm install -g` writes to `/opt/homebrew/lib` which is user-owned. No `sudo` required.
 
 **Note**: Unlike `brew install`, `npm install -g` always re-downloads even if the package is already installed. This is safe but adds ~30 seconds of network I/O on re-runs.
@@ -310,19 +326,12 @@ npm install -g vscode-langservers-extracted   # HTML, CSS, JSON, ESLint LSP serv
 npm install -g bash-language-server           # Bash/Zsh/Shell LSP
 npm install -g yaml-language-server           # YAML LSP
 npm install -g @mdx-js/language-server        # MDX LSP
-npm install -g @taplo/cli                     # TOML LSP (taplo)
 
 # Google Workspace CLI (mirrors devcontainer toolset)
 npm install -g @googleworkspace/cli           # Google Workspace admin CLI (gws)
 
 # TypeScript native compiler (tsgo — 10x faster type checking)
 npm install -g @typescript/native-preview     # Provides tsgo binary (TypeScript 7 Go port)
-
-# Linters and formatters (mirrors devcontainer toolset)
-npm install -g markdownlint-cli2              # Markdown linter (used by super-linter CI)
-npm install -g editorconfig-checker           # EditorConfig validation
-npm install -g prettier                       # Multi-language code formatter
-npm install -g @biomejs/biome                 # Fast JS/TS/JSON linter and formatter
 
 # Presentation and React tools
 npm install -g pptxgenjs                      # PowerPoint generation
@@ -336,18 +345,15 @@ npm install -g markitdown                     # Markdown processing
 ### Verify npm Global Packages
 
 ```bash
-npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|taplo|prettier|biome|googleworkspace|native-preview)"
+npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|googleworkspace|native-preview)"
 ```
 
-VERIFY: All nine packages appear in the output (exact versions may differ):
+VERIFY: All four LSP servers and supporting packages appear in the output (exact versions may differ):
 
-- `@biomejs/biome`
 - `@googleworkspace/cli`
 - `@mdx-js/language-server`
-- `@taplo/cli`
 - `@typescript/native-preview`
 - `bash-language-server`
-- `prettier`
 - `vscode-langservers-extracted`
 - `yaml-language-server`
 
@@ -907,23 +913,26 @@ it2 --help                     # VERIFY: output shows available commands (send, 
 
 ### 5.4 — Install Zsh Plugins
 
-Clone third-party plugins into Oh My Zsh's custom plugins directory. These mirror the plugins installed in the devcontainer Dockerfile.
+Link brew-managed plugins into Oh My Zsh's custom plugins directory, then clone
+the remaining plugins that have no Homebrew formula.
+
+`zsh-autosuggestions` and `zsh-syntax-highlighting` are installed via brew in Step 1.
+Symlinking them here makes Oh My Zsh's plugin loader find them without a separate clone.
+The `-sf` flag makes this idempotent.
+
+```bash
+mkdir -p ~/.oh-my-zsh/custom/plugins
+ln -sf "$(brew --prefix)/share/zsh-autosuggestions" \
+  ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+ln -sf "$(brew --prefix)/share/zsh-syntax-highlighting" \
+  ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+```
+
+Clone plugins that have no Homebrew formula:
 
 **IMPORTANT**: `git clone` fails with exit code 128 if the target directory already exists. Always guard with an existence check:
 
 ```bash
-[ -d ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions ] || \
-  git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
-    ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
-
-[ -d ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting ] || \
-  git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
-    ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
-
-[ -d ~/.oh-my-zsh/custom/plugins/zsh-claudecode-completion ] || \
-  git clone --depth=1 https://github.com/wbingli/zsh-claudecode-completion.git \
-    ~/.oh-my-zsh/custom/plugins/zsh-claudecode-completion
-
 [ -d ~/.oh-my-zsh/custom/plugins/conda-zsh-completion ] || \
   git clone --depth=1 https://github.com/conda-incubator/conda-zsh-completion.git \
     ~/.oh-my-zsh/custom/plugins/conda-zsh-completion
@@ -964,7 +973,7 @@ sed -i '' 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
 <!-- markdownlint-disable MD013 -->
 
 ```bash
-sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux zsh-claudecode-completion dotenv emoji gcloud git pre-commit iterm2 macos podman)/' ~/.zshrc
+sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux dotenv emoji gcloud git pre-commit iterm2 macos podman)/' ~/.zshrc
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -982,7 +991,7 @@ VERIFY all changes applied:
 
 ```bash
 grep '^ZSH_THEME=' ~/.zshrc    # VERIFY: output is ZSH_THEME="powerlevel10k/powerlevel10k"
-grep '^plugins=' ~/.zshrc       # VERIFY: output includes zsh-claudecode-completion
+grep '^plugins=' ~/.zshrc       # VERIFY: output includes zsh-autosuggestions and zsh-syntax-highlighting
 grep 'ZSH_DOTENV_PROMPT' ~/.zshrc  # VERIFY: output is export ZSH_DOTENV_PROMPT=false (before source line)
 ```
 
@@ -990,9 +999,8 @@ grep 'ZSH_DOTENV_PROMPT' ~/.zshrc  # VERIFY: output is export ZSH_DOTENV_PROMPT=
 
 | Plugin | Source | What It Does |
 | ------ | ------ | ------------ |
-| `zsh-syntax-highlighting` | Custom clone | Real-time color coding of commands as you type |
-| `zsh-autosuggestions` | Custom clone | Fish-like inline suggestions from command history (accept with →) |
-| `zsh-claudecode-completion` | Custom clone | Tab completions for Claude Code CLI |
+| `zsh-syntax-highlighting` | Homebrew | Real-time color coding of commands as you type |
+| `zsh-autosuggestions` | Homebrew | Fish-like inline suggestions from command history (accept with →) |
 | `conda-zsh-completion` | Custom clone | Conda environment and package completions |
 | `zsh-eza` | Custom clone | Enhanced `ls` using `eza` with icons and Git status |
 | `zsh-tfenv` | Custom clone | Terraform version manager completions |
@@ -1118,10 +1126,10 @@ defaults read com.googlecode.iterm2 TabStyleWithAutomaticOption        # Expecte
 
 ### 5.9 — Install Codex CLI
 
-Codex is OpenAI's coding agent CLI. Install via npm (safer than downloading binaries from GitHub releases directly).
+Codex is OpenAI's coding agent CLI. Install via Homebrew Cask (checksummed, IT-controlled installer — preferred over npm or GitHub binary downloads).
 
 ```bash
-npm install -g @openai/codex
+brew install --cask codex
 ```
 
 Write the Codex config (selects the model):
