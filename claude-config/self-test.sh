@@ -206,7 +206,7 @@ check "${ENABLED_COUNT} plugins configured (at least 1)" \
 check "FORCE_AUTOUPDATE_PLUGINS set" test "$FORCE_AUTOUPDATE_PLUGINS" = "true"
 check "official marketplace cached" \
   test -d "$HOME/.claude/plugins/marketplaces/claude-plugins-official"
-check "official marketplace.json in cache" \
+warn "official marketplace.json in cache (Anthropic may not include one)" \
   test -f "$HOME/.claude/plugins/marketplaces/claude-plugins-official/.claude-plugin/marketplace.json"
 check "f5xc marketplace cached" \
   test -d "$HOME/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace"
@@ -242,6 +242,9 @@ check "SessionStart hook references neutralize-hooks.sh" \
   jq -e '.hooks.SessionStart[0].hooks[0].command | test("neutralize-hooks")' "$HOME/.claude/settings.json"
 check "PostToolUse Skill hook references neutralize-hooks.sh" \
   jq -e '.hooks.PostToolUse[0].matcher == "Skill" and (.hooks.PostToolUse[0].hooks[0].command | test("neutralize-hooks"))' "$HOME/.claude/settings.json"
+# Ensure marketplace symlinks are current before checking (handles race
+# between Claude Code's runtime plugin sync and self-test execution)
+/opt/claude-config/neutralize-hooks.sh 2>/dev/null || true
 # Check that all enabled plugins have marketplace directories
 MISSING_MKT_DIRS=0
 while IFS= read -r KEY; do
