@@ -1552,7 +1552,7 @@ Write the file `~/.cache/opencode/package.json` with the following content (vers
 ```json
 {
   "dependencies": {
-    "@robinmordasiewicz/oh-my-opencode": "3.11.0-fork.1",
+    "@robinmordasiewicz/oh-my-opencode": "3.11.0-fork.2",
     "@ai-sdk/anthropic": "^3.0.64",
     "@ai-sdk/openai-compatible": "^2.0.37",
     "opencode-anthropic-auth": "0.0.13"
@@ -2101,7 +2101,7 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
   "small_model": "anthropic-proxy/claude-sonnet-4-6",
   "permission": "allow",
   "plugin": [
-    "@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"
+    "@robinmordasiewicz/oh-my-opencode@3.11.0-fork.2"
   ],
   "lsp": {
     "marksman": { "command": ["marksman", "server"], "extensions": [".md", ".mdx"] },
@@ -2151,7 +2151,7 @@ elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
       }
     }
   },
-  "plugin": ["opencode-claude-auth", "@robinmordasiewicz/oh-my-opencode@3.11.0-fork.1"],
+  "plugin": ["opencode-claude-auth", "@robinmordasiewicz/oh-my-opencode@3.11.0-fork.2"],
   "mcp": {
     "chrome-devtools": {
       "type": "local",
