@@ -235,24 +235,26 @@ if command -v fuser >/dev/null 2>&1; then
 fi
 
 # ============================================================
-# Fix plugin script permissions (issue #648)
-# Claude Code performs TWO plugin syncs during session init
-# (~10s apart). The SessionStart hook only fires after the
-# first sync, so the second sync re-introduces 644 perms.
+# Fix plugin script permissions and neutralize disabled hooks
 #
-# Five-layer fix:
-#   1. Immediate chmod sweep (self-test, non-session contexts)
-#   2. Background polling daemon for the first 60s of container
-#      life — catches all syncs regardless of timing
-#   3. SessionStart hook with delayed background chmod — catches
-#      the second sync even when the daemon has expired
-#   4. PostToolUse hook (matcher: Skill) for mid-session
+# Two upstream bugs require workarounds:
+#   - Issue #648: Plugin syncs reset .sh permissions to 644
+#   - cc#40013: Claude Code fires hooks from ALL plugins, not
+#     just enabled ones (causes SessionStart errors)
+#
+# Three-layer fix:
+#   1. Persistent background daemon (inotifywait or polling)
+#      watches for plugin syncs and immediately re-applies
+#      chmod +x and neutralizes non-enabled plugin hooks
+#   2. SessionStart hook — immediate chmod + neutralize when
+#      a new session starts (concurrent with plugin hooks)
+#   3. PostToolUse hook (matcher: Skill) — catches mid-session
 #      /reload-plugins
-#   5. Neutralize hooks.json for non-enabled marketplace plugins
-#      (cc#40013: Claude Code fires hooks from ALL installed
-#      plugins, not just enabled ones)
 #
-# Remove all five when upstream issues #648 and cc#40013 are resolved.
+# Build-time: install-plugins.sh also sets permissions and
+# neutralizes at image build time (baseline state).
+#
+# Remove all when upstream issues #648 and cc#40013 are resolved.
 # ============================================================
 
 # Neutralize hooks from non-enabled marketplace plugins (cc#40013)
@@ -287,8 +289,12 @@ neutralize_non_enabled_hooks() {
 find "${HOME}/.claude/plugins" -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
 neutralize_non_enabled_hooks
 
-# Background daemon: poll every 2s for 60s to catch all plugin syncs
+# Persistent background daemon (Layer 1)
+# Phase 1: poll every 2s for 60s (catches initial dual plugin syncs)
+# Phase 2: inotifywait or 30s polling indefinitely (catches plugin
+#   re-syncs when new sessions start in long-lived containers)
 (
+  # Phase 1: aggressive polling for initial syncs
   elapsed=0
   while [ "$elapsed" -lt 60 ]; do
     sleep 2
@@ -297,6 +303,25 @@ neutralize_non_enabled_hooks
     neutralize_non_enabled_hooks
     elapsed=$((elapsed + 2))
   done
+
+  # Phase 2: event-driven watch (falls back to polling if inotifywait unavailable)
+  if command -v inotifywait >/dev/null 2>&1; then
+    while true; do
+      inotifywait -q -r -e modify,create,moved_to \
+        "${HOME}/.claude/plugins/marketplaces" 2>/dev/null
+      sleep 1
+      find "${HOME}/.claude/plugins" -name "*.sh" -type f \
+        ! -perm -u+x -exec chmod +x {} + 2>/dev/null
+      neutralize_non_enabled_hooks
+    done
+  else
+    while true; do
+      sleep 30
+      find "${HOME}/.claude/plugins" -name "*.sh" -type f \
+        ! -perm -u+x -exec chmod +x {} + 2>/dev/null
+      neutralize_non_enabled_hooks
+    done
+  fi
 ) &
 
 # Inject SessionStart + PostToolUse hooks from template into runtime settings.json

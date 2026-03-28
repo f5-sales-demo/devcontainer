@@ -97,6 +97,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tailscale \
     # Shell tools
     bat bubblewrap fd-find ripgrep htop tree tmux file xxd \
+    # Filesystem event watcher (plugin hook neutralization daemon)
+    inotify-tools \
     # Node.js
     nodejs \
     # Python
