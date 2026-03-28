@@ -1161,7 +1161,7 @@ RUN OPENCODE_CACHE="$HOME/.cache/opencode" \
     && printf '21' > "$OPENCODE_CACHE/version" \
     && printf '{"dependencies":{}}\n' > "$OPENCODE_CACHE/package.json" \
     && bun add --cwd "$OPENCODE_CACHE" --force --exact \
-        @robinmordasiewicz/oh-my-opencode@3.11.0-fork.1 \
+        @robinmordasiewicz/oh-my-opencode@3.11.0-fork.2 \
         @ai-sdk/anthropic \
         @ai-sdk/openai-compatible \
         opencode-anthropic-auth@0.0.13
