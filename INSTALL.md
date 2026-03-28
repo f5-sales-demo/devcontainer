@@ -1325,14 +1325,24 @@ PLUGIN_BASE="$HOME/.claude/plugins"
 TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
 
 # Marketplace registry (all three marketplaces)
-printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"thedotmack":{"source":{"source":"github","repo":"thedotmack/claude-mem"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":false}}' \
-  "${PLUGIN_BASE}/marketplaces/claude-plugins-official" \
-  "$TIMESTAMP" \
-  "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" \
-  "$TIMESTAMP" \
-  "${PLUGIN_BASE}/marketplaces/thedotmack" \
-  "$TIMESTAMP" \
-  > "${PLUGIN_BASE}/known_marketplaces.json"
+jq -n \
+  --arg cl "${PLUGIN_BASE}/marketplaces/claude-plugins-official" \
+  --arg f5 "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" \
+  --arg td "${PLUGIN_BASE}/marketplaces/thedotmack" \
+  --arg ts "$TIMESTAMP" '{
+  "claude-plugins-official": {
+    "source": {"source":"github","repo":"anthropics/claude-plugins-official"},
+    "installLocation": $cl, "lastUpdated": $ts, "autoUpdate": true
+  },
+  "f5xc-salesdemos-marketplace": {
+    "source": {"source":"github","repo":"f5xc-salesdemos/marketplace"},
+    "installLocation": $f5, "lastUpdated": $ts, "autoUpdate": true
+  },
+  "thedotmack": {
+    "source": {"source":"github","repo":"thedotmack/claude-mem"},
+    "installLocation": $td, "lastUpdated": $ts, "autoUpdate": false
+  }
+}' > "${PLUGIN_BASE}/known_marketplaces.json"
 
 # Empty blocklist
 printf '{"fetchedAt":"%s","plugins":[]}' "$TIMESTAMP" > "${PLUGIN_BASE}/blocklist.json"
