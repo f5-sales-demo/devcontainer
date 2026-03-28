@@ -156,5 +156,7 @@ for MKT_DIR in "${PLUGIN_BASE}/marketplaces"/*/; do
       continue
     fi
     echo '{}' >"$HOOKS_FILE"
+    chmod 444 "$HOOKS_FILE"
+    chmod 555 "$(dirname "$HOOKS_FILE")"
   done
 done
