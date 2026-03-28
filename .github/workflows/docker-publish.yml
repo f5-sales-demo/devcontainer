@@ -12,9 +12,12 @@ on:
       - opencode-config/**
       - codex-config/**
       - pi-config/**
+      - scripts/**
       - docker-compose.yml
       - .devcontainer/**
       - .github/workflows/docker-publish.yml
+  schedule:
+    - cron: "0 5 * * *"
   workflow_dispatch:
 
 permissions:
