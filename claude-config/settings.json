@@ -54,12 +54,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "find ~/.claude/plugins -name '*.sh' -type f ! -perm -u+x -exec chmod +x {} + ; (sleep 15 && find ~/.claude/plugins -name '*.sh' -type f ! -perm -u+x -exec chmod +x {} + && for hf in ~/.claude/plugins/marketplaces/*/plugins/*/hooks/hooks.json; do [ -f \"$hf\" ] && p=$(basename $(dirname $(dirname \"$hf\"))) && m=$(basename $(dirname $(dirname $(dirname $(dirname \"$hf\"))))) && jq -e --arg k \"${p}@${m}\" '.enabledPlugins[$k]' ~/.claude/settings.json >/dev/null 2>&1 || echo '{}' > \"$hf\"; done) &",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "for hf in ~/.claude/plugins/marketplaces/*/plugins/*/hooks/hooks.json; do [ -f \"$hf\" ] || continue; p=$(basename $(dirname $(dirname \"$hf\"))); m=$(basename $(dirname $(dirname $(dirname $(dirname \"$hf\"))))); jq -e --arg k \"${p}@${m}\" '.enabledPlugins[$k]' ~/.claude/settings.json >/dev/null 2>&1 || echo '{}' > \"$hf\"; done",
+            "command": "find ~/.claude/plugins -name '*.sh' -type f ! -perm -u+x -exec chmod +x {} + ; for hf in ~/.claude/plugins/marketplaces/*/plugins/*/hooks/hooks.json; do [ -f \"$hf\" ] || continue; p=$(basename $(dirname $(dirname \"$hf\"))); m=$(basename $(dirname $(dirname $(dirname $(dirname \"$hf\"))))); jq -e --arg k \"${p}@${m}\" '.enabledPlugins[$k]' ~/.claude/settings.json >/dev/null 2>&1 || echo '{}' > \"$hf\"; done",
             "timeout": 10
           }
         ]
