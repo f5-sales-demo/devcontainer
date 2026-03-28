@@ -13,7 +13,7 @@
 > permission errors because the default policy prompts for confirmation — which is impossible in
 > non-interactive mode.
 >
-> **Execution notes**: This document is long (~1200 lines). Execute steps sequentially — do not
+> **Execution notes**: This document is long (~3000 lines). Execute steps sequentially — do not
 > skip ahead. Each step includes inline VERIFY comments that must pass before proceeding.
 > Steps marked **MANUAL STEP** require human interaction and should be skipped during automated runs.
 
@@ -404,72 +404,6 @@ OpenCode Desktop is the GUI companion for OpenCode. Install via Homebrew Cask:
 
 ```bash
 brew install --cask opencode-desktop
-```
-
----
-
-## Step 4c — Install Google Antigravity
-
-Google Antigravity is a UI-based AI Coding Agent IDE. It runs only on macOS (not in the Linux container). Install via Homebrew Cask:
-
-```bash
-brew install --cask antigravity
-```
-
-VERIFY:
-
-```bash
-agy --version              # VERIFY: output contains a version number
-```
-
----
-
-## Step 4e — Install Visual Studio Code
-
-Visual Studio Code is a general-purpose code editor with extensive extension support. Install via Homebrew Cask:
-
-**Idempotency**: Guard with an existence check — `brew install --cask` can fail if the app already exists:
-
-```bash
-[ -d "/Applications/Visual Studio Code.app" ] || brew install --cask visual-studio-code
-```
-
-VERIFY:
-
-```bash
-code --version                 # VERIFY: output contains a version number
-```
-
----
-
-## Step 4f — Install Cursor
-
-Cursor is an AI-native code editor built on the Visual Studio Code platform. Install via Homebrew Cask:
-
-```bash
-[ -d "/Applications/Cursor.app" ] || brew install --cask cursor
-```
-
-VERIFY:
-
-```bash
-cursor --version               # VERIFY: output contains a version number
-```
-
----
-
-## Step 4h — Install Zed
-
-Zed is a GPU-accelerated code editor with built-in AI assistant support. Install via Homebrew Cask:
-
-```bash
-[ -d "/Applications/Zed.app" ] || brew install --cask zed
-```
-
-VERIFY:
-
-```bash
-zed --version                  # VERIFY: output contains a version number
 ```
 
 ---
@@ -971,7 +905,7 @@ sed -i '' 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
 <!-- markdownlint-disable MD013 -->
 
 ```bash
-sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo vscode aws fzf docker history colored-man-pages command-not-found tmux dotenv emoji gcloud git pre-commit iterm2 macos podman)/' ~/.zshrc
+sed -i '' 's/^plugins=(.*/plugins=(zsh-syntax-highlighting zsh-autosuggestions zsh-interactive-cd jsontools gh gh-clone-complete common-aliases zsh-aliases-lsd zsh-eza zsh-tfenv conda-zsh-completion z pip terraform fluxcd azure git-auto-fetch helm istioctl kube-ps1 kubectl sudo aws fzf docker history colored-man-pages command-not-found tmux dotenv emoji gcloud git pre-commit iterm2 macos podman)/' ~/.zshrc
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -1019,7 +953,6 @@ grep 'ZSH_DOTENV_PROMPT' ~/.zshrc  # VERIFY: output is export ZSH_DOTENV_PROMPT=
 | `kube-ps1` | OMZ built-in | Kubernetes context/namespace in prompt |
 | `kubectl` | OMZ built-in | kubectl completions and aliases |
 | `sudo` | OMZ built-in | Press Escape twice to prepend `sudo` to current command |
-| `vscode` | OMZ built-in | Visual Studio Code aliases (`code .`, etc.) |
 | `aws` | OMZ built-in | AWS CLI completions |
 | `fzf` | OMZ built-in | Fuzzy finder integration (Ctrl+R history, Ctrl+T files) |
 | `docker` | OMZ built-in | Docker completions |
@@ -1116,33 +1049,6 @@ ls ~/Library/Fonts/MesloLGSNerdFont-Regular.ttf 2>/dev/null \
   ~/Library/Preferences/com.googlecode.iterm2.plist                    # Expected: 2
 defaults read com.googlecode.iterm2 TabStyleWithAutomaticOption        # Expected: 1 (Dark)
 ```
-
----
-
-### 5.9 — Install Codex CLI
-
-Codex is OpenAI's coding agent CLI. Install via Homebrew Cask (checksummed, IT-controlled installer — preferred over npm or GitHub binary downloads).
-
-```bash
-brew install --cask codex
-```
-
-Write the Codex config (selects the model):
-
-```bash
-mkdir -p ~/.codex
-cat > ~/.codex/config.toml <<'EOF'
-model = "gpt-5.2-codex"
-EOF
-```
-
-VERIFY:
-
-```bash
-codex --version            # VERIFY: output contains a version number
-```
-
-First-time users should run `codex` interactively to complete the OAuth login with an OpenAI account.
 
 ---
 
@@ -2650,10 +2556,6 @@ grep -q '\.local/bin' ~/.zshrc || \
 grep -q 'iTerm.app' ~/.zshrc || \
   echo 'export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"' >> ~/.zshrc
 
-# Oh My Zsh vscode plugin: use Cursor as default editor
-grep -q 'VSCODE=cursor' ~/.zshrc || \
-  echo 'export VSCODE=cursor' >> ~/.zshrc
-
 # dotenv plugin: auto-source .env files without prompting
 # Must appear BEFORE `source $ZSH/oh-my-zsh.sh` so the dotenv plugin sees it at load time
 grep -q 'ZSH_DOTENV_PROMPT' ~/.zshrc || \
@@ -2794,18 +2696,7 @@ VERIFY: all five packages appear in the output (exact versions may vary).
 
 VERIFY: output contains `Google Chrome` followed by a version number.
 
-### 16.5 — IDEs and Terminal
-
-```bash
-ls "/Applications/Visual Studio Code.app"   # VERIFY: directory exists
-code --version                               # VERIFY: output contains a version number
-ls "/Applications/Cursor.app"                # VERIFY: directory exists
-cursor --version                             # VERIFY: output contains a version number
-ls "/Applications/Zed.app"                   # VERIFY: directory exists
-zed --version                                # VERIFY: output contains a version number
-```
-
-### 16.6 — chrome-devtools-mcp
+### 16.5 — chrome-devtools-mcp
 
 ```bash
 npx -y chrome-devtools-mcp@latest --help
