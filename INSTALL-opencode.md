@@ -518,6 +518,7 @@ playwright-cli install --skills
 ### CLI-Anything (Claude Code Plugin)
 
 > **INTERACTIVE STEP**: Start Claude Code (`claude`) and run:
+>
 > 1. `/plugin marketplace add HKUDS/CLI-Anything`
 > 2. `/plugin install cli-anything`
 
