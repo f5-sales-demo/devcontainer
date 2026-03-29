@@ -1042,6 +1042,24 @@ RUN printf '#!/bin/sh\ncd /opt/caldera\nexec .venv/bin/python server.py --insecu
       > /usr/local/bin/caldera \
     && chmod +x /usr/local/bin/caldera
 
+# ============================================================
+# 12n. Hermes Agent (NousResearch — self-improving AI agent)
+#      Installed in /opt/hermes-agent with isolated Python 3.11
+#      venv. Reads OPENAI_BASE_URL + OPENAI_API_KEY for LiteLLM
+#      proxy, ANTHROPIC_TOKEN for Anthropic native auth.
+#      Config baked to ~/.hermes/config.yaml (section 17).
+# ============================================================
+# hadolint ignore=DL3059
+RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
+      https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent \
+    && rm -rf /opt/hermes-agent/.git \
+    && uv venv --python python3.11 /opt/hermes-agent/.venv \
+    && uv pip install --python /opt/hermes-agent/.venv/bin/python \
+      -e "/opt/hermes-agent[all]" \
+    && npm --prefix /opt/hermes-agent install --ignore-scripts 2>/dev/null || true \
+    && printf '#!/bin/sh\nexec /opt/hermes-agent/.venv/bin/hermes "$@"\n' \
+      > /usr/local/bin/hermes \
+    && chmod +x /usr/local/bin/hermes
 
 # Pre-stage plugin install script and settings for section 12l
 COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
@@ -1118,6 +1136,15 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
     ~/.config/gws \
     ~/.codex \
     ~/.pi/agent \
+    ~/.hermes \
+    ~/.hermes/cron \
+    ~/.hermes/sessions \
+    ~/.hermes/logs \
+    ~/.hermes/memories \
+    ~/.hermes/skills \
+    ~/.hermes/hooks \
+    ~/.hermes/image_cache \
+    ~/.hermes/audio_cache \
     ~/.ssh
 
 # Bun JavaScript runtime and package manager
@@ -1314,9 +1341,10 @@ COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-opencode-proxy.json /
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-opencode-anthropic.json /home/${USERNAME}/.config/opencode/oh-my-opencode-anthropic.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.opencode/opencode.json
 
-# --- Codex + Pi: bake static defaults ---
+# --- Codex + Pi + Hermes: bake static defaults ---
 COPY --chown=${USERNAME}:${USERNAME} codex-config/config.toml /home/${USERNAME}/.codex/config.toml
 COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
+COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
 
 
 # Map CLAUDE_CODE_OAUTH_TOKEN → ANTHROPIC_OAUTH_TOKEN for tools
