@@ -434,13 +434,16 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
       "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${NVIM_ARCH}.tar.gz" \
       | tar -xz -C /opt \
     && ln -s "/opt/nvim-linux-${NVIM_ARCH}/bin/nvim" /usr/local/bin/nvim \
-    # opencode (official upstream — install script handles arch detection)
-    # Use install(1) to copy binary into /usr/local/bin so it is accessible
-    # after USER switches to vscode (the installer writes to $HOME which is
-    # /root at this build stage, and /root is mode 700).
-    && curl ${CURL_RETRY} -fsSL "https://opencode.ai/install" \
-      | bash -s -- --no-modify-path \
-    && install -m 755 "$HOME/.opencode/bin/opencode" /usr/local/bin/opencode
+    # opencode (f5xc fork — download pre-built binary from fork GitHub releases)
+    # The fork adds persistent footer with git status, LiteLLM fixes, etc.
+    # Resolves latest release tag and downloads the matching platform binary.
+    && OPENCODE_TAG=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+        "https://github.com/f5xc-salesdemos/opencode/releases/latest" | sed 's|.*/||') \
+    && if [ "$DPKG_ARCH" = "amd64" ]; then OC_PLATFORM="linux-x64"; else OC_PLATFORM="linux-arm64"; fi \
+    && curl ${CURL_RETRY} -fsSL \
+        "https://github.com/f5xc-salesdemos/opencode/releases/download/${OPENCODE_TAG}/opencode-${OC_PLATFORM}.tar.gz" \
+        | tar -xz -C /usr/local/bin opencode \
+    && chmod +x /usr/local/bin/opencode
 
 # ============================================================
 # 10b. Additional binary tools (code CLI, oc, yq, terragrunt,
