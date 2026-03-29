@@ -29,6 +29,10 @@
     "toml": {
       "command": ["taplo", "lsp", "stdio"],
       "extensions": [".toml"]
+    },
+    "python": {
+      "command": ["pyright-langserver", "--stdio"],
+      "extensions": [".py", ".pyi"]
     }
   }
 }
