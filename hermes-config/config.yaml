@@ -4,12 +4,7 @@
 # ~/.hermes/.env at container startup.
 
 model:
-  # Default model (Hermes upstream default, OpenRouter-style naming)
-  default: "anthropic/claude-opus-4.6"
-  # Provider auto-detected from env vars at runtime:
-  #   OPENAI_BASE_URL + OPENAI_API_KEY → custom endpoint (LiteLLM proxy)
-  #   ANTHROPIC_TOKEN                  → anthropic native auth (OAuth)
-  #   Neither set                      → openrouter (requires OPENROUTER_API_KEY)
+  default: "claude-opus-4-6"
   provider: "auto"
   base_url: "https://openrouter.ai/api/v1"
 

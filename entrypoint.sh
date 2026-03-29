@@ -173,7 +173,7 @@ fi
 HERMES_HOME_DIR="$HOME/.hermes"
 mkdir -p "$HERMES_HOME_DIR"
 if [ -n "$LITELLM_API_KEY" ]; then
-  printf 'OPENAI_BASE_URL=%s\nOPENAI_API_KEY=%s\nLLM_MODEL=anthropic/claude-opus-4.6\n' \
+  printf 'OPENAI_BASE_URL=%s\nOPENAI_API_KEY=%s\nLLM_MODEL=claude-opus-4-6\n' \
     "$OPENAI_BASE_URL" "$OPENAI_API_KEY" \
     >"$HERMES_HOME_DIR/.env"
 elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
