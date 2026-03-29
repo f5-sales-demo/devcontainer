@@ -1215,12 +1215,13 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     && if [ "$UNAME_ARCH" = "x86_64" ]; then AIR_ARCH="x86_64"; else AIR_ARCH="aarch64"; fi \
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/posit-dev/air/releases/latest/download/air-${AIR_ARCH}-unknown-linux-gnu.tar.gz" \
-      | tar -xz -C /usr/local/bin air \
+      | tar -xz --strip-components=1 -C /usr/local/bin "air-${AIR_ARCH}-unknown-linux-gnu/air" \
     \
     && if [ "$UNAME_ARCH" = "x86_64" ]; then OXC_ARCH="x86_64"; else OXC_ARCH="aarch64"; fi \
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/oxc-project/oxc/releases/latest/download/oxfmt-${OXC_ARCH}-unknown-linux-gnu.tar.gz" \
-      | tar -xz -C /usr/local/bin oxfmt \
+      | tar -xz -C /usr/local/bin \
+    && mv /usr/local/bin/oxfmt-${OXC_ARCH}-unknown-linux-gnu /usr/local/bin/oxfmt \
     \
     && dub fetch dfmt \
     && dub build dfmt --compiler=ldc2 --build=release \
