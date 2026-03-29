@@ -437,8 +437,8 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     # opencode (f5xc fork — download pre-built binary from fork GitHub releases)
     # The fork adds persistent footer with git status, LiteLLM fixes, etc.
     # Resolves latest release tag and downloads the matching platform binary.
-    && OPENCODE_TAG=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
-        "https://github.com/f5xc-salesdemos/opencode/releases/latest" | sed 's|.*/||') \
+    && OPENCODE_TAG=$(curl -fsSL "https://api.github.com/repos/f5xc-salesdemos/opencode/releases" \
+        | grep -m1 '"tag_name"' | sed 's/.*"tag_name": *"//;s/".*//') \
     && if [ "$DPKG_ARCH" = "amd64" ]; then OC_PLATFORM="linux-x64"; else OC_PLATFORM="linux-arm64"; fi \
     && curl ${CURL_RETRY} -fsSL \
         "https://github.com/f5xc-salesdemos/opencode/releases/download/${OPENCODE_TAG}/opencode-${OC_PLATFORM}.tar.gz" \
