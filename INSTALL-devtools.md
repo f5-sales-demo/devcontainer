@@ -42,9 +42,8 @@ brew_install tree
 brew_install bat
 brew_install eza
 brew_install fzf
-brew_install yq
 brew_install poppler
-brew_install dos2unix
+brew_install tmux
 
 # Media tools
 brew_install ffmpeg
@@ -63,9 +62,8 @@ tree --version               # VERIFY: contains "tree v"
 bat --version                # VERIFY: starts with "bat"
 eza --version                # VERIFY: starts with "v"
 fzf --version                # VERIFY: a version number
-yq --version                 # VERIFY: "yq" followed by a version
 pdftotext -v 2>&1 | head -1 # VERIFY: contains "pdftotext version"
-dos2unix --version 2>&1 | head -1  # VERIFY: contains "dos2unix"
+tmux -V                      # VERIFY: tmux 3.x+
 ffmpeg -version | head -1    # VERIFY: starts with "ffmpeg version"
 yt-dlp --version             # VERIFY: a version string
 ```
@@ -131,15 +129,8 @@ terraform-docs --version # VERIFY: a version number
 ```bash
 brew_install hadolint
 brew_install actionlint
-brew_install yamllint
-brew_install codespell
 brew_install checkov
 brew_install zizmor
-brew_install prettier
-brew_install biome
-brew_install markdownlint-cli2
-brew_install editorconfig-checker
-brew_install taplo
 brew_install pre-commit
 ```
 
@@ -148,15 +139,8 @@ brew_install pre-commit
 ```bash
 hadolint --version               # VERIFY: "Haskell Dockerfile Linter"
 actionlint -version              # VERIFY: a version number
-yamllint --version               # VERIFY: starts with "yamllint"
-codespell --version              # VERIFY: starts with "codespell"
 checkov --version                # VERIFY: a version number
 zizmor --version                 # VERIFY: a version number
-prettier --version               # VERIFY: a version number
-biome --version                  # VERIFY: a version number
-markdownlint-cli2 --version     # VERIFY: a version number
-ec --version                     # VERIFY: a version number
-taplo --version                  # VERIFY: a version number
 pre-commit --version             # VERIFY: "pre-commit 4" or higher
 ```
 
@@ -342,7 +326,7 @@ curl --version | head -1
 bat --version
 eza --version
 fzf --version
-yq --version
+tmux -V
 
 # Runtimes
 python3 --version
@@ -358,18 +342,11 @@ gog --version
 tflint --version
 terraform-docs --version
 
-# Linters & scanners
+# Linters & scanners (CI-focused)
 hadolint --version
 actionlint -version
-yamllint --version
-codespell --version
 checkov --version
 zizmor --version
-prettier --version
-biome --version
-markdownlint-cli2 --version
-ec --version
-taplo --version
 pre-commit --version
 
 # Containers
