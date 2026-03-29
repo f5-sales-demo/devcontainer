@@ -1044,22 +1044,19 @@ RUN printf '#!/bin/sh\ncd /opt/caldera\nexec .venv/bin/python server.py --insecu
 
 # ============================================================
 # 12n. Hermes Agent (NousResearch — self-improving AI agent)
-#      Installed in /opt/hermes-agent with isolated Python 3.11
-#      venv. Reads OPENAI_BASE_URL + OPENAI_API_KEY for LiteLLM
-#      proxy, ANTHROPIC_TOKEN for Anthropic native auth.
+#      Installed in /opt/hermes-agent using system Python 3.x
+#      (requires >=3.11; system Python 3.13 is compatible).
+#      Reads OPENAI_BASE_URL + OPENAI_API_KEY for LiteLLM proxy,
+#      ANTHROPIC_TOKEN for Anthropic native auth.
 #      Config baked to ~/.hermes/config.yaml (section 17).
 # ============================================================
 # hadolint ignore=DL3059
 RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
       https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent \
     && rm -rf /opt/hermes-agent/.git \
-    && uv venv --python python3.11 /opt/hermes-agent/.venv \
-    && uv pip install --python /opt/hermes-agent/.venv/bin/python \
+    && uv pip install --system --break-system-packages \
       -e "/opt/hermes-agent[all]" \
-    && npm --prefix /opt/hermes-agent install --ignore-scripts 2>/dev/null || true \
-    && printf '#!/bin/sh\nexec /opt/hermes-agent/.venv/bin/hermes "$@"\n' \
-      > /usr/local/bin/hermes \
-    && chmod +x /usr/local/bin/hermes
+    && npm --prefix /opt/hermes-agent install --ignore-scripts 2>/dev/null || true
 
 # Pre-stage plugin install script and settings for section 12l
 COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
