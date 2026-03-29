@@ -83,7 +83,7 @@ brew install hashicorp/tap/terraform-ls 2>/dev/null \
 brew_install playwright-cli
 ```
 
-### Verify
+### Verify Step 1 — Core Dependencies
 
 ```bash
 node --version         # VERIFY: v25.x+
@@ -117,7 +117,7 @@ npm install -g react-icons react react-dom    # React ecosystem
 npm install -g sharp                          # Image processing
 ```
 
-### Verify
+### Verify Step 2 — npm Global Packages
 
 ```bash
 npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|googleworkspace|native-preview)"
@@ -133,7 +133,7 @@ Bun is used by OpenCode internally for plugin management.
 npm install -g bun
 ```
 
-### Verify
+### Verify Step 3 — Bun
 
 ```bash
 which bun       # VERIFY: /opt/homebrew/bin/bun or ~/.bun/bin/bun
@@ -150,7 +150,7 @@ Chrome is required by the `chrome-devtools-mcp` MCP server for browser automatio
 [ -d "/Applications/Google Chrome.app" ] || brew install --cask google-chrome
 ```
 
-### Verify
+### Verify Step 4 — Google Chrome
 
 ```bash
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version

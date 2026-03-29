@@ -51,7 +51,7 @@ brew_install ffmpeg
 brew_install yt-dlp
 ```
 
-### Verify
+### Verify Step 1 — Core CLI Utilities
 
 ```bash
 wget --version | head -1     # VERIFY: contains "GNU Wget"
@@ -81,7 +81,7 @@ brew_install terraform
 brew_install uv
 ```
 
-### Verify
+### Verify Step 2 — Development Runtimes
 
 ```bash
 python3 --version      # VERIFY: Python 3.x
@@ -100,7 +100,7 @@ brew install --cask google-cloud-sdk
 brew_install gogcli
 ```
 
-### Verify
+### Verify Step 3 — Cloud CLIs
 
 ```bash
 az --version 2>&1 | head -1   # VERIFY: contains "azure-cli"
@@ -117,7 +117,7 @@ brew_install tflint
 brew_install terraform-docs
 ```
 
-### Verify
+### Verify Step 4 — Terraform Ecosystem
 
 ```bash
 tflint --version         # VERIFY: "TFLint version"
@@ -143,7 +143,7 @@ brew_install taplo
 brew_install pre-commit
 ```
 
-### Verify
+### Verify Step 5 — Linters and Security Scanners
 
 ```bash
 hadolint --version               # VERIFY: "Haskell Dockerfile Linter"
@@ -195,7 +195,7 @@ EOF
 chmod +x ~/.local/bin/docker
 ```
 
-### Verify
+### Verify Step 6 — Container Runtime
 
 ```bash
 podman --version              # VERIFY: "podman version 5"
