@@ -3,7 +3,7 @@
   "permission": "allow",
   "model": "anthropic/claude-opus-4-6",
   "small_model": "anthropic/claude-sonnet-4-6",
-  "plugin": ["opencode-claude-auth", "@f5xc-salesdemos/oh-my-openagent@3.14.0-f5xc.5"],
+  "plugin": ["opencode-claude-auth", "@f5xc-salesdemos/oh-my-openagent@f5xc"],
   "mcp": {},
   "lsp": {
     "marksman": {

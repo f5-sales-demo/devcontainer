@@ -1197,8 +1197,8 @@ RUN OPENCODE_CACHE="$HOME/.cache/opencode" \
     && mkdir -p "$OPENCODE_CACHE" \
     && printf '21' > "$OPENCODE_CACHE/version" \
     && printf '{"dependencies":{}}\n' > "$OPENCODE_CACHE/package.json" \
-    && bun add --cwd "$OPENCODE_CACHE" --force --exact \
-        @f5xc-salesdemos/oh-my-openagent@3.14.0-f5xc.5 \
+    && bun add --cwd "$OPENCODE_CACHE" --force \
+        @f5xc-salesdemos/oh-my-openagent@f5xc \
         @ai-sdk/anthropic \
         @ai-sdk/openai-compatible \
         opencode-anthropic-auth@0.0.13
