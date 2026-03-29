@@ -435,9 +435,12 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
       | tar -xz -C /opt \
     && ln -s "/opt/nvim-linux-${NVIM_ARCH}/bin/nvim" /usr/local/bin/nvim \
     # opencode (official upstream — install script handles arch detection)
+    # Use install(1) to copy binary into /usr/local/bin so it is accessible
+    # after USER switches to vscode (the installer writes to $HOME which is
+    # /root at this build stage, and /root is mode 700).
     && curl ${CURL_RETRY} -fsSL "https://opencode.ai/install" \
       | bash -s -- --no-modify-path \
-    && ln -sf "$HOME/.opencode/bin/opencode" /usr/local/bin/opencode
+    && install -m 755 "$HOME/.opencode/bin/opencode" /usr/local/bin/opencode
 
 # ============================================================
 # 10b. Additional binary tools (code CLI, oc, yq, terragrunt,
@@ -852,6 +855,11 @@ ENV NODE_PATH=/usr/lib/node_modules
 # pip cannot upgrade these normally, so we skip the uninstall check.
 # hadolint ignore=DL3013,DL3059
 RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
+    "cryptography>=43,<47" \
+    "pyopenssl>=24.3,<=25.3.0" \
+    "packaging>=24,<26" \
+    "boto3>=1.34" \
+    tzdata \
     pre-commit \
     ansible \
     black \
@@ -883,7 +891,6 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     mitreattack-python \
     # Recon (recon-ng, spiderfoot installed via git clone below)
     theHarvester \
-    fierce \
     asciinema
 
 # Security & pentest pip packages.
@@ -902,15 +909,21 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     && pip install --no-cache-dir --break-system-packages --ignore-installed \
     mitmproxy \
     && pip install --no-cache-dir --break-system-packages --ignore-installed \
-    prowler kube-hunter
+    kube-hunter
 
-# uv-isolated tools (notebooklm-mcp-cli, checkov)
+# uv-isolated tools (notebooklm-mcp-cli, checkov, prowler, fierce)
+# checkov requires Python <3.13 (FileType.JSON AttributeError on 3.13).
+# prowler pins pydantic==1.x, boto3==1.26 — incompatible with global env.
+# fierce pins dnspython==1.16.0 — incompatible with global dnspython 2.x.
 # hadolint ignore=DL3059
 RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install notebooklm-mcp-cli \
     && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    uv tool install --python python3.12 checkov
-    # checkov requires Python <3.13 (FileType.JSON AttributeError on 3.13)
+    uv tool install --python python3.12 checkov \
+    && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    uv tool install prowler \
+    && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    uv tool install fierce
 
 # signal-cli (Signal messenger CLI — Java application)
 # hadolint ignore=DL3059
