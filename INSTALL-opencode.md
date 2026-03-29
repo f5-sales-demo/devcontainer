@@ -144,6 +144,30 @@ bun --version   # VERIFY: 1.3.x+
 
 ---
 
+## Step 3b — Install OpenCode (f5xc Fork)
+
+The f5xc fork of OpenCode includes a persistent footer with p10k-style Git status colorization, LiteLLM empty content fixes, and auto-updates from the fork's Homebrew tap.
+
+```bash
+brew tap f5xc-salesdemos/tap
+brew install f5xc-salesdemos/tap/opencode
+```
+
+### Verify Step 3b — OpenCode
+
+```bash
+which opencode      # VERIFY: /opt/homebrew/bin/opencode
+opencode --version  # VERIFY: version contains "-f5xc."
+```
+
+### Upgrade
+
+```bash
+brew upgrade f5xc-salesdemos/tap/opencode
+```
+
+---
+
 ## Step 4 — Install Google Chrome
 
 Chrome is required by the `chrome-devtools-mcp` MCP server for browser automation.
@@ -558,7 +582,7 @@ Write `~/.cache/opencode/package.json`:
 ```json
 {
   "dependencies": {
-    "@f5xc-salesdemos/oh-my-openagent": "3.14.0-f5xc.5",
+    "@f5xc-salesdemos/oh-my-openagent": "f5xc",
     "@ai-sdk/anthropic": "^3.0.64",
     "@ai-sdk/openai-compatible": "^2.0.37",
     "opencode-anthropic-auth": "0.0.13"
@@ -783,7 +807,7 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
   "model": "anthropic-proxy/claude-opus-4-6",
   "small_model": "anthropic-proxy/claude-sonnet-4-6",
   "permission": "allow",
-  "plugin": ["@f5xc-salesdemos/oh-my-openagent@3.14.0-f5xc.5"],
+  "plugin": ["@f5xc-salesdemos/oh-my-openagent@f5xc"],
       "lsp": {
     "marksman": { "command": ["marksman", "server"], "extensions": [".md", ".mdx"] },
     "mdx": { "command": ["mdx-language-server", "--stdio"], "extensions": [".mdx"] },
@@ -821,7 +845,7 @@ elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
       }
     }
   },
-  "plugin": ["opencode-claude-auth", "@f5xc-salesdemos/oh-my-openagent@3.14.0-f5xc.5"],
+  "plugin": ["opencode-claude-auth", "@f5xc-salesdemos/oh-my-openagent@f5xc"],
   "mcp": {
     "chrome-devtools": {
       "type": "local",
@@ -1088,7 +1112,7 @@ grep -q 'FORCE_AUTOUPDATE_PLUGINS' ~/.zshrc || \
 ## Verify the Complete OpenCode Installation
 
 ```bash
-opencode --version          # VERIFY: 1.3.x+
+opencode --version          # VERIFY: version contains "-f5xc."
 node --version              # VERIFY: v25.x+
 bun --version               # VERIFY: 1.3.x+
 
