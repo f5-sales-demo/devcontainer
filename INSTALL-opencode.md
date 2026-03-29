@@ -69,8 +69,15 @@ brew_install jq
 # GitHub CLI (used by opencode for PR/issue operations)
 brew_install gh
 
-# Terminal multiplexer (used by opencode for interactive sessions)
-brew_install tmux
+# Formatters and linters (used by opencode agents and LSP)
+brew_install yq
+brew_install dos2unix
+brew_install prettier
+brew_install biome
+brew_install markdownlint-cli2
+brew_install editorconfig-checker
+brew_install yamllint
+brew_install codespell
 
 # LSP servers (opencode auto-detects these on PATH)
 brew_install marksman
@@ -90,8 +97,15 @@ node --version         # VERIFY: v25.x+
 npm --version          # VERIFY: 11.x+
 rg --version           # VERIFY: contains "ripgrep"
 gh --version           # VERIFY: gh version 2.x+
-tmux -V                # VERIFY: tmux 3.x+
 jq --version           # VERIFY: jq-1.x+
+yq --version           # VERIFY: "yq" followed by a version
+dos2unix --version 2>&1 | head -1  # VERIFY: contains "dos2unix"
+prettier --version     # VERIFY: a version number
+biome --version        # VERIFY: a version number
+markdownlint-cli2 --version  # VERIFY: a version number
+ec --version           # VERIFY: a version number
+yamllint --version     # VERIFY: starts with "yamllint"
+codespell --version    # VERIFY: starts with "codespell"
 marksman --version     # VERIFY: prints a version string
 shellcheck --version   # VERIFY: version 0.10+
 shfmt --version        # VERIFY: v3.x+
