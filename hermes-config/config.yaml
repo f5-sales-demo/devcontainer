@@ -1,0 +1,59 @@
+# Hermes Agent Configuration — Devcontainer defaults
+# API keys are NOT stored here — they come from environment variables at runtime.
+# See entrypoint.sh for how LITELLM_API_KEY/LITELLM_BASE_URL are mapped to
+# ~/.hermes/.env at container startup.
+
+model:
+  default: "claude-opus-4-6"
+  provider: "auto"
+  base_url: "https://openrouter.ai/api/v1"
+
+terminal:
+  backend: "local"
+  cwd: "."
+  timeout: 180
+  container_cpu: 1
+  container_memory: 5120
+  container_disk: 51200
+  container_persistent: true
+
+compression:
+  enabled: true
+  threshold: 0.50
+  target_ratio: 0.20
+  protect_last_n: 20
+  summary_model: "google/gemini-3-flash-preview"
+  summary_provider: "auto"
+
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  memory_char_limit: 2200
+  user_char_limit: 1375
+  nudge_interval: 10
+  flush_min_turns: 6
+
+session_reset:
+  mode: both
+  idle_minutes: 1440
+  at_hour: 4
+
+agent:
+  max_turns: 60
+  verbose: false
+  reasoning_effort: "medium"
+
+skills:
+  creation_nudge_interval: 15
+
+display:
+  compact: false
+  tool_progress: all
+  busy_input_mode: interrupt
+  streaming: true
+  show_reasoning: false
+  bell_on_complete: false
+  skin: default
+
+platform_toolsets:
+  cli: [hermes-cli]

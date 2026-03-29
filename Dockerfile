@@ -141,6 +141,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     r-base \
     dart \
     dotnet-sdk-9.0 \
+    # D language compiler + package manager (for building dfmt)
+    ldc \
+    dub \
     # AI assistant tool dependencies
     libbrotli-dev \
     libc-ares-dev \
@@ -1042,6 +1045,21 @@ RUN printf '#!/bin/sh\ncd /opt/caldera\nexec .venv/bin/python server.py --insecu
       > /usr/local/bin/caldera \
     && chmod +x /usr/local/bin/caldera
 
+# ============================================================
+# 12n. Hermes Agent (NousResearch — self-improving AI agent)
+#      Installed in /opt/hermes-agent using system Python 3.x
+#      (requires >=3.11; system Python 3.13 is compatible).
+#      Reads OPENAI_BASE_URL + OPENAI_API_KEY for LiteLLM proxy,
+#      ANTHROPIC_TOKEN for Anthropic native auth.
+#      Config baked to ~/.hermes/config.yaml (section 17).
+# ============================================================
+# hadolint ignore=DL3059
+RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
+      https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent \
+    && rm -rf /opt/hermes-agent/.git \
+    && uv pip install --system --break-system-packages \
+      -e "/opt/hermes-agent[all]" \
+    && npm --prefix /opt/hermes-agent install --ignore-scripts 2>/dev/null || true
 
 # Pre-stage plugin install script and settings for section 12l
 COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
@@ -1104,10 +1122,6 @@ RUN npx playwright install-deps
 # ============================================================
 # User setup
 # ============================================================
-# Pre-create Homebrew prefix so the installer skips the sudo check
-RUN mkdir -p /home/linuxbrew/.linuxbrew \
-    && chown -R $USERNAME:$USERNAME /home/linuxbrew/.linuxbrew
-
 USER $USERNAME
 WORKDIR /home/$USERNAME
 
@@ -1118,6 +1132,15 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
     ~/.config/gws \
     ~/.codex \
     ~/.pi/agent \
+    ~/.hermes \
+    ~/.hermes/cron \
+    ~/.hermes/sessions \
+    ~/.hermes/logs \
+    ~/.hermes/memories \
+    ~/.hermes/skills \
+    ~/.hermes/hooks \
+    ~/.hermes/image_cache \
+    ~/.hermes/audio_cache \
     ~/.ssh
 
 # Bun JavaScript runtime and package manager
@@ -1176,21 +1199,54 @@ RUN if [ -f ~/.config/opencode/oh-my-opencode.json ]; then \
     fi
 
 # ============================================================
-# 14. Homebrew (AI assistant deps + formatters)
+# 14. Language formatters (GitHub binaries + source build)
+#     Replaces the previous Homebrew section. Each tool is
+#     fetched from its authoritative GitHub release or built
+#     from source. Arch-conditional logic handles the two
+#     formatters (nixfmt, ormolu) that only publish x86_64
+#     Linux binaries — arm64 falls back to Homebrew for those
+#     two only.
 # ============================================================
-RUN NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-ENV HOMEBREW_NO_AUTO_UPDATE=1
 ENV FORCE_AUTOUPDATE_PLUGINS=true
-ENV PATH="/home/vscode/.local/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
+ENV PATH="/home/vscode/.local/bin:${PATH}"
 
-# AI assistant deps + formatters (no APT packages available)
 # hadolint ignore=DL3059
-RUN brew install ada-url hdrhistogram_c icu4c@78 llhttp uvwasi \
-      air dfmt nixfmt ormolu oxfmt \
-    && brew cleanup --prune=all -s \
-    && rm -f /home/linuxbrew/.linuxbrew/bin/python3 \
-      /home/linuxbrew/.linuxbrew/bin/python3.14
+RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
+    && if [ "$UNAME_ARCH" = "x86_64" ]; then AIR_ARCH="x86_64"; else AIR_ARCH="aarch64"; fi \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/posit-dev/air/releases/latest/download/air-${AIR_ARCH}-unknown-linux-gnu.tar.gz" \
+      | tar -xz --strip-components=1 -C /usr/local/bin "air-${AIR_ARCH}-unknown-linux-gnu/air" \
+    \
+    && if [ "$UNAME_ARCH" = "x86_64" ]; then OXC_ARCH="x86_64"; else OXC_ARCH="aarch64"; fi \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/oxc-project/oxc/releases/latest/download/oxfmt-${OXC_ARCH}-unknown-linux-gnu.tar.gz" \
+      | tar -xz -C /usr/local/bin \
+    && mv /usr/local/bin/oxfmt-${OXC_ARCH}-unknown-linux-gnu /usr/local/bin/oxfmt \
+    \
+    && dub fetch dfmt \
+    && dub build dfmt --compiler=ldc2 --build=release \
+    && sudo install -m 755 "$(find ~/.dub/packages -name dfmt -type f -perm /111 2>/dev/null | head -1)" /usr/local/bin/dfmt \
+    \
+    && if [ "$DPKG_ARCH" = "amd64" ]; then \
+      curl ${CURL_RETRY} -fsSL \
+        "https://github.com/NixOS/nixfmt/releases/latest/download/nixfmt" \
+        -o /usr/local/bin/nixfmt \
+      && chmod +x /usr/local/bin/nixfmt \
+      && curl ${CURL_RETRY} -fsSL \
+        "https://github.com/tweag/ormolu/releases/latest/download/ormolu-x86_64-linux.zip" \
+        -o /tmp/ormolu.zip \
+      && unzip -qo /tmp/ormolu.zip ormolu -d /usr/local/bin \
+      && rm /tmp/ormolu.zip \
+      && chmod +x /usr/local/bin/ormolu; \
+    else \
+      sudo mkdir -p /home/linuxbrew/.linuxbrew \
+      && sudo chown -R "$(whoami)":"$(whoami)" /home/linuxbrew/.linuxbrew \
+      && NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
+      && /home/linuxbrew/.linuxbrew/bin/brew install nixfmt ormolu \
+      && /home/linuxbrew/.linuxbrew/bin/brew cleanup --prune=all -s \
+      && sudo ln -sf /home/linuxbrew/.linuxbrew/bin/nixfmt /usr/local/bin/nixfmt \
+      && sudo ln -sf /home/linuxbrew/.linuxbrew/bin/ormolu /usr/local/bin/ormolu; \
+    fi
 
 # ============================================================
 # 15. ZSH plugins (oh-my-zsh is pre-installed by devcontainers base)
@@ -1314,9 +1370,10 @@ COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-opencode-proxy.json /
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-opencode-anthropic.json /home/${USERNAME}/.config/opencode/oh-my-opencode-anthropic.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.opencode/opencode.json
 
-# --- Codex + Pi: bake static defaults ---
+# --- Codex + Pi + Hermes: bake static defaults ---
 COPY --chown=${USERNAME}:${USERNAME} codex-config/config.toml /home/${USERNAME}/.codex/config.toml
 COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
+COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
 
 
 # Map CLAUDE_CODE_OAUTH_TOKEN → ANTHROPIC_OAUTH_TOKEN for tools

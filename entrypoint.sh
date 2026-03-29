@@ -165,6 +165,23 @@ elif [ -n "$LITELLM_API_KEY" ]; then
 fi
 
 # ============================================================
+# Hermes Agent config (LiteLLM proxy vs Anthropic OAuth)
+# Writes ~/.hermes/.env so Hermes picks up credentials at startup.
+# Hermes reads OPENAI_BASE_URL + OPENAI_API_KEY for custom endpoints
+# and ANTHROPIC_TOKEN for Anthropic native auth.
+# ============================================================
+HERMES_HOME_DIR="$HOME/.hermes"
+mkdir -p "$HERMES_HOME_DIR"
+if [ -n "$LITELLM_API_KEY" ]; then
+  printf 'OPENAI_BASE_URL=%s\nOPENAI_API_KEY=%s\nLLM_MODEL=claude-opus-4-6\n' \
+    "$OPENAI_BASE_URL" "$OPENAI_API_KEY" \
+    >"$HERMES_HOME_DIR/.env"
+elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+  printf 'ANTHROPIC_TOKEN=%s\n' "$ANTHROPIC_OAUTH_TOKEN" \
+    >"$HERMES_HOME_DIR/.env"
+fi
+
+# ============================================================
 # Chrome DevTools MCP (symlink + shared browser)
 # ============================================================
 fix_chrome_symlink() {

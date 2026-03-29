@@ -83,7 +83,7 @@ brew install hashicorp/tap/terraform-ls 2>/dev/null \
 brew_install playwright-cli
 ```
 
-### Verify
+### Verify Step 1 — Core Dependencies
 
 ```bash
 node --version         # VERIFY: v25.x+
@@ -110,6 +110,7 @@ npm install -g vscode-langservers-extracted   # HTML, CSS, JSON, ESLint LSP serv
 npm install -g bash-language-server           # Bash/Zsh/Shell LSP
 npm install -g yaml-language-server           # YAML LSP
 npm install -g @mdx-js/language-server        # MDX LSP
+npm install -g pyright                        # Python LSP (pyright-langserver)
 npm install -g @googleworkspace/cli           # Google Workspace admin CLI (gws)
 npm install -g @typescript/native-preview     # tsgo — TypeScript 7 Go port
 npm install -g pptxgenjs                      # PowerPoint generation
@@ -117,10 +118,11 @@ npm install -g react-icons react react-dom    # React ecosystem
 npm install -g sharp                          # Image processing
 ```
 
-### Verify
+### Verify Step 2 — npm Global Packages
 
 ```bash
-npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|googleworkspace|native-preview)"
+npm list -g --depth=0 2>/dev/null | grep -E "(vscode-langservers|bash-language|yaml-language|mdx-js|pyright|googleworkspace|native-preview)"
+which pyright-langserver   # VERIFY: path to pyright LSP binary
 ```
 
 ---
@@ -133,7 +135,7 @@ Bun is used by OpenCode internally for plugin management.
 npm install -g bun
 ```
 
-### Verify
+### Verify Step 3 — Bun
 
 ```bash
 which bun       # VERIFY: /opt/homebrew/bin/bun or ~/.bun/bin/bun
@@ -150,7 +152,7 @@ Chrome is required by the `chrome-devtools-mcp` MCP server for browser automatio
 [ -d "/Applications/Google Chrome.app" ] || brew install --cask google-chrome
 ```
 
-### Verify
+### Verify Step 4 — Google Chrome
 
 ```bash
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version
@@ -518,6 +520,7 @@ playwright-cli install --skills
 ### CLI-Anything (Claude Code Plugin)
 
 > **INTERACTIVE STEP**: Start Claude Code (`claude`) and run:
+>
 > 1. `/plugin marketplace add HKUDS/CLI-Anything`
 > 2. `/plugin install cli-anything`
 
@@ -781,13 +784,14 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
   "small_model": "anthropic-proxy/claude-sonnet-4-6",
   "permission": "allow",
   "plugin": ["@f5xc-salesdemos/oh-my-openagent@3.14.0-f5xc.5"],
-  "lsp": {
+      "lsp": {
     "marksman": { "command": ["marksman", "server"], "extensions": [".md", ".mdx"] },
     "mdx": { "command": ["mdx-language-server", "--stdio"], "extensions": [".mdx"] },
     "json": { "command": ["vscode-json-language-server", "--stdio"], "extensions": [".json", ".jsonc"] },
     "css": { "command": ["vscode-css-language-server", "--stdio"], "extensions": [".css", ".less", ".scss"] },
     "html": { "command": ["vscode-html-language-server", "--stdio"], "extensions": [".html", ".htm"] },
-    "toml": { "command": ["taplo", "lsp", "stdio"], "extensions": [".toml"] }
+    "toml": { "command": ["taplo", "lsp", "stdio"], "extensions": [".toml"] },
+    "python": { "command": ["pyright-langserver", "--stdio"], "extensions": [".py", ".pyi"] }
   }
 }
 ENDOFJSON
@@ -838,7 +842,8 @@ elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
     "json": { "command": ["vscode-json-language-server", "--stdio"], "extensions": [".json", ".jsonc"] },
     "css": { "command": ["vscode-css-language-server", "--stdio"], "extensions": [".css", ".less", ".scss"] },
     "html": { "command": ["vscode-html-language-server", "--stdio"], "extensions": [".html", ".htm"] },
-    "toml": { "command": ["taplo", "lsp", "stdio"], "extensions": [".toml"] }
+    "toml": { "command": ["taplo", "lsp", "stdio"], "extensions": [".toml"] },
+    "python": { "command": ["pyright-langserver", "--stdio"], "extensions": [".py", ".pyi"] }
   }
 }
 ENDOFJSON
@@ -1088,7 +1093,7 @@ node --version              # VERIFY: v25.x+
 bun --version               # VERIFY: 1.3.x+
 
 # LSP servers on PATH
-which bash-language-server yaml-language-server marksman terraform-ls shellcheck shfmt
+which bash-language-server yaml-language-server marksman terraform-ls shellcheck shfmt pyright-langserver
 
 # OpenCode config files
 ls -la ~/.config/opencode/opencode.json

@@ -4,6 +4,7 @@
 !opencode-config/
 !codex-config/
 !pi-config/
+!hermes-config/
 !.devcontainer/scripts/
 !scripts/
 !configs/
