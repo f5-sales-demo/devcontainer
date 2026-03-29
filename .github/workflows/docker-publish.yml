@@ -75,6 +75,8 @@ jobs:
           build-args: |
             BUILD_COMMIT=${{ github.sha }}
             BUILD_DATE=${{ steps.buildmeta.outputs.build_date }}
+          secrets: |
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
           cache-from: type=registry,ref=${{ env.MAIN_IMAGE }}:cache-${{ matrix.cache-scope }}
           cache-to: type=registry,ref=${{ env.MAIN_IMAGE }}:cache-${{ matrix.cache-scope }},mode=max
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true

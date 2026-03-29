@@ -433,13 +433,24 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${NVIM_ARCH}.tar.gz" \
       | tar -xz -C /opt \
-    && ln -s "/opt/nvim-linux-${NVIM_ARCH}/bin/nvim" /usr/local/bin/nvim \
-    # opencode (f5xc fork — download pre-built binary from fork GitHub releases)
-    # The fork adds persistent footer with git status, LiteLLM fixes, etc.
-    # Resolves latest release tag and downloads the matching platform binary.
-    && OPENCODE_TAG=$(curl -fsSL "https://api.github.com/repos/f5xc-salesdemos/opencode/releases" \
+    && ln -s "/opt/nvim-linux-${NVIM_ARCH}/bin/nvim" /usr/local/bin/nvim
+
+# opencode (f5xc fork — pre-built binary from fork GitHub releases)
+# Separate RUN with --mount=type=secret for authenticated GitHub API.
+# Uses per_page=1 to fetch only the latest release (includes pre-releases).
+# Falls back to unauthenticated call for local builds without secrets.
+# hadolint ignore=DL3059
+RUN --mount=type=secret,id=GITHUB_TOKEN \
+    DPKG_ARCH=$(dpkg --print-architecture) \
+    && AUTH_HEADER="" \
+    && if [ -f /run/secrets/GITHUB_TOKEN ]; then \
+      AUTH_HEADER="Authorization: token $(cat /run/secrets/GITHUB_TOKEN)"; \
+    fi \
+    && OPENCODE_TAG=$(curl -fsSL ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
+        "https://api.github.com/repos/f5xc-salesdemos/opencode/releases?per_page=1" \
         | grep -m1 '"tag_name"' | sed 's/.*"tag_name": *"//;s/".*//') \
     && if [ "$DPKG_ARCH" = "amd64" ]; then OC_PLATFORM="linux-x64"; else OC_PLATFORM="linux-arm64"; fi \
+    && echo "Installing opencode ${OPENCODE_TAG} for ${OC_PLATFORM}" \
     && curl ${CURL_RETRY} -fsSL \
         "https://github.com/f5xc-salesdemos/opencode/releases/download/${OPENCODE_TAG}/opencode-${OC_PLATFORM}.tar.gz" \
         | tar -xz -C /usr/local/bin opencode \
