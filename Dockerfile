@@ -868,7 +868,7 @@ ENV NODE_PATH=/usr/lib/node_modules
 # packages without pip RECORD files (typing_extensions, packaging, etc.).
 # pip cannot upgrade these normally, so we skip the uninstall check.
 # hadolint ignore=DL3013,DL3059
-RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
+RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
     "cryptography>=43,<47" \
     "pyopenssl>=24.3,<=25.3.0" \
     "packaging>=24,<26" \
@@ -916,14 +916,10 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
 # --ignore-installed: Debian system packages (blinker, etc.) lack
 # pip RECORD files and block uninstall.
 # hadolint ignore=DL3013,DL3059
-RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
+RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
     scapy impacket sslyze arjun hashid \
-    && pip install --no-cache-dir --break-system-packages --ignore-installed \
-    pwntools volatility3 \
-    && pip install --no-cache-dir --break-system-packages --ignore-installed \
-    mitmproxy \
-    && pip install --no-cache-dir --break-system-packages --ignore-installed \
-    kube-hunter
+    && pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
+    pwntools volatility3 "packaging>=24,<26"
 
 # uv-isolated tools (notebooklm-mcp-cli, checkov, prowler, fierce)
 # checkov requires Python <3.13 (FileType.JSON AttributeError on 3.13).
@@ -934,10 +930,14 @@ RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install notebooklm-mcp-cli \
     && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install --python python3.12 checkov \
+    && (UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    uv tool install prowler 2>&1 | grep -v "missing.*RECORD") \
     && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    uv tool install prowler \
+    uv tool install fierce \
     && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    uv tool install fierce
+    uv tool install mitmproxy \
+    && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    uv tool install kube-hunter
 
 # signal-cli (Signal messenger CLI — Java application)
 # hadolint ignore=DL3059
@@ -1009,7 +1009,7 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
     && ln -s /opt/docker-bench-security/docker-bench-security.sh /usr/local/bin/docker-bench-security \
     # recon-ng and spiderfoot are not on PyPI — install from git
     && git clone --depth=1 https://github.com/lanmaster53/recon-ng.git /opt/recon-ng \
-    && pip install --no-cache-dir --break-system-packages -r /opt/recon-ng/REQUIREMENTS \
+    && pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r /opt/recon-ng/REQUIREMENTS \
     && ln -s /opt/recon-ng/recon-ng /usr/local/bin/recon-ng \
     && git clone --depth=1 https://github.com/smicallef/spiderfoot.git /opt/spiderfoot \
     # Spiderfoot pins lxml>=4.9.2,<5 but lxml 4.x Cython C code is
@@ -1017,7 +1017,7 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
     # changed _PyLong_AsByteArray).  Strip the <5 upper bound so pip uses
     # the already-installed lxml 6.x cp313 wheel.
     && sed -i 's/lxml>=4\.9\.2,<5/lxml>=4.9.2/' /opt/spiderfoot/requirements.txt \
-    && pip install --no-cache-dir --break-system-packages -r /opt/spiderfoot/requirements.txt \
+    && pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r /opt/spiderfoot/requirements.txt \
     && printf '#!/bin/sh\nexec python3 /opt/spiderfoot/sf.py "$@"\n' > /usr/local/bin/spiderfoot \
     && chmod +x /usr/local/bin/spiderfoot \
     && rm -rf /opt/testssl.sh/.git /opt/exploitdb/.git /opt/seclists/.git \
@@ -1034,7 +1034,7 @@ WORKDIR /tmp/attack-navigator/nav-app
 
 # hadolint ignore=DL3059
 RUN npm ci --ignore-scripts \
-    && npx ng build --configuration production \
+    && NODE_OPTIONS="--max-old-space-size=4096" npx ng build --configuration production 2>&1 | grep -v "chunkSizeWarningLimit" \
     && mkdir -p /opt/attack-navigator \
     && cp -r dist/browser/* /opt/attack-navigator/ \
     && rm -rf /tmp/attack-navigator \
@@ -1253,7 +1253,7 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     && rm "/tmp/oxfmt-${OXC_ARCH}-unknown-linux-gnu" \
     \
     && dub fetch dfmt \
-    && dub build dfmt --compiler=ldc2 --build=release \
+    && (dub build dfmt --compiler=ldc2 --build=release 2>&1 | grep -v "Warning Invalid source/import path") \
     && sudo install -m 755 "$(find ~/.dub/packages -name dfmt -type f -perm /111 2>/dev/null | head -1)" /usr/local/bin/dfmt \
     \
     && if [ "$DPKG_ARCH" = "amd64" ]; then \
@@ -1270,9 +1270,10 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     else \
       sudo mkdir -p /home/linuxbrew/.linuxbrew \
       && sudo chown -R "$(whoami)":"$(whoami)" /home/linuxbrew/.linuxbrew \
-      && NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
-      && /home/linuxbrew/.linuxbrew/bin/brew install nixfmt ormolu \
-      && /home/linuxbrew/.linuxbrew/bin/brew cleanup --prune=all -s \
+      && NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" 2>&1 | grep -v "is not in your PATH" \
+      && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
+      && brew install nixfmt ormolu \
+      && brew cleanup --prune=all -s \
       && sudo ln -sf /home/linuxbrew/.linuxbrew/bin/nixfmt /usr/local/bin/nixfmt \
       && sudo ln -sf /home/linuxbrew/.linuxbrew/bin/ormolu /usr/local/bin/ormolu; \
     fi
