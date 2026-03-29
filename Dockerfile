@@ -1215,13 +1215,15 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     && if [ "$UNAME_ARCH" = "x86_64" ]; then AIR_ARCH="x86_64"; else AIR_ARCH="aarch64"; fi \
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/posit-dev/air/releases/latest/download/air-${AIR_ARCH}-unknown-linux-gnu.tar.gz" \
-      | tar -xz --strip-components=1 -C /usr/local/bin "air-${AIR_ARCH}-unknown-linux-gnu/air" \
+      | tar -xz --strip-components=1 -C /tmp "air-${AIR_ARCH}-unknown-linux-gnu/air" \
+    && sudo install -m 755 /tmp/air /usr/local/bin/air && rm /tmp/air \
     \
     && if [ "$UNAME_ARCH" = "x86_64" ]; then OXC_ARCH="x86_64"; else OXC_ARCH="aarch64"; fi \
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/oxc-project/oxc/releases/latest/download/oxfmt-${OXC_ARCH}-unknown-linux-gnu.tar.gz" \
-      | tar -xz -C /usr/local/bin \
-    && mv /usr/local/bin/oxfmt-${OXC_ARCH}-unknown-linux-gnu /usr/local/bin/oxfmt \
+      | tar -xz -C /tmp \
+    && sudo install -m 755 "/tmp/oxfmt-${OXC_ARCH}-unknown-linux-gnu" /usr/local/bin/oxfmt \
+    && rm "/tmp/oxfmt-${OXC_ARCH}-unknown-linux-gnu" \
     \
     && dub fetch dfmt \
     && dub build dfmt --compiler=ldc2 --build=release \
@@ -1230,14 +1232,14 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     && if [ "$DPKG_ARCH" = "amd64" ]; then \
       curl ${CURL_RETRY} -fsSL \
         "https://github.com/NixOS/nixfmt/releases/latest/download/nixfmt" \
-        -o /usr/local/bin/nixfmt \
-      && chmod +x /usr/local/bin/nixfmt \
+        -o /tmp/nixfmt \
+      && sudo install -m 755 /tmp/nixfmt /usr/local/bin/nixfmt && rm /tmp/nixfmt \
       && curl ${CURL_RETRY} -fsSL \
         "https://github.com/tweag/ormolu/releases/latest/download/ormolu-x86_64-linux.zip" \
         -o /tmp/ormolu.zip \
-      && unzip -qo /tmp/ormolu.zip ormolu -d /usr/local/bin \
-      && rm /tmp/ormolu.zip \
-      && chmod +x /usr/local/bin/ormolu; \
+      && unzip -qo /tmp/ormolu.zip ormolu -d /tmp \
+      && sudo install -m 755 /tmp/ormolu /usr/local/bin/ormolu \
+      && rm /tmp/ormolu.zip /tmp/ormolu; \
     else \
       sudo mkdir -p /home/linuxbrew/.linuxbrew \
       && sudo chown -R "$(whoami)":"$(whoami)" /home/linuxbrew/.linuxbrew \
