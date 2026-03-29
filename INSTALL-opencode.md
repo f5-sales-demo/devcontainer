@@ -146,7 +146,7 @@ bun --version   # VERIFY: 1.3.x+
 
 ## Step 3b — Install OpenCode (f5xc Fork)
 
-The f5xc fork of OpenCode includes a persistent footer with p10k-style git status colorization, LiteLLM empty content fixes, and auto-updates from the fork's Homebrew tap.
+The f5xc fork of OpenCode includes a persistent footer with p10k-style Git status colorization, LiteLLM empty content fixes, and auto-updates from the fork's Homebrew tap.
 
 ```bash
 brew tap f5xc-salesdemos/tap
