@@ -10,7 +10,7 @@ if [ ! -d "${LAZY_DIR}" ]; then
   git clone --filter=blob:none \
     https://github.com/folke/lazy.nvim.git \
     --branch=stable \
-    "${LAZY_DIR}"
+    "${LAZY_DIR}" 2>&1 | grep -v "is not a commit"
 fi
 
 # Remove legacy native-pack plugins (if any)
