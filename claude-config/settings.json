@@ -29,6 +29,7 @@
     "skill-creator@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "hookify@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
     "f5xc-sales-engineer@f5xc-salesdemos-marketplace": true,
     "f5xc-docs-tools@f5xc-salesdemos-marketplace": true,
     "f5xc-github-ops@f5xc-salesdemos-marketplace": true,
@@ -36,6 +37,7 @@
     "f5xc-brand@f5xc-salesdemos-marketplace": true,
     "f5xc-devcontainer@f5xc-salesdemos-marketplace": true,
     "f5xc-platform@f5xc-salesdemos-marketplace": true,
+    "f5xc-meddpicc@f5xc-salesdemos-marketplace": true,
     "claude-mem@thedotmack": true
   },
   "env": {
