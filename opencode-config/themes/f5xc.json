@@ -195,40 +195,40 @@
       "light": "#1a1a1a"
     },
     "syntaxComment": {
-      "dark": "blackL2",
-      "light": "blackL2"
+      "dark": "#5c6370",
+      "light": "#6c7086"
     },
     "syntaxKeyword": {
-      "dark": "f5Red",
-      "light": "f5RedL3"
+      "dark": "#c678dd",
+      "light": "#7c3aed"
     },
     "syntaxFunction": {
-      "dark": "jadeL2",
-      "light": "jadeL3"
+      "dark": "#61afef",
+      "light": "#0062d1"
     },
     "syntaxVariable": {
-      "dark": "whiteL1",
-      "light": "#1a1a1a"
+      "dark": "#e06c75",
+      "light": "#dc2626"
     },
     "syntaxString": {
-      "dark": "tangerineL2",
-      "light": "tangerineL3"
+      "dark": "#98c379",
+      "light": "#16a34a"
     },
     "syntaxNumber": {
-      "dark": "eggplantL2",
-      "light": "eggplant"
+      "dark": "#d19a66",
+      "light": "#d97706"
     },
     "syntaxType": {
-      "dark": "bayL2",
-      "light": "bayL3"
+      "dark": "#e5c07b",
+      "light": "#d97706"
     },
     "syntaxOperator": {
-      "dark": "f5Red",
-      "light": "f5RedL3"
+      "dark": "#56b6c2",
+      "light": "#0891b2"
     },
     "syntaxPunctuation": {
-      "dark": "whiteL1",
-      "light": "#1a1a1a"
+      "dark": "#abb2bf",
+      "light": "#45475a"
     }
   }
 }
