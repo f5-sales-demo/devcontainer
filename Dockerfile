@@ -1399,9 +1399,11 @@ COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-opencode-proxy.json /
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-opencode-anthropic.json /home/${USERNAME}/.config/opencode/oh-my-opencode-anthropic.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.opencode/opencode.json
 
-# --- OpenCode: F5XC theme + TUI default ---
-RUN mkdir -p /home/${USERNAME}/.config/opencode/themes
-COPY --chown=${USERNAME}:${USERNAME} opencode-config/themes/f5xc.json /home/${USERNAME}/.config/opencode/themes/f5xc.json
+# --- OpenCode: F5XC theme (single source of truth: f5xc-salesdemos/xcsh-theme) ---
+RUN mkdir -p /home/${USERNAME}/.config/opencode/themes \
+    && curl -fsSL https://raw.githubusercontent.com/f5xc-salesdemos/xcsh-theme/main/tui/f5xc.json \
+      -o /home/${USERNAME}/.config/opencode/themes/f5xc.json \
+    && chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.config/opencode/themes/f5xc.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/tui.json /home/${USERNAME}/.config/opencode/tui.json
 
 # --- Codex + Pi + Hermes: bake static defaults ---
