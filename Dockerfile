@@ -944,8 +944,8 @@ RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
 RUN SIGNAL_CLI_VERSION="0.14.1" \
     && curl -fsSL "https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}.tar.gz" \
       -o /tmp/signal-cli.tar.gz \
-    && sudo tar xf /tmp/signal-cli.tar.gz -C /opt \
-    && sudo ln -sf "/opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli" /usr/local/bin/signal-cli \
+    && tar xf /tmp/signal-cli.tar.gz -C /opt \
+    && ln -sf "/opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli" /usr/local/bin/signal-cli \
     && rm /tmp/signal-cli.tar.gz
 
 # ============================================================
@@ -1172,23 +1172,29 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
 
 # Bun JavaScript runtime and package manager
 # hadolint ignore=DL3059
-RUN curl -fsSL https://bun.sh/install | bash \
-    && sudo ln -s /home/vscode/.bun/bin/bun /usr/local/bin/bun \
-    && sudo ln -s /home/vscode/.bun/bin/bunx /usr/local/bin/bunx
+RUN curl -fsSL https://bun.sh/install | bash
+USER root
+RUN ln -s /home/vscode/.bun/bin/bun /usr/local/bin/bun \
+    && ln -s /home/vscode/.bun/bin/bunx /usr/local/bin/bunx
+USER $USERNAME
 
 # Install native Claude Code binary (replaces npm package)
 # hadolint ignore=DL3059
-RUN claude install --force \
-    && sudo npm uninstall -g @anthropic-ai/claude-code
+RUN claude install --force
+USER root
+RUN npm uninstall -g @anthropic-ai/claude-code
+USER $USERNAME
 
 # Playwright Chromium browser binary (runs as vscode — cache to ~/.cache/ms-playwright)
 # hadolint ignore=DL3059
 RUN npx playwright install \
-    && CHROME_BIN="$(find ~/.cache/ms-playwright \
-        -name chrome -path '*/chromium-*/chrome-linux*/chrome' -print -quit)" \
-    && sudo mkdir -p /opt/google/chrome \
-    && sudo ln -sf "$CHROME_BIN" /opt/google/chrome/chrome \
     && playwright-cli install --skills || true
+USER root
+RUN CHROME_BIN="$(find /home/vscode/.cache/ms-playwright \
+        -name chrome -path '*/chromium-*/chrome-linux*/chrome' -print -quit)" \
+    && mkdir -p /opt/google/chrome \
+    && ln -sf "$CHROME_BIN" /opt/google/chrome/chrome
+USER $USERNAME
 
 # Chrome DevTools MCP: pre-cache the package (runs as vscode so npm caches
 # to ~/.npm/_npx; --headless is passed via .mcp.json args in each content repo)
@@ -1243,40 +1249,46 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/posit-dev/air/releases/latest/download/air-${AIR_ARCH}-unknown-linux-gnu.tar.gz" \
       | tar -xz --strip-components=1 -C /tmp "air-${AIR_ARCH}-unknown-linux-gnu/air" \
-    && sudo install -m 755 /tmp/air /usr/local/bin/air && rm /tmp/air \
     \
     && if [ "$UNAME_ARCH" = "x86_64" ]; then OXC_ARCH="x86_64"; else OXC_ARCH="aarch64"; fi \
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/oxc-project/oxc/releases/latest/download/oxfmt-${OXC_ARCH}-unknown-linux-gnu.tar.gz" \
       | tar -xz -C /tmp \
-    && sudo install -m 755 "/tmp/oxfmt-${OXC_ARCH}-unknown-linux-gnu" /usr/local/bin/oxfmt \
-    && rm "/tmp/oxfmt-${OXC_ARCH}-unknown-linux-gnu" \
     \
     && dub fetch dfmt \
     && (dub build dfmt --compiler=ldc2 --build=release 2>&1 | grep -v "Warning Invalid source/import path") \
-    && sudo install -m 755 "$(find ~/.dub/packages -name dfmt -type f -perm /111 2>/dev/null | head -1)" /usr/local/bin/dfmt \
+    && cp "$(find ~/.dub/packages -name dfmt -type f -perm /111 2>/dev/null | head -1)" /tmp/dfmt \
     \
     && if [ "$DPKG_ARCH" = "amd64" ]; then \
       curl ${CURL_RETRY} -fsSL \
         "https://github.com/NixOS/nixfmt/releases/latest/download/nixfmt" \
         -o /tmp/nixfmt \
-      && sudo install -m 755 /tmp/nixfmt /usr/local/bin/nixfmt && rm /tmp/nixfmt \
       && curl ${CURL_RETRY} -fsSL \
         "https://github.com/tweag/ormolu/releases/latest/download/ormolu-x86_64-linux.zip" \
         -o /tmp/ormolu.zip \
       && unzip -qo /tmp/ormolu.zip ormolu -d /tmp \
-      && sudo install -m 755 /tmp/ormolu /usr/local/bin/ormolu \
-      && rm /tmp/ormolu.zip /tmp/ormolu; \
+      && rm /tmp/ormolu.zip; \
     else \
-      sudo mkdir -p /home/linuxbrew/.linuxbrew \
-      && sudo chown -R "$(whoami)":"$(whoami)" /home/linuxbrew/.linuxbrew \
+      mkdir -p /home/linuxbrew/.linuxbrew \
       && NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" 2>&1 | grep -v "is not in your PATH" \
       && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
       && brew install nixfmt ormolu \
       && brew cleanup --prune=all -s \
-      && sudo ln -sf /home/linuxbrew/.linuxbrew/bin/nixfmt /usr/local/bin/nixfmt \
-      && sudo ln -sf /home/linuxbrew/.linuxbrew/bin/ormolu /usr/local/bin/ormolu; \
+      && cp /home/linuxbrew/.linuxbrew/bin/nixfmt /tmp/nixfmt \
+      && cp /home/linuxbrew/.linuxbrew/bin/ormolu /tmp/ormolu; \
     fi
+
+USER root
+# hadolint ignore=DL3059
+RUN install -m 755 /tmp/air /usr/local/bin/air \
+    && UNAME_ARCH=$(uname -m) \
+    && if [ "$UNAME_ARCH" = "x86_64" ]; then OXC_ARCH="x86_64"; else OXC_ARCH="aarch64"; fi \
+    && install -m 755 "/tmp/oxfmt-${OXC_ARCH}-unknown-linux-gnu" /usr/local/bin/oxfmt \
+    && install -m 755 /tmp/dfmt /usr/local/bin/dfmt \
+    && install -m 755 /tmp/nixfmt /usr/local/bin/nixfmt \
+    && install -m 755 /tmp/ormolu /usr/local/bin/ormolu \
+    && rm -f /tmp/air "/tmp/oxfmt-*" /tmp/dfmt /tmp/nixfmt /tmp/ormolu
+USER $USERNAME
 
 # ============================================================
 # 15. ZSH plugins (oh-my-zsh is pre-installed by devcontainers base)
