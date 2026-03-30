@@ -1241,6 +1241,10 @@ RUN if [ -f ~/.config/opencode/oh-my-opencode.json ]; then \
 ENV FORCE_AUTOUPDATE_PLUGINS=true
 ENV PATH="/home/vscode/.local/bin:${PATH}"
 
+USER root
+RUN mkdir -p /home/linuxbrew && chown ${USERNAME}:${USERNAME} /home/linuxbrew
+USER $USERNAME
+
 # hadolint ignore=DL3059
 RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     && if [ "$UNAME_ARCH" = "x86_64" ]; then AIR_ARCH="x86_64"; else AIR_ARCH="aarch64"; fi \
