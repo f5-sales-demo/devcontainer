@@ -1,18 +1,18 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
-    "sisyphus": { "model": "anthropic/claude-opus-4-6" },
-    "oracle": { "model": "anthropic/claude-opus-4-6" },
-    "librarian": { "model": "anthropic/claude-opus-4-6" },
-    "explore": { "model": "anthropic/claude-sonnet-4-6" },
-    "multimodal-looker": { "model": "anthropic/claude-opus-4-6" },
-    "prometheus": { "model": "anthropic/claude-opus-4-6" },
-    "metis": { "model": "anthropic/claude-opus-4-6" },
-    "hephaestus": { "model": "anthropic/claude-opus-4-6" },
-    "momus": { "model": "anthropic/claude-opus-4-6" },
-    "atlas": { "model": "anthropic/claude-sonnet-4-6" },
-    "frontend-ui-ux-engineer": { "model": "anthropic/claude-opus-4-6" },
-    "document-writer": { "model": "anthropic/claude-opus-4-6" }
+    "sisyphus": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
+    "oracle": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
+    "librarian": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
+    "explore": { "model": "anthropic/claude-sonnet-4-6", "color": "#e4002b" },
+    "multimodal-looker": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
+    "prometheus": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
+    "metis": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
+    "hephaestus": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
+    "momus": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
+    "atlas": { "model": "anthropic/claude-sonnet-4-6", "color": "#e4002b" },
+    "frontend-ui-ux-engineer": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
+    "document-writer": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" }
   },
   "categories": {
     "visual-engineering": { "model": "anthropic/claude-opus-4-6" },
