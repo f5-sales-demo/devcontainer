@@ -915,7 +915,7 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root
 # pip RECORD files and block uninstall.
 # hadolint ignore=DL3013,DL3059
 RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
-    scapy impacket sslyze arjun hashid \
+    scapy impacket arjun hashid \
     && pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
     pwntools volatility3 "packaging>=24,<26"
 
@@ -935,7 +935,9 @@ RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install mitmproxy \
     && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    uv tool install kube-hunter
+    uv tool install kube-hunter \
+    && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    uv tool install sslyze
 
 # signal-cli (Signal messenger CLI — Java application)
 # hadolint ignore=DL3059
@@ -1082,8 +1084,8 @@ RUN printf '#!/bin/sh\ncd /opt/caldera\nexec .venv/bin/python server.py --insecu
 RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
       https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent \
     && rm -rf /opt/hermes-agent/.git \
-    && uv pip install --system --break-system-packages \
-      -e "/opt/hermes-agent[all]" \
+    && (uv pip install --system --break-system-packages \
+      -e "/opt/hermes-agent[all]" 2>&1 | grep -v "missing.*RECORD") \
     && npm --prefix /opt/hermes-agent install --ignore-scripts 2>/dev/null || true
 
 # Pre-stage plugin install script and settings for section 12l
@@ -1185,7 +1187,7 @@ USER $USERNAME
 
 # Playwright Chromium browser binary (runs as vscode — cache to ~/.cache/ms-playwright)
 # hadolint ignore=DL3059
-RUN npx playwright install \
+RUN (npx playwright install 2>&1 | grep -v "not in your PATH") \
     && playwright-cli install --skills || true
 USER root
 RUN CHROME_BIN="$(find /home/vscode/.cache/ms-playwright \
