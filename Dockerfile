@@ -90,7 +90,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Media / utilities
     ffmpeg poppler-utils qrencode \
     # Network tools
-    dnsutils net-tools iputils-ping traceroute tcpdump nmap netcat-openbsd \
+    dnsutils net-tools iputils-ping traceroute tcpdump nmap netcat-openbsd jnettop \
     # CLI browsers (xdg-open fallback for gh auth login)
     lynx w3m elinks links2 \
     # Tailscale VPN
