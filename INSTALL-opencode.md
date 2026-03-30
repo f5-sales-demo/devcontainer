@@ -406,22 +406,6 @@ fi
 uv pip install --system --break-system-packages python-pptx
 ```
 
-### 5.5 — Install Status Line Script
-
-```bash
-REPO_DIR="$(pwd)"
-SRC="${REPO_DIR}/claude-config/statusline.sh"
-DEST="$HOME/.claude/statusline.sh"
-
-if [ -f "$SRC" ]; then
-  \cp -f "$SRC" "$DEST"
-  chmod +x "$DEST"
-  echo "Installed statusline.sh to $DEST"
-else
-  echo "WARNING: ${SRC} not found — skipping statusline install"
-fi
-```
-
 ### 5.6 — Merge Container Settings into `~/.claude/settings.json`
 
 This step idempotently merges settings into `~/.claude/settings.json`. Local values win on conflict.
@@ -429,7 +413,6 @@ This step idempotently merges settings into `~/.claude/settings.json`. Local val
 ```bash
 CONTAINER_SETTINGS="$(cat <<SETTINGS
 {
-  "statusLine": { "type": "command", "command": "${HOME}/.claude/statusline.sh" },
   "model": "opus",
   "spinnerTipsEnabled": false,
   "terminalProgressBarEnabled": false,
@@ -1151,7 +1134,6 @@ ls ~/.cache/opencode/node_modules/opencode-anthropic-auth/package.json
 jq '.plugins | length' ~/.claude/plugins/installed_plugins.json  # Expected: 23
 jq '.enabledPlugins | keys | length' ~/.claude/settings.json     # Expected: 23
 jq '.model' ~/.claude/settings.json                               # Expected: "opus"
-test -x ~/.claude/statusline.sh && echo "OK" || echo "MISSING"
 jq '.mcpServers | has("chrome-devtools")' ~/.claude.json          # Expected: true
 
 # Chrome
