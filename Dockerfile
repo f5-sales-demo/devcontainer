@@ -826,18 +826,16 @@ RUN npm install -g \
     puppeteer-extra-plugin-stealth \
     eslint \
     @biomejs/biome \
-    standard \
-    ts-standard \
     stylelint \
     htmlhint \
     textlint \
     textlint-rule-terminology \
     jscpd \
-    coffeelint \
+    @coffeelint/cli \
     npm-groovy-lint \
     @stoplight/spectral-cli \
-    gherkin-lint \
-    tekton-lint \
+    gplint \
+    @ibm/tekton-lint \
     asl-validator \
     renovate \
     markdownlint-cli \
