@@ -68,7 +68,7 @@ done
 
 # Firecrawl health check
 if curl -sf http://localhost:3002/v1/scrape -X POST -H "Content-Type: application/json" \
-    -d '{"url":"https://example.com","formats":["markdown"]}' >/dev/null 2>&1; then
+  -d '{"url":"https://example.com","formats":["markdown"]}' >/dev/null 2>&1; then
   echo ""
   echo "  Firecrawl: healthy (port 3002)"
 fi
