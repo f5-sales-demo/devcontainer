@@ -889,18 +889,18 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
-    "sisyphus": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "oracle": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "librarian": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "explore": { "model": "openai-proxy/grok-code-fast-1" },
-    "multimodal-looker": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "prometheus": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "metis": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "hephaestus": { "model": "openai-proxy/gpt-5.4" },
-    "momus": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "atlas": { "model": "anthropic-proxy/claude-sonnet-4-6" },
-    "frontend-ui-ux-engineer": { "model": "openai-proxy/gpt-5.4" },
-    "document-writer": { "model": "anthropic-proxy/claude-opus-4-6" }
+    "sisyphus": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
+    "oracle": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
+    "librarian": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
+    "explore": { "model": "openai-proxy/grok-code-fast-1", "color": "#e4002b" },
+    "multimodal-looker": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
+    "prometheus": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
+    "metis": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
+    "hephaestus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b" },
+    "momus": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
+    "atlas": { "model": "anthropic-proxy/claude-sonnet-4-6", "color": "#e4002b" },
+    "frontend-ui-ux-engineer": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b" },
+    "document-writer": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" }
   },
   "categories": {
     "visual-engineering": { "model": "openai-proxy/gpt-5.4" },
@@ -914,12 +914,7 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
     "writing": { "model": "anthropic-proxy/claude-opus-4-6" }
   },
   "background_task": {
-    "defaultConcurrency": 5,
     "providerConcurrency": { "openai-proxy": 5, "anthropic-proxy": 5 }
-  },
-  "claude_code": {
-    "plugins": true, "skills": true, "commands": true,
-    "agents": true, "hooks": true, "mcp": true
   }
 }
 ENDOFJSON
@@ -929,38 +924,8 @@ else
   cat > ~/.config/opencode/oh-my-opencode.json << 'ENDOFJSON'
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
-  "agents": {
-    "sisyphus": { "model": "anthropic/claude-opus-4-6" },
-    "oracle": { "model": "anthropic/claude-opus-4-6" },
-    "librarian": { "model": "anthropic/claude-opus-4-6" },
-    "explore": { "model": "anthropic/claude-sonnet-4-6" },
-    "multimodal-looker": { "model": "anthropic/claude-opus-4-6" },
-    "prometheus": { "model": "anthropic/claude-opus-4-6" },
-    "metis": { "model": "anthropic/claude-opus-4-6" },
-    "hephaestus": { "model": "anthropic/claude-opus-4-6" },
-    "momus": { "model": "anthropic/claude-opus-4-6" },
-    "atlas": { "model": "anthropic/claude-sonnet-4-6" },
-    "frontend-ui-ux-engineer": { "model": "anthropic/claude-opus-4-6" },
-    "document-writer": { "model": "anthropic/claude-opus-4-6" }
-  },
-  "categories": {
-    "visual-engineering": { "model": "anthropic/claude-opus-4-6" },
-    "business-logic": { "model": "anthropic/claude-opus-4-6" },
-    "ultrabrain": { "model": "anthropic/claude-opus-4-6" },
-    "deep": { "model": "anthropic/claude-opus-4-6" },
-    "artistry": { "model": "anthropic/claude-opus-4-6" },
-    "quick": { "model": "anthropic/claude-sonnet-4-6" },
-    "unspecified-low": { "model": "anthropic/claude-opus-4-6" },
-    "unspecified-high": { "model": "anthropic/claude-opus-4-6" },
-    "writing": { "model": "anthropic/claude-opus-4-6" }
-  },
   "background_task": {
-    "defaultConcurrency": 5,
     "providerConcurrency": { "anthropic": 5 }
-  },
-  "claude_code": {
-    "plugins": true, "skills": true, "commands": true,
-    "agents": true, "hooks": true, "mcp": true
   }
 }
 ENDOFJSON
