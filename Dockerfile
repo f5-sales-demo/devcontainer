@@ -743,7 +743,7 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && GOBIN=/usr/local/bin go install github.com/jreisinger/checkip@v0.49.0 \
     && GOBIN=/usr/local/bin go install github.com/Macmod/goblob@v1.2.2 \
     && git clone --depth=1 --branch v2.0 https://github.com/redhuntlabs/bucketloot.git /tmp/bucketloot \
-    && (cd /tmp/bucketloot && go build -o /usr/local/bin/bucketloot .) && rm -rf /tmp/bucketloot \
+    && go build -C /tmp/bucketloot -o /usr/local/bin/bucketloot . && rm -rf /tmp/bucketloot \
     && rm -f /usr/local/bin/LICENSE* /usr/local/bin/README*
 
 # ============================================================
@@ -1230,11 +1230,11 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
     && chown -R ${USERNAME}:${USERNAME} "${PLUGIN_BASE}"
 
 # claude-mem runtime dependencies (tree-sitter native parsers + worker)
-# hadolint ignore=DL3003,DL3059
+# hadolint ignore=DL3016,DL3059
 RUN CMEM_PKG=$(find /home/${USERNAME}/.claude/plugins/cache/thedotmack/claude-mem \
       -name "package.json" -not -path "*/node_modules/*" -maxdepth 3 -print -quit 2>/dev/null) \
     && if [ -n "$CMEM_PKG" ]; then \
-        cd "$(dirname "$CMEM_PKG")" && npm install; \
+        npm install --prefix "$(dirname "$CMEM_PKG")"; \
     fi
 
 # 12m. Claude Code skills (git-cloned external skills)
