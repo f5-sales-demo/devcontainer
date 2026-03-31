@@ -25,21 +25,10 @@
     "unspecified-high": { "model": "anthropic-proxy/claude-opus-4-6" },
     "writing": { "model": "anthropic-proxy/claude-opus-4-6" }
   },
-  "disabled_hooks": ["startup-toast", "legacy-plugin-toast"],
   "background_task": {
-    "defaultConcurrency": 5,
     "providerConcurrency": {
       "openai-proxy": 5,
       "anthropic-proxy": 5
-    },
-    "task_toasts_enabled": false
-  },
-  "claude_code": {
-    "plugins": true,
-    "skills": true,
-    "commands": true,
-    "agents": true,
-    "hooks": true,
-    "mcp": true
+    }
   }
 }

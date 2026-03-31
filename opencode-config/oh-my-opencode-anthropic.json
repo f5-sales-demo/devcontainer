@@ -1,44 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
-  "agents": {
-    "sisyphus": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
-    "oracle": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
-    "librarian": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
-    "explore": { "model": "anthropic/claude-sonnet-4-6", "color": "#e4002b" },
-    "multimodal-looker": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
-    "prometheus": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
-    "metis": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
-    "hephaestus": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
-    "momus": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
-    "atlas": { "model": "anthropic/claude-sonnet-4-6", "color": "#e4002b" },
-    "frontend-ui-ux-engineer": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" },
-    "document-writer": { "model": "anthropic/claude-opus-4-6", "color": "#e4002b" }
-  },
-  "categories": {
-    "visual-engineering": { "model": "anthropic/claude-opus-4-6" },
-    "business-logic": { "model": "anthropic/claude-opus-4-6" },
-    "ultrabrain": { "model": "anthropic/claude-opus-4-6" },
-    "deep": { "model": "anthropic/claude-opus-4-6" },
-    "artistry": { "model": "anthropic/claude-opus-4-6" },
-    "quick": { "model": "anthropic/claude-sonnet-4-6" },
-    "unspecified-low": { "model": "anthropic/claude-opus-4-6" },
-    "unspecified-high": { "model": "anthropic/claude-opus-4-6" },
-    "writing": { "model": "anthropic/claude-opus-4-6" }
-  },
-  "disabled_hooks": ["startup-toast", "legacy-plugin-toast"],
   "background_task": {
-    "defaultConcurrency": 5,
     "providerConcurrency": {
       "anthropic": 5
-    },
-    "task_toasts_enabled": false
-  },
-  "claude_code": {
-    "plugins": true,
-    "skills": true,
-    "commands": true,
-    "agents": true,
-    "hooks": true,
-    "mcp": true
+    }
   }
 }
