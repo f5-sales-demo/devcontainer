@@ -190,11 +190,11 @@ fi
 if [ -n "$LITELLM_API_KEY" ]; then
   _otc_upstream="${OPENAI_BASE_URL%/v1}"
   OPENAI_BASE_URL_INTERNAL="$_otc_upstream" \
-  OPENAI_BASE_URL=http://localhost:4000 \
-  OPENAI_API_KEY="$OPENAI_API_KEY" \
-  API_ADAPTER_PORT=4000 \
-  PYTHONDONTWRITEBYTECODE=1 \
-  nohup /opt/codex-config/start-otc.sh >/tmp/otc.log 2>&1 &
+    OPENAI_BASE_URL=http://localhost:4000 \
+    OPENAI_API_KEY="$OPENAI_API_KEY" \
+    API_ADAPTER_PORT=4000 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    nohup /opt/codex-config/start-otc.sh >/tmp/otc.log 2>&1 &
   unset _otc_upstream
 fi
 
