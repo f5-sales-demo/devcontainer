@@ -45,7 +45,7 @@ echo "  Installed tools:"
 for cmd in node python3 go rustc javac git gh kubectl helm terraform \
   pre-commit uv claude opencode codex prettier markdownlint-cli2 \
   actionlint act terraform-docs ansible black pylint yamllint yt-dlp \
-  aws az pwsh devcontainer brew playwright \
+  aws az pwsh devcontainer brew playwright pnpm redis-cli psql tirith \
   marksman terraform-ls taplo yaml-language-server bash-language-server \
   vscode-json-language-server mdx-language-server; do
   if command -v $cmd &>/dev/null; then
@@ -65,6 +65,13 @@ for cmd in sherlock maigret holehe h8mail dnsrecon subfinder amass httpx \
     printf "    %-20s %s\n" "$cmd" "OK"
   fi
 done
+
+# Firecrawl health check
+if curl -sf http://localhost:3002/v1/scrape -X POST -H "Content-Type: application/json" \
+    -d '{"url":"https://example.com","formats":["markdown"]}' >/dev/null 2>&1; then
+  echo ""
+  echo "  Firecrawl: healthy (port 3002)"
+fi
 
 # GitHub CLI authentication status
 echo ""
