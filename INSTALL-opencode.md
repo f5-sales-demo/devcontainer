@@ -1001,41 +1001,7 @@ Write `~/.config/opencode/AGENTS.md`:
 
 ---
 
-## Step 11 — Install F5XC TUI Theme
-
-The F5XC theme provides branded syntax highlighting and UI chrome for OpenCode's terminal interface.
-
-```bash
-mkdir -p ~/.config/opencode/themes
-curl -fsSL https://raw.githubusercontent.com/f5xc-salesdemos/xcsh-theme/main/tui/f5xc.json \
-  -o ~/.config/opencode/themes/f5xc.json
-```
-
-### Verify Step 11 — F5XC TUI Theme
-
-```bash
-jq '.name' ~/.config/opencode/themes/f5xc.json  # VERIFY: "F5XC"
-```
-
----
-
-## Step 12 — Write `tui.json`
-
-Write `~/.config/opencode/tui.json`:
-
-```json
-{
-  "$schema": "https://opencode.ai/tui.json",
-  "theme": "f5xc",
-  "scroll_acceleration": {
-    "enabled": true
-  }
-}
-```
-
----
-
-## Step 13 — Write `.gitignore`
+## Step 11 — Write `.gitignore`
 
 Write `~/.config/opencode/.gitignore`:
 
@@ -1048,11 +1014,11 @@ bun.lock
 
 ---
 
-## Step 14 — Smoke-Test OpenCode Configuration
+## Step 12 — Smoke-Test OpenCode Configuration
 
 ```bash
 echo "Validating config file syntax..."
-for f in opencode.json oh-my-opencode.json tui.json; do
+for f in opencode.json oh-my-opencode.json; do
   if ! jq . "$HOME/.config/opencode/$f" > /dev/null 2>&1; then
     echo "ERROR: $f is not valid JSON."
     exit 1
@@ -1103,7 +1069,7 @@ cd - > /dev/null
 
 ---
 
-## Step 15 — Configure `.zshrc` (OpenCode-Specific Entries)
+## Step 13 — Configure `.zshrc` (OpenCode-Specific Entries)
 
 These entries add OpenCode-specific environment variables and completions to `~/.zshrc`. They are appended idempotently using `grep -q` guards.
 
@@ -1135,13 +1101,10 @@ bun --version               # VERIFY: 1.3.x+
 # LSP servers on PATH
 which bash-language-server yaml-language-server marksman terraform-ls shellcheck shfmt pyright-langserver
 
-# OpenCode config files and theme
+# OpenCode config files
 ls -la ~/.config/opencode/opencode.json
 ls -la ~/.config/opencode/oh-my-opencode.json
 ls -la ~/.config/opencode/AGENTS.md
-ls -la ~/.config/opencode/tui.json
-ls -la ~/.config/opencode/themes/f5xc.json
-jq '.theme' ~/.config/opencode/tui.json          # Expected: "f5xc"
 ls -la ~/.config/opencode/package.json
 ls -la ~/.config/opencode/node_modules/@opencode-ai/plugin/
 
