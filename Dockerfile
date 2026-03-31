@@ -95,6 +95,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     lynx w3m elinks links2 \
     # Tailscale VPN
     tailscale \
+    # Firecrawl runtime dependencies
+    redis-server \
+    postgresql postgresql-client \
     # Shell tools
     cron \
     bat bubblewrap fd-find ripgrep htop tree tmux file xxd \
@@ -668,7 +671,7 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 # 10g. Security binary tools (pentest & recon)
 #      All resolve latest versions at build time.
 # ============================================================
-# hadolint ignore=DL3059
+# hadolint ignore=DL3003,DL3059
 RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/||;s|^v||'; } \
     && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # --- Recon: ProjectDiscovery suite ---
@@ -739,8 +742,19 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     # --- OSINT: cloud & IP recon (go install) ---
     && GOBIN=/usr/local/bin go install github.com/jreisinger/checkip@v0.49.0 \
     && GOBIN=/usr/local/bin go install github.com/Macmod/goblob@v1.2.2 \
-    && GOBIN=/usr/local/bin go install github.com/redhuntlabs/bucketloot/cmd/bucketloot@v2.0 \
+    && git clone --depth=1 --branch v2.0 https://github.com/redhuntlabs/bucketloot.git /tmp/bucketloot \
+    && cd /tmp/bucketloot/cmd/bucketloot && go build -o /usr/local/bin/bucketloot . && cd / && rm -rf /tmp/bucketloot \
     && rm -f /usr/local/bin/LICENSE* /usr/local/bin/README*
+
+# ============================================================
+# 10g-ii. Tirith — terminal security (homograph/injection guard)
+# ============================================================
+# hadolint ignore=DL3059
+RUN DPKG_ARCH=$(dpkg --print-architecture) \
+    && if [ "$DPKG_ARCH" = "amd64" ]; then TIRITH_ARCH="x86_64-unknown-linux-gnu"; \
+      else TIRITH_ARCH="aarch64-unknown-linux-gnu"; fi \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/sheeki03/tirith/releases/latest/download/tirith-${TIRITH_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin tirith
 
 # ============================================================
 # 10h. OWASP ZAP (web app scanner — replaces Burp Suite)
@@ -813,6 +827,7 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
 # ============================================================
 # hadolint ignore=DL3016,DL3059
 RUN npm install -g \
+    pnpm \
     @anthropic-ai/claude-code \
     @mariozechner/pi-coding-agent \
     prettier \
@@ -866,6 +881,41 @@ RUN npm install -g \
 # Ensure Node.js can resolve globally-installed packages at the system prefix
 # even after npm prefix is changed to $HOME/.npm-global later.
 ENV NODE_PATH=/usr/lib/node_modules
+
+# ============================================================
+# 11a. Firecrawl — self-hosted web scraper (API on port 3002)
+#      Requires Redis + PostgreSQL (started in entrypoint.sh).
+# ============================================================
+# hadolint ignore=DL3059
+RUN git clone --depth=1 https://github.com/mendableai/firecrawl.git /opt/firecrawl
+
+WORKDIR /opt/firecrawl/apps/api
+# hadolint ignore=DL3059
+RUN pnpm install --ignore-scripts
+
+WORKDIR /opt/firecrawl/apps/api/node_modules/@mendable/firecrawl-rs
+# hadolint ignore=DL3059
+RUN npx napi build --platform --release
+
+WORKDIR /opt/firecrawl/apps/api
+# hadolint ignore=DL3059
+RUN npx tsc
+
+WORKDIR /opt/firecrawl/apps/playwright-service-ts
+# hadolint ignore=DL3059
+RUN pnpm install --ignore-scripts && npx tsc
+
+# hadolint ignore=DL3059
+RUN rm -rf /opt/firecrawl/.git
+
+WORKDIR /
+
+# Relax PostgreSQL auth for local socket connections (entrypoint manages lifecycle)
+# hadolint ignore=DL3059
+RUN PG_HBA=$(find /etc/postgresql -name pg_hba.conf -print -quit 2>/dev/null) \
+    && if [ -n "$PG_HBA" ]; then \
+        sed -i 's/peer/trust/g; s/scram-sha-256/trust/g' "$PG_HBA"; \
+      fi
 
 # ============================================================
 # 12. pip tools

@@ -469,6 +469,46 @@ if [ -f "$SETTINGS" ] && [ -f "$TEMPLATE" ] && command -v jq >/dev/null 2>&1; th
 fi
 
 # ============================================================
+# Firecrawl — self-hosted web scraper (Redis + PostgreSQL + API)
+# Scrape/crawl endpoint on port 3002, Playwright on port 3000.
+# Disable with ENABLE_FIRECRAWL=false.
+# ============================================================
+if [ "${ENABLE_FIRECRAWL:-true}" = "true" ] && [ -d /opt/firecrawl ]; then
+  # Redis (daemonised, logs to /tmp/redis.log)
+  redis-server --daemonize yes --logfile /tmp/redis.log 2>/dev/null
+
+  # PostgreSQL — start cluster if not already running
+  _pg_cluster=$(pg_lsclusters -h 2>/dev/null | awk 'NR==1{print $1, $2}')
+  if [ -n "$_pg_cluster" ]; then
+    # shellcheck disable=SC2086
+    pg_ctlcluster $_pg_cluster start 2>/dev/null || true
+  fi
+
+  # Initialise firecrawl database on first run
+  if ! psql -h /var/run/postgresql -U postgres -lqt 2>/dev/null | grep -qw firecrawl; then
+    createdb -h /var/run/postgresql -U postgres firecrawl 2>/dev/null
+    psql -h /var/run/postgresql -U postgres -d firecrawl \
+      -f /opt/firecrawl/apps/nuq-postgres/nuq.sql >/dev/null 2>&1 || true
+  fi
+  unset _pg_cluster
+
+  # Playwright microservice (port 3000)
+  (cd /opt/firecrawl/apps/playwright-service-ts && \
+    PORT=3000 nohup node dist/api.js >/tmp/firecrawl-playwright.log 2>&1 &)
+
+  # Firecrawl API (port 3002)
+  (cd /opt/firecrawl/apps/api && \
+    REDIS_URL=redis://localhost:6379 \
+    REDIS_RATE_LIMIT_URL=redis://localhost:6379 \
+    PLAYWRIGHT_MICROSERVICE_URL=http://localhost:3000 \
+    DATABASE_URL=postgresql://postgres@localhost:5432/firecrawl \
+    USE_DB_AUTHENTICATION=false \
+    PORT=3002 HOST=0.0.0.0 \
+    NUM_WORKERS_PER_QUEUE=4 \
+    nohup node dist/src/index.js >/tmp/firecrawl-api.log 2>&1 &)
+fi
+
+# ============================================================
 # Shared Chrome browser (remote debugging on port 9222)
 # ============================================================
 start_chrome_browser
