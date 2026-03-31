@@ -1018,9 +1018,7 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root
 RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
     scapy impacket arjun hashid \
     && pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
-    pwntools volatility3 "packaging>=24,<26" \
-    && pip install --no-cache-dir --break-system-packages --root-user-action=ignore \
-    git+https://github.com/f5xc-salesdemos/open-responses-server.git
+    pwntools volatility3 "packaging>=24,<26"
 
 # uv-isolated tools (notebooklm-mcp-cli, checkov, prowler, fierce)
 # checkov requires Python <3.13 (FileType.JSON AttributeError on 3.13).
@@ -1523,8 +1521,6 @@ COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /
 
 # --- Codex + Pi + Hermes: bake static defaults ---
 COPY --chown=${USERNAME}:${USERNAME} codex-config/config.toml /home/${USERNAME}/.codex/config.toml
-COPY codex-config/start-otc.sh /opt/codex-config/start-otc.sh
-RUN chmod +x /opt/codex-config/start-otc.sh
 COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
 COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
 

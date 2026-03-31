@@ -108,8 +108,8 @@ if [ -n "$LITELLM_API_KEY" ]; then
   printf 'ANTHROPIC_API_KEY=%s\n' "$LITELLM_API_KEY" >"$HOME/.claude-mem/.env"
 fi
 if [ -n "$LITELLM_BASE_URL" ]; then
-  export OPENAI_BASE_URL="${LITELLM_BASE_URL}/api/v1"
-  export OPENAI_API_BASE="${LITELLM_BASE_URL}/api/v1"
+  export OPENAI_BASE_URL="${LITELLM_BASE_URL}/openai/v1"
+  export OPENAI_API_BASE="${LITELLM_BASE_URL}/openai/v1"
   export ANTHROPIC_BASE_URL="${LITELLM_BASE_URL}/anthropic"
 fi
 
@@ -182,20 +182,16 @@ elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
 fi
 
 # ============================================================
-# Codex CLI — open-responses-server bridge
-# Translates Responses API (codex wire format) → Chat Completions
-# for the upstream Open WebUI proxy that lacks /responses support.
-# Only started when LITELLM_API_KEY is set (proxy mode).
+# Codex CLI — substitute base URL placeholder in config
+# The f5ai provider in config.toml uses __CODEX_BASE_URL__ as a
+# placeholder; resolve it to the OpenAI passthrough endpoint.
 # ============================================================
-if [ -n "$LITELLM_API_KEY" ]; then
-  _otc_upstream="${OPENAI_BASE_URL%/v1}"
-  OPENAI_BASE_URL_INTERNAL="$_otc_upstream" \
-    OPENAI_BASE_URL=http://localhost:4000 \
-    OPENAI_API_KEY="$OPENAI_API_KEY" \
-    API_ADAPTER_PORT=4000 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    nohup /opt/codex-config/start-otc.sh >/tmp/otc.log 2>&1 &
-  unset _otc_upstream
+if [ -n "$LITELLM_BASE_URL" ]; then
+  _codex_config="$HOME/.codex/config.toml"
+  if [ -f "$_codex_config" ]; then
+    sed -i "s|__CODEX_BASE_URL__|${LITELLM_BASE_URL}/openai/v1|g" "$_codex_config"
+  fi
+  unset _codex_config
 fi
 
 # ============================================================
