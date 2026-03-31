@@ -743,7 +743,7 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && GOBIN=/usr/local/bin go install github.com/jreisinger/checkip@v0.49.0 \
     && GOBIN=/usr/local/bin go install github.com/Macmod/goblob@v1.2.2 \
     && git clone --depth=1 --branch v2.0 https://github.com/redhuntlabs/bucketloot.git /tmp/bucketloot \
-    && cd /tmp/bucketloot/cmd/bucketloot && go build -o /usr/local/bin/bucketloot . && cd / && rm -rf /tmp/bucketloot \
+    && cd /tmp/bucketloot && go build -o /usr/local/bin/bucketloot . && cd / && rm -rf /tmp/bucketloot \
     && rm -f /usr/local/bin/LICENSE* /usr/local/bin/README*
 
 # ============================================================
