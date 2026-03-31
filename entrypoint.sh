@@ -493,19 +493,19 @@ if [ "${ENABLE_FIRECRAWL:-true}" = "true" ] && [ -d /opt/firecrawl ]; then
   unset _pg_cluster
 
   # Playwright microservice (port 3000)
-  (cd /opt/firecrawl/apps/playwright-service-ts && \
+  (cd /opt/firecrawl/apps/playwright-service-ts &&
     PORT=3000 nohup node dist/api.js >/tmp/firecrawl-playwright.log 2>&1 &)
 
   # Firecrawl API (port 3002)
-  (cd /opt/firecrawl/apps/api && \
+  (cd /opt/firecrawl/apps/api &&
     REDIS_URL=redis://localhost:6379 \
-    REDIS_RATE_LIMIT_URL=redis://localhost:6379 \
-    PLAYWRIGHT_MICROSERVICE_URL=http://localhost:3000 \
-    DATABASE_URL=postgresql://postgres@localhost:5432/firecrawl \
-    USE_DB_AUTHENTICATION=false \
-    PORT=3002 HOST=0.0.0.0 \
-    NUM_WORKERS_PER_QUEUE=4 \
-    nohup node dist/src/index.js >/tmp/firecrawl-api.log 2>&1 &)
+      REDIS_RATE_LIMIT_URL=redis://localhost:6379 \
+      PLAYWRIGHT_MICROSERVICE_URL=http://localhost:3000 \
+      DATABASE_URL=postgresql://postgres@localhost:5432/firecrawl \
+      USE_DB_AUTHENTICATION=false \
+      PORT=3002 HOST=0.0.0.0 \
+      NUM_WORKERS_PER_QUEUE=4 \
+      nohup node dist/src/index.js >/tmp/firecrawl-api.log 2>&1 &)
 fi
 
 # ============================================================
