@@ -54,6 +54,18 @@ for cmd in node python3 go rustc javac git gh kubectl helm terraform \
   fi
 done
 
+# OSINT tools check
+echo ""
+echo "  OSINT tools:"
+for cmd in sherlock maigret holehe h8mail dnsrecon subfinder amass httpx \
+  nuclei nmap masscan exiftool whois dig checkip goblob bucketloot \
+  iocextract oletools apkleaks frida waybackpack searchsploit \
+  recon-ng spiderfoot; do
+  if command -v $cmd &>/dev/null; then
+    printf "    %-20s %s\n" "$cmd" "OK"
+  fi
+done
+
 # GitHub CLI authentication status
 echo ""
 echo "  GitHub CLI:"

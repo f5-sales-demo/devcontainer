@@ -244,6 +244,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Build deps for lxml (spiderfoot requirement)
     libxml2-dev \
     libxslt1-dev \
+    # OSINT: media metadata & forensics
+    exiv2 \
+    mediainfo \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create expected binary names for tools Ubuntu renames
@@ -733,6 +736,10 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
       && unzip -oq /tmp/bettercap.zip -d /usr/local/bin && rm /tmp/bettercap.zip \
       && chmod +x /usr/local/bin/bettercap; \
     fi \
+    # --- OSINT: cloud & IP recon (go install) ---
+    && GOBIN=/usr/local/bin go install github.com/jreisinger/checkip@v0.49.0 \
+    && GOBIN=/usr/local/bin go install github.com/Macmod/goblob@v1.2.2 \
+    && GOBIN=/usr/local/bin go install github.com/redhuntlabs/bucketloot/cmd/bucketloot@v2.0 \
     && rm -f /usr/local/bin/LICENSE* /usr/local/bin/README*
 
 # ============================================================
@@ -853,7 +860,8 @@ RUN npm install -g \
     react \
     react-dom \
     sharp \
-    opencode-claude-auth
+    opencode-claude-auth \
+    js-deobfuscator
 
 # Ensure Node.js can resolve globally-installed packages at the system prefix
 # even after npm prefix is changed to $HOME/.npm-global later.
@@ -904,6 +912,49 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root
     # Recon (recon-ng, spiderfoot installed via git clone below)
     theHarvester \
     asciinema
+
+# ============================================================
+# 12a. OSINT Framework pip tools (osint-framework plugin)
+#      Username, email, domain, cloud, threat-intel, mobile,
+#      social, media, and forensic investigation tools.
+# ============================================================
+# hadolint ignore=DL3013,DL3059
+RUN pip install --no-cache-dir --break-system-packages --root-user-action=ignore \
+    # Username & email recon
+    sherlock-project \
+    maigret \
+    holehe \
+    h8mail \
+    sylva \
+    # Domain & network recon
+    dnsrecon \
+    sublist3r \
+    scanless \
+    # Cloud security
+    scoutsuite \
+    c7n \
+    roadrecon \
+    # Threat intelligence
+    iocextract \
+    ioc_parser \
+    pymisp \
+    # Malware & file analysis
+    oletools \
+    pdfid \
+    quicksand \
+    # Mobile & app analysis
+    apkleaks \
+    frida-tools \
+    # Social & messaging
+    masto \
+    wechatsogou \
+    linelog2py \
+    xeuledoc \
+    # Media & archives
+    waybackpack \
+    dfir-unfurl \
+    # Dark web
+    torbot
 
 # Security & pentest pip packages.
 # Installed in isolated groups because mitmproxy, sslyze, impacket,
@@ -960,7 +1011,8 @@ RUN gem install --no-document \
     rubocop-rspec \
     rubocop-minitest \
     htmlbeautifier \
-    standardrb
+    standardrb \
+    origami
 
 # ============================================================
 # 12e. Perl linter modules (Perl::Critic extensions via cpanm)
