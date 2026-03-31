@@ -969,7 +969,7 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root
 #      social, media, and forensic investigation tools.
 # ============================================================
 # hadolint ignore=DL3013,DL3059
-RUN pip install --no-cache-dir --break-system-packages --root-user-action=ignore \
+RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
     # Username & email recon
     sherlock-project \
     maigret \
