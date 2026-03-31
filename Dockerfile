@@ -886,14 +886,29 @@ ENV NODE_PATH=/usr/lib/node_modules
 # 11a. Firecrawl — self-hosted web scraper (API on port 3002)
 #      Requires Redis + PostgreSQL (started in entrypoint.sh).
 # ============================================================
-# hadolint ignore=DL3003,DL3059
-RUN git clone --depth=1 https://github.com/mendableai/firecrawl.git /opt/firecrawl \
-    && cd /opt/firecrawl/apps/api && pnpm install --ignore-scripts \
-    && cd /opt/firecrawl/apps/api/node_modules/@mendable/firecrawl-rs \
-    && npx napi build --platform --release \
-    && cd /opt/firecrawl/apps/api && npx tsc \
-    && cd /opt/firecrawl/apps/playwright-service-ts && pnpm install --ignore-scripts && npx tsc \
-    && rm -rf /opt/firecrawl/.git
+# hadolint ignore=DL3059
+RUN git clone --depth=1 https://github.com/mendableai/firecrawl.git /opt/firecrawl
+
+WORKDIR /opt/firecrawl/apps/api
+# hadolint ignore=DL3059
+RUN pnpm install --ignore-scripts
+
+WORKDIR /opt/firecrawl/apps/api/node_modules/@mendable/firecrawl-rs
+# hadolint ignore=DL3059
+RUN npx napi build --platform --release
+
+WORKDIR /opt/firecrawl/apps/api
+# hadolint ignore=DL3059
+RUN npx tsc
+
+WORKDIR /opt/firecrawl/apps/playwright-service-ts
+# hadolint ignore=DL3059
+RUN pnpm install --ignore-scripts && npx tsc
+
+# hadolint ignore=DL3059
+RUN rm -rf /opt/firecrawl/.git
+
+WORKDIR /
 
 # Relax PostgreSQL auth for local socket connections (entrypoint manages lifecycle)
 # hadolint ignore=DL3059
