@@ -14,13 +14,13 @@
 # positives for valid zsh code.
 
 # Exit silently if gh CLI is not installed
-(( $+commands[gh] )) || return 0
+(($+commands[gh])) || return 0
 
 # ============================================================
 # Configuration
 # ============================================================
 GH_CLONE_CACHE_DIR="${HOME}/.cache/gh-clone-complete"
-GH_CLONE_CACHE_TTL=600  # 10 minutes in seconds
+GH_CLONE_CACHE_TTL=600 # 10 minutes in seconds
 
 # ============================================================
 # Cache Management
@@ -35,7 +35,7 @@ __gh_cache_is_fresh() {
   [[ -f "${file}" ]] || return 1
   local now=$(date +%s)
   local mtime=$(stat -c %Y "${file}" 2>/dev/null || stat -f %m "${file}" 2>/dev/null)
-  (( now - mtime < GH_CLONE_CACHE_TTL ))
+  ((now - mtime < GH_CLONE_CACHE_TTL))
 }
 
 # Get list of owners (authenticated user + orgs)
@@ -58,10 +58,10 @@ __gh_get_owners() {
   orgs=$(gh api user/orgs --jq '.[].login' 2>/dev/null)
   [[ -n "${orgs}" ]] && owners+=("${(@f)orgs}")
 
-  if (( ${#owners[@]} > 0 )); then
+  if ((${#owners[@]} > 0)); then
     # Atomic write via temp file
     local tmp="${cache_file}.tmp.$$"
-    printf '%s\n' "${owners[@]}" > "${tmp}"
+    printf '%s\n' "${owners[@]}" >"${tmp}"
     mv "${tmp}" "${cache_file}"
   fi
 
@@ -85,7 +85,7 @@ __gh_get_repos() {
   if [[ -n "${repos}" ]]; then
     # Atomic write via temp file
     local tmp="${cache_file}.tmp.$$"
-    printf '%s\n' "${repos}" > "${tmp}"
+    printf '%s\n' "${repos}" >"${tmp}"
     mv "${tmp}" "${cache_file}"
   fi
 

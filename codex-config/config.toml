@@ -1,8 +1,8 @@
 model = "gpt-5.4"
-model_provider = "f5ai"
+model_provider = "litellm"
 
-[model_providers.f5ai]
-name = "F5AI"
+[model_providers.litellm]
+name = "LiteLLM"
 base_url = "__CODEX_BASE_URL__"
 env_key = "OPENAI_API_KEY"
 wire_api = "responses"

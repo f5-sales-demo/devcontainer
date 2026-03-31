@@ -183,7 +183,7 @@ fi
 
 # ============================================================
 # Codex CLI — substitute base URL placeholder in config
-# The f5ai provider in config.toml uses __CODEX_BASE_URL__ as a
+# The litellm provider in config.toml uses __CODEX_BASE_URL__ as a
 # placeholder; resolve it to the OpenAI passthrough endpoint.
 # ============================================================
 if [ -n "$LITELLM_BASE_URL" ]; then
