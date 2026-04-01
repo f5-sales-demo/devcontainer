@@ -464,43 +464,119 @@ if [ -f "$SETTINGS" ] && [ -f "$TEMPLATE" ] && command -v jq >/dev/null 2>&1; th
 fi
 
 # ============================================================
-# Firecrawl — self-hosted web scraper (Redis + PostgreSQL + API)
-# Scrape/crawl endpoint on port 3002, Playwright on port 3000.
+# Firecrawl — self-hosted web scraper
+# API on port 3002, Playwright on port 3000.
+# Infrastructure: Redis, PostgreSQL, RabbitMQ.
+# Worker processes: nuq-worker (scrape queue), extract-worker.
 # Disable with ENABLE_FIRECRAWL=false.
 # ============================================================
 if [ "${ENABLE_FIRECRAWL:-true}" = "true" ] && [ -d /opt/firecrawl ]; then
+  # Shared env vars for all firecrawl processes
+  _FC_REDIS_URL=redis://localhost:6379
+  _FC_DB_URL=postgresql://postgres@localhost:5432/firecrawl
+  _FC_RABBITMQ_URL=amqp://localhost:5672
+
   # Redis (daemonised, logs to /tmp/redis.log)
   redis-server --daemonize yes --logfile /tmp/redis.log 2>/dev/null
 
-  # PostgreSQL — start cluster if not already running
+  # PostgreSQL — ensure runtime dir exists and start cluster
+  sudo mkdir -p /var/run/postgresql
+  sudo chown postgres:postgres /var/run/postgresql
   _pg_cluster=$(pg_lsclusters -h 2>/dev/null | awk 'NR==1{print $1, $2}')
   if [ -n "$_pg_cluster" ]; then
     # shellcheck disable=SC2086
-    pg_ctlcluster $_pg_cluster start 2>/dev/null || true
-  fi
-
-  # Initialise firecrawl database on first run
-  if ! psql -h /var/run/postgresql -U postgres -lqt 2>/dev/null | grep -qw firecrawl; then
-    createdb -h /var/run/postgresql -U postgres firecrawl 2>/dev/null
-    psql -h /var/run/postgresql -U postgres -d firecrawl \
-      -f /opt/firecrawl/apps/nuq-postgres/nuq.sql >/dev/null 2>&1 || true
+    sudo pg_ctlcluster $_pg_cluster start 2>/dev/null || true
   fi
   unset _pg_cluster
 
+  # Wait for PostgreSQL readiness (up to 5s)
+  for _i in $(seq 1 10); do
+    pg_isready -h /var/run/postgresql -q 2>/dev/null && break
+    sleep 0.5
+  done
+  unset _i
+
+  # Initialise firecrawl database on first run
+  if pg_isready -h /var/run/postgresql -q 2>/dev/null; then
+    if ! psql -h /var/run/postgresql -U postgres -lqt 2>/dev/null | grep -qw firecrawl; then
+      createdb -h /var/run/postgresql -U postgres firecrawl 2>/dev/null
+      psql -h /var/run/postgresql -U postgres -d firecrawl \
+        -f /opt/firecrawl/apps/nuq-postgres/nuq.sql >/dev/null 2>&1 || true
+    fi
+  fi
+
+  # RabbitMQ (required for extract endpoint)
+  sudo rabbitmq-server -detached 2>/dev/null || true
+  for _i in $(seq 1 10); do
+    sudo rabbitmqctl status >/dev/null 2>&1 && break
+    sleep 1
+  done
+  unset _i
+
   # Playwright microservice (port 3000)
   (cd /opt/firecrawl/apps/playwright-service-ts &&
-    PORT=3000 nohup node dist/api.js >/tmp/firecrawl-playwright.log 2>&1 &)
+    PLAYWRIGHT_BROWSERS_PATH=/home/vscode/.cache/ms-playwright \
+      PORT=3000 nohup node dist/api.js >/tmp/firecrawl-playwright.log 2>&1 &)
 
   # Firecrawl API (port 3002)
+  # OPENAI_BASE_URL and OPENAI_API_KEY are passed through from the
+  # container environment to enable the /v1/extract endpoint via litellm.
   (cd /opt/firecrawl/apps/api &&
-    REDIS_URL=redis://localhost:6379 \
-      REDIS_RATE_LIMIT_URL=redis://localhost:6379 \
+    REDIS_URL="${_FC_REDIS_URL}" \
+      REDIS_RATE_LIMIT_URL="${_FC_REDIS_URL}" \
       PLAYWRIGHT_MICROSERVICE_URL=http://localhost:3000 \
-      DATABASE_URL=postgresql://postgres@localhost:5432/firecrawl \
+      DATABASE_URL="${_FC_DB_URL}" \
+      NUQ_DATABASE_URL="${_FC_DB_URL}" \
+      NUQ_RABBITMQ_URL="${_FC_RABBITMQ_URL}" \
       USE_DB_AUTHENTICATION=false \
+      OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
+      OPENAI_BASE_URL="${OPENAI_BASE_URL:-}" \
+      MODEL_NAME="${FIRECRAWL_MODEL_NAME:-gpt-4.1-mini}" \
       PORT=3002 HOST=0.0.0.0 \
       NUM_WORKERS_PER_QUEUE=4 \
       nohup node dist/src/index.js >/tmp/firecrawl-api.log 2>&1 &)
+
+  # NuQ prefetch worker (moves jobs from PostgreSQL to RabbitMQ prefetch queue)
+  (cd /opt/firecrawl/apps/api &&
+    REDIS_URL="${_FC_REDIS_URL}" \
+      REDIS_RATE_LIMIT_URL="${_FC_REDIS_URL}" \
+      DATABASE_URL="${_FC_DB_URL}" \
+      NUQ_DATABASE_URL="${_FC_DB_URL}" \
+      NUQ_RABBITMQ_URL="${_FC_RABBITMQ_URL}" \
+      NUQ_PREFETCH_WORKER_PORT=3006 \
+      USE_DB_AUTHENTICATION=false \
+      nohup node dist/src/services/worker/nuq-prefetch-worker.js >/tmp/firecrawl-nuq-prefetch-worker.log 2>&1 &)
+
+  # NuQ scrape worker (processes scrape jobs via RabbitMQ prefetch)
+  (cd /opt/firecrawl/apps/api &&
+    REDIS_URL="${_FC_REDIS_URL}" \
+      REDIS_RATE_LIMIT_URL="${_FC_REDIS_URL}" \
+      PLAYWRIGHT_MICROSERVICE_URL=http://localhost:3000 \
+      DATABASE_URL="${_FC_DB_URL}" \
+      NUQ_DATABASE_URL="${_FC_DB_URL}" \
+      NUQ_RABBITMQ_URL="${_FC_RABBITMQ_URL}" \
+      NUQ_WORKER_PORT=3005 \
+      USE_DB_AUTHENTICATION=false \
+      OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
+      OPENAI_BASE_URL="${OPENAI_BASE_URL:-}" \
+      MODEL_NAME="${FIRECRAWL_MODEL_NAME:-gpt-4.1-mini}" \
+      nohup node dist/src/services/worker/nuq-worker.js >/tmp/firecrawl-nuq-worker.log 2>&1 &)
+
+  # Extract worker (processes extract jobs from RabbitMQ)
+  (cd /opt/firecrawl/apps/api &&
+    REDIS_URL="${_FC_REDIS_URL}" \
+      REDIS_RATE_LIMIT_URL="${_FC_REDIS_URL}" \
+      PLAYWRIGHT_MICROSERVICE_URL=http://localhost:3000 \
+      DATABASE_URL="${_FC_DB_URL}" \
+      NUQ_DATABASE_URL="${_FC_DB_URL}" \
+      NUQ_RABBITMQ_URL="${_FC_RABBITMQ_URL}" \
+      USE_DB_AUTHENTICATION=false \
+      OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
+      OPENAI_BASE_URL="${OPENAI_BASE_URL:-}" \
+      MODEL_NAME="${FIRECRAWL_MODEL_NAME:-gpt-4.1-mini}" \
+      nohup node dist/src/services/extract-worker.js >/tmp/firecrawl-extract-worker.log 2>&1 &)
+
+  unset _FC_REDIS_URL _FC_DB_URL _FC_RABBITMQ_URL
 fi
 
 # ============================================================
