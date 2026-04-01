@@ -1,5 +1,6 @@
 model = "gpt-5.4"
 model_provider = "litellm"
+sandbox_mode = "danger-full-access"
 
 [model_providers.litellm]
 name = "LiteLLM"

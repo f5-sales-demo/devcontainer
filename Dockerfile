@@ -1215,11 +1215,15 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
     && git clone --depth=1 --single-branch --branch main \
         https://github.com/thedotmack/claude-mem.git \
         "${PLUGIN_BASE}/marketplaces/thedotmack" \
+    && git clone --depth=1 --single-branch --branch main \
+        https://github.com/f5xc-salesdemos/codex-plugin-cc.git \
+        "${PLUGIN_BASE}/marketplaces/openai-codex" \
     && TS="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
-    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"thedotmack":{"source":{"source":"github","repo":"thedotmack/claude-mem"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":false}}' \
+    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"thedotmack":{"source":{"source":"github","repo":"thedotmack/claude-mem"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":false},"openai-codex":{"source":{"source":"github","repo":"f5xc-salesdemos/codex-plugin-cc"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":false}}' \
         "${PLUGIN_BASE}/marketplaces/claude-plugins-official" "$TS" \
         "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" "$TS" \
         "${PLUGIN_BASE}/marketplaces/thedotmack" "$TS" \
+        "${PLUGIN_BASE}/marketplaces/openai-codex" "$TS" \
         > "${PLUGIN_BASE}/known_marketplaces.json" \
     && printf '{"fetchedAt":"%s","plugins":[]}' "$TS" \
         > "${PLUGIN_BASE}/blocklist.json" \
@@ -1322,7 +1326,7 @@ RUN OPENCODE_CACHE="$HOME/.cache/opencode" \
     && bun add --cwd "$OPENCODE_CACHE" --force \
         @f5xc-salesdemos/oh-my-openagent@f5xc \
         @ai-sdk/anthropic \
-        @ai-sdk/openai-compatible \
+        @ai-sdk/openai \
         opencode-anthropic-auth@0.0.13
 
 # Patch oh-my-opencode config in-place with claude_code integration flags

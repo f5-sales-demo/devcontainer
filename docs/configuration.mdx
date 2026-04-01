@@ -33,7 +33,7 @@ When set, both Claude Code and OpenCode authenticate directly with Anthropic usi
 If your LiteLLM (or other) proxy already speaks the native Anthropic Messages API — including `web_search`, streaming, and tool use — set `LITELLM_BASE_URL` to the proxy domain. The container automatically derives the provider-specific URLs:
 
 - Anthropic endpoint → `${LITELLM_BASE_URL}/anthropic` (used by Claude Code)
-- OpenAI-compatible endpoint → `${LITELLM_BASE_URL}/api/v1` (used by OpenCode)
+- OpenAI-compatible endpoint → `${LITELLM_BASE_URL}/openai/v1` (used by OpenCode)
 
 | Variable | Description | Example |
 |----------|-------------|---------|

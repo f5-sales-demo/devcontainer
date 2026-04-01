@@ -38,7 +38,16 @@
     "f5xc-devcontainer@f5xc-salesdemos-marketplace": true,
     "f5xc-platform@f5xc-salesdemos-marketplace": true,
     "f5xc-meddpicc@f5xc-salesdemos-marketplace": true,
-    "claude-mem@thedotmack": true
+    "claude-mem@thedotmack": true,
+    "codex@openai-codex": true
+  },
+  "extraKnownMarketplaces": {
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "f5xc-salesdemos/codex-plugin-cc"
+      }
+    }
   },
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
