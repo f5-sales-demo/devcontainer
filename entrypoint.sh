@@ -135,30 +135,25 @@ if [ -n "$ANTHROPIC_API_KEY" ] && [ -f "$HOME/.claude.json" ]; then
 fi
 
 # ============================================================
-# OpenCode config switching (OAuth vs proxy mode)
+# OpenCode config (proxy mode only — Anthropic OAuth removed)
 # ============================================================
-# All config variants are baked into the image at final paths.
-# This block only activates the correct variant based on env vars.
+# Substitute env-var placeholders in opencode.json with real values.
+# OpenCode requires the LiteLLM proxy; OAuth-only mode is no longer supported.
 OPENCODE_CONFIG_DIR="$HOME/.config/opencode"
-if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-  cp "$OPENCODE_CONFIG_DIR/opencode-anthropic.json" "$OPENCODE_CONFIG_DIR/opencode.json"
-  cp "$OPENCODE_CONFIG_DIR/oh-my-opencode-anthropic.json" "$OPENCODE_CONFIG_DIR/oh-my-opencode.json"
-  cat >"$HOME/.local/share/opencode/auth.json" <<AUTHEOF
-{"anthropic":{"type":"oauth","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}
-AUTHEOF
-elif [ -n "$LITELLM_API_KEY" ]; then
+if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$LITELLM_API_KEY" ]; then
+  echo "WARNING: CLAUDE_CODE_OAUTH_TOKEN is set but LITELLM_API_KEY is not."
+  echo "         Claude Code will work via OAuth, but OpenCode requires the"
+  echo "         LiteLLM proxy (LITELLM_API_KEY + LITELLM_BASE_URL)."
+fi
+if [ -n "$LITELLM_API_KEY" ]; then
   _esc_base_url=$(printf '%s' "$_openai_base_url" | sed 's/[&\\/]/\\&/g')
   _esc_api_key=$(printf '%s' "$OPENAI_API_KEY" | sed 's/[&\\/]/\\&/g')
-  _esc_anthropic_base_url=$(printf '%s' "$ANTHROPIC_BASE_URL" | sed 's/[&\\/]/\\&/g')
-  _esc_anthropic_api_key=$(printf '%s' "$ANTHROPIC_API_KEY" | sed 's/[&\\/]/\\&/g')
   sed -e "s|{env:OPENAI_BASE_URL}|${_esc_base_url}|g" \
     -e "s|{env:OPENAI_API_KEY}|${_esc_api_key}|g" \
-    -e "s|{env:ANTHROPIC_BASE_URL}|${_esc_anthropic_base_url}|g" \
-    -e "s|{env:ANTHROPIC_API_KEY}|${_esc_anthropic_api_key}|g" \
     "$OPENCODE_CONFIG_DIR/opencode.json" \
     >"$OPENCODE_CONFIG_DIR/opencode.json.tmp" &&
     mv "$OPENCODE_CONFIG_DIR/opencode.json.tmp" "$OPENCODE_CONFIG_DIR/opencode.json"
-  unset _esc_base_url _esc_api_key _esc_anthropic_base_url _esc_anthropic_api_key
+  unset _esc_base_url _esc_api_key
   cp "$OPENCODE_CONFIG_DIR/oh-my-opencode-proxy.json" \
     "$OPENCODE_CONFIG_DIR/oh-my-opencode.json"
 fi

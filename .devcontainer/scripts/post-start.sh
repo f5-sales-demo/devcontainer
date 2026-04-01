@@ -4,39 +4,22 @@ set -e
 echo "Running post-start checks..."
 
 # Check AI provider mode
-if [ -n "$ANTHROPIC_BASE_URL" ]; then
-  echo "  Mode: LiteLLM direct (Anthropic-compatible endpoint)"
-  echo "  Endpoint: $ANTHROPIC_BASE_URL"
+if [ -n "$LITELLM_BASE_URL" ]; then
+  echo "  Mode: LiteLLM proxy"
+  echo "  Endpoint: $LITELLM_BASE_URL"
   echo -n "  Checking endpoint... "
-  if curl -sf --connect-timeout 5 -o /dev/null "${ANTHROPIC_BASE_URL%/}" 2>/dev/null; then
+  if curl -sf --connect-timeout 5 -o /dev/null "${LITELLM_BASE_URL%/}" 2>/dev/null; then
     echo "reachable"
   else
     echo "not reachable (check VPN / network connectivity)"
   fi
-  echo "  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:+set}${ANTHROPIC_API_KEY:-NOT SET}"
+  echo "  OPENAI_API_KEY: ${OPENAI_API_KEY:+set}${OPENAI_API_KEY:-NOT SET}"
+  echo "  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:+set}${ANTHROPIC_API_KEY:-NOT SET} (for Claude Code)"
 else
-  echo "  Mode: direct API (no proxy)"
+  echo "  WARNING: LiteLLM proxy is not configured — OpenCode will not work"
+  echo "           Set LITELLM_API_KEY and LITELLM_BASE_URL in .env"
   if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-    echo "  Auth: Claude Max (OAuth via CLAUDE_CODE_OAUTH_TOKEN)"
-    if [ -f "$HOME/.local/share/opencode/auth.json" ]; then
-      echo "  opencode: OAuth credentials seeded"
-    fi
-  elif [ -z "$ANTHROPIC_API_KEY" ]; then
-    echo "  WARNING: ANTHROPIC_API_KEY is not set — AI tools will not work"
-    echo "           Set your key in .env: ANTHROPIC_API_KEY=sk-ant-..."
-    echo "           Get a key at https://console.anthropic.com/"
-  elif [[ "$ANTHROPIC_API_KEY" == *"your-api-key"* ]] ||
-    [[ "$ANTHROPIC_API_KEY" == *"placeholder"* ]] ||
-    [[ "$ANTHROPIC_API_KEY" == *"change-me"* ]]; then
-    echo "  WARNING: ANTHROPIC_API_KEY appears to be a placeholder"
-    echo "           Replace the value in .env with your real API key"
-    echo "           Get a key at https://console.anthropic.com/"
-  elif [[ "$ANTHROPIC_API_KEY" != sk-ant-* ]]; then
-    echo "  WARNING: ANTHROPIC_API_KEY does not look like an Anthropic key"
-    echo "           If using an Anthropic-compatible proxy, set ANTHROPIC_BASE_URL"
-    echo "           in .env to route Claude Code directly to it."
-  else
-    echo "  ANTHROPIC_API_KEY is set"
+    echo "           Claude Code will still work via OAuth"
   fi
 fi
 

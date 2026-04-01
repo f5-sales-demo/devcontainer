@@ -580,9 +580,7 @@ Write `~/.cache/opencode/package.json`:
 {
   "dependencies": {
     "@f5xc-salesdemos/oh-my-openagent": "f5xc",
-    "@ai-sdk/anthropic": "^3.0.64",
-    "@ai-sdk/openai-compatible": "^2.0.37",
-    "opencode-anthropic-auth": "0.0.13"
+    "@ai-sdk/openai-compatible": "^2.0.37"
   }
 }
 ```
@@ -595,9 +593,7 @@ Write `~/.cache/opencode/package.json`:
 
 ```bash
 ls ~/.cache/opencode/node_modules/@f5xc-salesdemos/oh-my-openagent/     # Expected: directory exists
-ls ~/.cache/opencode/node_modules/@ai-sdk/anthropic/                   # Expected: directory exists
 ls ~/.cache/opencode/node_modules/@ai-sdk/openai-compatible/           # Expected: directory exists
-ls ~/.cache/opencode/node_modules/opencode-anthropic-auth/             # Expected: directory exists
 ```
 
 ---
@@ -710,13 +706,11 @@ for VAR in LITELLM_API_KEY LITELLM_BASE_URL; do
   esac
 done
 
-if [ -n "$MISSING" ] && [ -z "$_OAUTH" ]; then
+if [ -n "$MISSING" ]; then
   echo "Missing:$MISSING"
-  echo "Set LITELLM_API_KEY or CLAUDE_CODE_OAUTH_TOKEN before proceeding."
-elif [ -n "$MISSING" ]; then
-  echo "LiteLLM proxy not configured — will use OAuth mode (Anthropic only)"
+  echo "Set LITELLM_API_KEY and LITELLM_BASE_URL before proceeding."
 else
-  echo "All variables set — will use LiteLLM proxy mode (multi-provider)"
+  echo "All variables set — will use LiteLLM proxy mode"
 fi
 ```
 
@@ -734,13 +728,13 @@ set +a
 
 ## Step 8 — Write `opencode.json`
 
-The configuration depends on which authentication mode is available (LiteLLM proxy vs OAuth).
+OpenCode uses the LiteLLM proxy for model access (OpenAI-compatible endpoint only).
 
 ```bash
 mkdir -p ~/.config/opencode
 
 if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
-  echo "Writing opencode.json (LiteLLM proxy mode — multi-provider)..."
+  echo "Writing opencode.json (LiteLLM proxy mode — OpenAI only)..."
   cat > ~/.config/opencode/opencode.json << ENDOFJSON
 {
   "\$schema": "https://opencode.ai/config.json",
@@ -763,7 +757,7 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
       "name": "OpenAI Proxy",
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "${LITELLM_BASE_URL}/api/v1",
+        "baseURL": "${LITELLM_BASE_URL}/openai/v1",
         "apiKey": "${LITELLM_API_KEY}"
       },
       "models": {
@@ -772,91 +766,14 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
           "modalities": { "input": ["text", "image"], "output": ["text"] },
           "limit": { "context": 1000000, "output": 128000 },
           "options": { "reasoningSummary": null }
-        },
-        "grok-code-fast-1": {
-          "name": "Explore",
-          "modalities": { "input": ["text"], "output": ["text"] },
-          "limit": { "context": 256000, "output": 256000 }
-        }
-      }
-    },
-    "anthropic-proxy": {
-      "name": "Anthropic Proxy",
-      "npm": "@ai-sdk/anthropic",
-      "options": {
-        "baseURL": "${LITELLM_BASE_URL}/anthropic/v1",
-        "apiKey": "${LITELLM_API_KEY}"
-      },
-      "models": {
-        "claude-opus-4-6": {
-          "name": "Claude Opus 4.6",
-          "modalities": { "input": ["text", "image"], "output": ["text"] },
-          "limit": { "context": 1000000, "output": 128000 }
-        },
-        "claude-sonnet-4-6": {
-          "name": "Claude Sonnet 4.6",
-          "modalities": { "input": ["text", "image"], "output": ["text"] },
-          "limit": { "context": 1000000, "output": 128000 }
         }
       }
     }
   },
-  "model": "anthropic-proxy/claude-opus-4-6",
-  "small_model": "anthropic-proxy/claude-sonnet-4-6",
+  "model": "openai-proxy/gpt-5.4",
+  "small_model": "openai-proxy/gpt-5.4",
   "permission": "allow",
   "plugin": ["@f5xc-salesdemos/oh-my-openagent@f5xc"],
-      "lsp": {
-    "marksman": { "command": ["marksman", "server"], "extensions": [".md", ".mdx"] },
-    "mdx": { "command": ["mdx-language-server", "--stdio"], "extensions": [".mdx"] },
-    "json": { "command": ["vscode-json-language-server", "--stdio"], "extensions": [".json", ".jsonc"] },
-    "css": { "command": ["vscode-css-language-server", "--stdio"], "extensions": [".css", ".less", ".scss"] },
-    "html": { "command": ["vscode-html-language-server", "--stdio"], "extensions": [".html", ".htm"] },
-    "toml": { "command": ["taplo", "lsp", "stdio"], "extensions": [".toml"] },
-    "python": { "command": ["pyright-langserver", "--stdio"], "extensions": [".py", ".pyi"] }
-  }
-}
-ENDOFJSON
-
-elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-  echo "Writing opencode.json (OAuth mode — Anthropic models only)..."
-  cat > ~/.config/opencode/opencode.json << 'ENDOFJSON'
-{
-  "$schema": "https://opencode.ai/config.json",
-  "permission": "allow",
-  "model": "anthropic/claude-opus-4-6",
-  "small_model": "anthropic/claude-sonnet-4-6",
-  "provider": {
-    "anthropic": {
-      "name": "Anthropic (OAuth)",
-      "models": {
-        "claude-opus-4-6": {
-          "name": "Claude Opus 4.6",
-          "modalities": { "input": ["text", "image"], "output": ["text"] },
-          "limit": { "context": 1000000, "output": 128000 }
-        },
-        "claude-sonnet-4-6": {
-          "name": "Claude Sonnet 4.6",
-          "modalities": { "input": ["text", "image"], "output": ["text"] },
-          "limit": { "context": 1000000, "output": 128000 }
-        }
-      }
-    }
-  },
-  "plugin": ["opencode-claude-auth", "@f5xc-salesdemos/oh-my-openagent@f5xc"],
-  "mcp": {
-    "chrome-devtools": {
-      "type": "local",
-      "command": [
-        "npx", "-y", "chrome-devtools-mcp@^0.20.2",
-        "--executablePath", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-        "--chromeArg=--disable-features=HttpsFirstBalancedModeAutoEnable,HttpsUpgrades,HttpsFirstModeV2",
-        "--chromeArg=--no-first-run", "--chromeArg=--no-default-browser-check",
-        "--chromeArg=--disable-extensions",
-        "--chromeArg=--disable-background-timer-throttling",
-        "--chromeArg=--disable-backgrounding-occluded-windows"
-      ]
-    }
-  },
   "lsp": {
     "marksman": { "command": ["marksman", "server"], "extensions": [".md", ".mdx"] },
     "mdx": { "command": ["mdx-language-server", "--stdio"], "extensions": [".mdx"] },
@@ -869,11 +786,8 @@ elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
 }
 ENDOFJSON
 
-  npm install -g opencode-claude-auth
-  echo "Installed opencode-claude-auth for OAuth mode"
-
 else
-  echo "ERROR: Neither LITELLM_API_KEY nor CLAUDE_CODE_OAUTH_TOKEN is set."
+  echo "ERROR: LITELLM_API_KEY or LITELLM_BASE_URL is not set."
   echo "Re-run Step 7 to configure authentication before proceeding."
 fi
 ```
@@ -883,24 +797,23 @@ fi
 ## Step 9 — Write `oh-my-opencode.json`
 
 ```bash
-if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
-  echo "Writing oh-my-opencode.json (proxy mode — multi-provider agents)..."
-  cat > ~/.config/opencode/oh-my-opencode.json << 'ENDOFJSON'
+echo "Writing oh-my-opencode.json (OpenAI proxy — optimized with variant settings)..."
+cat > ~/.config/opencode/oh-my-opencode.json << 'ENDOFJSON'
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
-    "sisyphus": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "oracle": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "librarian": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "explore": { "model": "openai-proxy/grok-code-fast-1", "color": "#e4002b" },
-    "multimodal-looker": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "prometheus": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "metis": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "hephaestus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b" },
-    "momus": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "atlas": { "model": "anthropic-proxy/claude-sonnet-4-6", "color": "#e4002b" },
-    "frontend-ui-ux-engineer": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b" },
-    "document-writer": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" }
+    "sisyphus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "oracle": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "librarian": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "explore": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "fast" },
+    "multimodal-looker": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "prometheus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "metis": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "hephaestus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "momus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "atlas": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "fast" },
+    "frontend-ui-ux-engineer": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "document-writer": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" }
   },
   "categories": {
     "visual-engineering": { "model": "openai-proxy/gpt-5.4" },
@@ -908,28 +821,16 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
     "ultrabrain": { "model": "openai-proxy/gpt-5.4" },
     "deep": { "model": "openai-proxy/gpt-5.4" },
     "artistry": { "model": "openai-proxy/gpt-5.4" },
-    "quick": { "model": "anthropic-proxy/claude-sonnet-4-6" },
-    "unspecified-low": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "unspecified-high": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "writing": { "model": "anthropic-proxy/claude-opus-4-6" }
+    "quick": { "model": "openai-proxy/gpt-5.4" },
+    "unspecified-low": { "model": "openai-proxy/gpt-5.4" },
+    "unspecified-high": { "model": "openai-proxy/gpt-5.4" },
+    "writing": { "model": "openai-proxy/gpt-5.4" }
   },
   "background_task": {
-    "providerConcurrency": { "openai-proxy": 5, "anthropic-proxy": 5 }
+    "providerConcurrency": { "openai-proxy": 5 }
   }
 }
 ENDOFJSON
-
-else
-  echo "Writing oh-my-opencode.json (OAuth mode — Anthropic models only)..."
-  cat > ~/.config/opencode/oh-my-opencode.json << 'ENDOFJSON'
-{
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
-  "background_task": {
-    "providerConcurrency": { "anthropic": 5 }
-  }
-}
-ENDOFJSON
-fi
 ```
 
 ---
@@ -1075,9 +976,7 @@ ls -la ~/.config/opencode/node_modules/@opencode-ai/plugin/
 
 # Runtime cache
 ls ~/.cache/opencode/node_modules/@f5xc-salesdemos/oh-my-openagent/package.json
-ls ~/.cache/opencode/node_modules/@ai-sdk/anthropic/package.json
 ls ~/.cache/opencode/node_modules/@ai-sdk/openai-compatible/package.json
-ls ~/.cache/opencode/node_modules/opencode-anthropic-auth/package.json
 
 # Claude Code plugins
 jq '.plugins | length' ~/.claude/plugins/installed_plugins.json  # Expected: 23

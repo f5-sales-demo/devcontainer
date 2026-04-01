@@ -1,18 +1,18 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
-    "sisyphus": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "oracle": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "librarian": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "explore": { "model": "openai-proxy/grok-code-fast-1", "color": "#e4002b" },
-    "multimodal-looker": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "prometheus": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "metis": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "hephaestus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b" },
-    "momus": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" },
-    "atlas": { "model": "anthropic-proxy/claude-sonnet-4-6", "color": "#e4002b" },
-    "frontend-ui-ux-engineer": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b" },
-    "document-writer": { "model": "anthropic-proxy/claude-opus-4-6", "color": "#e4002b" }
+    "sisyphus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "oracle": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "librarian": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "explore": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "fast" },
+    "multimodal-looker": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "prometheus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "metis": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "hephaestus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "momus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "atlas": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "fast" },
+    "frontend-ui-ux-engineer": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "document-writer": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" }
   },
   "categories": {
     "visual-engineering": { "model": "openai-proxy/gpt-5.4" },
@@ -20,15 +20,14 @@
     "ultrabrain": { "model": "openai-proxy/gpt-5.4" },
     "deep": { "model": "openai-proxy/gpt-5.4" },
     "artistry": { "model": "openai-proxy/gpt-5.4" },
-    "quick": { "model": "anthropic-proxy/claude-sonnet-4-6" },
-    "unspecified-low": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "unspecified-high": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "writing": { "model": "anthropic-proxy/claude-opus-4-6" }
+    "quick": { "model": "openai-proxy/gpt-5.4" },
+    "unspecified-low": { "model": "openai-proxy/gpt-5.4" },
+    "unspecified-high": { "model": "openai-proxy/gpt-5.4" },
+    "writing": { "model": "openai-proxy/gpt-5.4" }
   },
   "background_task": {
     "providerConcurrency": {
-      "openai-proxy": 5,
-      "anthropic-proxy": 5
+      "openai-proxy": 5
     }
   }
 }

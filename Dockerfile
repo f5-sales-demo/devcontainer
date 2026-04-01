@@ -1331,9 +1331,7 @@ RUN OPENCODE_CACHE="$HOME/.cache/opencode" \
     && printf '{"dependencies":{}}\n' > "$OPENCODE_CACHE/package.json" \
     && bun add --cwd "$OPENCODE_CACHE" --force \
         @f5xc-salesdemos/oh-my-openagent@f5xc \
-        @ai-sdk/anthropic \
-        @ai-sdk/openai \
-        opencode-anthropic-auth@0.0.13
+        @ai-sdk/openai
 
 # Patch oh-my-opencode config in-place with claude_code integration flags
 # hadolint ignore=DL3059
@@ -1519,14 +1517,10 @@ COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.json /home/${USERNAM
 COPY --chown=${USERNAME}:${USERNAME} claude-config/claude.json /home/${USERNAME}/.claude.json
 COPY --chown=${USERNAME}:${USERNAME} claude-config/user-CLAUDE.md /home/${USERNAME}/.claude/CLAUDE.md
 
-# --- OpenCode: bake all config variants to final paths ---
-# Default config lives at the active path; OAuth variant
-# is stored alongside it. Entrypoint swaps the active file at runtime
-# based on which auth env vars are set.
+# --- OpenCode: bake config to final paths ---
+# Entrypoint substitutes env-var placeholders at runtime.
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json /home/${USERNAME}/.config/opencode/opencode.json
-COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-anthropic.json /home/${USERNAME}/.config/opencode/opencode-anthropic.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-opencode-proxy.json /home/${USERNAME}/.config/opencode/oh-my-opencode-proxy.json
-COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-opencode-anthropic.json /home/${USERNAME}/.config/opencode/oh-my-opencode-anthropic.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.opencode/opencode.json
 
 
