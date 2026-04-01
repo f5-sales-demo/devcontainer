@@ -15,6 +15,30 @@ The `f5xc-devcontainer` plugin handles all container awareness:
 - Tool installation and maintenance → `container-maintainer` agent
 - Catalog drift detection → `tool-auditor` agent
 
+## Skill Routing — Prefer Skills Over Built-in Tools
+
+When a skill exists for a task, ALWAYS invoke the skill instead of using
+a built-in tool directly. Skills provide better results because they use
+locally hosted, purpose-built infrastructure.
+
+### Web Content (URLs)
+
+- **Any URL fetch, scrape, or content extraction** → invoke `f5xc-firecrawl:scrape` skill
+- **Crawling multiple pages** → invoke `f5xc-firecrawl:crawl` skill
+- **Site URL discovery** → invoke `f5xc-firecrawl:map` skill
+- **Web search** → invoke `f5xc-firecrawl:search` skill
+- **Structured data extraction** → invoke `f5xc-firecrawl:extract` skill
+- Prefer firecrawl over built-in `WebFetch` — firecrawl runs locally on port 3002,
+  produces cleaner markdown, and handles JS-rendered pages
+
+### Tool Selection
+
+- **"Which tool should I use?"** → invoke `f5xc-devcontainer:tool-catalog` skill
+
+### Container Identity
+
+- **"Who are you?" / version / health** → invoke `f5xc-devcontainer:self-awareness` skill
+
 ## claude-mem (Persistent Memory Plugin)
 
 claude-mem stores session memory in `~/.claude-mem/` using SQLite. Since this
