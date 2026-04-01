@@ -98,6 +98,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Firecrawl runtime dependencies
     redis-server \
     postgresql postgresql-client \
+    rabbitmq-server \
     # Shell tools
     cron \
     bat bubblewrap fd-find ripgrep htop tree tmux file xxd \
@@ -903,7 +904,8 @@ RUN npx tsc
 
 WORKDIR /opt/firecrawl/apps/playwright-service-ts
 # hadolint ignore=DL3059
-RUN pnpm install --ignore-scripts && npx tsc
+RUN pnpm install --ignore-scripts && npx tsc \
+    && PLAYWRIGHT_BROWSERS_PATH=/home/vscode/.cache/ms-playwright npx playwright install chromium
 
 # hadolint ignore=DL3059
 RUN rm -rf /opt/firecrawl/.git
