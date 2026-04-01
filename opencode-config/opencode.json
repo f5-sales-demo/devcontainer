@@ -34,7 +34,7 @@
       }
     },
     "openai-proxy": {
-      "npm": "@ai-sdk/openai-compatible",
+      "npm": "@ai-sdk/openai",
       "name": "OpenAI Proxy",
       "options": {
         "baseURL": "{env:OPENAI_BASE_URL}",
