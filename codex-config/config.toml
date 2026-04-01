@@ -1,6 +1,12 @@
 model = "gpt-5.4"
 model_provider = "litellm"
 sandbox_mode = "danger-full-access"
+approval_policy = "never"
+web_search = "live"
+model_reasoning_effort = "high"
+personality = "pragmatic"
+hide_agent_reasoning = true
+service_tier = "fast"
 
 [model_providers.litellm]
 name = "LiteLLM"
@@ -11,3 +17,14 @@ query_params = {}
 
 [notice.model_migrations]
 "gpt-5.3-codex" = "gpt-5.4"
+
+[features]
+multi_agent = true
+shell_tool = true
+fast_mode = true
+
+[projects."/workspace"]
+trust_level = "trusted"
+
+[projects."/home/vscode"]
+trust_level = "trusted"
