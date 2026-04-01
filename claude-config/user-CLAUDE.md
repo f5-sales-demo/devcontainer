@@ -29,7 +29,7 @@ locally hosted, purpose-built infrastructure.
 - **Web search** → invoke `f5xc-firecrawl:search` skill
 - **Structured data extraction** → invoke `f5xc-firecrawl:extract` skill
 - Prefer firecrawl over built-in `WebFetch` — firecrawl runs locally on port 3002,
-  produces cleaner markdown, and handles JS-rendered pages
+  produces cleaner Markdown, and handles JS-rendered pages
 
 ### Tool Selection
 
