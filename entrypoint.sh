@@ -108,8 +108,7 @@ if [ -n "$LITELLM_API_KEY" ]; then
   printf 'ANTHROPIC_API_KEY=%s\n' "$LITELLM_API_KEY" >"$HOME/.claude-mem/.env"
 fi
 if [ -n "$LITELLM_BASE_URL" ]; then
-  export OPENAI_BASE_URL="${LITELLM_BASE_URL}/openai/v1"
-  export OPENAI_API_BASE="${LITELLM_BASE_URL}/openai/v1"
+  _openai_base_url="${LITELLM_BASE_URL}/openai/v1"
   export ANTHROPIC_BASE_URL="${LITELLM_BASE_URL}/anthropic"
 fi
 
@@ -148,7 +147,7 @@ if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
 {"anthropic":{"type":"oauth","access":"${CLAUDE_CODE_OAUTH_TOKEN}","refresh":"","expires":9999999999999}}
 AUTHEOF
 elif [ -n "$LITELLM_API_KEY" ]; then
-  _esc_base_url=$(printf '%s' "$OPENAI_BASE_URL" | sed 's/[&\\/]/\\&/g')
+  _esc_base_url=$(printf '%s' "$_openai_base_url" | sed 's/[&\\/]/\\&/g')
   _esc_api_key=$(printf '%s' "$OPENAI_API_KEY" | sed 's/[&\\/]/\\&/g')
   _esc_anthropic_base_url=$(printf '%s' "$ANTHROPIC_BASE_URL" | sed 's/[&\\/]/\\&/g')
   _esc_anthropic_api_key=$(printf '%s' "$ANTHROPIC_API_KEY" | sed 's/[&\\/]/\\&/g')
@@ -174,7 +173,7 @@ HERMES_HOME_DIR="$HOME/.hermes"
 mkdir -p "$HERMES_HOME_DIR"
 if [ -n "$LITELLM_API_KEY" ]; then
   printf 'OPENAI_BASE_URL=%s\nOPENAI_API_KEY=%s\nLLM_MODEL=claude-opus-4-6\n' \
-    "$OPENAI_BASE_URL" "$OPENAI_API_KEY" \
+    "$_openai_base_url" "$OPENAI_API_KEY" \
     >"$HERMES_HOME_DIR/.env"
 elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
   printf 'ANTHROPIC_TOKEN=%s\n' "$ANTHROPIC_OAUTH_TOKEN" \

@@ -1178,7 +1178,7 @@ RUN printf '#!/bin/sh\ncd /opt/caldera\nexec .venv/bin/python server.py --insecu
 # 12n. Hermes Agent (NousResearch — self-improving AI agent)
 #      Installed in /opt/hermes-agent using system Python 3.x
 #      (requires >=3.11; system Python 3.13 is compatible).
-#      Reads OPENAI_BASE_URL + OPENAI_API_KEY for LiteLLM proxy,
+#      Reads OPENAI_BASE_URL + OPENAI_API_KEY from ~/.hermes/.env,
 #      ANTHROPIC_TOKEN for Anthropic native auth.
 #      Config baked to ~/.hermes/config.yaml (section 17).
 # ============================================================
@@ -1434,6 +1434,7 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && echo '[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh' >> "$HOME/.zshrc" \
     && echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> "$HOME/.zshrc" \
     && echo 'alias vim=nvim' >> "$HOME/.zshrc" \
+    && echo 'alias codex-exec="codex exec --skip-git-repo-check"' >> "$HOME/.zshrc" \
     && echo 'export LESS="-R -F -X -i -J --mouse"' >> "$HOME/.zshrc" \
     && echo 'export LESSHISTFILE="$HOME/.cache/lesshst"' >> "$HOME/.zshrc" \
     && echo 'export LESSOPEN="|~/.lessfilter %s"' >> "$HOME/.zshrc" \
