@@ -1254,6 +1254,10 @@ RUN git clone --depth=1 --single-branch --branch main \
 # hadolint ignore=DL3059
 RUN npx playwright install-deps
 
+# Fix ownership of dirs created by root under /home/vscode (e.g. .cache from playwright)
+# hadolint ignore=DL3059
+RUN chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.cache
+
 # ============================================================
 # User setup
 # ============================================================
