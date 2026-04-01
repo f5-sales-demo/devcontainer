@@ -1,8 +1,0 @@
-{
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
-  "background_task": {
-    "providerConcurrency": {
-      "anthropic": 5
-    }
-  }
-}

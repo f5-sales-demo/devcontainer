@@ -1,38 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
-    "anthropic-proxy": {
-      "npm": "@ai-sdk/anthropic",
-      "name": "Anthropic Proxy",
-      "options": {
-        "baseURL": "{env:ANTHROPIC_BASE_URL}/v1",
-        "apiKey": "{env:ANTHROPIC_API_KEY}"
-      },
-      "models": {
-        "claude-opus-4-6": {
-          "name": "Claude Opus 4.6",
-          "modalities": {
-            "input": ["text", "image"],
-            "output": ["text"]
-          },
-          "limit": {
-            "context": 1000000,
-            "output": 128000
-          }
-        },
-        "claude-sonnet-4-6": {
-          "name": "Claude Sonnet 4.6",
-          "modalities": {
-            "input": ["text", "image"],
-            "output": ["text"]
-          },
-          "limit": {
-            "context": 1000000,
-            "output": 128000
-          }
-        }
-      }
-    },
     "openai-proxy": {
       "npm": "@ai-sdk/openai",
       "name": "OpenAI Proxy",
@@ -54,23 +22,12 @@
           "options": {
             "reasoningSummary": null
           }
-        },
-        "grok-code-fast-1": {
-          "name": "Explore",
-          "modalities": {
-            "input": ["text"],
-            "output": ["text"]
-          },
-          "limit": {
-            "context": 256000,
-            "output": 256000
-          }
         }
       }
     }
   },
-  "model": "anthropic-proxy/claude-opus-4-6",
-  "small_model": "anthropic-proxy/claude-sonnet-4-6",
+  "model": "openai-proxy/gpt-5.4",
+  "small_model": "openai-proxy/gpt-5.4",
   "plugin": ["@f5xc-salesdemos/oh-my-openagent@f5xc"],
   "mcp": {},
   "lsp": {
