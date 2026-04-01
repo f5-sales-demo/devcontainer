@@ -676,20 +676,20 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # --- Recon: ProjectDiscovery suite ---
     && NUCLEI_VERSION=$(ghlatest projectdiscovery/nuclei) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_${NUCLEI_VERSION}_linux_${DPKG_ARCH}.zip" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/projectdiscovery/nuclei/releases/download/v${NUCLEI_VERSION}/nuclei_${NUCLEI_VERSION}_linux_${DPKG_ARCH}.zip" \
       -o /tmp/nuclei.zip \
     && unzip -oq /tmp/nuclei.zip -d /usr/local/bin && rm /tmp/nuclei.zip \
     && SUBFINDER_VERSION=$(ghlatest projectdiscovery/subfinder) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/projectdiscovery/subfinder/releases/latest/download/subfinder_${SUBFINDER_VERSION}_linux_${DPKG_ARCH}.zip" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/projectdiscovery/subfinder/releases/download/v${SUBFINDER_VERSION}/subfinder_${SUBFINDER_VERSION}_linux_${DPKG_ARCH}.zip" \
       -o /tmp/subfinder.zip \
     && unzip -oq /tmp/subfinder.zip -d /usr/local/bin && rm /tmp/subfinder.zip \
     && HTTPX_VERSION=$(ghlatest projectdiscovery/httpx) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/projectdiscovery/httpx/releases/latest/download/httpx_${HTTPX_VERSION}_linux_${DPKG_ARCH}.zip" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/projectdiscovery/httpx/releases/download/v${HTTPX_VERSION}/httpx_${HTTPX_VERSION}_linux_${DPKG_ARCH}.zip" \
       -o /tmp/httpx.zip \
     && unzip -oq /tmp/httpx.zip -d /usr/local/bin && rm /tmp/httpx.zip \
     # --- Web fuzzing ---
     && FFUF_VERSION=$(ghlatest ffuf/ffuf) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/ffuf/ffuf/releases/latest/download/ffuf_${FFUF_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/ffuf/ffuf/releases/download/v${FFUF_VERSION}/ffuf_${FFUF_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin ffuf \
     && if [ "$UNAME_ARCH" = "x86_64" ]; then GB_ARCH="x86_64"; else GB_ARCH="arm64"; fi \
     && curl ${CURL_RETRY} -fsSL "https://github.com/OJ/gobuster/releases/latest/download/gobuster_Linux_${GB_ARCH}.tar.gz" \
@@ -711,26 +711,26 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && curl ${CURL_RETRY} -fsSL "https://github.com/owasp-amass/amass/releases/latest/download/amass_linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz --strip-components=1 -C /usr/local/bin "amass_linux_${DPKG_ARCH}/amass" \
     && GAU_VERSION=$(ghlatest lc/gau) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/lc/gau/releases/latest/download/gau_${GAU_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/lc/gau/releases/download/v${GAU_VERSION}/gau_${GAU_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin gau \
     && if [ "$DPKG_ARCH" = "amd64" ]; then \
       WAYBACK_VERSION=$(ghlatest tomnomnom/waybackurls) \
-      && curl ${CURL_RETRY} -fsSL "https://github.com/tomnomnom/waybackurls/releases/latest/download/waybackurls-linux-amd64-${WAYBACK_VERSION}.tgz" \
+      && curl ${CURL_RETRY} -fsSL "https://github.com/tomnomnom/waybackurls/releases/download/v${WAYBACK_VERSION}/waybackurls-linux-amd64-${WAYBACK_VERSION}.tgz" \
         | tar -xz -C /usr/local/bin waybackurls; \
     fi \
     # --- Supply chain & secret scanning ---
     && TRUFFLEHOG_VERSION=$(ghlatest trufflesecurity/trufflehog) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/trufflesecurity/trufflehog/releases/latest/download/trufflehog_${TRUFFLEHOG_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin trufflehog \
     && GRYPE_VERSION=$(ghlatest anchore/grype) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/anchore/grype/releases/latest/download/grype_${GRYPE_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/anchore/grype/releases/download/v${GRYPE_VERSION}/grype_${GRYPE_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin grype \
     && SYFT_VERSION=$(ghlatest anchore/syft) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/anchore/syft/releases/latest/download/syft_${SYFT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/anchore/syft/releases/download/v${SYFT_VERSION}/syft_${SYFT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin syft \
     # --- Kubernetes security ---
     && KUBEBENCH_VERSION=$(ghlatest aquasecurity/kube-bench) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/aquasecurity/kube-bench/releases/latest/download/kube-bench_${KUBEBENCH_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+    && curl ${CURL_RETRY} -fsSL "https://github.com/aquasecurity/kube-bench/releases/download/v${KUBEBENCH_VERSION}/kube-bench_${KUBEBENCH_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin kube-bench \
     # --- Network attack (amd64 only) ---
     && if [ "$DPKG_ARCH" = "amd64" ]; then \
