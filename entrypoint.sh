@@ -516,7 +516,7 @@ if [ "${ENABLE_FIRECRAWL:-true}" = "true" ] && [ -d /opt/firecrawl ]; then
   # Playwright microservice (port 3000)
   (cd /opt/firecrawl/apps/playwright-service-ts &&
     PLAYWRIGHT_BROWSERS_PATH=/home/vscode/.cache/ms-playwright \
-    PORT=3000 nohup node dist/api.js >/tmp/firecrawl-playwright.log 2>&1 &)
+      PORT=3000 nohup node dist/api.js >/tmp/firecrawl-playwright.log 2>&1 &)
 
   # Firecrawl API (port 3002)
   # OPENAI_BASE_URL and OPENAI_API_KEY are passed through from the
