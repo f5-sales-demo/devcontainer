@@ -240,8 +240,8 @@ check "all plugin scripts executable (${NON_EXEC_TOTAL} non-exec: ${NON_EXEC_OFF
 check "neutralize-hooks.sh installed" test -x /opt/claude-config/neutralize-hooks.sh
 check "SessionStart hook references neutralize-hooks.sh" \
   jq -e '.hooks.SessionStart[0].hooks[0].command | test("neutralize-hooks")' "$HOME/.claude/settings.json"
-check "PostToolUse Skill hook references neutralize-hooks.sh" \
-  jq -e '.hooks.PostToolUse[0].matcher == "Skill" and (.hooks.PostToolUse[0].hooks[0].command | test("neutralize-hooks"))' "$HOME/.claude/settings.json"
+# PostToolUse hook removed — background daemon (inotifywait/polling) provides
+# persistent coverage for mid-session plugin syncs. See devcontainer#654.
 # Ensure marketplace symlinks are current before checking (handles race
 # between Claude Code's runtime plugin sync and self-test execution)
 /opt/claude-config/neutralize-hooks.sh 2>/dev/null || true
@@ -276,7 +276,7 @@ done
 check "no active hooks from non-enabled plugins (${NON_ENABLED_HOOKS} found)" \
   test "$NON_ENABLED_HOOKS" -eq 0
 # Track upstream workaround — warn when issue #648 is closed so the
-# SessionStart hook, PostToolUse hook, and entrypoint chmod sweep can be reviewed for removal
+# SessionStart hook and entrypoint chmod sweep can be reviewed for removal
 ISSUE_STATE=$(gh issue view 648 --repo f5xc-salesdemos/devcontainer \
   --json state --jq '.state' 2>/dev/null || echo "UNKNOWN")
 if [ "$ISSUE_STATE" = "CLOSED" ]; then

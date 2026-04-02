@@ -1,6 +1,6 @@
 #!/bin/bash
 # Plugin hook neutralization and marketplace directory repair.
-# Called from settings.json SessionStart and PostToolUse hooks.
+# Called from settings.json SessionStart hook.
 #
 # Three responsibilities:
 #   1. Ensure marketplace directories exist for all enabled cached plugins
