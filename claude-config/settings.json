@@ -73,18 +73,6 @@
           }
         ]
       }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Skill",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/opt/claude-config/neutralize-hooks.sh",
-            "timeout": 10
-          }
-        ]
-      }
     ]
   }
 }

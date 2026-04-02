@@ -44,6 +44,12 @@ fi
 # Ensure Homebrew npm global directory exists (issue #677)
 mkdir -p "${HOME}/.npm-global/lib" 2>/dev/null || true
 
+# Ensure Codex skills symlink is intact (may break if ~/.claude is volume-mounted)
+if [ ! -L "$HOME/.agents/skills" ]; then
+  mkdir -p "$HOME/.agents"
+  ln -sf "$HOME/.claude/skills" "$HOME/.agents/skills"
+fi
+
 sudo cron 2>/dev/null || true
 
 # ============================================================
@@ -188,6 +194,11 @@ if [ -n "$LITELLM_BASE_URL" ]; then
   unset _codex_config
 fi
 
+# Re-sync Codex agents from Claude Code plugins (catches plugin updates)
+if [ -x /opt/codex-config/sync-agents.sh ]; then
+  /opt/codex-config/sync-agents.sh >/dev/null 2>&1 || true
+fi
+
 # ============================================================
 # Chrome DevTools MCP (symlink + shared browser)
 # ============================================================
@@ -268,14 +279,12 @@ fi
 #   - cc#40013: Claude Code fires hooks from ALL plugins, not
 #     just enabled ones (causes SessionStart errors)
 #
-# Three-layer fix:
+# Two-layer fix:
 #   1. Persistent background daemon (inotifywait or polling)
 #      watches for plugin syncs and immediately re-applies
 #      chmod +x and neutralizes non-enabled plugin hooks
 #   2. SessionStart hook — immediate chmod + neutralize when
 #      a new session starts (concurrent with plugin hooks)
-#   3. PostToolUse hook (matcher: Skill) — catches mid-session
-#      /reload-plugins
 #
 # Build-time: install-plugins.sh also sets permissions and
 # neutralizes at image build time (baseline state).
@@ -424,7 +433,8 @@ neutralize_non_enabled_hooks
   if command -v inotifywait >/dev/null 2>&1; then
     while true; do
       inotifywait -qq -r -e modify,create,moved_to,moved_from \
-        "${HOME}/.claude/plugins/marketplaces" 2>/dev/null
+        "${HOME}/.claude/plugins/marketplaces" \
+        "${HOME}/.claude/settings.json" 2>/dev/null
       # No sleep — neutralize IMMEDIATELY after filesystem event
       ensure_marketplace_dirs
       find "${HOME}/.claude/plugins" -name "*.sh" -type f \
@@ -442,7 +452,7 @@ neutralize_non_enabled_hooks
   fi
 ) >/dev/null 2>&1 &
 
-# Inject SessionStart + PostToolUse hooks from template into runtime settings.json
+# Inject SessionStart hook from template into runtime settings.json
 # The template at /opt/claude-config/settings.json has the canonical hook definitions.
 # This ensures runtime hooks stay in sync without fragile Python string escaping.
 SETTINGS="${HOME}/.claude/settings.json"

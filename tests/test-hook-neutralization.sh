@@ -284,11 +284,10 @@ SETTINGS_FILE="$(dirname "$0")/../claude-config/settings.json"
 if [ -f "$SETTINGS_FILE" ]; then
   check "SessionStart hook references neutralize-hooks.sh" \
     jq -e '.hooks.SessionStart[0].hooks[0].command | test("neutralize-hooks")' "$SETTINGS_FILE"
-  check "PostToolUse hook references neutralize-hooks.sh" \
-    jq -e '.hooks.PostToolUse[0].hooks[0].command | test("neutralize-hooks")' "$SETTINGS_FILE"
+  # PostToolUse hook removed — background daemon provides persistent coverage
 else
   echo "  FAIL: settings.json not found"
-  FAIL=$((FAIL + 2))
+  FAIL=$((FAIL + 1))
 fi
 
 echo ""
