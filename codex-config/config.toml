@@ -28,3 +28,10 @@ trust_level = "trusted"
 
 [projects."/home/vscode"]
 trust_level = "trusted"
+
+[mcp_servers.chrome-devtools]
+command = "npx"
+args = ["-y", "chrome-devtools-mcp@0.20.2", "--browserUrl=http://localhost:9222"]
+
+[mcp_servers.chrome-devtools.env]
+NODE_OPTIONS = "--no-warnings"

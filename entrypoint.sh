@@ -44,6 +44,12 @@ fi
 # Ensure Homebrew npm global directory exists (issue #677)
 mkdir -p "${HOME}/.npm-global/lib" 2>/dev/null || true
 
+# Ensure Codex skills symlink is intact (may break if ~/.claude is volume-mounted)
+if [ ! -L "$HOME/.agents/skills" ]; then
+  mkdir -p "$HOME/.agents"
+  ln -sf "$HOME/.claude/skills" "$HOME/.agents/skills"
+fi
+
 sudo cron 2>/dev/null || true
 
 # ============================================================
@@ -186,6 +192,11 @@ if [ -n "$LITELLM_BASE_URL" ]; then
     sed -i "s|__CODEX_BASE_URL__|${LITELLM_BASE_URL}/openai/v1|g" "$_codex_config"
   fi
   unset _codex_config
+fi
+
+# Re-sync Codex agents from Claude Code plugins (catches plugin updates)
+if [ -x /opt/codex-config/sync-agents.sh ]; then
+  /opt/codex-config/sync-agents.sh >/dev/null 2>&1 || true
 fi
 
 # ============================================================

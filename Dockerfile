@@ -1248,6 +1248,15 @@ RUN git clone --depth=1 --single-branch --branch main \
       "/home/${USERNAME}/.claude/skills/frontend-slides" \
     && chown -R ${USERNAME}:${USERNAME} "/home/${USERNAME}/.claude"
 
+# 12n. Share Claude Code skills with Codex and OpenCode via ~/.agents/skills symlink
+# Codex discovers user skills from ~/.agents/skills/; OpenCode (oh-my-openagent)
+# reads both ~/.claude/skills/ and ~/.agents/skills/. A whole-directory symlink
+# lets all three agents share ~/.claude/skills/ as the single source of truth.
+# hadolint ignore=DL3059
+RUN mkdir -p "/home/${USERNAME}/.agents" \
+    && ln -s "/home/${USERNAME}/.claude/skills" "/home/${USERNAME}/.agents/skills" \
+    && chown -h ${USERNAME}:${USERNAME} "/home/${USERNAME}/.agents" "/home/${USERNAME}/.agents/skills"
+
 # ============================================================
 # 13. Playwright system dependencies (requires root for apt)
 # ============================================================
@@ -1526,6 +1535,14 @@ COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /
 
 # --- Codex + Pi + Hermes: bake static defaults ---
 COPY --chown=${USERNAME}:${USERNAME} codex-config/config.toml /home/${USERNAME}/.codex/config.toml
+COPY --chown=${USERNAME}:${USERNAME} codex-config/sync-agents.sh /opt/codex-config/sync-agents.sh
+
+# 17a. Sync Claude Code plugin agents → Codex .toml format
+# Converts ~/.claude/plugins/cache/*/agents/*.md to ~/.codex/agents/*.toml
+# so Codex can natively discover the same agents as Claude Code and OpenCode.
+# hadolint ignore=DL3059
+RUN chmod +x /opt/codex-config/sync-agents.sh \
+    && /opt/codex-config/sync-agents.sh
 COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
 COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
 

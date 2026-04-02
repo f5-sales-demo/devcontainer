@@ -227,6 +227,17 @@ check "all ${ENABLED_COUNT} enabled plugins cached (${CACHED_COUNT} found)" \
   test "$CACHED_COUNT" -eq "$ENABLED_COUNT"
 check "frontend-slides skill installed" \
   test -f "$HOME/.claude/skills/frontend-slides/SKILL.md"
+check "Codex skills symlink exists" \
+  test -L "$HOME/.agents/skills"
+check "Codex skills symlink resolves" \
+  test -d "$HOME/.agents/skills"
+check "Codex can see skills via symlink" \
+  test -f "$HOME/.agents/skills/frontend-slides/SKILL.md"
+CODEX_AGENT_COUNT=$(find "$HOME/.codex/agents" -name "*.toml" 2>/dev/null | wc -l)
+check "Codex agents synced from CC plugins (${CODEX_AGENT_COUNT} found)" \
+  test "$CODEX_AGENT_COUNT" -gt 0
+check "Codex chrome-devtools MCP configured" \
+  grep -q "chrome-devtools" "$HOME/.codex/config.toml"
 # Check permissions by marketplace to pinpoint source (issue #648)
 NON_EXEC_OFFICIAL=$(find "$HOME/.claude/plugins" \
   -path "*/claude-plugins-official/*" -name "*.sh" -type f \
