@@ -22,7 +22,7 @@ fi
 mkdir -p "$OUTPUT_DIR"
 
 # Use Python for reliable YAML frontmatter parsing
-python3 - "$CACHE_DIR" "$OUTPUT_DIR" << 'PYEOF'
+python3 - "$CACHE_DIR" "$OUTPUT_DIR" <<'PYEOF'
 import sys, os, re, glob
 
 CACHE_DIR = sys.argv[1]
