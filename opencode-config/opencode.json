@@ -28,7 +28,7 @@
   },
   "model": "openai-proxy/gpt-5.4",
   "small_model": "openai-proxy/gpt-5.4",
-  "plugin": ["@f5xc-salesdemos/oh-my-xcsh@f5xc"],
+  "plugin": ["@f5xc-salesdemos/oh-my-openagent@f5xc"],
   "mcp": {},
   "lsp": {
     "marksman": {
