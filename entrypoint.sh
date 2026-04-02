@@ -422,7 +422,8 @@ neutralize_non_enabled_hooks
   if command -v inotifywait >/dev/null 2>&1; then
     while true; do
       inotifywait -qq -r -e modify,create,moved_to,moved_from \
-        "${HOME}/.claude/plugins/marketplaces" 2>/dev/null
+        "${HOME}/.claude/plugins/marketplaces" \
+        "${HOME}/.claude/settings.json" 2>/dev/null
       # No sleep — neutralize IMMEDIATELY after filesystem event
       ensure_marketplace_dirs
       find "${HOME}/.claude/plugins" -name "*.sh" -type f \
