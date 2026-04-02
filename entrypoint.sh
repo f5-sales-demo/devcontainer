@@ -160,8 +160,8 @@ if [ -n "$LITELLM_API_KEY" ]; then
     >"$OPENCODE_CONFIG_DIR/opencode.json.tmp" &&
     mv "$OPENCODE_CONFIG_DIR/opencode.json.tmp" "$OPENCODE_CONFIG_DIR/opencode.json"
   unset _esc_base_url _esc_api_key
-  cp "$OPENCODE_CONFIG_DIR/oh-my-opencode-proxy.json" \
-    "$OPENCODE_CONFIG_DIR/oh-my-opencode.json"
+  cp "$OPENCODE_CONFIG_DIR/oh-my-xcsh-proxy.json" \
+    "$OPENCODE_CONFIG_DIR/oh-my-xcsh.json"
 fi
 
 # ============================================================

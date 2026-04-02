@@ -1322,11 +1322,11 @@ USER $USERNAME
 # hadolint ignore=DL3059
 RUN npm exec chrome-devtools-mcp@0.20.2 -- --version 2>/dev/null || true
 
-# oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
-# Build-time install uses upstream oh-my-opencode for config scaffolding.
+# oh-my-xcsh (OpenCode plugin system — "ultrawork" / "ulw" command)
+# Build-time install uses upstream oh-my-xcsh for config scaffolding.
 # The f5xc fork runtime plugin is pre-installed so opencode skips download.
 # hadolint ignore=DL3059
-RUN npx -y oh-my-opencode install --no-tui \
+RUN npx -y oh-my-xcsh install --no-tui \
     --claude=max20 --openai=no --gemini=no --copilot=no \
     && rm -f ~/.config/opencode/*.bak.*
 # Pre-install npm packages into opencode's XDG cache so it skips
@@ -1339,15 +1339,15 @@ RUN OPENCODE_CACHE="$HOME/.cache/opencode" \
     && printf '21' > "$OPENCODE_CACHE/version" \
     && printf '{"dependencies":{}}\n' > "$OPENCODE_CACHE/package.json" \
     && bun add --cwd "$OPENCODE_CACHE" --force \
-        @f5xc-salesdemos/oh-my-openagent@f5xc \
+        @f5xc-salesdemos/oh-my-xcsh@f5xc \
         @ai-sdk/openai
 
-# Patch oh-my-opencode config in-place with claude_code integration flags
+# Patch oh-my-xcsh config in-place with claude_code integration flags
 # hadolint ignore=DL3059
-RUN if [ -f ~/.config/opencode/oh-my-opencode.json ]; then \
+RUN if [ -f ~/.config/opencode/oh-my-xcsh.json ]; then \
       jq '. + {"claude_code":{"plugins":true,"skills":true,"commands":true,"agents":true,"hooks":true,"mcp":true}}' \
-          ~/.config/opencode/oh-my-opencode.json > /tmp/omc-patched.json \
-      && mv /tmp/omc-patched.json ~/.config/opencode/oh-my-opencode.json; \
+          ~/.config/opencode/oh-my-xcsh.json > /tmp/omc-patched.json \
+      && mv /tmp/omc-patched.json ~/.config/opencode/oh-my-xcsh.json; \
     fi
 
 # ============================================================
@@ -1529,7 +1529,7 @@ COPY --chown=${USERNAME}:${USERNAME} claude-config/user-CLAUDE.md /home/${USERNA
 # --- OpenCode: bake config to final paths ---
 # Entrypoint substitutes env-var placeholders at runtime.
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json /home/${USERNAME}/.config/opencode/opencode.json
-COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-opencode-proxy.json /home/${USERNAME}/.config/opencode/oh-my-opencode-proxy.json
+COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-xcsh-proxy.json /home/${USERNAME}/.config/opencode/oh-my-xcsh-proxy.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.opencode/opencode.json
 
 
