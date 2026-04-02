@@ -63,8 +63,7 @@ echo ""
 echo "4. Hook Coexistence"
 check "settings.json SessionStart chmod hook intact" \
   jq -e '.hooks.SessionStart[0].hooks[0].command | test("chmod.*\\+x")' "$HOME/.claude/settings.json"
-check "settings.json PostToolUse Skill hook intact" \
-  jq -e '.hooks.PostToolUse[0].matcher == "Skill"' "$HOME/.claude/settings.json"
+# PostToolUse hook removed — background daemon provides persistent coverage
 check "claude-mem hooks.json defines hooks" \
   jq -e '.hooks | length > 0' "$CMEM_DIR/hooks/hooks.json"
 # Verify superpowers plugin hooks also still exist

@@ -268,14 +268,12 @@ fi
 #   - cc#40013: Claude Code fires hooks from ALL plugins, not
 #     just enabled ones (causes SessionStart errors)
 #
-# Three-layer fix:
+# Two-layer fix:
 #   1. Persistent background daemon (inotifywait or polling)
 #      watches for plugin syncs and immediately re-applies
 #      chmod +x and neutralizes non-enabled plugin hooks
 #   2. SessionStart hook — immediate chmod + neutralize when
 #      a new session starts (concurrent with plugin hooks)
-#   3. PostToolUse hook (matcher: Skill) — catches mid-session
-#      /reload-plugins
 #
 # Build-time: install-plugins.sh also sets permissions and
 # neutralizes at image build time (baseline state).
@@ -442,7 +440,7 @@ neutralize_non_enabled_hooks
   fi
 ) >/dev/null 2>&1 &
 
-# Inject SessionStart + PostToolUse hooks from template into runtime settings.json
+# Inject SessionStart hook from template into runtime settings.json
 # The template at /opt/claude-config/settings.json has the canonical hook definitions.
 # This ensures runtime hooks stay in sync without fragile Python string escaping.
 SETTINGS="${HOME}/.claude/settings.json"
