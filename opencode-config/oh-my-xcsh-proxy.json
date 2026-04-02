@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
+  "$schema": "https://raw.githubusercontent.com/f5xc-salesdemos/oh-my-xcsh/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
     "oracle": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },

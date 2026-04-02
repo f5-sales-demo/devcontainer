@@ -579,7 +579,7 @@ Write `~/.cache/opencode/package.json`:
 ```json
 {
   "dependencies": {
-    "@f5xc-salesdemos/oh-my-openagent": "f5xc",
+    "@f5xc-salesdemos/oh-my-xcsh": "f5xc",
     "@ai-sdk/openai-compatible": "^2.0.37"
   }
 }
@@ -592,7 +592,7 @@ Write `~/.cache/opencode/package.json`:
 ### Verify Runtime Cache
 
 ```bash
-ls ~/.cache/opencode/node_modules/@f5xc-salesdemos/oh-my-openagent/     # Expected: directory exists
+ls ~/.cache/opencode/node_modules/@f5xc-salesdemos/oh-my-xcsh/     # Expected: directory exists
 ls ~/.cache/opencode/node_modules/@ai-sdk/openai-compatible/           # Expected: directory exists
 ```
 
@@ -773,7 +773,7 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
   "model": "openai-proxy/gpt-5.4",
   "small_model": "openai-proxy/gpt-5.4",
   "permission": "allow",
-  "plugin": ["@f5xc-salesdemos/oh-my-openagent@f5xc"],
+  "plugin": ["@f5xc-salesdemos/oh-my-xcsh@f5xc"],
   "lsp": {
     "marksman": { "command": ["marksman", "server"], "extensions": [".md", ".mdx"] },
     "mdx": { "command": ["mdx-language-server", "--stdio"], "extensions": [".mdx"] },
@@ -794,13 +794,13 @@ fi
 
 ---
 
-## Step 9 — Write `oh-my-opencode.json`
+## Step 9 — Write `oh-my-xcsh.json`
 
 ```bash
-echo "Writing oh-my-opencode.json (OpenAI proxy — optimized with variant settings)..."
-cat > ~/.config/opencode/oh-my-opencode.json << 'ENDOFJSON'
+echo "Writing oh-my-xcsh.json (OpenAI proxy — optimized with variant settings)..."
+cat > ~/.config/opencode/oh-my-xcsh.json << 'ENDOFJSON'
 {
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
+  "$schema": "https://raw.githubusercontent.com/f5xc-salesdemos/oh-my-xcsh/dev/assets/oh-my-xcsh.schema.json",
   "agents": {
     "sisyphus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
     "oracle": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
@@ -884,7 +884,7 @@ bun.lock
 
 ```bash
 echo "Validating config file syntax..."
-for f in opencode.json oh-my-opencode.json; do
+for f in opencode.json oh-my-xcsh.json; do
   if ! jq . "$HOME/.config/opencode/$f" > /dev/null 2>&1; then
     echo "ERROR: $f is not valid JSON."
     exit 1
@@ -969,13 +969,13 @@ which bash-language-server yaml-language-server marksman terraform-ls shellcheck
 
 # OpenCode config files
 ls -la ~/.config/opencode/opencode.json
-ls -la ~/.config/opencode/oh-my-opencode.json
+ls -la ~/.config/opencode/oh-my-xcsh.json
 ls -la ~/.config/opencode/AGENTS.md
 ls -la ~/.config/opencode/package.json
 ls -la ~/.config/opencode/node_modules/@opencode-ai/plugin/
 
 # Runtime cache
-ls ~/.cache/opencode/node_modules/@f5xc-salesdemos/oh-my-openagent/package.json
+ls ~/.cache/opencode/node_modules/@f5xc-salesdemos/oh-my-xcsh/package.json
 ls ~/.cache/opencode/node_modules/@ai-sdk/openai-compatible/package.json
 
 # Claude Code plugins
