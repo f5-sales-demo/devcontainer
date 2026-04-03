@@ -1341,9 +1341,8 @@ RUN XCSH_CACHE="$HOME/.cache/xcsh" \
     && bun add --cwd "$XCSH_CACHE" --force @ai-sdk/openai \
     && PLUGIN_DIR="$XCSH_CACHE/packages/oh-my-xcsh@latest" \
     && mkdir -p "$PLUGIN_DIR" \
-    && cd "$PLUGIN_DIR" \
-    && npm init -y > /dev/null 2>&1 \
-    && npm install --save oh-my-xcsh
+    && printf '{"dependencies":{}}\n' > "$PLUGIN_DIR/package.json" \
+    && npm install --prefix "$PLUGIN_DIR" --save oh-my-xcsh@latest
 
 # Patch oh-my-xcsh config in-place with claude_code integration flags
 # (scaffolding creates oh-my-xcsh.json; entrypoint overwrites with oh-my-xcsh-proxy.json at runtime)
