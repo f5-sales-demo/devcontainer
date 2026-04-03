@@ -57,7 +57,7 @@ This is **not recommended** for production use. Only set this when you trust the
 
 ### xcsh
 
-The container automatically configures [xcsh](https://opencode.ai/) (our fork of OpenCode) based on which credentials are available. OAuth mode takes priority when both are set.
+The container automatically configures [xcsh](https://github.com/f5xc-salesdemos/xcsh) based on which credentials are available. OAuth mode takes priority when both are set.
 
 #### OAuth mode (Claude Max)
 
@@ -89,7 +89,7 @@ The container includes several AI coding agents in addition to Claude Code:
 
 | Agent | Command | Provider |
 |-------|---------|----------|
-| [xcsh](https://opencode.ai/) | `xcsh` | Anthropic (OAuth) or OpenAI-compatible (proxy) |
+| [xcsh](https://github.com/f5xc-salesdemos/xcsh) | `xcsh` | Anthropic (OAuth) or OpenAI-compatible (proxy) |
 | [Codex](https://github.com/openai/codex) | `codex` | OpenAI-compatible |
 | [Aider](https://aider.chat/) | `aider` | Multi-provider (configure at runtime) |
 | [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | Multi-provider (configure at runtime) |

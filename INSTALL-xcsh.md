@@ -27,7 +27,7 @@ if ! jq -e '
   echo ""
   echo '  mkdir -p ~/.config/xcsh'
   echo '  cat > ~/.config/xcsh/xcsh.json << '"'"'EOF'"'"''
-  echo '  { "$schema": "https://opencode.ai/config.json", "permission": "allow" }'
+  echo '  { "$schema": "https://f5xc-salesdemos.github.io/xcsh/config.json", "permission": "allow" }'
   echo '  EOF'
   echo ""
   exit 1
@@ -558,7 +558,7 @@ Write `~/.config/xcsh/package.json`:
 ```json
 {
   "dependencies": {
-    "@opencode-ai/plugin": "^1.3.3"
+    "@f5xc-salesdemos/plugin": "^1.3.3"
   }
 }
 ```
@@ -737,7 +737,7 @@ if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
   echo "Writing xcsh.json (LiteLLM proxy mode — OpenAI only)..."
   cat > ~/.config/xcsh/xcsh.json << ENDOFJSON
 {
-  "\$schema": "https://opencode.ai/config.json",
+  "\$schema": "https://f5xc-salesdemos.github.io/xcsh/config.json",
   "mcp": {
     "chrome-devtools": {
       "type": "local",
@@ -972,7 +972,7 @@ ls -la ~/.config/xcsh/xcsh.json
 ls -la ~/.config/xcsh/oh-my-xcsh.json
 ls -la ~/.config/xcsh/AGENTS.md
 ls -la ~/.config/xcsh/package.json
-ls -la ~/.config/xcsh/node_modules/@opencode-ai/plugin/
+ls -la ~/.config/xcsh/node_modules/@f5xc-salesdemos/plugin/
 
 # Runtime cache
 ls ~/.cache/xcsh/node_modules/@f5xc-salesdemos/oh-my-xcsh/package.json
