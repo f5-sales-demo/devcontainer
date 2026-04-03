@@ -16,7 +16,7 @@ if [ -n "$LITELLM_BASE_URL" ]; then
   echo "  OPENAI_API_KEY: ${OPENAI_API_KEY:+set}${OPENAI_API_KEY:-NOT SET}"
   echo "  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:+set}${ANTHROPIC_API_KEY:-NOT SET} (for Claude Code)"
 else
-  echo "  WARNING: LiteLLM proxy is not configured — OpenCode will not work"
+  echo "  WARNING: LiteLLM proxy is not configured — xcsh will not work"
   echo "           Set LITELLM_API_KEY and LITELLM_BASE_URL in .env"
   if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
     echo "           Claude Code will still work via OAuth"
@@ -26,7 +26,7 @@ fi
 # Check installed tools
 echo "  Installed tools:"
 for cmd in node python3 go rustc javac git gh kubectl helm terraform \
-  pre-commit uv claude opencode codex prettier markdownlint-cli2 \
+  pre-commit uv claude xcsh codex prettier markdownlint-cli2 \
   actionlint act terraform-docs ansible black pylint yamllint yt-dlp \
   aws az pwsh devcontainer brew playwright pnpm redis-cli psql tirith \
   marksman terraform-ls taplo yaml-language-server bash-language-server \

@@ -9,7 +9,7 @@ on:
       - entrypoint.sh
       - configs/**
       - claude-config/**
-      - opencode-config/**
+      - xcsh-config/**
       - codex-config/**
       - pi-config/**
       - scripts/**

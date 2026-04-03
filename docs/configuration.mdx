@@ -26,14 +26,14 @@ Do not combine modes — use exactly one.
 |----------|-------------|---------|
 | `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token from a Claude Max subscription | `sk-ant-oat01-...` |
 
-When set, both Claude Code and OpenCode authenticate directly with Anthropic using OAuth — no API key or proxy needed. This takes priority over `LITELLM_API_KEY` for OpenCode configuration. Get your token from Claude Code settings or the [Anthropic console](https://console.anthropic.com/).
+When set, both Claude Code and xcsh authenticate directly with Anthropic using OAuth — no API key or proxy needed. This takes priority over `LITELLM_API_KEY` for xcsh configuration. Get your token from Claude Code settings or the [Anthropic console](https://console.anthropic.com/).
 
 ### LiteLLM Proxy
 
 If your LiteLLM (or other) proxy already speaks the native Anthropic Messages API — including `web_search`, streaming, and tool use — set `LITELLM_BASE_URL` to the proxy domain. The container automatically derives the provider-specific URLs:
 
 - Anthropic endpoint → `${LITELLM_BASE_URL}/anthropic` (used by Claude Code)
-- OpenAI-compatible endpoint → `${LITELLM_BASE_URL}/openai/v1` (used by OpenCode)
+- OpenAI-compatible endpoint → `${LITELLM_BASE_URL}/openai/v1` (used by xcsh)
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -55,22 +55,22 @@ NODE_TLS_REJECT_UNAUTHORIZED=0
 
 This is **not recommended** for production use. Only set this when you trust the network path between the container and your API endpoint.
 
-### OpenCode
+### xcsh
 
-The container automatically configures [OpenCode](https://opencode.ai/) based on which credentials are available. OAuth mode takes priority when both are set.
+The container automatically configures [xcsh](https://opencode.ai/) (our fork of OpenCode) based on which credentials are available. OAuth mode takes priority when both are set.
 
 #### OAuth mode (Claude Max)
 
 When `CLAUDE_CODE_OAUTH_TOKEN` is set, the entrypoint seeds:
 
-- `~/.config/opencode/opencode.json` — Anthropic-native config with `claude-opus-4-6` as the default model
-- `~/.local/share/opencode/auth.json` — OAuth credentials for Anthropic
+- `~/.config/xcsh/xcsh.json` — Anthropic-native config with `claude-opus-4-6` as the default model
+- `~/.local/share/xcsh/auth.json` — OAuth credentials for Anthropic
 
-This connects OpenCode directly to Anthropic with no proxy needed.
+This connects xcsh directly to Anthropic with no proxy needed.
 
 #### LiteLLM mode
 
-When `LITELLM_API_KEY` and `LITELLM_BASE_URL` are set (and no OAuth token), the entrypoint seeds `~/.config/opencode/opencode.json` with a custom provider called **OpenAI Proxy** that points at the upstream endpoint.
+When `LITELLM_API_KEY` and `LITELLM_BASE_URL` are set (and no OAuth token), the entrypoint seeds `~/.config/xcsh/xcsh.json` with a custom provider called **OpenAI Proxy** that points at the upstream endpoint.
 
 Available models (LiteLLM mode):
 
@@ -81,7 +81,7 @@ Available models (LiteLLM mode):
 | `claude-opus-4-6` | Claude Opus 4.6 |
 | `claude-haiku-4-5` | Claude Haiku 4.5 |
 
-In both modes, the config is only seeded when the file doesn't already exist, so you can customize it without it being overwritten on restart. To reset to defaults, delete `~/.config/opencode/opencode.json` (and `~/.local/share/opencode/auth.json` for OAuth mode) and restart the container.
+In both modes, the config is only seeded when the file doesn't already exist, so you can customize it without it being overwritten on restart. To reset to defaults, delete `~/.config/xcsh/xcsh.json` (and `~/.local/share/xcsh/auth.json` for OAuth mode) and restart the container.
 
 ### AI Coding Agents
 
@@ -89,7 +89,7 @@ The container includes several AI coding agents in addition to Claude Code:
 
 | Agent | Command | Provider |
 |-------|---------|----------|
-| [OpenCode](https://opencode.ai/) | `opencode` | Anthropic (OAuth) or OpenAI-compatible (proxy) |
+| [xcsh](https://opencode.ai/) | `xcsh` | Anthropic (OAuth) or OpenAI-compatible (proxy) |
 | [Codex](https://github.com/openai/codex) | `codex` | OpenAI-compatible |
 | [Aider](https://aider.chat/) | `aider` | Multi-provider (configure at runtime) |
 | [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | Multi-provider (configure at runtime) |
@@ -99,7 +99,7 @@ Aider is installed via `uv tool install` with Python 3.12 (it requires Python &l
 ### Web Search
 
 - **Claude Code**: Uses built-in web search via the Anthropic Messages API (`web_search` tool)
-- **OpenCode**: Uses built-in [Exa](https://exa.ai) web search — no API key required. Enabled via `OPENCODE_ENABLE_EXA=true` or `OPENCODE_EXPERIMENTAL=true`
+- **xcsh**: Uses built-in [Exa](https://exa.ai) web search — no API key required. Enabled via `XCSH_ENABLE_EXA=true` or `XCSH_EXPERIMENTAL=true`
 
 ### Remote Display (noVNC)
 

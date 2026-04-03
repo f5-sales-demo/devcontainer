@@ -76,17 +76,17 @@ Common causes:
 - **LiteLLM proxy key missing or invalid** — if you're using proxy mode, make sure `LITELLM_API_KEY` in `.env` contains the correct proxy credential, then restart the container so the entrypoint can derive `ANTHROPIC_API_KEY`.
 - **OAuth token or proxy mode mismatch** — use exactly one auth mode. If `CLAUDE_CODE_OAUTH_TOKEN` is set, it takes precedence over LiteLLM proxy mode.
 
-### OpenCode shows "Model not found"
+### xcsh shows "Model not found"
 
 If using Claude Max OAuth, check that the auth credentials were seeded:
 
 ```bash
-cat ~/.local/share/opencode/auth.json
+cat ~/.local/share/xcsh/auth.json
 ```
 
 The file should contain an `"anthropic"` key with your OAuth token. If missing, verify `CLAUDE_CODE_OAUTH_TOKEN` is set in `.env` and restart the container.
 
-To reset OpenCode config: delete `~/.config/opencode/opencode.json` and `~/.local/share/opencode/auth.json`, then restart.
+To reset xcsh config: delete `~/.config/xcsh/xcsh.json` and `~/.local/share/xcsh/auth.json`, then restart.
 
 ### API requests fail with 401
 
