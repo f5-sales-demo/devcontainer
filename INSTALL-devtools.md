@@ -1,6 +1,6 @@
 # CLI Development & Security Toolchain Setup
 
-> **Audience**: Plain-language instructions for OpenCode or a human operator.
+> **Audience**: Plain-language instructions for xcsh or a human operator.
 > **Platform**: macOS on Apple Silicon (arm64). Homebrew is already installed.
 > **Prerequisite**: None — this guide is fully standalone.
 >

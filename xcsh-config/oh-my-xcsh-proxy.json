@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/f5xc-salesdemos/oh-my-xcsh/dev/assets/oh-my-opencode.schema.json",
+  "$schema": "https://raw.githubusercontent.com/f5xc-salesdemos/oh-my-xcsh/dev/assets/oh-my-xcsh.schema.json",
   "agents": {
     "sisyphus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
     "oracle": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
@@ -12,7 +12,11 @@
     "momus": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
     "atlas": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "fast" },
     "frontend-ui-ux-engineer": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
-    "document-writer": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" }
+    "document-writer": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b", "variant": "high" },
+    "build": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b" },
+    "plan": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b" },
+    "sisyphus-junior": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b" },
+    "OpenCode-Builder": { "model": "openai-proxy/gpt-5.4", "color": "#e4002b" }
   },
   "categories": {
     "visual-engineering": { "model": "openai-proxy/gpt-5.4" },

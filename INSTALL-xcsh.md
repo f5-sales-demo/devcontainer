@@ -1,6 +1,6 @@
-# OpenCode + Oh-My-OpenCode — AI Agent Stack Setup
+# xcsh + Oh-My-xcsh — AI Agent Stack Setup
 
-> **Audience**: Plain-language instructions for OpenCode itself or a human operator.
+> **Audience**: Plain-language instructions for xcsh itself or a human operator.
 > **Platform**: macOS on Apple Silicon (arm64). Homebrew is already installed.
 > **Prerequisite**: Run `INSTALL-devtools.md` first — it installs Node.js, npm, and other
 > foundational tools that this guide depends on.
@@ -19,14 +19,14 @@ if ! jq -e '
    (.permission.edit == "allow" or .permission.edit["*"] == "allow") and
    (.permission.bash == "allow" or .permission.bash["*"] == "allow") and
    (.permission.external_directory == "allow" or .permission.external_directory["*"] == "allow"))
-' ~/.config/opencode/opencode.json > /dev/null 2>&1; then
+' ~/.config/xcsh/xcsh.json > /dev/null 2>&1; then
   echo ""
-  echo "ERROR: OpenCode permissions are not configured for automated setup."
+  echo "ERROR: xcsh permissions are not configured for automated setup."
   echo ""
   echo "Paste the following into your terminal, then rerun:"
   echo ""
-  echo '  mkdir -p ~/.config/opencode'
-  echo '  cat > ~/.config/opencode/opencode.json << '"'"'EOF'"'"''
+  echo '  mkdir -p ~/.config/xcsh'
+  echo '  cat > ~/.config/xcsh/xcsh.json << '"'"'EOF'"'"''
   echo '  { "$schema": "https://opencode.ai/config.json", "permission": "allow" }'
   echo '  EOF'
   echo ""
@@ -37,7 +37,7 @@ echo "Preflight check passed — permissions are configured correctly."
 
 ---
 
-## Step 1 — Install OpenCode Core Dependencies (Homebrew)
+## Step 1 — Install xcsh Core Dependencies (Homebrew)
 
 ```bash
 # Helper function: install a brew package with stale-Cellar recovery.
@@ -61,15 +61,15 @@ brew_install() {
   fi
 }
 
-# Core runtime (required by opencode)
+# Core runtime (required by xcsh)
 brew_install node
 brew_install ripgrep
 brew_install jq
 
-# GitHub CLI (used by opencode for PR/issue operations)
+# GitHub CLI (used by xcsh for PR/issue operations)
 brew_install gh
 
-# Formatters and linters (used by opencode agents and LSP)
+# Formatters and linters (used by xcsh agents and LSP)
 brew_install yq
 brew_install dos2unix
 brew_install prettier
@@ -79,7 +79,7 @@ brew_install editorconfig-checker
 brew_install yamllint
 brew_install codespell
 
-# LSP servers (opencode auto-detects these on PATH)
+# LSP servers (xcsh auto-detects these on PATH)
 brew_install marksman
 brew_install shellcheck
 brew_install shfmt
@@ -143,7 +143,7 @@ which pyright-langserver   # VERIFY: path to pyright LSP binary
 
 ## Step 3 — Install Bun
 
-Bun is used by OpenCode internally for plugin management.
+Bun is used by xcsh internally for plugin management.
 
 ```bash
 npm install -g bun
@@ -158,26 +158,26 @@ bun --version   # VERIFY: 1.3.x+
 
 ---
 
-## Step 3b — Install OpenCode (f5xc Fork)
+## Step 3b — Install xcsh (f5xc Fork)
 
-The f5xc fork of OpenCode includes a persistent footer with p10k-style Git status colorization, LiteLLM empty content fixes, and auto-updates from the fork's Homebrew tap.
+The f5xc fork of OpenCode (xcsh) includes a persistent footer with p10k-style Git status colorization, LiteLLM empty content fixes, and auto-updates from the fork's Homebrew tap.
 
 ```bash
 brew tap f5xc-salesdemos/tap
-brew install f5xc-salesdemos/tap/opencode
+brew install f5xc-salesdemos/tap/xcsh
 ```
 
-### Verify Step 3b — OpenCode
+### Verify Step 3b — xcsh
 
 ```bash
-which opencode      # VERIFY: /opt/homebrew/bin/opencode
-opencode --version  # VERIFY: version contains "-f5xc."
+which xcsh      # VERIFY: /opt/homebrew/bin/xcsh
+xcsh --version  # VERIFY: version contains "-f5xc."
 ```
 
 ### Upgrade
 
 ```bash
-brew upgrade f5xc-salesdemos/tap/opencode
+brew upgrade f5xc-salesdemos/tap/xcsh
 ```
 
 ---
@@ -200,7 +200,7 @@ Chrome is required by the `chrome-devtools-mcp` MCP server for browser automatio
 
 ## Step 5 — Install Claude Code Plugins and Settings
 
-The `~/.claude/` directory is the **single source of truth** for the plugin ecosystem shared by both Claude Code and OpenCode.
+The `~/.claude/` directory is the **single source of truth** for the plugin ecosystem shared by both Claude Code and xcsh.
 
 ### 5.1 — Clone Plugin Marketplaces
 
@@ -547,13 +547,13 @@ playwright-cli install --skills
 
 ---
 
-## Step 6 — Install OpenCode Plugin SDK Dependencies
+## Step 6 — Install xcsh Plugin SDK Dependencies
 
 ```bash
-mkdir -p ~/.config/opencode
+mkdir -p ~/.config/xcsh
 ```
 
-Write `~/.config/opencode/package.json`:
+Write `~/.config/xcsh/package.json`:
 
 ```json
 {
@@ -564,17 +564,17 @@ Write `~/.config/opencode/package.json`:
 ```
 
 ```bash
-(cd ~/.config/opencode && bun install)
+(cd ~/.config/xcsh && bun install)
 ```
 
-### 6.1 — Pre-cache OpenCode Runtime Dependencies
+### 6.1 — Pre-cache xcsh Runtime Dependencies
 
 ```bash
-mkdir -p ~/.cache/opencode
-printf '21' > ~/.cache/opencode/version
+mkdir -p ~/.cache/xcsh
+printf '21' > ~/.cache/xcsh/version
 ```
 
-Write `~/.cache/opencode/package.json`:
+Write `~/.cache/xcsh/package.json`:
 
 ```json
 {
@@ -586,14 +586,14 @@ Write `~/.cache/opencode/package.json`:
 ```
 
 ```bash
-(cd ~/.cache/opencode && bun install)
+(cd ~/.cache/xcsh && bun install)
 ```
 
 ### Verify Runtime Cache
 
 ```bash
-ls ~/.cache/opencode/node_modules/@f5xc-salesdemos/oh-my-xcsh/     # Expected: directory exists
-ls ~/.cache/opencode/node_modules/@ai-sdk/openai-compatible/           # Expected: directory exists
+ls ~/.cache/xcsh/node_modules/@f5xc-salesdemos/oh-my-xcsh/     # Expected: directory exists
+ls ~/.cache/xcsh/node_modules/@ai-sdk/openai-compatible/           # Expected: directory exists
 ```
 
 ---
@@ -674,11 +674,11 @@ if gh auth status >/dev/null 2>&1; then
   [ -n "$_GH_TOKEN" ] && env_set GH_TOKEN "$_GH_TOKEN"
 fi
 
-OPENCODE_JSON="$HOME/.config/opencode/opencode.json"
-if [ -f "$OPENCODE_JSON" ]; then
-  _OC_API_KEY="$(jq -r '.provider["openai-proxy"].options.apiKey // empty' "$OPENCODE_JSON" 2>/dev/null)"
+XCSH_JSON="$HOME/.config/xcsh/xcsh.json"
+if [ -f "$XCSH_JSON" ]; then
+  _OC_API_KEY="$(jq -r '.provider["openai-proxy"].options.apiKey // empty' "$XCSH_JSON" 2>/dev/null)"
   [ -n "$_OC_API_KEY" ] && env_set LITELLM_API_KEY "$_OC_API_KEY"
-  _OC_BASE_URL="$(jq -r '.provider["openai-proxy"].options.baseURL // empty' "$OPENCODE_JSON" 2>/dev/null)"
+  _OC_BASE_URL="$(jq -r '.provider["openai-proxy"].options.baseURL // empty' "$XCSH_JSON" 2>/dev/null)"
   _OC_BASE_URL="${_OC_BASE_URL%/api/v1}"
   [ -n "$_OC_BASE_URL" ] && env_set LITELLM_BASE_URL "$_OC_BASE_URL"
 fi
@@ -726,16 +726,16 @@ set +a
 
 ---
 
-## Step 8 — Write `opencode.json`
+## Step 8 — Write `xcsh.json`
 
-OpenCode uses the LiteLLM proxy for model access (OpenAI-compatible endpoint only).
+xcsh uses the LiteLLM proxy for model access (OpenAI-compatible endpoint only).
 
 ```bash
-mkdir -p ~/.config/opencode
+mkdir -p ~/.config/xcsh
 
 if [ -n "$LITELLM_API_KEY" ] && [ -n "$LITELLM_BASE_URL" ]; then
-  echo "Writing opencode.json (LiteLLM proxy mode — OpenAI only)..."
-  cat > ~/.config/opencode/opencode.json << ENDOFJSON
+  echo "Writing xcsh.json (LiteLLM proxy mode — OpenAI only)..."
+  cat > ~/.config/xcsh/xcsh.json << ENDOFJSON
 {
   "\$schema": "https://opencode.ai/config.json",
   "mcp": {
@@ -798,7 +798,7 @@ fi
 
 ```bash
 echo "Writing oh-my-xcsh.json (OpenAI proxy — optimized with variant settings)..."
-cat > ~/.config/opencode/oh-my-xcsh.json << 'ENDOFJSON'
+cat > ~/.config/xcsh/oh-my-xcsh.json << 'ENDOFJSON'
 {
   "$schema": "https://raw.githubusercontent.com/f5xc-salesdemos/oh-my-xcsh/dev/assets/oh-my-xcsh.schema.json",
   "agents": {
@@ -837,7 +837,7 @@ ENDOFJSON
 
 ## Step 10 — Write `AGENTS.md`
 
-Write `~/.config/opencode/AGENTS.md`:
+Write `~/.config/xcsh/AGENTS.md`:
 
 ```markdown
 # Global Rules
@@ -869,7 +869,7 @@ Write `~/.config/opencode/AGENTS.md`:
 
 ## Step 11 — Write `.gitignore`
 
-Write `~/.config/opencode/.gitignore`:
+Write `~/.config/xcsh/.gitignore`:
 
 ```
 node_modules
@@ -880,22 +880,22 @@ bun.lock
 
 ---
 
-## Step 12 — Smoke-Test OpenCode Configuration
+## Step 12 — Smoke-Test xcsh Configuration
 
 ```bash
 echo "Validating config file syntax..."
-for f in opencode.json oh-my-xcsh.json; do
-  if ! jq . "$HOME/.config/opencode/$f" > /dev/null 2>&1; then
+for f in xcsh.json oh-my-xcsh.json; do
+  if ! jq . "$HOME/.config/xcsh/$f" > /dev/null 2>&1; then
     echo "ERROR: $f is not valid JSON."
     exit 1
   fi
   echo "  OK: $f"
 done
 
-echo "Running OpenCode smoke test from /tmp..."
+echo "Running xcsh smoke test from /tmp..."
 cd /tmp
 SMOKE_OUT=$(mktemp)
-opencode run --format json "Reply with exactly one word: OPENCODE_OK" > "$SMOKE_OUT" 2>&1 &
+xcsh run --format json "Reply with exactly one word: XCSH_OK" > "$SMOKE_OUT" 2>&1 &
 OCPID=$!
 
 ELAPSED=0
@@ -905,7 +905,7 @@ while kill -0 "$OCPID" 2>/dev/null; do
   if [ "$ELAPSED" -ge 120 ]; then
     kill "$OCPID" 2>/dev/null
     wait "$OCPID" 2>/dev/null
-    echo "ERROR: opencode run timed out after 120 seconds."
+    echo "ERROR: xcsh run timed out after 120 seconds."
     cat "$SMOKE_OUT"
     rm -f "$SMOKE_OUT"
     exit 1
@@ -917,17 +917,17 @@ OC_EXIT=$?
 CLEAN_OUT=$(jq -r 'select(.type=="text") | .part.text' "$SMOKE_OUT" 2>/dev/null | head -1)
 
 if [ "$OC_EXIT" -ne 0 ]; then
-  echo "ERROR: opencode run exited with code $OC_EXIT"
+  echo "ERROR: xcsh run exited with code $OC_EXIT"
   cat "$SMOKE_OUT"
   rm -f "$SMOKE_OUT"
   exit 1
 elif [ -z "$CLEAN_OUT" ]; then
-  echo "ERROR: opencode run produced no response"
+  echo "ERROR: xcsh run produced no response"
   cat "$SMOKE_OUT"
   rm -f "$SMOKE_OUT"
   exit 1
 else
-  echo "Smoke test passed — OpenCode responded: $CLEAN_OUT"
+  echo "Smoke test passed — xcsh responded: $CLEAN_OUT"
 fi
 rm -f "$SMOKE_OUT"
 cd - > /dev/null
@@ -935,14 +935,14 @@ cd - > /dev/null
 
 ---
 
-## Step 13 — Configure `.zshrc` (OpenCode-Specific Entries)
+## Step 13 — Configure `.zshrc` (xcsh-Specific Entries)
 
-These entries add OpenCode-specific environment variables and completions to `~/.zshrc`. They are appended idempotently using `grep -q` guards.
+These entries add xcsh-specific environment variables and completions to `~/.zshrc`. They are appended idempotently using `grep -q` guards.
 
 ```bash
-# OpenCode zsh completion
-grep -q 'opencode-completions' ~/.zshrc || \
-  opencode completion >> ~/.zshrc
+# xcsh zsh completion
+grep -q 'xcsh-completions' ~/.zshrc || \
+  xcsh completion >> ~/.zshrc
 
 # API key for AI proxy (only in LiteLLM proxy mode)
 if [ -n "$LITELLM_API_KEY" ]; then
@@ -957,26 +957,26 @@ grep -q 'FORCE_AUTOUPDATE_PLUGINS' ~/.zshrc || \
 
 ---
 
-## Verify the Complete OpenCode Installation
+## Verify the Complete xcsh Installation
 
 ```bash
-opencode --version          # VERIFY: version contains "-f5xc."
+xcsh --version          # VERIFY: version contains "-f5xc."
 node --version              # VERIFY: v25.x+
 bun --version               # VERIFY: 1.3.x+
 
 # LSP servers on PATH
 which bash-language-server yaml-language-server marksman terraform-ls shellcheck shfmt pyright-langserver
 
-# OpenCode config files
-ls -la ~/.config/opencode/opencode.json
-ls -la ~/.config/opencode/oh-my-xcsh.json
-ls -la ~/.config/opencode/AGENTS.md
-ls -la ~/.config/opencode/package.json
-ls -la ~/.config/opencode/node_modules/@opencode-ai/plugin/
+# xcsh config files
+ls -la ~/.config/xcsh/xcsh.json
+ls -la ~/.config/xcsh/oh-my-xcsh.json
+ls -la ~/.config/xcsh/AGENTS.md
+ls -la ~/.config/xcsh/package.json
+ls -la ~/.config/xcsh/node_modules/@opencode-ai/plugin/
 
 # Runtime cache
-ls ~/.cache/opencode/node_modules/@f5xc-salesdemos/oh-my-xcsh/package.json
-ls ~/.cache/opencode/node_modules/@ai-sdk/openai-compatible/package.json
+ls ~/.cache/xcsh/node_modules/@f5xc-salesdemos/oh-my-xcsh/package.json
+ls ~/.cache/xcsh/node_modules/@ai-sdk/openai-compatible/package.json
 
 # Claude Code plugins
 jq '.plugins | length' ~/.claude/plugins/installed_plugins.json  # Expected: 23
@@ -995,8 +995,8 @@ jq '.mcpServers | has("chrome-devtools")' ~/.claude.json          # Expected: tr
 ### Plugin fails to load
 
 ```bash
-rm -rf ~/.cache/opencode/node_modules
-opencode
+rm -rf ~/.cache/xcsh/node_modules
+xcsh
 ```
 
 ### chrome-devtools-mcp fails
@@ -1024,8 +1024,8 @@ bun --version
 ### Reset to Clean State
 
 ```bash
-rm -rf ~/.config/opencode/node_modules ~/.config/opencode/bun.lock
-rm -rf ~/.cache/opencode/node_modules ~/.cache/opencode/bun.lock
+rm -rf ~/.config/xcsh/node_modules ~/.config/xcsh/bun.lock
+rm -rf ~/.cache/xcsh/node_modules ~/.cache/xcsh/bun.lock
 rm -rf ~/.claude/plugins ~/.claude/settings.json
 rm -rf ~/.npm/_npx
 rm -rf ~/.cache/chrome-devtools-mcp
