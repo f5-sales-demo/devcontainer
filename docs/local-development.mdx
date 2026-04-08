@@ -29,7 +29,6 @@ cd devcontainer
 ├── .env.example                # Example environment variables
 ├── docs/                       # Documentation site (Starlight)
 ├── claude-config/              # Claude Code configuration files
-├── xcsh-config/                # xcsh provider templates (OAuth + LiteLLM)
 └── codex-config/               # Codex configuration
 ```
 
@@ -118,7 +117,7 @@ These layers change more frequently (npm/pip updates, config changes) but rebuil
 | Section | Contents |
 |---------|----------|
 | 9. AWS CLI v2 | Official installer |
-| 10. Binary tools | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv, xcsh |
+| 10. Binary tools | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv |
 | 10b. Additional binaries | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint, codex |
 | 10c. Super-linter binaries | shfmt, gitleaks, editorconfig-checker, clj-kondo, dotenv-linter, golangci-lint, goreleaser, kubeconform, protolint, scalafmt, ktlint |
 | 10d. Java JAR tools | checkstyle, google-java-format (wrapper scripts) |
@@ -142,7 +141,7 @@ These layers change more frequently (npm/pip updates, config changes) but rebuil
 | 14b. Aider | `uv tool install` with Python 3.12 (browser, help, playwright extras) |
 | 15. ZSH plugins | oh-my-zsh custom plugins |
 | 16. Shell bootstrap | npm-global, tfenv, compinit |
-| 17. Claude Code + xcsh + Codex config | Tool awareness memory, managed policy, self-test script, xcsh provider templates, Codex config |
+| 17. Claude Code + Codex config | Tool awareness memory, managed policy, self-test script, Codex config |
 | 18. Entrypoint | Container startup script (absolute last COPY) |
 
 ## Adding Tools
