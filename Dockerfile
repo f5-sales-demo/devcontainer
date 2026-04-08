@@ -810,6 +810,7 @@ RUN npm install -g \
     pnpm \
     @anthropic-ai/claude-code \
     @mariozechner/pi-coding-agent \
+    @oh-my-pi/pi-coding-agent \
     prettier \
     markdownlint-cli2 \
     @devcontainers/cli \
@@ -1264,6 +1265,7 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
     ~/.config/gws \
     ~/.codex \
     ~/.pi/agent \
+    ~/.omp/agent \
     ~/.hermes \
     ~/.hermes/cron \
     ~/.hermes/sessions \
@@ -1494,6 +1496,8 @@ COPY --chown=${USERNAME}:${USERNAME} codex-config/sync-agents.sh /opt/codex-conf
 RUN chmod +x /opt/codex-config/sync-agents.sh \
     && /opt/codex-config/sync-agents.sh
 COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
+COPY --chown=${USERNAME}:${USERNAME} omp-config/settings.json /home/${USERNAME}/.omp/agent/settings.json
+COPY --chown=${USERNAME}:${USERNAME} omp-config/config.yml /home/${USERNAME}/.omp/agent/config.yml
 COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
 
 
@@ -1519,7 +1523,7 @@ RUN printf 'BUILD_COMMIT=%s\nBUILD_DATE=%s\nIMAGE=ghcr.io/f5xc-salesdemos/devcon
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 # chmod the entrypoint and ensure the entire home directory (including hidden
 # files/folders created by earlier root-owned stages such as .claude/, .config/,
-# .codex/, .pi/) is owned by the runtime user.
+# .codex/, .pi/, .omp/) is owned by the runtime user.
 RUN chmod +x /usr/local/bin/entrypoint.sh \
     && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
 

@@ -39,6 +39,7 @@ check "browsh installed" command -v browsh
 check "firefox-esr installed" command -v firefox-esr
 check "claude CLI installed" command -v claude
 check "pi CLI installed" command -v pi
+check "omp CLI installed" command -v omp
 check "node installed" command -v node
 check "python installed" command -v python3
 check "git installed" command -v git
