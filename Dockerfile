@@ -963,7 +963,15 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root
     mitreattack-python \
     # Recon (recon-ng, spiderfoot installed via git clone below)
     theHarvester \
-    asciinema
+    asciinema \
+    aiohappyeyeballs \
+    aiohttp \
+    aiosignal \
+    frozenlist \
+    multidict \
+    propcache \
+    tabulate \
+    yarl
 
 # ============================================================
 # 12a. OSINT Framework pip tools (osint-framework plugin)
