@@ -102,8 +102,8 @@ fi
 
 # ============================================================
 # Derive intermediate variables from LITELLM_API_KEY and LITELLM_BASE_URL.
-# Both xcsh providers and Claude Code share the same LiteLLM server.
-# Must happen before auto-approve and the xcsh.json sed substitution.
+# Claude Code uses the LiteLLM server.
+# Must happen before auto-approve.
 # ============================================================
 if [ -n "$LITELLM_API_KEY" ]; then
   export OPENAI_API_KEY="$LITELLM_API_KEY"
@@ -138,30 +138,6 @@ if [ -n "$ANTHROPIC_API_KEY" ] && [ -f "$HOME/.claude.json" ]; then
       (.customApiKeyResponses.approved // []) + [$key[-20:]] | unique
     )' "$HOME/.claude.json" >"$HOME/.claude.json.tmp" &&
     mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
-fi
-
-# ============================================================
-# xcsh config (proxy mode only — Anthropic OAuth removed)
-# ============================================================
-# Substitute env-var placeholders in xcsh.json with real values.
-# xcsh requires the LiteLLM proxy; OAuth-only mode is no longer supported.
-XCSH_CONFIG_DIR="$HOME/.config/xcsh"
-if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$LITELLM_API_KEY" ]; then
-  echo "WARNING: CLAUDE_CODE_OAUTH_TOKEN is set but LITELLM_API_KEY is not."
-  echo "         Claude Code will work via OAuth, but xcsh requires the"
-  echo "         LiteLLM proxy (LITELLM_API_KEY + LITELLM_BASE_URL)."
-fi
-if [ -n "$LITELLM_API_KEY" ]; then
-  _esc_base_url=$(printf '%s' "$_openai_base_url" | sed 's/[&\\/]/\\&/g')
-  _esc_api_key=$(printf '%s' "$OPENAI_API_KEY" | sed 's/[&\\/]/\\&/g')
-  sed -e "s|{env:OPENAI_BASE_URL}|${_esc_base_url}|g" \
-    -e "s|{env:OPENAI_API_KEY}|${_esc_api_key}|g" \
-    "$XCSH_CONFIG_DIR/xcsh.json" \
-    >"$XCSH_CONFIG_DIR/xcsh.json.tmp" &&
-    mv "$XCSH_CONFIG_DIR/xcsh.json.tmp" "$XCSH_CONFIG_DIR/xcsh.json"
-  unset _esc_base_url _esc_api_key
-  cp "$XCSH_CONFIG_DIR/oh-my-xcsh-proxy.json" \
-    "$XCSH_CONFIG_DIR/oh-my-xcsh.json"
 fi
 
 # ============================================================

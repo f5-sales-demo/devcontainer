@@ -10,5 +10,3 @@ ignored:
   - SC2016
   # DL3003: cd used inside RUN for npm --prefix alternative
   - DL3003
-  # DL3016: oh-my-xcsh@latest is intentional (always pull newest plugin)
-  - DL3016

@@ -1,7 +1,6 @@
 *
 !entrypoint.sh
 !claude-config/
-!xcsh-config/
 !codex-config/
 !pi-config/
 !hermes-config/

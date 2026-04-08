@@ -396,7 +396,7 @@ RUN ARCH=$(uname -m) \
 
 # ============================================================
 # 10. Binary tools (kubectl, helm, tflint, terraform-docs,
-#     act, actionlint, yt-dlp, uv, xcsh)
+#     act, actionlint, yt-dlp, uv)
 #     All resolve latest versions at build time.
 # ============================================================
 # hadolint ignore=DL3059
@@ -441,27 +441,6 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
       "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${NVIM_ARCH}.tar.gz" \
       | tar -xz -C /opt \
     && ln -s "/opt/nvim-linux-${NVIM_ARCH}/bin/nvim" /usr/local/bin/nvim
-
-# xcsh (f5xc fork — pre-built binary from fork GitHub releases)
-# Separate RUN with --mount=type=secret for authenticated GitHub API.
-# Uses per_page=1 to fetch only the latest release (includes pre-releases).
-# Falls back to unauthenticated call for local builds without secrets.
-# hadolint ignore=DL3059
-RUN --mount=type=secret,id=GITHUB_TOKEN \
-    DPKG_ARCH=$(dpkg --print-architecture) \
-    && AUTH_HEADER="" \
-    && if [ -f /run/secrets/GITHUB_TOKEN ]; then \
-      AUTH_HEADER="Authorization: token $(cat /run/secrets/GITHUB_TOKEN)"; \
-    fi \
-    && XCSH_TAG=$(curl -fsSL ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
-        "https://api.github.com/repos/f5xc-salesdemos/xcsh/releases?per_page=1" \
-        | grep -m1 '"tag_name"' | sed 's/.*"tag_name": *"//;s/".*//') \
-    && if [ "$DPKG_ARCH" = "amd64" ]; then OC_PLATFORM="linux-x64"; else OC_PLATFORM="linux-arm64"; fi \
-    && echo "Installing xcsh ${XCSH_TAG} for ${OC_PLATFORM}" \
-    && curl ${CURL_RETRY} -fsSL \
-        "https://github.com/f5xc-salesdemos/xcsh/releases/download/${XCSH_TAG}/xcsh-${OC_PLATFORM}.tar.gz" \
-        | tar -xz -C /usr/local/bin xcsh \
-    && chmod +x /usr/local/bin/xcsh
 
 # ============================================================
 # 10b. Additional binary tools (code CLI, oc, yq, terragrunt,
@@ -1256,10 +1235,9 @@ RUN git clone --depth=1 --single-branch --branch main \
       "/home/${USERNAME}/.claude/skills/frontend-slides" \
     && chown -R ${USERNAME}:${USERNAME} "/home/${USERNAME}/.claude"
 
-# 12n. Share Claude Code skills with Codex and xcsh via ~/.agents/skills symlink
-# Codex discovers user skills from ~/.agents/skills/; xcsh (oh-my-xcsh)
-# reads both ~/.claude/skills/ and ~/.agents/skills/. A whole-directory symlink
-# lets all three agents share ~/.claude/skills/ as the single source of truth.
+# 12n. Share Claude Code skills with Codex via ~/.agents/skills symlink
+# Codex discovers user skills from ~/.agents/skills/. A whole-directory symlink
+# lets both agents share ~/.claude/skills/ as the single source of truth.
 # hadolint ignore=DL3059
 RUN mkdir -p "/home/${USERNAME}/.agents" \
     && ln -s "/home/${USERNAME}/.claude/skills" "/home/${USERNAME}/.agents/skills" \
@@ -1282,8 +1260,6 @@ USER $USERNAME
 WORKDIR /home/$USERNAME
 
 RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
-    ~/.config/xcsh \
-    ~/.local/share/xcsh \
     ~/.config/gogcli \
     ~/.config/gws \
     ~/.codex \
@@ -1329,37 +1305,6 @@ USER $USERNAME
 # to ~/.npm/_npx; --headless is passed via .mcp.json args in each content repo)
 # hadolint ignore=DL3059
 RUN npm exec chrome-devtools-mcp@0.20.2 -- --version 2>/dev/null || true
-
-# oh-my-xcsh (xcsh plugin system — "ultrawork" / "ulw" command)
-# Build-time install uses npx oh-my-xcsh for config scaffolding.
-# The f5xc fork runtime plugin is pre-installed so xcsh skips download.
-# hadolint ignore=DL3059
-RUN npx -y oh-my-xcsh install --no-tui \
-    --claude=max20 --openai=no --gemini=no --copilot=no \
-    && rm -f ~/.config/xcsh/*.bak.*
-# Pre-install npm packages into xcsh's XDG cache so it skips
-# downloads on first launch.  Write the cache-version marker ("21")
-# and a package.json with pinned dependencies so BunProc.install()
-# sees each package as already present.
-# hadolint ignore=DL3059
-RUN XCSH_CACHE="$HOME/.cache/xcsh" \
-    && mkdir -p "$XCSH_CACHE" \
-    && printf '21' > "$XCSH_CACHE/version" \
-    && printf '{"dependencies":{}}\n' > "$XCSH_CACHE/package.json" \
-    && bun add --cwd "$XCSH_CACHE" --force @ai-sdk/openai \
-    && PLUGIN_DIR="$XCSH_CACHE/packages/oh-my-xcsh@latest" \
-    && mkdir -p "$PLUGIN_DIR" \
-    && printf '{"dependencies":{}}\n' > "$PLUGIN_DIR/package.json" \
-    && npm install --prefix "$PLUGIN_DIR" --save oh-my-xcsh@latest
-
-# Patch oh-my-xcsh config in-place with claude_code integration flags
-# (scaffolding creates oh-my-xcsh.json; entrypoint overwrites with oh-my-xcsh-proxy.json at runtime)
-# hadolint ignore=DL3059
-RUN if [ -f ~/.config/xcsh/oh-my-xcsh.json ]; then \
-      jq '. + {"claude_code":{"plugins":true,"skills":true,"commands":true,"agents":true,"hooks":true,"mcp":true}}' \
-          ~/.config/xcsh/oh-my-xcsh.json > /tmp/omc-patched.json \
-      && mv /tmp/omc-patched.json ~/.config/xcsh/oh-my-xcsh.json; \
-    fi
 
 # ============================================================
 # 14. Language formatters (GitHub binaries + source build)
@@ -1477,7 +1422,6 @@ RUN mkdir -p "$HOME/.npm-global" \
     && "$HOME/.tfenv/bin/tfenv" install latest \
     && "$HOME/.tfenv/bin/tfenv" use latest \
     && git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" \
-    && SHELL=/bin/zsh xcsh completion >> "$HOME/.zshrc" \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 # gogcli (gog) native zsh completions (generated from gog help-json schema)
@@ -1537,11 +1481,6 @@ COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.json /home/${USERNAM
 COPY --chown=${USERNAME}:${USERNAME} claude-config/claude.json /home/${USERNAME}/.claude.json
 COPY --chown=${USERNAME}:${USERNAME} claude-config/user-CLAUDE.md /home/${USERNAME}/.claude/CLAUDE.md
 
-# --- xcsh: bake config to final paths ---
-# Entrypoint substitutes env-var placeholders at runtime.
-COPY --chown=${USERNAME}:${USERNAME} xcsh-config/xcsh.json /home/${USERNAME}/.config/xcsh/xcsh.json
-COPY --chown=${USERNAME}:${USERNAME} xcsh-config/oh-my-xcsh-proxy.json /home/${USERNAME}/.config/xcsh/oh-my-xcsh-proxy.json
-COPY --chown=${USERNAME}:${USERNAME} xcsh-config/xcsh-permissions.json /home/${USERNAME}/.xcsh/xcsh.json
 
 
 # --- Codex + Pi + Hermes: bake static defaults ---
@@ -1550,7 +1489,7 @@ COPY --chown=${USERNAME}:${USERNAME} codex-config/sync-agents.sh /opt/codex-conf
 
 # 17a. Sync Claude Code plugin agents → Codex .toml format
 # Converts ~/.claude/plugins/cache/*/agents/*.md to ~/.codex/agents/*.toml
-# so Codex can natively discover the same agents as Claude Code and xcsh.
+# so Codex can natively discover the same agents as Claude Code.
 # hadolint ignore=DL3059
 RUN chmod +x /opt/codex-config/sync-agents.sh \
     && /opt/codex-config/sync-agents.sh
