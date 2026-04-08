@@ -158,6 +158,19 @@ elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
 fi
 
 # ============================================================
+# Pi & Oh-My-Pi — write models.json with LiteLLM proxy base URL.
+# Neither tool reads ANTHROPIC_BASE_URL from the environment;
+# they require a models.json provider override instead.
+# ============================================================
+if [ -n "$LITELLM_BASE_URL" ]; then
+  _pi_models='{"providers":{"anthropic":{"baseUrl":"'"${LITELLM_BASE_URL}/anthropic"'"}}}'
+  mkdir -p "$HOME/.pi/agent" "$HOME/.omp/agent"
+  printf '%s\n' "$_pi_models" > "$HOME/.pi/agent/models.json"
+  printf '%s\n' "$_pi_models" > "$HOME/.omp/agent/models.json"
+  unset _pi_models
+fi
+
+# ============================================================
 # Codex CLI — substitute base URL placeholder in config
 # The litellm provider in config.toml uses __CODEX_BASE_URL__ as a
 # placeholder; resolve it to the OpenAI passthrough endpoint.

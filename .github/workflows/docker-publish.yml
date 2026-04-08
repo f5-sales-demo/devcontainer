@@ -11,6 +11,7 @@ on:
       - claude-config/**
       - codex-config/**
       - pi-config/**
+      - omp-config/**
       - scripts/**
       - docker-compose.yml
       - .devcontainer/**

@@ -3,6 +3,7 @@
 !claude-config/
 !codex-config/
 !pi-config/
+!omp-config/
 !hermes-config/
 !.devcontainer/scripts/
 !scripts/

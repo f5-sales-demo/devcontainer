@@ -29,7 +29,9 @@ cd devcontainer
 ├── .env.example                # Example environment variables
 ├── docs/                       # Documentation site (Starlight)
 ├── claude-config/              # Claude Code configuration files
-└── codex-config/               # Codex configuration
+├── codex-config/               # Codex configuration
+├── pi-config/                  # Pi configuration
+└── omp-config/                 # Oh-My-Pi (omp) configuration
 ```
 
 ## Build File
@@ -127,7 +129,7 @@ These layers change more frequently (npm/pip updates, config changes) but rebuil
 | 10h. OWASP ZAP | Java-based web application scanner |
 | 10i. Ghidra | Reverse engineering framework |
 | 10j. Metasploit | Exploitation framework (amd64 only) |
-| 11. npm global tools | claude-code, prettier, markdownlint-cli2, devcontainers-cli, playwright, pi-coding-agent |
+| 11. npm global tools | claude-code, prettier, markdownlint-cli2, devcontainers-cli, playwright, pi-coding-agent, oh-my-pi |
 | 12. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
 | 12c. Ruby linters | rubocop + extensions |
 | 12e. Perl linter modules | Perl::Critic extensions |

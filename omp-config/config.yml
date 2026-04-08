@@ -1,0 +1,7 @@
+defaultProvider: anthropic
+defaultModel: claude-opus-4-6
+modelRoles:
+  smol: anthropic/claude-haiku-4-5
+  default: anthropic/claude-opus-4-6
+  slow: anthropic/claude-opus-4-6
+  plan: anthropic/claude-opus-4-6
