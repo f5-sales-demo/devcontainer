@@ -831,7 +831,7 @@ RUN npm install -g \
     @biomejs/biome \
     stylelint \
     htmlhint \
-    textlint \
+    "textlint@<15.5.3" \
     textlint-rule-terminology \
     jscpd \
     @coffeelint/cli \
