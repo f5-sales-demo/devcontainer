@@ -5,6 +5,7 @@
 !pi-config/
 !omp-config/
 !hermes-config/
+!xcsh-config/
 !.devcontainer/scripts/
 !scripts/
 !configs/
