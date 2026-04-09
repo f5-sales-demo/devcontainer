@@ -171,6 +171,19 @@ if [ -n "$LITELLM_BASE_URL" ]; then
 fi
 
 # ============================================================
+# xcsh — write models.json + models.yml with LiteLLM proxy base URL.
+# xcsh reads provider routing from ~/.xcsh/agent/models.json.
+# ============================================================
+if [ -n "$LITELLM_BASE_URL" ]; then
+  _xcsh_models='{"providers":{"anthropic":{"baseUrl":"'"${LITELLM_BASE_URL}/anthropic"'"}}}'
+  mkdir -p "$HOME/.xcsh/agent"
+  printf '%s\n' "$_xcsh_models" > "$HOME/.xcsh/agent/models.json"
+  printf 'providers: \n  anthropic: \n    baseUrl: %s\n' "${LITELLM_BASE_URL}/anthropic" \
+    > "$HOME/.xcsh/agent/models.yml"
+  unset _xcsh_models
+fi
+
+# ============================================================
 # Codex CLI — substitute base URL placeholder in config
 # The litellm provider in config.toml uses __CODEX_BASE_URL__ as a
 # placeholder; resolve it to the OpenAI passthrough endpoint.
