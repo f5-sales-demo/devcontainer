@@ -165,8 +165,8 @@ fi
 if [ -n "$LITELLM_BASE_URL" ]; then
   _pi_models='{"providers":{"anthropic":{"baseUrl":"'"${LITELLM_BASE_URL}/anthropic"'"}}}'
   mkdir -p "$HOME/.pi/agent" "$HOME/.omp/agent"
-  printf '%s\n' "$_pi_models" > "$HOME/.pi/agent/models.json"
-  printf '%s\n' "$_pi_models" > "$HOME/.omp/agent/models.json"
+  printf '%s\n' "$_pi_models" >"$HOME/.pi/agent/models.json"
+  printf '%s\n' "$_pi_models" >"$HOME/.omp/agent/models.json"
   unset _pi_models
 fi
 
@@ -177,9 +177,9 @@ fi
 if [ -n "$LITELLM_BASE_URL" ]; then
   _xcsh_models='{"providers":{"anthropic":{"baseUrl":"'"${LITELLM_BASE_URL}/anthropic"'"}}}'
   mkdir -p "$HOME/.xcsh/agent"
-  printf '%s\n' "$_xcsh_models" > "$HOME/.xcsh/agent/models.json"
+  printf '%s\n' "$_xcsh_models" >"$HOME/.xcsh/agent/models.json"
   printf 'providers: \n  anthropic: \n    baseUrl: %s\n' "${LITELLM_BASE_URL}/anthropic" \
-    > "$HOME/.xcsh/agent/models.yml"
+    >"$HOME/.xcsh/agent/models.yml"
   unset _xcsh_models
 fi
 
