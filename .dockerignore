@@ -6,6 +6,7 @@
 !omp-config/
 !hermes-config/
 !xcsh-config/
+!opencode-config/
 !.devcontainer/scripts/
 !scripts/
 !configs/
