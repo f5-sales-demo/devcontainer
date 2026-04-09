@@ -75,6 +75,7 @@ fi
 echo "--- rust ---"
 if command -v rustup >/dev/null 2>&1; then
   rustup update stable 2>&1 || true
+  rustup update nightly 2>&1 || true
 fi
 
 # ── Playwright browsers ──

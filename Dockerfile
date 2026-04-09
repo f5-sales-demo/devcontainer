@@ -295,16 +295,18 @@ RUN GO_VERSION=$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -1 | sed 's/^
 ENV PATH="/usr/local/go/bin:${PATH}"
 
 # ============================================================
-# 5. Rust (system-wide, latest stable — resolved by rustup)
+# 5. Rust (system-wide, stable + nightly — resolved by rustup)
 # ============================================================
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH="/usr/local/cargo/bin:${PATH}"
 RUN curl ${CURL_RETRY} --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     | sh -s -- -y --default-toolchain stable --no-modify-path \
+    && rustup toolchain install nightly --profile minimal \
     && rustup component add clippy rustfmt rust-analyzer rust-src \
+    && rustup component add --toolchain nightly clippy rustfmt rust-analyzer rust-src \
     && cargo install cargo-watch cargo-edit \
-    && chmod -R a+rX /usr/local/rustup /usr/local/cargo
+    && chown -R ${USERNAME}:${USERNAME} /usr/local/rustup /usr/local/cargo
 
 # ============================================================
 # 6. Maven + Gradle
