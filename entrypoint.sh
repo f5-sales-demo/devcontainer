@@ -3,6 +3,12 @@
 # Configure user environment (env-var-dependent only)
 # ============================================================
 
+# Ensure Rust toolchain dirs are writable (Dockerfile chown can be
+# lost by layer caching or volume mounts).
+if [ -d /usr/local/rustup ] && [ ! -w /usr/local/rustup ]; then
+  sudo chown -R "$(id -u):$(id -g)" /usr/local/rustup /usr/local/cargo 2>/dev/null || true
+fi
+
 if [ -n "$GIT_AUTHOR_NAME" ]; then
   git config --global user.name "$GIT_AUTHOR_NAME"
   export GIT_COMMITTER_NAME="${GIT_COMMITTER_NAME:-$GIT_AUTHOR_NAME}"
