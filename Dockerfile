@@ -824,6 +824,7 @@ RUN npm install -g \
     @anthropic-ai/claude-code \
     @mariozechner/pi-coding-agent \
     @oh-my-pi/pi-coding-agent \
+    @f5xc-salesdemos/xcsh \
     prettier \
     markdownlint-cli2 \
     @devcontainers/cli \
@@ -1279,6 +1280,8 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
     ~/.codex \
     ~/.pi/agent \
     ~/.omp/agent \
+    ~/.xcsh/agent \
+    ~/.xcsh/logs \
     ~/.hermes \
     ~/.hermes/cron \
     ~/.hermes/sessions \
@@ -1511,6 +1514,7 @@ RUN chmod +x /opt/codex-config/sync-agents.sh \
 COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
 COPY --chown=${USERNAME}:${USERNAME} omp-config/settings.json /home/${USERNAME}/.omp/agent/settings.json
 COPY --chown=${USERNAME}:${USERNAME} omp-config/config.yml /home/${USERNAME}/.omp/agent/config.yml
+COPY --chown=${USERNAME}:${USERNAME} xcsh-config/config.yml /home/${USERNAME}/.xcsh/agent/config.yml
 COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
 
 
