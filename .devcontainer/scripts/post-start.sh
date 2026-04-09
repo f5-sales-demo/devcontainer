@@ -30,7 +30,7 @@ for cmd in node python3 go rustc javac git gh kubectl helm terraform \
   actionlint act terraform-docs ansible black pylint yamllint yt-dlp \
   aws az pwsh devcontainer brew playwright pnpm redis-cli psql tirith \
   marksman terraform-ls taplo yaml-language-server bash-language-server \
-  vscode-json-language-server mdx-language-server; do
+  vscode-json-language-server mdx-language-server zig; do
   if command -v $cmd &>/dev/null; then
     ver=$($cmd --version 2>&1 | head -1 | sed 's/^[[:space:]]*//')
     printf "    %-20s %s\n" "$cmd" "$ver"

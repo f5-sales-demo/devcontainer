@@ -86,7 +86,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # System essentials
-    build-essential pkg-config libssl-dev libffi-dev \
+    build-essential pkg-config libssl-dev libffi-dev cmake lld \
     # Media / utilities
     ffmpeg poppler-utils qrencode \
     # Network tools
@@ -302,7 +302,8 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     PATH="/usr/local/cargo/bin:${PATH}"
 RUN curl ${CURL_RETRY} --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     | sh -s -- -y --default-toolchain stable --no-modify-path \
-    && rustup component add clippy rustfmt \
+    && rustup component add clippy rustfmt rust-analyzer rust-src \
+    && cargo install cargo-watch cargo-edit \
     && chmod -R a+rX /usr/local/rustup /usr/local/cargo
 
 # ============================================================
@@ -383,6 +384,7 @@ ARG GHIDRA_VERSION=12.0.4
 ARG GHIDRA_DATE=20260303
 ARG BUILD_COMMIT=unknown
 ARG BUILD_DATE=unknown
+ARG ZIG_VERSION=0.15.2
 
 # ============================================================
 # 9. AWS CLI v2
@@ -801,6 +803,17 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
       "https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-${TAPLO_ARCH}.gz" \
       | gzip -d > /usr/local/bin/taplo \
     && chmod +x /usr/local/bin/taplo
+
+# ============================================================
+# 10l. Zig cross-compilation toolchain (needed by napi-rs
+#      for native addon builds in the Firecrawl section).
+# ============================================================
+# hadolint ignore=DL3059
+RUN UNAME_ARCH=$(uname -m) \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://ziglang.org/download/${ZIG_VERSION}/zig-${UNAME_ARCH}-linux-${ZIG_VERSION}.tar.xz" \
+      | tar -xJ -C /opt \
+    && ln -s "/opt/zig-${UNAME_ARCH}-linux-${ZIG_VERSION}/zig" /usr/local/bin/zig
 
 # ============================================================
 # 11. npm global tools
