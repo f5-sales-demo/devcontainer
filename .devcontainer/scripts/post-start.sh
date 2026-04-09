@@ -26,7 +26,7 @@ fi
 # Check installed tools
 echo "  Installed tools:"
 for cmd in node python3 go rustc javac git gh kubectl helm terraform \
-  pre-commit uv claude codex xcsh prettier markdownlint-cli2 \
+  pre-commit uv claude codex opencode xcsh prettier markdownlint-cli2 \
   actionlint act terraform-docs ansible black pylint yamllint yt-dlp \
   aws az pwsh devcontainer brew playwright pnpm redis-cli psql tirith \
   marksman terraform-ls taplo yaml-language-server bash-language-server \

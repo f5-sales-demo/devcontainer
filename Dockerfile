@@ -872,6 +872,7 @@ RUN npm install -g \
     react \
     react-dom \
     sharp \
+    opencode-ai \
     opencode-claude-auth \
     js-deobfuscator
 
@@ -1277,6 +1278,8 @@ USER $USERNAME
 WORKDIR /home/$USERNAME
 
 RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
+    ~/.config/opencode \
+    ~/.local/share/opencode \
     ~/.config/gogcli \
     ~/.config/gws \
     ~/.codex \
@@ -1325,6 +1328,13 @@ USER $USERNAME
 # to ~/.npm/_npx; --headless is passed via .mcp.json args in each content repo)
 # hadolint ignore=DL3059
 RUN npm exec chrome-devtools-mcp@0.20.2 -- --version 2>/dev/null || true
+
+# oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
+# Build-time install uses npx oh-my-opencode for config scaffolding.
+# hadolint ignore=DL3059
+RUN npx -y oh-my-opencode install --no-tui \
+    --claude=max20 --openai=no --gemini=no --copilot=no \
+    && rm -f ~/.config/opencode/*.bak.*
 
 # ============================================================
 # 14. Language formatters (GitHub binaries + source build)
@@ -1517,6 +1527,9 @@ COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.
 COPY --chown=${USERNAME}:${USERNAME} omp-config/settings.json /home/${USERNAME}/.omp/agent/settings.json
 COPY --chown=${USERNAME}:${USERNAME} omp-config/config.yml /home/${USERNAME}/.omp/agent/config.yml
 COPY --chown=${USERNAME}:${USERNAME} xcsh-config/config.yml /home/${USERNAME}/.xcsh/agent/config.yml
+COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json /home/${USERNAME}/.config/opencode/opencode.json
+COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-openagent.json /home/${USERNAME}/.config/opencode/oh-my-openagent.json
+COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.config/opencode/opencode-permissions.json
 COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
 
 
