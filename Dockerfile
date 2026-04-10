@@ -1307,8 +1307,14 @@ RUN ln -s /home/vscode/.bun/bin/bun /usr/local/bin/bun \
 USER $USERNAME
 
 # Install native Claude Code binary (replaces npm package)
+# Retry up to 4 times with exponential back-off to handle transient
+# CDN 429 rate-limit responses during parallel multi-arch builds.
 # hadolint ignore=DL3059
-RUN claude install --force
+RUN for attempt in 1 2 3 4; do \
+      claude install --force && break; \
+      echo "claude install attempt $attempt failed, retrying in $((attempt * 15))s..."; \
+      sleep "$((attempt * 15))"; \
+    done
 USER root
 RUN npm uninstall -g @anthropic-ai/claude-code
 USER $USERNAME
