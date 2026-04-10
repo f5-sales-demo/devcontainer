@@ -490,8 +490,11 @@ fi
 # ============================================================
 _CMEM_ROOT=$(find "$HOME/.claude/plugins/cache/thedotmack/claude-mem" -maxdepth 1 -type d -name '[0-9]*' 2>/dev/null | sort -V | tail -1)
 if [ -n "$_CMEM_ROOT" ] && [ -f "$_CMEM_ROOT/scripts/worker-service.cjs" ]; then
-  node "$_CMEM_ROOT/scripts/bun-runner.js" \
-    "$_CMEM_ROOT/scripts/worker-service.cjs" start >/dev/null 2>&1 &
+  # worker-service.cjs start daemonizes itself (forks + SIGKILLs parent).
+  # Wrapping in a subshell with || true prevents bash from printing "Killed"
+  # when the daemon fork kills the parent node process.
+  (node "$_CMEM_ROOT/scripts/bun-runner.js" \
+    "$_CMEM_ROOT/scripts/worker-service.cjs" start >/dev/null 2>&1 || true) &
   # Brief background wait — don't block entrypoint, but give the worker
   # a head start.  Remaining startup steps provide additional delay.
   (
