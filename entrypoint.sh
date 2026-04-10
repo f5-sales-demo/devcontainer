@@ -502,19 +502,12 @@ if [ -n "$_CMEM_ROOT" ] && [ -f "$_CMEM_ROOT/scripts/worker-service.cjs" ]; then
     # Run the worker daemon directly with --daemon flag.  This starts the HTTP
     # server in-process without the two-stage fork that worker-service.cjs
     # "start" uses (fork + setsid + SIGKILL parent).  No fork means no SIGKILL,
-    # no "Killed" output from bash.  disown removes the job from bash's table
-    # so any unexpected exit is also silent.
-    "$_CMEM_BUN" "$_CMEM_ROOT/scripts/worker-service.cjs" \
-      --daemon >/dev/null 2>&1 &
+    # no "Killed" output from bash.  disown removes the job from bash's table.
+    # Health gate before exec "$@" (end of file) guarantees the worker is
+    # registered before Claude Code's plugin hooks can fire.
+    CLAUDE_MEM_WORKER_PORT=37777 "$_CMEM_BUN" \
+      "$_CMEM_ROOT/scripts/worker-service.cjs" --daemon >/dev/null 2>&1 &
     disown
-    # Brief background wait — gives the worker time to become ready before
-    # Claude Code's SessionStart hooks fire (8-second health-check timeout).
-    (
-      for _i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-        curl -sf http://localhost:37777/health >/dev/null 2>&1 && break
-        sleep 1
-      done
-    ) &
   fi
 fi
 unset _CMEM_ROOT _CMEM_BUN
@@ -657,5 +650,15 @@ if [ "${ENABLE_TAILSCALE:-false}" = "true" ]; then
     ) &
   fi
 fi
+
+# Wait for claude-mem worker health before dropping to shell.
+# The worker was started earlier in the entrypoint; Firecrawl, Chrome, and
+# Tailscale startup have given it 10-30 s to initialise.  This synchronous
+# gate prevents Claude Code's plugin hooks from encountering an unregistered
+# worker and triggering the daemon fork's SIGKILL on hook processes.
+for _i in 1 2 3 4 5; do
+  curl -sf http://localhost:37777/health >/dev/null 2>&1 && break
+  sleep 1
+done
 
 exec "$@"
