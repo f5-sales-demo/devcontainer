@@ -62,7 +62,7 @@ __gh_get_owners() {
     # Atomic write via temp file
     local tmp="${cache_file}.tmp.$$"
     printf '%s\n' "${owners[@]}" >"${tmp}"
-    mv "${tmp}" "${cache_file}"
+    command mv -f "${tmp}" "${cache_file}"
   fi
 
   printf '%s\n' "${owners[@]}"
@@ -86,7 +86,7 @@ __gh_get_repos() {
     # Atomic write via temp file
     local tmp="${cache_file}.tmp.$$"
     printf '%s\n' "${repos}" >"${tmp}"
-    mv "${tmp}" "${cache_file}"
+    command mv -f "${tmp}" "${cache_file}"
   fi
 
   printf '%s\n' "${repos}"
@@ -95,6 +95,7 @@ __gh_get_repos() {
 # Background cache refresh (non-blocking)
 # shellcheck disable=SC1009,SC1035,SC1072,SC1073
 __gh_refresh_cache_background() {
+  setopt local_options no_monitor no_notify
   (
     # Check if gh is authenticated
     gh auth status &>/dev/null || return 0
@@ -108,8 +109,8 @@ __gh_refresh_cache_background() {
     for owner in ${(f)owners}; do
       __gh_get_repos "${owner}" >/dev/null
     done
-  ) &
-  disown
+  ) &>/dev/null &
+  disown &>/dev/null
 }
 
 # Warm cache on shell startup (non-blocking)
