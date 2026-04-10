@@ -477,6 +477,33 @@ if [ -f "$SETTINGS" ] && [ -f "$TEMPLATE" ] && command -v jq >/dev/null 2>&1; th
 fi
 
 # ============================================================
+# claude-mem worker pre-start (issue #882b)
+# Start the claude-mem worker early so it is healthy before
+# Claude Code's SessionStart hooks fire.  The plugin's hooks
+# poll localhost:37777/health with an 8-second timeout — on a
+# cold start this is not enough time, producing two
+# "SessionStart:startup hook error" warnings.  Pre-starting
+# the worker here (after fuser killed stale instances and
+# after plugin permissions are fixed) eliminates the race.
+# The subsequent Firecrawl / Chrome startup provides 10-15 s
+# of natural delay before the user starts Claude Code.
+# ============================================================
+_CMEM_ROOT=$(find "$HOME/.claude/plugins/cache/thedotmack/claude-mem" -maxdepth 1 -type d -name '[0-9]*' 2>/dev/null | sort -V | tail -1)
+if [ -n "$_CMEM_ROOT" ] && [ -f "$_CMEM_ROOT/scripts/worker-service.cjs" ]; then
+  node "$_CMEM_ROOT/scripts/bun-runner.js" \
+    "$_CMEM_ROOT/scripts/worker-service.cjs" start >/dev/null 2>&1 &
+  # Brief background wait — don't block entrypoint, but give the worker
+  # a head start.  Remaining startup steps provide additional delay.
+  (
+    for _i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+      curl -sf http://localhost:37777/health >/dev/null 2>&1 && break
+      sleep 1
+    done
+  ) &
+fi
+unset _CMEM_ROOT
+
+# ============================================================
 # Firecrawl — self-hosted web scraper
 # API on port 3002, Playwright on port 3000.
 # Infrastructure: Redis, PostgreSQL, RabbitMQ.
