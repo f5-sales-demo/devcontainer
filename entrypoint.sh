@@ -491,7 +491,7 @@ fi
 _CMEM_ROOT=$(find "$HOME/.claude/plugins/cache/thedotmack/claude-mem" -maxdepth 1 -type d -name '[0-9]*' 2>/dev/null | sort -V | tail -1)
 if [ -n "$_CMEM_ROOT" ] && [ -f "$_CMEM_ROOT/scripts/worker-service.cjs" ]; then
   node "$_CMEM_ROOT/scripts/bun-runner.js" \
-       "$_CMEM_ROOT/scripts/worker-service.cjs" start >/dev/null 2>&1 &
+    "$_CMEM_ROOT/scripts/worker-service.cjs" start >/dev/null 2>&1 &
   # Brief background wait — don't block entrypoint, but give the worker
   # a head start.  Remaining startup steps provide additional delay.
   (
