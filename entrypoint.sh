@@ -488,23 +488,36 @@ fi
 # The subsequent Firecrawl / Chrome startup provides 10-15 s
 # of natural delay before the user starts Claude Code.
 # ============================================================
-_CMEM_ROOT=$(find "$HOME/.claude/plugins/cache/thedotmack/claude-mem" -maxdepth 1 -type d -name '[0-9]*' 2>/dev/null | sort -V | tail -1)
+_CMEM_ROOT=$(find "$HOME/.claude/plugins/cache/thedotmack/claude-mem" \
+  -maxdepth 1 -type d -name '[0-9]*' 2>/dev/null | sort -V | tail -1)
 if [ -n "$_CMEM_ROOT" ] && [ -f "$_CMEM_ROOT/scripts/worker-service.cjs" ]; then
-  # worker-service.cjs start daemonizes itself (forks + SIGKILLs parent).
-  # Wrapping in a subshell with || true prevents bash from printing "Killed"
-  # when the daemon fork kills the parent node process.
-  (node "$_CMEM_ROOT/scripts/bun-runner.js" \
-    "$_CMEM_ROOT/scripts/worker-service.cjs" start >/dev/null 2>&1 || true) &
-  # Brief background wait — don't block entrypoint, but give the worker
-  # a head start.  Remaining startup steps provide additional delay.
-  (
-    for _i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-      curl -sf http://localhost:37777/health >/dev/null 2>&1 && break
-      sleep 1
-    done
-  ) &
+  # Locate bun runtime (mirrors bun-runner.js discovery: PATH then ~/.bun/bin).
+  _CMEM_BUN=""
+  if command -v bun >/dev/null 2>&1; then
+    _CMEM_BUN=$(command -v bun)
+  elif [ -x "$HOME/.bun/bin/bun" ]; then
+    _CMEM_BUN="$HOME/.bun/bin/bun"
+  fi
+  if [ -n "$_CMEM_BUN" ]; then
+    # Run the worker daemon directly with --daemon flag.  This starts the HTTP
+    # server in-process without the two-stage fork that worker-service.cjs
+    # "start" uses (fork + setsid + SIGKILL parent).  No fork means no SIGKILL,
+    # no "Killed" output from bash.  disown removes the job from bash's table
+    # so any unexpected exit is also silent.
+    "$_CMEM_BUN" "$_CMEM_ROOT/scripts/worker-service.cjs" \
+      --daemon >/dev/null 2>&1 &
+    disown
+    # Brief background wait — gives the worker time to become ready before
+    # Claude Code's SessionStart hooks fire (8-second health-check timeout).
+    (
+      for _i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+        curl -sf http://localhost:37777/health >/dev/null 2>&1 && break
+        sleep 1
+      done
+    ) &
+  fi
 fi
-unset _CMEM_ROOT
+unset _CMEM_ROOT _CMEM_BUN
 
 # ============================================================
 # Firecrawl — self-hosted web scraper
