@@ -230,3 +230,32 @@ while IFS= read -r HF; do
   echo '{}' >"$HF" 2>/dev/null || true
   chmod 444 "$HF" 2>/dev/null || true
 done < <(find "${PLUGIN_BASE}/marketplaces" -name "hooks.json" 2>/dev/null)
+
+# Third pass: neutralize cache-level hooks.json for non-enabled plugins.
+# Claude Code reads hooks from installed_plugins.json -> installPath which
+# always points to cache/<mkt>/<name>/<version>/hooks/hooks.json.
+for CHF in "${PLUGIN_BASE}/cache"/*/*/*/hooks/hooks.json; do
+  [ -f "$CHF" ] || continue
+  RELATIVE="${CHF#"${PLUGIN_BASE}"/cache/}"
+  C_MKT="${RELATIVE%%/*}"
+  C_NAME="${RELATIVE#*/}"
+  C_NAME="${C_NAME%%/*}"
+  C_KEY="${C_NAME}@${C_MKT}"
+  CHD=$(dirname "$CHF")
+
+  if jq -e --arg k "$C_KEY" '.enabledPlugins[$k]' "$SETTINGS" >/dev/null 2>&1; then
+    continue
+  fi
+
+  C_CURRENT=$(cat "$CHF" 2>/dev/null || true)
+  if [ "$C_CURRENT" = "{}" ]; then
+    chmod 755 "$CHD" 2>/dev/null || true
+    chmod 444 "$CHF" 2>/dev/null || true
+    continue
+  fi
+
+  chmod 755 "$CHD" 2>/dev/null || true
+  chmod 644 "$CHF" 2>/dev/null || true
+  echo '{}' >"$CHF" 2>/dev/null || true
+  chmod 444 "$CHF" 2>/dev/null || true
+done

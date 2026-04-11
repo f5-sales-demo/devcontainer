@@ -410,11 +410,80 @@ neutralize_non_enabled_hooks() {
     echo '{}' >"$hf" 2>/dev/null || true
     chmod 444 "$hf" 2>/dev/null || true
   done < <(find "$plugin_base/marketplaces" -name "hooks.json" 2>/dev/null)
+
+  # Third pass: neutralize cache-level hooks.json for non-enabled plugins.
+  # Claude Code reads hooks from installed_plugins.json -> installPath which
+  # always points to cache/<mkt>/<name>/<version>/hooks/hooks.json.  For
+  # plugins whose marketplace dir is a real directory (not a symlink to cache),
+  # the marketplace passes above do NOT neutralize the cache copy.
+  local chf chd c_relative c_mkt c_name c_key c_current
+  for chf in "$plugin_base"/cache/*/*/*/hooks/hooks.json; do
+    [ -f "$chf" ] || continue
+    c_relative="${chf#"${plugin_base}"/cache/}"
+    c_mkt="${c_relative%%/*}"
+    c_name="${c_relative#*/}"
+    c_name="${c_name%%/*}"
+    c_key="${c_name}@${c_mkt}"
+    chd=$(dirname "$chf")
+
+    if jq -e --arg k "$c_key" '.enabledPlugins[$k]' "$settings" >/dev/null 2>&1; then
+      chmod 755 "$chd" 2>/dev/null || true
+      chmod 644 "$chf" 2>/dev/null || true
+      continue
+    fi
+
+    c_current=$(cat "$chf" 2>/dev/null || true)
+    if [ "$c_current" = "{}" ]; then
+      chmod 755 "$chd" 2>/dev/null || true
+      chmod 444 "$chf" 2>/dev/null || true
+      continue
+    fi
+
+    chmod 755 "$chd" 2>/dev/null || true
+    chmod 644 "$chf" 2>/dev/null || true
+    echo '{}' >"$chf" 2>/dev/null || true
+    chmod 444 "$chf" 2>/dev/null || true
+  done
+}
+
+# Wrap claude-mem hook commands with exit-0 guard to prevent
+# non-zero exit codes (from signal deaths during daemon spawn races)
+# from surfacing as "hook error" warnings in Claude Code.
+# The hook handlers already exit 0 on worker-unavailable errors;
+# the only failure mode that leaks non-zero is a signal kill of
+# the bun process during daemon restart attempts in PR()/TD().
+wrap_cmem_hooks_with_guard() {
+  local cmem_hooks
+  cmem_hooks=$(find "${HOME}/.claude/plugins/cache/thedotmack/claude-mem" \
+    -name "hooks.json" -path "*/hooks/hooks.json" -print -quit 2>/dev/null)
+  [ -f "$cmem_hooks" ] || return 0
+
+  # Only patch if not already patched (idempotent)
+  grep -q '|| exit 0' "$cmem_hooks" 2>/dev/null && return 0
+
+  # Use jq to wrap UserPromptSubmit commands with ( ... ) || exit 0
+  local tmp="${cmem_hooks}.tmp"
+  if jq '
+    if .hooks.UserPromptSubmit then
+      .hooks.UserPromptSubmit |= map(
+        .hooks |= map(
+          if .command and (.command | test("\\|\\| exit 0$") | not) then
+            .command = "( " + .command + " ) || exit 0"
+          else . end
+        )
+      )
+    else . end
+  ' "$cmem_hooks" >"$tmp" 2>/dev/null; then
+    mv -f "$tmp" "$cmem_hooks"
+  else
+    rm -f "$tmp"
+  fi
 }
 
 ensure_marketplace_dirs
 find "${HOME}/.claude/plugins" -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
 neutralize_non_enabled_hooks
+wrap_cmem_hooks_with_guard
 
 # Persistent background daemon (Layer 1)
 # Phase 1: poll every 1-2s for 60s (catches initial dual plugin syncs
@@ -434,6 +503,7 @@ neutralize_non_enabled_hooks
     find "${HOME}/.claude/plugins" -name "*.sh" -type f \
       ! -perm -u+x -exec chmod +x {} + 2>/dev/null
     neutralize_non_enabled_hooks
+    wrap_cmem_hooks_with_guard
     elapsed=$((elapsed + $([ "$elapsed" -lt 10 ] && echo 1 || echo 2)))
   done
 
@@ -442,12 +512,14 @@ neutralize_non_enabled_hooks
     while true; do
       inotifywait -qq -r -e modify,create,moved_to,moved_from \
         "${HOME}/.claude/plugins/marketplaces" \
+        "${HOME}/.claude/plugins/cache" \
         "${HOME}/.claude/settings.json" 2>/dev/null
       # No sleep — neutralize IMMEDIATELY after filesystem event
       ensure_marketplace_dirs
       find "${HOME}/.claude/plugins" -name "*.sh" -type f \
         ! -perm -u+x -exec chmod +x {} + 2>/dev/null
       neutralize_non_enabled_hooks
+      wrap_cmem_hooks_with_guard
     done
   else
     while true; do
@@ -456,6 +528,7 @@ neutralize_non_enabled_hooks
       find "${HOME}/.claude/plugins" -name "*.sh" -type f \
         ! -perm -u+x -exec chmod +x {} + 2>/dev/null
       neutralize_non_enabled_hooks
+      wrap_cmem_hooks_with_guard
     done
   fi
 ) >/dev/null 2>&1 &
@@ -651,13 +724,15 @@ if [ "${ENABLE_TAILSCALE:-false}" = "true" ]; then
   fi
 fi
 
-# Wait for claude-mem worker health before dropping to shell.
+# Wait for claude-mem worker health AND readiness before dropping to shell.
+# Health = HTTP server listening.  Readiness = full initialisation complete.
 # The worker was started earlier in the entrypoint; Firecrawl, Chrome, and
 # Tailscale startup have given it 10-30 s to initialise.  This synchronous
 # gate prevents Claude Code's plugin hooks from encountering an unregistered
 # worker and triggering the daemon fork's SIGKILL on hook processes.
-for _i in 1 2 3 4 5; do
-  curl -sf http://localhost:37777/health >/dev/null 2>&1 && break
+for _i in 1 2 3 4 5 6 7 8 9 10; do
+  curl -sf http://localhost:37777/api/readiness >/dev/null 2>&1 && break
+  curl -sf http://localhost:37777/health >/dev/null 2>&1 || true
   sleep 1
 done
 

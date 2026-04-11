@@ -119,5 +119,38 @@ while IFS= read -r hf; do
   chmod 444 "$hf" 2>/dev/null || true
 done < <(find "$PLUGIN_BASE/marketplaces" -name "hooks.json" 2>/dev/null)
 
+# ── 5. Neutralize cache-level hooks.json for non-enabled plugins ──────────
+# Claude Code reads hooks from installed_plugins.json -> installPath which
+# always points to cache/<mkt>/<name>/<version>/hooks/hooks.json.  For
+# plugins whose marketplace dir is a real directory (not a symlink to cache),
+# the marketplace passes above do NOT neutralize the cache copy.
+for hf in "$PLUGIN_BASE"/cache/*/*/*/hooks/hooks.json; do
+  [ -f "$hf" ] || continue
+  relative="${hf#"${PLUGIN_BASE}"/cache/}"
+  c_mkt="${relative%%/*}"
+  c_name="${relative#*/}"
+  c_name="${c_name%%/*}"
+  c_key="${c_name}@${c_mkt}"
+  hd=$(dirname "$hf")
+
+  if jq -e --arg k "$c_key" '.enabledPlugins[$k]' "$SETTINGS" >/dev/null 2>&1; then
+    chmod 755 "$hd" 2>/dev/null || true
+    chmod 644 "$hf" 2>/dev/null || true
+    continue
+  fi
+
+  current=$(cat "$hf" 2>/dev/null || true)
+  if [ "$current" = "{}" ]; then
+    chmod 755 "$hd" 2>/dev/null || true
+    chmod 444 "$hf" 2>/dev/null || true
+    continue
+  fi
+
+  chmod 755 "$hd" 2>/dev/null || true
+  chmod 644 "$hf" 2>/dev/null || true
+  echo '{}' >"$hf" 2>/dev/null || true
+  chmod 444 "$hf" 2>/dev/null || true
+done
+
 # ALWAYS exit 0 — never cause "hook error" display
 exit 0
