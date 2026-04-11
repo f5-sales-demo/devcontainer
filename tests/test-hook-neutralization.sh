@@ -440,6 +440,92 @@ else
 fi
 teardown_mock_env
 
+echo ""
+echo "9. Cache-Level Neutralization"
+
+# Test 27: non-enabled plugin's cache hooks.json gets neutralized to {} with 444 perms
+setup_mock_env
+create_mock_cache_plugin "test-mkt" "gamma" "1.0.0" \
+  '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo bad"}]}]}}'
+source_neutralize_fn
+HOME="$MOCK_HOME" neutralize_non_enabled_hooks
+CONTENT=$(cat "${MOCK_HOME}/.claude/plugins/cache/test-mkt/gamma/1.0.0/hooks/hooks.json")
+FPERMS=$(stat -c '%a' "${MOCK_HOME}/.claude/plugins/cache/test-mkt/gamma/1.0.0/hooks/hooks.json" 2>/dev/null)
+check "non-enabled cache hooks.json neutralized to {}" \
+  test "$CONTENT" = "{}"
+check "non-enabled cache hooks.json perms 444" \
+  test "$FPERMS" = "444"
+teardown_mock_env
+
+# Test 28: enabled plugin's cache hooks.json is preserved with 644 perms
+setup_mock_env
+ORIG_HOOKS='{"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"echo ok"}]}]}}'
+create_mock_cache_plugin "test-mkt" "alpha" "1.0.0" "$ORIG_HOOKS"
+source_neutralize_fn
+HOME="$MOCK_HOME" neutralize_non_enabled_hooks
+CONTENT=$(cat "${MOCK_HOME}/.claude/plugins/cache/test-mkt/alpha/1.0.0/hooks/hooks.json")
+FPERMS=$(stat -c '%a' "${MOCK_HOME}/.claude/plugins/cache/test-mkt/alpha/1.0.0/hooks/hooks.json" 2>/dev/null)
+check "enabled cache hooks.json preserved" \
+  test "$CONTENT" = "$ORIG_HOOKS"
+check "enabled cache hooks.json perms 644" \
+  test "$FPERMS" = "644"
+teardown_mock_env
+
+# Test 29: idempotent — already-neutralized cache hooks.json causes no errors
+setup_mock_env
+create_mock_cache_plugin "test-mkt" "gamma" "1.0.0" '{}'
+chmod 444 "${MOCK_HOME}/.claude/plugins/cache/test-mkt/gamma/1.0.0/hooks/hooks.json"
+source_neutralize_fn
+STDERR_OUTPUT=$(HOME="$MOCK_HOME" neutralize_non_enabled_hooks 2>&1 || true)
+CONTENT=$(cat "${MOCK_HOME}/.claude/plugins/cache/test-mkt/gamma/1.0.0/hooks/hooks.json")
+check "idempotent cache neutralize — no errors" \
+  test -z "$STDERR_OUTPUT"
+check "idempotent cache neutralize preserves {} content" \
+  test "$CONTENT" = "{}"
+teardown_mock_env
+
+# Test 30: multiple cache versions for same plugin all get neutralized
+setup_mock_env
+create_mock_cache_plugin "test-mkt" "gamma" "1.0.0" '{"hooks":{"SessionStart":[]}}'
+create_mock_cache_plugin "test-mkt" "gamma" "2.0.0" '{"hooks":{"PreToolUse":[]}}'
+create_mock_cache_plugin "test-mkt" "gamma" "abc123" '{"hooks":{"Stop":[]}}'
+source_neutralize_fn
+HOME="$MOCK_HOME" neutralize_non_enabled_hooks
+C1=$(cat "${MOCK_HOME}/.claude/plugins/cache/test-mkt/gamma/1.0.0/hooks/hooks.json")
+C2=$(cat "${MOCK_HOME}/.claude/plugins/cache/test-mkt/gamma/2.0.0/hooks/hooks.json")
+C3=$(cat "${MOCK_HOME}/.claude/plugins/cache/test-mkt/gamma/abc123/hooks/hooks.json")
+check "cache version 1.0.0 neutralized" test "$C1" = "{}"
+check "cache version 2.0.0 neutralized" test "$C2" = "{}"
+check "cache version abc123 neutralized" test "$C3" = "{}"
+teardown_mock_env
+
+# Test 31: cache neutralization doesn't affect marketplace hooks.json (independence)
+setup_mock_env
+create_mock_mkt_plugin "test-mkt" "gamma" '{"hooks":{"SessionStart":[]}}'
+create_mock_cache_plugin "test-mkt" "gamma" "1.0.0" '{"hooks":{"PreToolUse":[]}}'
+source_neutralize_fn
+HOME="$MOCK_HOME" neutralize_non_enabled_hooks
+MKT_CONTENT=$(cat "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks/hooks.json")
+CACHE_CONTENT=$(cat "${MOCK_HOME}/.claude/plugins/cache/test-mkt/gamma/1.0.0/hooks/hooks.json")
+check "marketplace hooks.json neutralized (independent)" test "$MKT_CONTENT" = "{}"
+check "cache hooks.json also neutralized (independent)" test "$CACHE_CONTENT" = "{}"
+teardown_mock_env
+
+# Test 32: concurrent cache neutralization produces valid JSON
+setup_mock_env
+create_mock_cache_plugin "test-mkt" "gamma" "1.0.0" '{"hooks":{"SessionStart":[]}}'
+create_mock_cache_plugin "test-mkt" "gamma" "2.0.0" '{"hooks":{"PreToolUse":[]}}'
+source_neutralize_fn
+for _ in 1 2 3 4 5; do
+  HOME="$MOCK_HOME" neutralize_non_enabled_hooks &
+done
+wait
+C1=$(cat "${MOCK_HOME}/.claude/plugins/cache/test-mkt/gamma/1.0.0/hooks/hooks.json" 2>/dev/null || echo "MISSING")
+C2=$(cat "${MOCK_HOME}/.claude/plugins/cache/test-mkt/gamma/2.0.0/hooks/hooks.json" 2>/dev/null || echo "MISSING")
+check "concurrent cache neutralize v1 produces valid JSON {}" test "$C1" = "{}"
+check "concurrent cache neutralize v2 produces valid JSON {}" test "$C2" = "{}"
+teardown_mock_env
+
 if [ "$UNIT_ONLY" = true ]; then
   echo ""
   echo "── Skipping E2E tests (--unit-only) ──"
@@ -488,6 +574,28 @@ else
   done
   check "no active hooks from non-enabled plugins (${NON_ENABLED_HOOKS} found)" \
     test "$NON_ENABLED_HOOKS" -eq 0
+
+  # Test 18b: no non-enabled plugin has active hooks IN CACHE
+  NON_ENABLED_CACHE_HOOKS=0
+  while IFS= read -r hf; do
+    [ -f "$hf" ] || continue
+    # Extract mkt and name from cache/<mkt>/<name>/<ver>/hooks/hooks.json
+    relative="${hf#"${PLUGIN_BASE}"/cache/}"
+    cache_mkt="${relative%%/*}"
+    tmp="${relative#*/}"
+    cache_name="${tmp%%/*}"
+    KEY="${cache_name}@${cache_mkt}"
+    if jq -e --arg k "$KEY" '.enabledPlugins[$k]' "$SETTINGS" >/dev/null 2>&1; then
+      continue
+    fi
+    CONTENT=$(cat "$hf")
+    if [ "$CONTENT" != "{}" ]; then
+      echo "    ACTIVE CACHE: $hf (key=$KEY)"
+      NON_ENABLED_CACHE_HOOKS=$((NON_ENABLED_CACHE_HOOKS + 1))
+    fi
+  done < <(find "$PLUGIN_BASE/cache" -path "*/hooks/hooks.json" 2>/dev/null)
+  check "no active hooks from non-enabled plugins in cache (${NON_ENABLED_CACHE_HOOKS} found)" \
+    test "$NON_ENABLED_CACHE_HOOKS" -eq 0
 
   # Test 19: all enabled plugins have cache entries
   MISSING_CACHE=0
