@@ -822,8 +822,7 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
 # 10l-2. C# language server (csharp-ls via dotnet global tool)
 # ============================================================
 # hadolint ignore=DL3059
-RUN dotnet tool install --global csharp-ls --version 0.16.0 \
-    && ln -sf /home/vscode/.dotnet/tools/csharp-ls /usr/local/bin/csharp-ls
+RUN dotnet tool install csharp-ls --version 0.16.0 --tool-path /usr/local/bin
 
 # ============================================================
 # 10l. Zig cross-compilation toolchain (needed by napi-rs
