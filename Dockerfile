@@ -1473,8 +1473,19 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
 # 16. User shell bootstrap (baked in — eliminates runtime setup)
 # ============================================================
 # hadolint ignore=DL3059
-RUN mkdir -p "$HOME/.npm-global" \
+RUN mkdir -p "$HOME/.npm-global/lib/node_modules" "$HOME/.npm-global/bin" \
     && npm config set prefix "$HOME/.npm-global" \
+    # Symlink system-installed typescript into user prefix so that
+    # 'npx tsc' resolves the real compiler instead of the deprecated
+    # 'tsc' npm stub package ("This is not the tsc command you are
+    # looking for"). System packages live at /usr/lib/node_modules
+    # but npx only checks the user prefix (~/.npm-global).
+    && ln -sf /usr/lib/node_modules/typescript \
+              "$HOME/.npm-global/lib/node_modules/typescript" \
+    && ln -sf ../lib/node_modules/typescript/bin/tsc \
+              "$HOME/.npm-global/bin/tsc" \
+    && ln -sf ../lib/node_modules/typescript/bin/tsserver \
+              "$HOME/.npm-global/bin/tsserver" \
     && git clone --depth=1 https://github.com/tfutils/tfenv.git "$HOME/.tfenv" \
     && "$HOME/.tfenv/bin/tfenv" install latest \
     && "$HOME/.tfenv/bin/tfenv" use latest \
