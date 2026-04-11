@@ -809,8 +809,8 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
       | gzip -d > /usr/local/bin/taplo \
     && chmod +x /usr/local/bin/taplo \
     # jdtls (Eclipse JDT Language Server for Java — Python wrapper + plugin jars)
-    && JDTLS_TARBALL=$(curl ${CURL_RETRY} -fsSL "https://download.eclipse.org/jdtls/milestones/1.57.0/" \
-      | grep -oP 'jdt-language-server-[^"<]+\.tar\.gz' | head -1) \
+    && JDTLS_TARBALL=$(curl ${CURL_RETRY} -fsSL \
+      "https://download.eclipse.org/jdtls/milestones/1.57.0/latest.txt") \
     && mkdir -p /opt/jdtls \
     && curl ${CURL_RETRY} -fsSL \
       "https://download.eclipse.org/jdtls/milestones/1.57.0/${JDTLS_TARBALL}" \
