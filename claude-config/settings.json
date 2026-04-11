@@ -24,6 +24,7 @@
     "ralph-loop@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true,
@@ -71,6 +72,18 @@
             "type": "command",
             "command": "/opt/claude-config/neutralize-hooks.sh",
             "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "for _i in 1 2 3; do curl -sf http://localhost:37777/api/readiness >/dev/null 2>&1 && exit 0; sleep 1; done; exit 0",
+            "timeout": 5
           }
         ]
       }
