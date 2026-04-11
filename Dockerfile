@@ -1475,17 +1475,24 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
 # hadolint ignore=DL3059
 RUN mkdir -p "$HOME/.npm-global/lib/node_modules" "$HOME/.npm-global/bin" \
     && npm config set prefix "$HOME/.npm-global" \
-    # Symlink system-installed typescript into user prefix so that
-    # 'npx tsc' resolves the real compiler instead of the deprecated
-    # 'tsc' npm stub package ("This is not the tsc command you are
-    # looking for"). System packages live at /usr/lib/node_modules
-    # but npx only checks the user prefix (~/.npm-global).
-    && ln -sf /usr/lib/node_modules/typescript \
-              "$HOME/.npm-global/lib/node_modules/typescript" \
-    && ln -sf ../lib/node_modules/typescript/bin/tsc \
-              "$HOME/.npm-global/bin/tsc" \
-    && ln -sf ../lib/node_modules/typescript/bin/tsserver \
-              "$HOME/.npm-global/bin/tsserver" \
+    # Symlink every system-installed npm binary into the user prefix.
+    # Without this, 'npx <tool>' cannot see packages installed at the
+    # system prefix (/usr/lib/node_modules) and either downloads the
+    # wrong npm package (e.g. npx biome -> env-var manager instead of
+    # the linter, npx tsc -> deprecated stub) or wastes time
+    # re-downloading the correct one.
+    && for bin in /usr/bin/*; do \
+         target=$(readlink "$bin" 2>/dev/null || true); \
+         [ -z "$target" ] && continue; \
+         case "$target" in */node_modules/*) ;; *) continue ;; esac; \
+         ln -sf "$bin" "$HOME/.npm-global/bin/$(basename "$bin")"; \
+       done \
+    && for pkg in /usr/lib/node_modules/*; do \
+         [ -d "$pkg" ] || continue; \
+         name=$(basename "$pkg"); \
+         [ -e "$HOME/.npm-global/lib/node_modules/$name" ] && continue; \
+         ln -sf "$pkg" "$HOME/.npm-global/lib/node_modules/$name"; \
+       done \
     && git clone --depth=1 https://github.com/tfutils/tfenv.git "$HOME/.tfenv" \
     && "$HOME/.tfenv/bin/tfenv" install latest \
     && "$HOME/.tfenv/bin/tfenv" use latest \
