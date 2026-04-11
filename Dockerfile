@@ -145,6 +145,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     r-base \
     dart \
     dotnet-sdk-9.0 \
+    dotnet-runtime-8.0 \
+    # C/C++ LSP server
+    clangd \
     # D language compiler + package manager (for building dfmt)
     ldc \
     dub \
@@ -804,7 +807,23 @@ RUN ghlatest() { curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.c
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-${TAPLO_ARCH}.gz" \
       | gzip -d > /usr/local/bin/taplo \
-    && chmod +x /usr/local/bin/taplo
+    && chmod +x /usr/local/bin/taplo \
+    # jdtls (Eclipse JDT Language Server for Java — Python wrapper + plugin jars)
+    && JDTLS_TARBALL=$(curl ${CURL_RETRY} -fsSL "https://download.eclipse.org/jdtls/milestones/1.57.0/" \
+      | grep -oP 'jdt-language-server-[^"<]+\.tar\.gz' | head -1) \
+    && mkdir -p /opt/jdtls \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://download.eclipse.org/jdtls/milestones/1.57.0/${JDTLS_TARBALL}" \
+      | tar xzf - --no-same-owner -C /opt/jdtls \
+    && chmod +x /opt/jdtls/bin/jdtls \
+    && ln -s /opt/jdtls/bin/jdtls /usr/local/bin/jdtls
+
+# ============================================================
+# 10l-2. C# language server (csharp-ls via dotnet global tool)
+# ============================================================
+# hadolint ignore=DL3059
+RUN dotnet tool install --global csharp-ls --version 0.16.0 \
+    && ln -sf /home/vscode/.dotnet/tools/csharp-ls /usr/local/bin/csharp-ls
 
 # ============================================================
 # 10l. Zig cross-compilation toolchain (needed by napi-rs
@@ -867,6 +886,7 @@ RUN npm install -g \
     @typescript/native-preview \
     pyright \
     vscode-langservers-extracted \
+    intelephense \
     pptxgenjs \
     react-icons \
     react \
@@ -1069,7 +1089,8 @@ RUN gem install --no-document \
     rubocop-minitest \
     htmlbeautifier \
     standardrb \
-    origami
+    origami \
+    ruby-lsp
 
 # ============================================================
 # 12e. Perl linter modules (Perl::Critic extensions via cpanm)
