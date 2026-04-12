@@ -53,6 +53,9 @@ test_binary "MDX LSP" "mdx-language-server"
 test_binary "Marksman" "marksman"
 test_binary "TOML LSP" "taplo"
 
+echo "--- Native TypeScript (tsgo) ---"
+test_binary "TypeScript Native (tsgo)" "tsgo"
+
 echo "--- New binaries (5 servers) ---"
 test_binary "C/C++ LSP" "clangd"
 test_binary "Java LSP" "jdtls"
@@ -76,6 +79,9 @@ test_plugin_enabled "html-lsp@f5xc-salesdemos-marketplace"
 test_plugin_enabled "eslint-lsp@f5xc-salesdemos-marketplace"
 test_plugin_enabled "markdown-lsp@f5xc-salesdemos-marketplace"
 test_plugin_enabled "mdx-lsp@f5xc-salesdemos-marketplace"
+
+echo "--- Native TypeScript plugin ---"
+test_plugin_enabled "tsgo-lsp@f5xc-salesdemos-marketplace"
 
 echo "--- New plugins (6 plugins) ---"
 test_plugin_enabled "toml-lsp@f5xc-salesdemos-marketplace"
