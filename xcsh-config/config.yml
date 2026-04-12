@@ -1,10 +1,10 @@
-lastChangelogVersion: 14.0.3
+lastChangelogVersion: 15.6.2
 modelRoles:
   default: anthropic/claude-opus-4-6
 symbolPreset: nerd
 statusLine:
-  separator: slash
-  preset: minimal
+  separator: powerline
+  preset: xcsh
 colorBlindMode: false
 hideThinkingBlock: true
 autoResume: true
@@ -14,6 +14,7 @@ stt:
   enabled: true
 compaction:
   idleEnabled: true
+  handoffSaveToDisk: true
 memories:
   enabled: true
 todo:
