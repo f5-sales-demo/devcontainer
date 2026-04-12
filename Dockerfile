@@ -1570,7 +1570,6 @@ RUN chmod +x /opt/codex-config/sync-agents.sh \
 COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
 COPY --chown=${USERNAME}:${USERNAME} omp-config/settings.json /home/${USERNAME}/.omp/agent/settings.json
 COPY --chown=${USERNAME}:${USERNAME} omp-config/config.yml /home/${USERNAME}/.omp/agent/config.yml
-COPY --chown=${USERNAME}:${USERNAME} xcsh-config/config.yml /home/${USERNAME}/.xcsh/agent/config.yml
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json /home/${USERNAME}/.config/opencode/opencode.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-openagent.json /home/${USERNAME}/.config/opencode/oh-my-openagent.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.config/opencode/opencode-permissions.json
