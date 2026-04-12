@@ -287,14 +287,19 @@ for hf in "$HOME/.claude/plugins/marketplaces"/*/plugins/*/hooks/hooks.json; do
 done
 check "no active hooks from non-enabled plugins (${NON_ENABLED_HOOKS} found)" \
   test "$NON_ENABLED_HOOKS" -eq 0
-# Track upstream workaround — warn when issue #648 is closed so the
-# SessionStart hook and entrypoint chmod sweep can be reviewed for removal
-ISSUE_STATE=$(gh issue view 648 --repo f5xc-salesdemos/devcontainer \
+# Track upstream workarounds — the SessionStart hook and entrypoint chmod
+# sweep exist for TWO upstream bugs.  The workaround can only be removed
+# when BOTH are resolved:
+#   - #648  (f5xc-salesdemos/devcontainer) — plugin syncs reset .sh perms  [CLOSED 2026-03-27]
+#   - #40013 (anthropics/claude-code)       — hooks fire from ALL plugins   [still open]
+CC_STATE=$(gh issue view 40013 --repo anthropics/claude-code \
   --json state --jq '.state' 2>/dev/null || echo "UNKNOWN")
-if [ "$ISSUE_STATE" = "CLOSED" ]; then
-  warn "workaround for #648 may be removable — issue is closed, review settings.json hooks and entrypoint.sh" false
-elif [ "$ISSUE_STATE" = "UNKNOWN" ]; then
-  echo "  SKIP: could not check issue #648 status (no GH_TOKEN or network)"
+if [ "$CC_STATE" = "CLOSED" ]; then
+  warn "cc#40013 is closed — neutralize-hooks workaround in settings.json hooks and entrypoint.sh can be removed" false
+elif [ "$CC_STATE" = "UNKNOWN" ]; then
+  echo "  SKIP: could not check cc#40013 status (no GH_TOKEN or network)"
+else
+  echo "  INFO: cc#40013 still open — neutralize-hooks workaround still required"
 fi
 
 echo ""

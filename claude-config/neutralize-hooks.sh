@@ -2,6 +2,10 @@
 # Plugin hook neutralization and marketplace directory repair.
 # Called from settings.json SessionStart hook.
 #
+# Workaround for cc#40013: Claude Code fires hooks from ALL installed
+# plugins, not just enabled ones.  (Issue #648 — .sh permission resets —
+# was closed 2026-03-27; chmod sweep kept as defence-in-depth.)
+#
 # Three responsibilities:
 #   1. Ensure marketplace directories exist for all enabled cached plugins
 #   2. Fix .sh execute permissions across all plugin directories
