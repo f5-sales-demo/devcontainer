@@ -282,10 +282,11 @@ fi
 # ============================================================
 # Fix plugin script permissions and neutralize disabled hooks
 #
-# Two upstream bugs require workarounds:
-#   - Issue #648: Plugin syncs reset .sh permissions to 644
+# Upstream bug requiring workaround:
 #   - cc#40013: Claude Code fires hooks from ALL plugins, not
 #     just enabled ones (causes SessionStart errors)
+#   (Issue #648 — plugin syncs reset .sh perms — was closed 2026-03-27,
+#    but the chmod sweep is kept as defence-in-depth while cc#40013 remains.)
 #
 # Two-layer fix:
 #   1. Persistent background daemon (inotifywait or polling)
@@ -297,7 +298,7 @@ fi
 # Build-time: install-plugins.sh also sets permissions and
 # neutralizes at image build time (baseline state).
 #
-# Remove all when upstream issues #648 and cc#40013 are resolved.
+# Remove all when cc#40013 is resolved.
 # ============================================================
 
 # Ensure every enabled cached plugin has a marketplace directory entry.
