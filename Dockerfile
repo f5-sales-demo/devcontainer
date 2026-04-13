@@ -892,6 +892,7 @@ RUN npm install -g \
     react-dom \
     sharp \
     opencode-ai \
+    @charmland/crush \
     opencode-claude-auth \
     js-deobfuscator
 
@@ -1574,6 +1575,7 @@ COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json /home/${USERN
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-openagent.json /home/${USERNAME}/.config/opencode/oh-my-openagent.json
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.config/opencode/opencode-permissions.json
 COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
+COPY --chown=${USERNAME}:${USERNAME} crush-config/crush.json /home/${USERNAME}/.config/crush/crush.json
 
 
 # Map CLAUDE_CODE_OAUTH_TOKEN → ANTHROPIC_OAUTH_TOKEN for tools

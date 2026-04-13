@@ -40,6 +40,7 @@ check "firefox-esr installed" command -v firefox-esr
 check "claude CLI installed" command -v claude
 check "pi CLI installed" command -v pi
 check "omp CLI installed" command -v omp
+check "crush CLI installed" command -v crush
 check "node installed" command -v node
 check "python installed" command -v python3
 check "git installed" command -v git
@@ -239,6 +240,9 @@ check "Codex agents synced from CC plugins (${CODEX_AGENT_COUNT} found)" \
   test "$CODEX_AGENT_COUNT" -gt 0
 check "Codex chrome-devtools MCP configured" \
   grep -q "chrome-devtools" "$HOME/.codex/config.toml"
+check "crush config exists" test -f "$HOME/.config/crush/crush.json"
+check "crush base URL hydrated" \
+  grep -qv "__CRUSH_BASE_URL__" "$HOME/.config/crush/crush.json"
 # Check permissions by marketplace to pinpoint source (issue #648)
 NON_EXEC_OFFICIAL=$(find "$HOME/.claude/plugins" \
   -path "*/claude-plugins-official/*" -name "*.sh" -type f \

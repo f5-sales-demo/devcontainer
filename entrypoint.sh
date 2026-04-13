@@ -202,6 +202,19 @@ if [ -n "$LITELLM_BASE_URL" ]; then
   unset _codex_config
 fi
 
+# ============================================================
+# Crush — substitute base URL placeholder in config
+# The litellm provider in crush.json uses __CRUSH_BASE_URL__ as a
+# placeholder; resolve it to the OpenAI passthrough endpoint.
+# ============================================================
+if [ -n "$LITELLM_BASE_URL" ]; then
+  _crush_config="$HOME/.config/crush/crush.json"
+  if [ -f "$_crush_config" ]; then
+    sed -i "s|__CRUSH_BASE_URL__|${LITELLM_BASE_URL}/openai/v1|g" "$_crush_config"
+  fi
+  unset _crush_config
+fi
+
 # Re-sync Codex agents from Claude Code plugins (catches plugin updates)
 if [ -x /opt/codex-config/sync-agents.sh ]; then
   /opt/codex-config/sync-agents.sh >/dev/null 2>&1 || true
