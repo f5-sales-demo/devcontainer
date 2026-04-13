@@ -1,0 +1,14 @@
+{
+  "$schema": "https://charm.land/crush.json",
+  "models": {
+    "large": { "model": "claude-opus-4-6", "provider": "litellm" },
+    "small": { "model": "claude-haiku-4-5", "provider": "litellm" }
+  },
+  "providers": {
+    "litellm": {
+      "type": "openai-compat",
+      "base_url": "__CRUSH_BASE_URL__",
+      "api_key": "$OPENAI_API_KEY"
+    }
+  }
+}
