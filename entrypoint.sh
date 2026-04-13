@@ -203,16 +203,11 @@ if [ -n "$LITELLM_BASE_URL" ]; then
 fi
 
 # ============================================================
-# Crush — substitute base URL placeholder in config
-# The litellm provider in crush.json uses __CRUSH_BASE_URL__ as a
-# placeholder; resolve it to the OpenAI passthrough endpoint.
+# Crush — route Anthropic provider through LiteLLM proxy.
+# Crush reads ANTHROPIC_API_ENDPOINT for the Anthropic base URL.
 # ============================================================
 if [ -n "$LITELLM_BASE_URL" ]; then
-  _crush_config="$HOME/.config/crush/crush.json"
-  if [ -f "$_crush_config" ]; then
-    sed -i "s|__CRUSH_BASE_URL__|${LITELLM_BASE_URL}/openai/v1|g" "$_crush_config"
-  fi
-  unset _crush_config
+  export ANTHROPIC_API_ENDPOINT="${LITELLM_BASE_URL}/anthropic"
 fi
 
 # Re-sync Codex agents from Claude Code plugins (catches plugin updates)
