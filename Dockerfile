@@ -20,10 +20,10 @@ ARG GHIDRA_DATE=20260303
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Retry flags for all curl downloads — handles transient network
-# errors AND HTTP errors (e.g. CDN 404) with exponential backoff
-# (1s, 2s, 4s, 8s, 16s). Bounded to 120s total retry time.
+# errors AND HTTP errors (e.g. CDN 404/502) with exponential backoff
+# (1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s). Bounded to 300s total.
 # shellcheck disable=SC2140
-ENV CURL_RETRY="--connect-timeout 30 --retry 5 --retry-all-errors --retry-max-time 120"
+ENV CURL_RETRY="--connect-timeout 30 --retry 8 --retry-all-errors --retry-max-time 300"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -408,7 +408,7 @@ RUN ARCH=$(uname -m) \
 #     All resolve latest versions at build time.
 # ============================================================
 # hadolint ignore=DL3059
-RUN ghlatest() { local repo="$1" attempt=0 max=5 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
+RUN ghlatest() { local repo="$1" attempt=0 max=8 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
     && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # kubectl (latest stable)
     && KUBECTL_VERSION=$(curl ${CURL_RETRY} -fsSL https://dl.k8s.io/release/stable.txt) \
@@ -456,7 +456,7 @@ RUN ghlatest() { local repo="$1" attempt=0 max=5 delay=5 ver=""; while [ "$attem
 #      All resolve latest versions at build time except IBM Cloud CLI.
 # ============================================================
 # hadolint ignore=DL3059
-RUN ghlatest() { local repo="$1" attempt=0 max=5 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
+RUN ghlatest() { local repo="$1" attempt=0 max=8 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
     && DPKG_ARCH=$(dpkg --print-architecture) \
     # Visual Studio Code CLI (already latest)
     && if [ "$DPKG_ARCH" = "amd64" ]; then VSCODE_ARCH="x64"; else VSCODE_ARCH="arm64"; fi \
@@ -531,7 +531,7 @@ RUN for util in imgcat imgls it2dl it2ul it2copy it2check; do \
 #      All resolve latest versions at build time.
 # ============================================================
 # hadolint ignore=DL3059
-RUN ghlatest() { local repo="$1" attempt=0 max=5 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
+RUN ghlatest() { local repo="$1" attempt=0 max=8 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
     && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # shfmt (version in asset name)
     && SHFMT_VERSION=$(ghlatest mvdan/sh) \
@@ -604,7 +604,7 @@ RUN ghlatest() { local repo="$1" attempt=0 max=5 delay=5 ver=""; while [ "$attem
 #      Wrapper scripts in /usr/local/bin, JARs in /opt/
 # ============================================================
 # hadolint ignore=DL3059
-RUN ghlatest() { local repo="$1" attempt=0 max=5 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
+RUN ghlatest() { local repo="$1" attempt=0 max=8 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
     # checkstyle (tag is "checkstyle-X.Y.Z" — strip the prefix)
     && CHECKSTYLE_VERSION=$(ghlatest checkstyle/checkstyle | sed 's/^checkstyle-//') \
     && curl ${CURL_RETRY} -fsSL \
@@ -660,7 +660,7 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 #      All resolve latest versions at build time.
 # ============================================================
 # hadolint ignore=DL3003,DL3059
-RUN ghlatest() { local repo="$1" attempt=0 max=5 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
+RUN ghlatest() { local repo="$1" attempt=0 max=8 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
     && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # --- Recon: ProjectDiscovery suite ---
     && NUCLEI_VERSION=$(ghlatest projectdiscovery/nuclei) \
@@ -749,7 +749,7 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
 #      Java app, arch-independent. Runs headless or via VNC.
 # ============================================================
 # hadolint ignore=DL3059
-RUN ghlatest() { local repo="$1" attempt=0 max=5 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
+RUN ghlatest() { local repo="$1" attempt=0 max=8 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
     && ZAP_VERSION=$(ghlatest zaproxy/zaproxy) \
     && curl ${CURL_RETRY} -fsSL "https://github.com/zaproxy/zaproxy/releases/latest/download/ZAP_${ZAP_VERSION}_Linux.tar.gz" \
       | tar -xz -C /opt \
@@ -790,7 +790,7 @@ RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
 #      latest versions at build time.
 # ============================================================
 # hadolint ignore=DL3059
-RUN ghlatest() { local repo="$1" attempt=0 max=5 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
+RUN ghlatest() { local repo="$1" attempt=0 max=8 delay=5 ver=""; while [ "$attempt" -lt "$max" ]; do ver=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest" 2>/dev/null | sed 's|.*/||;s|^v||') && [ -n "$ver" ] && [ "$ver" = "${ver##*/}" ] && { echo "$ver"; return 0; }; attempt=$((attempt + 1)); echo "ghlatest: ${repo} attempt ${attempt}/${max} failed (got '${ver}'), retrying in ${delay}s..." >&2; sleep "$delay"; delay=$((delay * 2)); done; echo "ghlatest: ${repo} failed after ${max} attempts" >&2; return 1; } \
     && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # marksman (Markdown/MDX LSP — self-contained binary, no runtime deps)
     && if [ "$DPKG_ARCH" = "amd64" ]; then MK_ARCH="x64"; else MK_ARCH="arm64"; fi \
