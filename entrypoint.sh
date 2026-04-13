@@ -210,6 +210,19 @@ if [ -n "$LITELLM_BASE_URL" ]; then
   export ANTHROPIC_API_ENDPOINT="${LITELLM_BASE_URL}/anthropic"
 fi
 
+# ============================================================
+# OpenCode — substitute Anthropic base URL placeholder.
+# OpenCode's bundled Anthropic SDK appends /messages (not /v1/messages),
+# so the base URL must include the /v1 path segment.
+# ============================================================
+if [ -n "$LITELLM_BASE_URL" ]; then
+  _oc_cfg="$HOME/.config/opencode/opencode.json"
+  if [ -f "$_oc_cfg" ]; then
+    sed -i "s|__OPENCODE_ANTHROPIC_BASE_URL__|${LITELLM_BASE_URL}/anthropic/v1|g" "$_oc_cfg"
+  fi
+  unset _oc_cfg
+fi
+
 # Re-sync Codex agents from Claude Code plugins (catches plugin updates)
 if [ -x /opt/codex-config/sync-agents.sh ]; then
   /opt/codex-config/sync-agents.sh >/dev/null 2>&1 || true
