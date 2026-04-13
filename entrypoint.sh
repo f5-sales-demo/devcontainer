@@ -120,7 +120,7 @@ if [ -n "$LITELLM_API_KEY" ]; then
   printf 'ANTHROPIC_API_KEY=%s\n' "$LITELLM_API_KEY" >"$HOME/.claude-mem/.env"
 fi
 if [ -n "$LITELLM_BASE_URL" ]; then
-  _openai_base_url="${LITELLM_BASE_URL}/openai/v1"
+  export OPENAI_BASE_URL="${LITELLM_BASE_URL}/openai/v1"
   export ANTHROPIC_BASE_URL="${LITELLM_BASE_URL}/anthropic"
 fi
 
@@ -156,7 +156,7 @@ HERMES_HOME_DIR="$HOME/.hermes"
 mkdir -p "$HERMES_HOME_DIR"
 if [ -n "$LITELLM_API_KEY" ]; then
   printf 'OPENAI_BASE_URL=%s\nOPENAI_API_KEY=%s\nLLM_MODEL=claude-opus-4-6\n' \
-    "$_openai_base_url" "$OPENAI_API_KEY" \
+    "$OPENAI_BASE_URL" "$OPENAI_API_KEY" \
     >"$HERMES_HOME_DIR/.env"
 elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
   printf 'ANTHROPIC_TOKEN=%s\n' "$ANTHROPIC_OAUTH_TOKEN" \
@@ -208,19 +208,6 @@ fi
 # ============================================================
 if [ -n "$LITELLM_BASE_URL" ]; then
   export ANTHROPIC_API_ENDPOINT="${LITELLM_BASE_URL}/anthropic"
-fi
-
-# ============================================================
-# OpenCode — substitute Anthropic base URL placeholder.
-# OpenCode's bundled Anthropic SDK appends /messages (not /v1/messages),
-# so the base URL must include the /v1 path segment.
-# ============================================================
-if [ -n "$LITELLM_BASE_URL" ]; then
-  _oc_cfg="$HOME/.config/opencode/opencode.json"
-  if [ -f "$_oc_cfg" ]; then
-    sed -i "s|__OPENCODE_ANTHROPIC_BASE_URL__|${LITELLM_BASE_URL}/anthropic/v1|g" "$_oc_cfg"
-  fi
-  unset _oc_cfg
 fi
 
 # Re-sync Codex agents from Claude Code plugins (catches plugin updates)
