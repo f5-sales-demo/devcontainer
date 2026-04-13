@@ -241,8 +241,7 @@ check "Codex agents synced from CC plugins (${CODEX_AGENT_COUNT} found)" \
 check "Codex chrome-devtools MCP configured" \
   grep -q "chrome-devtools" "$HOME/.codex/config.toml"
 check "crush config exists" test -f "$HOME/.config/crush/crush.json"
-check "crush base URL hydrated" \
-  grep -qv "__CRUSH_BASE_URL__" "$HOME/.config/crush/crush.json"
+check "crush ANTHROPIC_API_ENDPOINT set" test -n "$ANTHROPIC_API_ENDPOINT"
 # Check permissions by marketplace to pinpoint source (issue #648)
 NON_EXEC_OFFICIAL=$(find "$HOME/.claude/plugins" \
   -path "*/claude-plugins-official/*" -name "*.sh" -type f \
