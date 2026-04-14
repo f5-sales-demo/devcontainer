@@ -1617,7 +1617,9 @@ COPY --chown=${USERNAME}:${USERNAME} crush-config/crush.json /home/${USERNAME}/.
 #   Phase 2: pre-install oh-my-openagent plugin into cache
 # ────────────────────────────────────────────────────────────
 # hadolint ignore=DL3059
-RUN cd /home/${USERNAME}/.config/opencode \
+RUN printf '{"dependencies":{"@opencode-ai/plugin":"^1.4.3"}}\n' \
+       > /home/${USERNAME}/.config/opencode/package.json \
+    && cd /home/${USERNAME}/.config/opencode \
     && npm install --no-audit --no-fund \
     && mkdir -p /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent \
     && printf '{"dependencies":{"oh-my-openagent":"latest"}}\n' \
