@@ -530,9 +530,11 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
       | tar -xz --strip-components=1 -C /usr/local/bin nu-${NU_VERSION}-${UNAME_ARCH}-unknown-linux-gnu/nu \
     # mise
     && curl -fsSL https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh \
-    # dagu
+    # dagu (resolve version — asset name contains version)
+    && DAGU_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+      "https://github.com/daguflow/dagu/releases/latest" | sed 's|.*/||;s|^v||') \
     && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/daguflow/dagu/releases/latest/download/dagu_linux_${DPKG_ARCH}.tar.gz" \
+      "https://github.com/daguflow/dagu/releases/latest/download/dagu_${DAGU_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
       | tar -xz -C /usr/local/bin dagu \
     # wasmtime
     && WASMTIME_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
