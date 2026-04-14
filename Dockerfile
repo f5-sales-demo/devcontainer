@@ -1389,10 +1389,10 @@ USER $USERNAME
 # hadolint ignore=DL3059
 RUN npm exec chrome-devtools-mcp@0.20.2 -- --version 2>/dev/null || true
 
-# oh-my-opencode (OpenCode plugin system — "ultrawork" / "ulw" command)
-# Build-time install uses npx oh-my-opencode for config scaffolding.
+# oh-my-openagent (OpenCode plugin system — "ultrawork" / "ulw" command)
+# Build-time install uses npx oh-my-openagent for config scaffolding.
 # hadolint ignore=DL3059
-RUN npx -y oh-my-opencode install --no-tui \
+RUN npx -y oh-my-openagent install --no-tui \
     --claude=max20 --openai=no --gemini=no --copilot=no \
     && rm -f ~/.config/opencode/*.bak.*
 
@@ -1617,13 +1617,13 @@ COPY --chown=${USERNAME}:${USERNAME} crush-config/crush.json /home/${USERNAME}/.
 #   Phase 2: pre-install oh-my-openagent plugin into cache
 # ────────────────────────────────────────────────────────────
 # hadolint ignore=DL3059
-RUN cd /home/${USERNAME}/.config/opencode \
-    && npm install --no-audit --no-fund \
+RUN printf '{"dependencies":{"@opencode-ai/plugin":"^1.4.3"}}\n' \
+       > /home/${USERNAME}/.config/opencode/package.json \
+    && npm install --no-audit --no-fund --prefix /home/${USERNAME}/.config/opencode \
     && mkdir -p /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent \
     && printf '{"dependencies":{"oh-my-openagent":"latest"}}\n' \
        > /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent/package.json \
-    && cd /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent \
-    && npm install --no-audit --no-fund
+    && npm install --no-audit --no-fund --prefix /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent
 
 # Map CLAUDE_CODE_OAUTH_TOKEN → ANTHROPIC_OAUTH_TOKEN for tools
 # that read the Anthropic-native env var (e.g. Pi).
