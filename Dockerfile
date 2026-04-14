@@ -515,6 +515,34 @@ RUN ghlatest() { local repo="$1" attempt=0 max=8 delay=5 ver=""; while [ "$attem
       | tar -xz -C /usr/local/bin gog
 
 # ============================================================
+# 10b-2. claude-skills CLI tools
+#        nushell, mise, dagu, wasmtime — required by
+#        vinnie357/claude-skills plugin ecosystem.
+# ============================================================
+# hadolint ignore=DL3059
+RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
+    && CURL_RETRY="--retry 8 --retry-all-errors --retry-delay 2 --retry-max-time 120" \
+    # nushell
+    && NU_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+      "https://github.com/nushell/nushell/releases/latest" | sed 's|.*/||;s|^v||') \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/nushell/nushell/releases/latest/download/nu-${NU_VERSION}-${UNAME_ARCH}-unknown-linux-gnu.tar.gz" \
+      | tar -xz --strip-components=1 -C /usr/local/bin nu-${NU_VERSION}-${UNAME_ARCH}-unknown-linux-gnu/nu \
+    # mise
+    && curl -fsSL https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh \
+    # dagu
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/daguflow/dagu/releases/latest/download/dagu_linux_${DPKG_ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin dagu \
+    # wasmtime
+    && WASMTIME_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+      "https://github.com/bytecodealliance/wasmtime/releases/latest" | sed 's|.*/||;s|^v||') \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/bytecodealliance/wasmtime/releases/latest/download/wasmtime-v${WASMTIME_VERSION}-${UNAME_ARCH}-linux.tar.xz" \
+      | tar -xJ --strip-components=1 -C /usr/local/bin \
+        wasmtime-v${WASMTIME_VERSION}-${UNAME_ARCH}-linux/wasmtime
+
+# ============================================================
 # 10c. iTerm2 terminal image utilities
 #      Standalone scripts — display images, transfer files,
 #      and copy to clipboard via OSC 1337 escape sequences.
