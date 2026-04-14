@@ -1610,6 +1610,20 @@ COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /
 COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
 COPY --chown=${USERNAME}:${USERNAME} crush-config/crush.json /home/${USERNAME}/.config/crush/crush.json
 
+# ────────────────────────────────────────────────────────────
+# OpenCode npm pre-warm: pre-install base SDK and plugin deps
+# to eliminate the ~13.5 s first-run npm download delay.
+#   Phase 1: reify ~/.config/opencode/package.json
+#   Phase 2: pre-install oh-my-openagent plugin into cache
+# ────────────────────────────────────────────────────────────
+# hadolint ignore=DL3059
+RUN cd /home/${USERNAME}/.config/opencode \
+    && npm install --no-audit --no-fund \
+    && mkdir -p /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent \
+    && printf '{"dependencies":{"oh-my-openagent":"latest"}}\n' \
+       > /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent/package.json \
+    && cd /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent \
+    && npm install --no-audit --no-fund
 
 # Map CLAUDE_CODE_OAUTH_TOKEN → ANTHROPIC_OAUTH_TOKEN for tools
 # that read the Anthropic-native env var (e.g. Pi).
