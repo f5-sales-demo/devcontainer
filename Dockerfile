@@ -842,6 +842,7 @@ RUN UNAME_ARCH=$(uname -m) \
 # hadolint ignore=DL3016,DL3059
 RUN npm install -g \
     pnpm \
+    turbo \
     @anthropic-ai/claude-code \
     @mariozechner/pi-coding-agent \
     @oh-my-pi/pi-coding-agent \
@@ -863,6 +864,7 @@ RUN npm install -g \
     puppeteer-extra \
     puppeteer-extra-plugin-stealth \
     eslint \
+    lint-staged \
     @biomejs/biome \
     stylelint \
     htmlhint \
