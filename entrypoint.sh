@@ -174,28 +174,116 @@ if [ -n "$LITELLM_BASE_URL" ]; then
 fi
 
 # ============================================================
-# Pi & Oh-My-Pi — write models.json with LiteLLM proxy base URL.
-# Neither tool reads ANTHROPIC_BASE_URL from the environment;
-# they require a models.json provider override instead.
+# Pi & Oh-My-Pi — write models.json registering pd-claude-opus-4-7
+# as a custom model under the anthropic provider.
+#
+# Pi-ai (both @mariozechner/pi-ai and @oh-my-pi/pi-ai forks) keep a
+# built-in Anthropic model registry that does not include the custom
+# proxy ID `pd-claude-opus-4-7`. Without an explicit entry, the
+# resolver treats the ID as unknown, falls back to a built-in name
+# (e.g. `claude-opus-4-7` with no prefix), rewrites settings.json,
+# and the proxy rejects the stripped ID with 400. Declaring the
+# model here makes the resolver exact-match and stops the rewrite.
 # ============================================================
 if [ -n "$LITELLM_BASE_URL" ]; then
-  _pi_models='{"providers":{"anthropic":{"baseUrl":"'"${LITELLM_BASE_URL}/anthropic"'"}}}'
+  _pi_models=$(cat <<EOF
+{
+  "providers": {
+    "anthropic": {
+      "baseUrl": "${LITELLM_BASE_URL}/anthropic",
+      "apiKey": "LITELLM_API_KEY",
+      "api": "anthropic-messages",
+      "models": [
+        {
+          "id": "pd-claude-opus-4-7",
+          "name": "Claude Opus 4.7 (PD)",
+          "api": "anthropic-messages",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {"input": 5, "output": 25, "cacheRead": 0.5, "cacheWrite": 6.25},
+          "contextWindow": 1000000,
+          "maxTokens": 128000
+        }
+      ]
+    }
+  }
+}
+EOF
+)
   mkdir -p "$HOME/.pi/agent" "$HOME/.omp/agent"
   printf '%s\n' "$_pi_models" >"$HOME/.pi/agent/models.json"
   printf '%s\n' "$_pi_models" >"$HOME/.omp/agent/models.json"
+  # Reset pi's defaultModel on every boot — pi-ai's fallback path
+  # overwrites this file with the stripped ID; without this reset
+  # the corruption survives container restart when $HOME is mounted.
+  printf '{"defaultProvider":"anthropic","defaultModel":"pd-claude-opus-4-7"}\n' \
+    >"$HOME/.pi/agent/settings.json"
   unset _pi_models
 fi
 
 # ============================================================
-# xcsh — write models.json + models.yml with LiteLLM proxy base URL.
-# xcsh reads provider routing from ~/.xcsh/agent/models.json.
+# xcsh — write models.json + models.yml registering the custom
+# pd-claude-opus-4-7 model (same rationale as pi/omp above).
 # ============================================================
 if [ -n "$LITELLM_BASE_URL" ]; then
-  _xcsh_models='{"providers":{"anthropic":{"baseUrl":"'"${LITELLM_BASE_URL}/anthropic"'"}}}'
+  _xcsh_models=$(cat <<EOF
+{
+  "providers": {
+    "anthropic": {
+      "baseUrl": "${LITELLM_BASE_URL}/anthropic",
+      "apiKey": "LITELLM_API_KEY",
+      "api": "anthropic-messages",
+      "models": [
+        {
+          "id": "pd-claude-opus-4-7",
+          "name": "Claude Opus 4.7 (PD)",
+          "api": "anthropic-messages",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {"input": 5, "output": 25, "cacheRead": 0.5, "cacheWrite": 6.25},
+          "contextWindow": 1000000,
+          "maxTokens": 128000
+        }
+      ]
+    },
+    "litellm": {
+      "baseUrl": "${LITELLM_BASE_URL}/api/v1",
+      "apiKey": "LITELLM_API_KEY",
+      "api": "openai-completions"
+    }
+  }
+}
+EOF
+)
   mkdir -p "$HOME/.xcsh/agent"
   printf '%s\n' "$_xcsh_models" >"$HOME/.xcsh/agent/models.json"
-  printf 'providers: \n  anthropic: \n    baseUrl: %s\n' "${LITELLM_BASE_URL}/anthropic" \
-    >"$HOME/.xcsh/agent/models.yml"
+  cat >"$HOME/.xcsh/agent/models.yml" <<EOF
+configVersion: 2
+providers:
+  anthropic:
+    baseUrl: "${LITELLM_BASE_URL}/anthropic"
+    apiKey: LITELLM_API_KEY
+    api: anthropic-messages
+    models:
+      - id: pd-claude-opus-4-7
+        name: "Claude Opus 4.7 (PD)"
+        api: anthropic-messages
+        reasoning: true
+        input: [text, image]
+        cost:
+          input: 5
+          output: 25
+          cacheRead: 0.5
+          cacheWrite: 6.25
+        contextWindow: 1000000
+        maxTokens: 128000
+  litellm:
+    baseUrl: "${LITELLM_BASE_URL}/api/v1"
+    apiKey: LITELLM_API_KEY
+    api: openai-completions
+    discovery:
+      type: openai-compat
+EOF
   unset _xcsh_models
 fi
 
@@ -213,11 +301,49 @@ if [ -n "$LITELLM_BASE_URL" ]; then
 fi
 
 # ============================================================
-# Crush — route Anthropic provider through LiteLLM proxy.
-# Crush reads ANTHROPIC_API_ENDPOINT for the Anthropic base URL.
+# Crush — render base URL placeholder into crush.json.
+#
+# The tracked crush-config/crush.json uses __CRUSH_BASE_URL__ as a
+# placeholder so no internal hostnames live in the public repo.
+# Resolve it at container start to the LiteLLM Anthropic passthrough.
+#
+# crush.json also carries `options.disable_provider_auto_update: true`
+# plus a full `providers.anthropic.models[]` entry for
+# pd-claude-opus-4-7. Without the disable flag crush re-fetches the
+# upstream Catwalk catalog on every invocation, wiping custom models.
+# Without the inline models[] entry crush's embedded catalog has no
+# pd-claude-opus-4-7 and the proxy rejects the fallback ID.
 # ============================================================
 if [ -n "$LITELLM_BASE_URL" ]; then
+  _crush_config="$HOME/.config/crush/crush.json"
+  if [ -f "$_crush_config" ]; then
+    sed -i "s|__CRUSH_BASE_URL__|${LITELLM_BASE_URL}/anthropic|g" "$_crush_config"
+  fi
+  unset _crush_config
   export ANTHROPIC_API_ENDPOINT="${LITELLM_BASE_URL}/anthropic"
+fi
+
+# ============================================================
+# Proxy sanity probe.
+#
+# After all per-tool configs are rendered, POST a 1-token request
+# to the LiteLLM Anthropic passthrough to confirm pd-claude-opus-4-7
+# is accepted. Warns (non-fatal) on any non-200 response so the next
+# regression surfaces immediately instead of at first tool invocation.
+# ============================================================
+if [ -n "$LITELLM_BASE_URL" ] && [ -n "$LITELLM_API_KEY" ] && command -v curl >/dev/null 2>&1; then
+  _probe_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+    -X POST "${LITELLM_BASE_URL}/anthropic/v1/messages" \
+    -H "x-api-key: ${LITELLM_API_KEY}" \
+    -H 'content-type: application/json' \
+    -H 'anthropic-version: 2023-06-01' \
+    -d '{"model":"pd-claude-opus-4-7","max_tokens":4,"messages":[{"role":"user","content":"hi"}]}' \
+    2>/dev/null || true)
+  if [ "$_probe_status" != "200" ]; then
+    printf 'WARN: LiteLLM proxy probe for pd-claude-opus-4-7 returned %s (expected 200)\n' \
+      "${_probe_status:-no-response}" >&2
+  fi
+  unset _probe_status
 fi
 
 # Re-sync Codex agents from Claude Code plugins (catches plugin updates)

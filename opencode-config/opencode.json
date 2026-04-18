@@ -10,7 +10,7 @@
       },
       "models": {
         "pd-claude-opus-4-7": {
-          "name": "Claude Opus 4.6",
+          "name": "Claude Opus 4.7 (PD)",
           "modalities": {
             "input": ["text", "image"],
             "output": ["text"]
