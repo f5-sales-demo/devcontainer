@@ -132,7 +132,7 @@ if [ -n "$LITELLM_BASE_URL" ]; then
   export ANTHROPIC_SMALL_FAST_MODEL="claude-haiku-4-5"
   export ANTHROPIC_DEFAULT_HAIKU_MODEL="claude-haiku-4-5"
   export ANTHROPIC_DEFAULT_SONNET_MODEL="claude-sonnet-4-6"
-  export ANTHROPIC_DEFAULT_OPUS_MODEL="claude-opus-4-6"
+  export ANTHROPIC_DEFAULT_OPUS_MODEL="pd-claude-opus-4-7"
 fi
 
 # ============================================================
@@ -155,12 +155,22 @@ fi
 HERMES_HOME_DIR="$HOME/.hermes"
 mkdir -p "$HERMES_HOME_DIR"
 if [ -n "$LITELLM_API_KEY" ]; then
-  printf 'OPENAI_BASE_URL=%s\nOPENAI_API_KEY=%s\nLLM_MODEL=claude-opus-4-6\n' \
+  printf 'OPENAI_BASE_URL=%s\nOPENAI_API_KEY=%s\nLLM_MODEL=pd-claude-opus-4-7\n' \
     "$OPENAI_BASE_URL" "$OPENAI_API_KEY" \
     >"$HERMES_HOME_DIR/.env"
 elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
   printf 'ANTHROPIC_TOKEN=%s\n' "$ANTHROPIC_OAUTH_TOKEN" \
     >"$HERMES_HOME_DIR/.env"
+fi
+
+# Substitute base URL placeholder in config.yaml so the repo
+# never contains internal hostnames.
+if [ -n "$LITELLM_BASE_URL" ]; then
+  _hermes_config="$HERMES_HOME_DIR/config.yaml"
+  if [ -f "$_hermes_config" ]; then
+    sed -i "s|__HERMES_BASE_URL__|${LITELLM_BASE_URL}/openai/v1|g" "$_hermes_config"
+  fi
+  unset _hermes_config
 fi
 
 # ============================================================

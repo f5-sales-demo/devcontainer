@@ -4,9 +4,9 @@
 # ~/.hermes/.env at container startup.
 
 model:
-  default: "claude-opus-4-6"
+  default: "pd-claude-opus-4-7"
   provider: "auto"
-  base_url: "https://openrouter.ai/api/v1"
+  base_url: "__HERMES_BASE_URL__"
 
 terminal:
   backend: "local"

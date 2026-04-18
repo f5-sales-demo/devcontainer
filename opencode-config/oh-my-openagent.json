@@ -1,20 +1,20 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
-    "sisyphus": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "oracle": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "librarian": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "sisyphus": { "model": "anthropic-proxy/pd-claude-opus-4-7" },
+    "oracle": { "model": "anthropic-proxy/pd-claude-opus-4-7" },
+    "librarian": { "model": "anthropic-proxy/pd-claude-opus-4-7" },
     "explore": { "model": "openai-proxy/grok-code-fast-1" },
-    "multimodal-looker": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "prometheus": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "metis": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "multimodal-looker": { "model": "anthropic-proxy/pd-claude-opus-4-7" },
+    "prometheus": { "model": "anthropic-proxy/pd-claude-opus-4-7" },
+    "metis": { "model": "anthropic-proxy/pd-claude-opus-4-7" },
     "hephaestus": { "model": "openai-proxy/gpt-5.4" },
-    "momus": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "momus": { "model": "anthropic-proxy/pd-claude-opus-4-7" },
     "atlas": { "model": "anthropic-proxy/claude-sonnet-4-6" },
     "frontend-ui-ux-engineer": { "model": "openai-proxy/gpt-5.4" },
-    "document-writer": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "build": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "plan": { "model": "anthropic-proxy/claude-opus-4-6" },
+    "document-writer": { "model": "anthropic-proxy/pd-claude-opus-4-7" },
+    "build": { "model": "anthropic-proxy/pd-claude-opus-4-7" },
+    "plan": { "model": "anthropic-proxy/pd-claude-opus-4-7" },
     "sisyphus-junior": { "model": "anthropic-proxy/claude-sonnet-4-6" }
   },
   "categories": {
@@ -24,9 +24,9 @@
     "deep": { "model": "openai-proxy/gpt-5.4" },
     "artistry": { "model": "openai-proxy/gpt-5.4" },
     "quick": { "model": "anthropic-proxy/claude-sonnet-4-6" },
-    "unspecified-low": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "unspecified-high": { "model": "anthropic-proxy/claude-opus-4-6" },
-    "writing": { "model": "anthropic-proxy/claude-opus-4-6" }
+    "unspecified-low": { "model": "anthropic-proxy/pd-claude-opus-4-7" },
+    "unspecified-high": { "model": "anthropic-proxy/pd-claude-opus-4-7" },
+    "writing": { "model": "anthropic-proxy/pd-claude-opus-4-7" }
   },
   "background_task": {
     "providerConcurrency": {
