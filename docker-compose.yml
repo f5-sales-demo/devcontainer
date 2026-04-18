@@ -21,7 +21,7 @@ services:
       - SETGID
       - NET_RAW
       - NET_ADMIN
-    mem_limit: 8g
+    mem_limit: 12g
     cpus: 4
     pids_limit: 4096
     tmpfs:
@@ -30,3 +30,4 @@ services:
     tty: true
     init: true
     restart: unless-stopped
+    command: zsh
