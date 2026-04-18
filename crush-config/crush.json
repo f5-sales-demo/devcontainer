@@ -1,7 +1,30 @@
 {
   "$schema": "https://charm.land/crush.json",
+  "options": {
+    "disable_provider_auto_update": true
+  },
+  "providers": {
+    "anthropic": {
+      "base_url": "__CRUSH_BASE_URL__",
+      "api_key": "$LITELLM_API_KEY",
+      "models": [
+        {
+          "id": "pd-claude-opus-4-7",
+          "name": "Claude Opus 4.7 (PD)",
+          "cost_per_1m_in": 5,
+          "cost_per_1m_out": 25,
+          "cost_per_1m_in_cached": 6.25,
+          "cost_per_1m_out_cached": 0.5,
+          "context_window": 1000000,
+          "default_max_tokens": 128000,
+          "can_reason": true,
+          "supports_attachments": true
+        }
+      ]
+    }
+  },
   "models": {
     "large": { "model": "pd-claude-opus-4-7", "provider": "anthropic" },
-    "small": { "model": "claude-haiku-4-5", "provider": "anthropic" }
+    "small": { "model": "pd-claude-opus-4-7", "provider": "anthropic" }
   }
 }
