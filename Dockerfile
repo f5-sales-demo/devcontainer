@@ -555,8 +555,7 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
       "https://github.com/yorukot/superfile/releases/latest" | sed 's|.*/||') \
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/yorukot/superfile/releases/latest/download/superfile-linux-${SPF_VERSION}-${DPKG_ARCH}.tar.gz" \
-      | tar -xz --strip-components=2 -C /usr/local/bin \
-        dist/superfile-linux-${SPF_VERSION}-${DPKG_ARCH}/spf
+      | tar -xz --strip-components=3 -C /usr/local/bin
 
 # ============================================================
 # 10c. iTerm2 terminal image utilities
