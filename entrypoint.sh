@@ -186,7 +186,8 @@ fi
 # model here makes the resolver exact-match and stops the rewrite.
 # ============================================================
 if [ -n "$LITELLM_BASE_URL" ]; then
-  _pi_models=$(cat <<EOF
+  _pi_models=$(
+    cat <<EOF
 {
   "providers": {
     "anthropic": {
@@ -209,7 +210,7 @@ if [ -n "$LITELLM_BASE_URL" ]; then
   }
 }
 EOF
-)
+  )
   mkdir -p "$HOME/.pi/agent" "$HOME/.omp/agent"
   printf '%s\n' "$_pi_models" >"$HOME/.pi/agent/models.json"
   printf '%s\n' "$_pi_models" >"$HOME/.omp/agent/models.json"
@@ -226,7 +227,8 @@ fi
 # pd-claude-opus-4-7 model (same rationale as pi/omp above).
 # ============================================================
 if [ -n "$LITELLM_BASE_URL" ]; then
-  _xcsh_models=$(cat <<EOF
+  _xcsh_models=$(
+    cat <<EOF
 {
   "providers": {
     "anthropic": {
@@ -254,7 +256,7 @@ if [ -n "$LITELLM_BASE_URL" ]; then
   }
 }
 EOF
-)
+  )
   mkdir -p "$HOME/.xcsh/agent"
   printf '%s\n' "$_xcsh_models" >"$HOME/.xcsh/agent/models.json"
   cat >"$HOME/.xcsh/agent/models.yml" <<EOF
