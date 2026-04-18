@@ -516,8 +516,8 @@ RUN ghlatest() { local repo="$1" attempt=0 max=8 delay=5 ver=""; while [ "$attem
 
 # ============================================================
 # 10b-2. claude-skills CLI tools
-#        nushell, mise, dagu, wasmtime — required by
-#        vinnie357/claude-skills plugin ecosystem.
+#        nushell, mise, dagu, wasmtime, pastel, superfile
+#        — required by vinnie357/claude-skills plugin ecosystem.
 # ============================================================
 # hadolint ignore=DL3059
 RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
@@ -542,7 +542,21 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/bytecodealliance/wasmtime/releases/latest/download/wasmtime-v${WASMTIME_VERSION}-${UNAME_ARCH}-linux.tar.xz" \
       | tar -xJ --strip-components=1 -C /usr/local/bin \
-        wasmtime-v${WASMTIME_VERSION}-${UNAME_ARCH}-linux/wasmtime
+        wasmtime-v${WASMTIME_VERSION}-${UNAME_ARCH}-linux/wasmtime \
+    # pastel — color manipulation CLI (https://github.com/sharkdp/pastel)
+    && PASTEL_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+      "https://github.com/sharkdp/pastel/releases/latest" | sed 's|.*/||;s|^v||') \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/sharkdp/pastel/releases/latest/download/pastel_${PASTEL_VERSION}_${DPKG_ARCH}.deb" \
+      -o /tmp/pastel.deb \
+    && dpkg -i /tmp/pastel.deb && rm -f /tmp/pastel.deb \
+    # superfile — terminal file manager (https://github.com/yorukot/superfile)
+    && SPF_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+      "https://github.com/yorukot/superfile/releases/latest" | sed 's|.*/||') \
+    && curl ${CURL_RETRY} -fsSL \
+      "https://github.com/yorukot/superfile/releases/latest/download/superfile-linux-${SPF_VERSION}-${DPKG_ARCH}.tar.gz" \
+      | tar -xz --strip-components=1 -C /usr/local/bin \
+        superfile-linux-${SPF_VERSION}-${DPKG_ARCH}/spf
 
 # ============================================================
 # 10c. iTerm2 terminal image utilities
