@@ -1,4 +1,8 @@
-# Remove Non-OpenCode AI Tools from INSTALL.md Implementation Plan
+---
+title: "Plan: Remove Non-OpenCode AI Tools"
+sidebar:
+  hidden: true
+---
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -104,6 +108,7 @@ grep -n 'cursor\|codex\|antigravity\|agy\|zed\b\|vscode\|VSCODE\|VS Code\|Visual
 ```
 
 Surviving matches must only be LSP binary names:
+
 - `vscode-langservers-extracted` (npm package)
 - `vscode-json/css/html-language-server` (LSP binary names in opencode.json)
 
