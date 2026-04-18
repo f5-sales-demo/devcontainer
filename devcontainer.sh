@@ -260,7 +260,17 @@ fi
 # ============================================================
 cd "$(dirname "$0")"
 
-echo "Starting devcontainer ..."
+# --- container name (stable per directory, unique across workspaces) ---
+NAME_FILE=".devcontainer-name"
+if [ -f "$NAME_FILE" ]; then
+  DEVCONTAINER_NAME=$(cat "$NAME_FILE")
+else
+  DEVCONTAINER_NAME="devcontainer-$(date +%Y%m%d%H%M%S)"
+  echo "$DEVCONTAINER_NAME" >"$NAME_FILE"
+fi
+export DEVCONTAINER_NAME
+
+echo "Starting $DEVCONTAINER_NAME ..."
 echo ""
 
 # --- preflight checks ---
