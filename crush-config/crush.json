@@ -1,7 +1,7 @@
 {
   "$schema": "https://charm.land/crush.json",
   "models": {
-    "large": { "model": "claude-opus-4-6", "provider": "anthropic" },
+    "large": { "model": "pd-claude-opus-4-7", "provider": "anthropic" },
     "small": { "model": "claude-haiku-4-5", "provider": "anthropic" }
   }
 }
