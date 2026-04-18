@@ -1513,7 +1513,8 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && echo 'export MANPAGER="sh -c '\''col -bx | bat -l man -p'\''"' >> "$HOME/.zshrc" \
     && echo 'export BAT_THEME="Coldark-Dark"' >> "$HOME/.zshrc" \
     && echo 'export BROWSER="browsh"' >> "$HOME/.zshrc" \
-    && sed -i '/^source \$ZSH\/oh-my-zsh.sh/i export ZSH_DOTENV_PROMPT=false' "$HOME/.zshrc"
+    && sed -i '/^source \$ZSH\/oh-my-zsh.sh/i export ZSH_DOTENV_PROMPT=false' "$HOME/.zshrc" \
+    && echo '[ -f /run/entrypoint-env.sh ] && . /run/entrypoint-env.sh' >> "$HOME/.zshenv"
 
 # ============================================================
 # 16. User shell bootstrap (baked in — eliminates runtime setup)
