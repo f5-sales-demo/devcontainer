@@ -1,8 +1,15 @@
-# Local build — NOT auto-merged. Use explicitly:
-#   docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
-#   podman compose -f docker-compose.yml -f docker-compose.build.yml up --build
+---
+# Local build — arm64 only, layer cache enabled.
+#
+# Build and start:
+#   ./devcontainer.sh build
+#
+# Or manually:
+#   podman compose -f docker-compose.yml -f docker-compose.build.yml build
+#   podman compose -f docker-compose.yml -f docker-compose.build.yml up -d
 services:
   dev:
+    platform: linux/arm64
     build:
       context: .
       dockerfile: Dockerfile

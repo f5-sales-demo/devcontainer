@@ -235,6 +235,27 @@ EOF'
 fi
 
 # ============================================================
+# Build mode: local arm64 image build with layer caching.
+# Usage: ./devcontainer.sh build
+# ============================================================
+if [ "${1:-}" = "build" ]; then
+  cd "$(dirname "$0")"
+
+  if ! command -v podman >/dev/null 2>&1; then
+    fatal "podman is not installed."
+  fi
+
+  if [ ! -f docker-compose.build.yml ]; then
+    fatal "docker-compose.build.yml not found. Run from the repo root."
+  fi
+
+  echo "Building devcontainer (arm64, local layer cache) ..."
+  echo ""
+  shift
+  exec podman compose -f docker-compose.yml -f docker-compose.build.yml build "$@"
+fi
+
+# ============================================================
 # Run mode: detect host environment and start the container.
 # ============================================================
 cd "$(dirname "$0")"
