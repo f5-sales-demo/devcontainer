@@ -1,0 +1,79 @@
+---
+title: Quick Install
+description: One command to install and configure the devcontainer on macOS.
+sidebar:
+  order: 0
+---
+
+## One-Line Install
+
+```bash
+curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
+```
+
+This single command handles the full first-run setup:
+
+1. Installs Homebrew packages (podman, podman-compose, gh, iterm2, nerd fonts)
+2. Configures iTerm2 (font, bell, scrollback, dark theme, Shift+Enter keybinding)
+3. Initializes and tunes the Podman machine (16 GB RAM, 4 CPUs, 220 GB disk, zram, swappiness)
+4. Downloads `docker-compose.yml`, `devcontainer.sh`, and `.env` template to the current directory
+
+:::note[Homebrew required]
+If Homebrew is not installed, the script exits with instructions.
+Your IT department may provide Homebrew as managed software — check with them first.
+:::
+
+## After Install
+
+Edit `.env` with your credentials:
+
+```bash
+vi .env
+```
+
+Then start the container:
+
+```bash
+./devcontainer.sh
+```
+
+The script detects your timezone and pulls a fresh GitHub token from `gh auth token` at each invocation.
+
+## What Gets Created
+
+After running the installer, your directory will contain:
+
+| File | Purpose |
+|---|---|
+| `devcontainer.sh` | Launcher script (run this to start the container) |
+| `docker-compose.yml` | Container service definition |
+| `.env` | Your credentials (from template, edit before first start) |
+
+## Subsequent Starts
+
+```bash
+./devcontainer.sh
+```
+
+## Connect
+
+```bash
+podman exec -it devcontainer zsh
+```
+
+## Update
+
+Pull the latest image and restart:
+
+```bash
+podman compose pull
+./devcontainer.sh
+```
+
+## Local Build
+
+Build the image locally from source (arm64 only):
+
+```bash
+./devcontainer.sh build
+```
