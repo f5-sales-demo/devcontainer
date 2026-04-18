@@ -8,11 +8,14 @@ RETRY_DELAY=2
 # ============================================================
 # Helpers
 # ============================================================
-info()  { printf '  %s\n' "$*"; }
-ok()    { printf '  \033[32m✓\033[0m %s\n' "$*"; }
-warn()  { printf '  \033[33m!\033[0m %s\n' "$*"; }
-fail()  { printf '  \033[31m✗\033[0m %s\n' "$*" >&2; }
-fatal() { fail "$@"; exit 1; }
+info() { printf '  %s\n' "$*"; }
+ok() { printf '  \033[32m✓\033[0m %s\n' "$*"; }
+warn() { printf '  \033[33m!\033[0m %s\n' "$*"; }
+fail() { printf '  \033[31m✗\033[0m %s\n' "$*" >&2; }
+fatal() {
+  fail "$@"
+  exit 1
+}
 
 download() {
   local url="$1" dest="$2" attempt=0 tmp
@@ -92,17 +95,26 @@ if [ ! -f docker-compose.yml ]; then
   if pgrep -xq iTerm2; then
     info "Quitting iTerm2 to apply settings ..."
     osascript -e 'tell application "iTerm2" to quit' 2>/dev/null || true
-    for _ in $(seq 1 20); do pgrep -xq iTerm2 || break; sleep 0.5; done
+    for _ in $(seq 1 20); do
+      pgrep -xq iTerm2 || break
+      sleep 0.5
+    done
   fi
 
   # Generate default plist if iTerm2 has never been launched
   if [ ! -f "$PLIST" ]; then
     info "Launching iTerm2 once to generate defaults ..."
     open -a iTerm2
-    for _ in $(seq 1 16); do [ -f "$PLIST" ] && break; sleep 0.5; done
+    for _ in $(seq 1 16); do
+      [ -f "$PLIST" ] && break
+      sleep 0.5
+    done
     sleep 1
     osascript -e 'tell application "iTerm2" to quit' 2>/dev/null || true
-    for _ in $(seq 1 20); do pgrep -xq iTerm2 || break; sleep 0.5; done
+    for _ in $(seq 1 20); do
+      pgrep -xq iTerm2 || break
+      sleep 0.5
+    done
   fi
 
   if [ -f "$PLIST" ]; then
@@ -193,11 +205,11 @@ EOF'
   echo "Compose files"
   echo "-------------"
 
-  download "${REPO_BASE}/docker-compose.yml" docker-compose.yml || \
+  download "${REPO_BASE}/docker-compose.yml" docker-compose.yml ||
     fatal "Cannot continue without docker-compose.yml"
   ok "docker-compose.yml"
 
-  download "${REPO_BASE}/devcontainer.sh" devcontainer.sh || \
+  download "${REPO_BASE}/devcontainer.sh" devcontainer.sh ||
     fatal "Cannot continue without devcontainer.sh"
   chmod +x devcontainer.sh
   ok "devcontainer.sh"
