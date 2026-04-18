@@ -2,11 +2,20 @@
 title: Getting Started
 description: Download one file, start the container, and connect — no Git or cloning required.
 sidebar:
-  order: 1
+  order: 2
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
+:::tip[macOS Quick Install]
+If you're on macOS with Apple Silicon, skip this page and use the [one-line installer](/devcontainer/install/):
 
+```bash
+curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
+```
+
+It handles Homebrew packages, iTerm2 config, Podman setup, and downloads everything you need.
+:::
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 ## Prerequisites
 
 ### Container Runtime
