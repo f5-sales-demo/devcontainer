@@ -1,7 +1,7 @@
 services:
   dev:
     image: ghcr.io/f5xc-salesdemos/devcontainer:latest
-    pull_policy: always
+    pull_policy: missing
     container_name: devcontainer
     hostname: devcontainer
     env_file:
@@ -9,6 +9,7 @@ services:
         required: false
     environment:
       - TZ=${TZ:-UTC}
+      - GH_TOKEN=${GH_TOKEN:-}
     ports:
       - "127.0.0.1:${NOVNC_HOST_PORT:-6080}:6080"
     cap_drop:
