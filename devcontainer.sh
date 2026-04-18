@@ -63,9 +63,10 @@ if [ ! -f docker-compose.yml ]; then
 
   # -- Homebrew -------------------------------------------------
   if ! command -v brew >/dev/null 2>&1; then
-    info "Homebrew not found. Installing ..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null)"
+    fail "Homebrew is not installed."
+    info "Your IT department may provide Homebrew as managed software."
+    info "Otherwise, see https://brew.sh for installation instructions."
+    exit 1
   fi
   ok "Homebrew"
 
