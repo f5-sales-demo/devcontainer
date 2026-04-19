@@ -91,7 +91,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # System essentials
-    build-essential pkg-config libssl-dev libffi-dev libcairo2-dev cmake lld \
+    build-essential pkg-config libssl-dev libffi-dev cmake lld \
+    # Graphics / image libraries (Cairo + companions for native node modules, e.g. canvas)
+    libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev \
     # Media / utilities
     ffmpeg poppler-utils qrencode \
     # Network tools
