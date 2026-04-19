@@ -29,7 +29,10 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # ghlatest: resolve latest GitHub release version (used by sections 9-10)
 COPY scripts/ghlatest.sh /usr/local/bin/ghlatest
-RUN chmod +x /usr/local/bin/ghlatest
+# install-release: atomic download-then-extract for GitHub release assets.
+# Replaces curl|tar pipes that silently corrupt on mid-stream retries.
+COPY scripts/install-release.sh /usr/local/bin/install-release
+RUN chmod +x /usr/local/bin/ghlatest /usr/local/bin/install-release
 
 # ============================================================
 # 1. APT repository setup
@@ -582,71 +585,86 @@ RUN for util in imgcat imgls it2dl it2ul it2copy it2check; do \
 # hadolint ignore=DL3059
 RUN true \
     && DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
-    # shfmt (version in asset name)
+    # shfmt (version in asset name, raw binary)
     && SHFMT_VERSION=$(ghlatest mvdan/sh) \
-    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/shfmt \
-      "https://github.com/mvdan/sh/releases/latest/download/shfmt_v${SHFMT_VERSION}_linux_${DPKG_ARCH}" \
-    && chmod +x /usr/local/bin/shfmt \
+    && install-release shfmt \
+        "https://github.com/mvdan/sh/releases/latest/download/shfmt_v${SHFMT_VERSION}_linux_${DPKG_ARCH}" \
+        raw-bin shfmt \
     # gitleaks (assets use x64/arm64, not amd64/arm64)
     && GITLEAKS_VERSION=$(ghlatest gitleaks/gitleaks) \
     && if [ "$DPKG_ARCH" = "amd64" ]; then GL_ARCH="x64"; else GL_ARCH="arm64"; fi \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_${GITLEAKS_VERSION}_linux_${GL_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin gitleaks \
-    # editorconfig-checker (version-free asset; binary is bin/ec-linux-<arch>)
-    && curl ${CURL_RETRY} -fsSL "https://github.com/editorconfig-checker/editorconfig-checker/releases/latest/download/ec-linux-${DPKG_ARCH}.tar.gz" \
-      | tar -xz --strip-components=1 -C /usr/local/bin "bin/ec-linux-${DPKG_ARCH}" \
-    && mv /usr/local/bin/ec-linux-${DPKG_ARCH} /usr/local/bin/editorconfig-checker \
-    # clj-kondo
+    && install-release gitleaks \
+        "https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_${GITLEAKS_VERSION}_linux_${GL_ARCH}.tar.gz" \
+        tgz-bin gitleaks \
+    # editorconfig-checker (binary at bin/ec-linux-<arch> inside the tarball)
+    && install-release editorconfig-checker \
+        "https://github.com/editorconfig-checker/editorconfig-checker/releases/latest/download/ec-linux-${DPKG_ARCH}.tar.gz" \
+        tgz-bin editorconfig-checker "bin/ec-linux-${DPKG_ARCH}" \
+    # clj-kondo (zip contains a single clj-kondo binary)
     && CLJ_KONDO_VERSION=$(ghlatest clj-kondo/clj-kondo) \
     && if [ "$DPKG_ARCH" = "amd64" ]; then CK_ARCH="amd64"; else CK_ARCH="aarch64"; fi \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/clj-kondo/clj-kondo/releases/latest/download/clj-kondo-${CLJ_KONDO_VERSION}-linux-${CK_ARCH}.zip" \
-      -o /tmp/clj-kondo.zip \
-    && unzip -q /tmp/clj-kondo.zip -d /usr/local/bin && rm /tmp/clj-kondo.zip \
+    && install-release clj-kondo \
+        "https://github.com/clj-kondo/clj-kondo/releases/latest/download/clj-kondo-${CLJ_KONDO_VERSION}-linux-${CK_ARCH}.zip" \
+        zip-bin clj-kondo \
     # dotenv-linter
     && if [ "$UNAME_ARCH" = "x86_64" ]; then DL_ARCH="x86_64"; else DL_ARCH="aarch64"; fi \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/dotenv-linter/dotenv-linter/releases/latest/download/dotenv-linter-linux-${DL_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin dotenv-linter \
-    # gopls (Go LSP server)
+    && install-release dotenv-linter \
+        "https://github.com/dotenv-linter/dotenv-linter/releases/latest/download/dotenv-linter-linux-${DL_ARCH}.tar.gz" \
+        tgz-bin dotenv-linter \
+    # gopls (Go LSP server — pulled via Go module proxy, not curl)
     && GOBIN=/usr/local/bin go install golang.org/x/tools/gopls@v0.21.1 \
-    # golangci-lint (install script auto-detects arch)
-    && curl ${CURL_RETRY} -sSfL https://golangci-lint.run/install.sh | sh -s -- -b /usr/local/bin \
+    # golangci-lint: stage the vendor install script to a file before running,
+    # so a partial-download doesn't get piped into sh.
+    && curl ${CURL_RETRY} -fsSLo /tmp/golangci-lint-install.sh https://golangci-lint.run/install.sh \
+    && [ -s /tmp/golangci-lint-install.sh ] \
+    && sh /tmp/golangci-lint-install.sh -b /usr/local/bin \
+    && rm /tmp/golangci-lint-install.sh \
     # goreleaser
     && if [ "$UNAME_ARCH" = "x86_64" ]; then GR_ARCH="x86_64"; else GR_ARCH="arm64"; fi \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/goreleaser/goreleaser/releases/latest/download/goreleaser_Linux_${GR_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin goreleaser \
-    # kubeconform (version-free asset)
-    && curl ${CURL_RETRY} -fsSL "https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin kubeconform \
-    # kustomize (install script handles special tag format)
-    && curl ${CURL_RETRY} -fsSL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash \
+    && install-release goreleaser \
+        "https://github.com/goreleaser/goreleaser/releases/latest/download/goreleaser_Linux_${GR_ARCH}.tar.gz" \
+        tgz-bin goreleaser \
+    # kubeconform
+    && install-release kubeconform \
+        "https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-${DPKG_ARCH}.tar.gz" \
+        tgz-bin kubeconform \
+    # kustomize: stage the vendor install script to a file (same rationale as golangci-lint)
+    && curl ${CURL_RETRY} -fsSLo /tmp/kustomize-install.sh \
+        https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh \
+    && [ -s /tmp/kustomize-install.sh ] \
+    && bash /tmp/kustomize-install.sh \
+    && rm /tmp/kustomize-install.sh \
     && mv kustomize /usr/local/bin/ \
     # protolint (version in asset name)
     && PROTOLINT_VERSION=$(ghlatest yoheimuta/protolint) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/yoheimuta/protolint/releases/latest/download/protolint_${PROTOLINT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin protolint \
-    # scalafmt (native binary — different asset names per arch)
+    && install-release protolint \
+        "https://github.com/yoheimuta/protolint/releases/latest/download/protolint_${PROTOLINT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin protolint \
+    # scalafmt (different asset shape per arch: raw binary on amd64, zip on arm64)
     && if [ "$DPKG_ARCH" = "amd64" ]; then \
-      curl ${CURL_RETRY} -fsSLo /usr/local/bin/scalafmt \
-        "https://github.com/scalameta/scalafmt/releases/latest/download/scalafmt-linux-glibc"; \
+        install-release scalafmt \
+          "https://github.com/scalameta/scalafmt/releases/latest/download/scalafmt-linux-glibc" \
+          raw-bin scalafmt; \
     else \
-      curl ${CURL_RETRY} -fsSL "https://github.com/scalameta/scalafmt/releases/latest/download/scalafmt-aarch64-pc-linux.zip" \
-        -o /tmp/scalafmt.zip \
-      && unzip -q /tmp/scalafmt.zip -d /usr/local/bin && rm /tmp/scalafmt.zip; \
+        install-release scalafmt \
+          "https://github.com/scalameta/scalafmt/releases/latest/download/scalafmt-aarch64-pc-linux.zip" \
+          zip-bin scalafmt; \
     fi \
-    && chmod +x /usr/local/bin/scalafmt \
-    # ktlint (runnable JAR — arch-independent, needs Java)
-    && curl ${CURL_RETRY} -fsSLo /usr/local/bin/ktlint \
-      "https://github.com/pinterest/ktlint/releases/latest/download/ktlint" \
-    && chmod +x /usr/local/bin/ktlint \
+    # ktlint (runnable JAR — raw download, needs Java at runtime)
+    && install-release ktlint \
+        "https://github.com/pinterest/ktlint/releases/latest/download/ktlint" \
+        raw-bin ktlint \
     # cljfmt (GraalVM native binary — Clojure formatter)
     && CLJFMT_VERSION=$(ghlatest weavejester/cljfmt) \
     && if [ "$DPKG_ARCH" = "amd64" ]; then CLJFMT_ARCH="amd64-static"; else CLJFMT_ARCH="aarch64"; fi \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/weavejester/cljfmt/releases/latest/download/cljfmt-${CLJFMT_VERSION}-linux-${CLJFMT_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin cljfmt \
+    && install-release cljfmt \
+        "https://github.com/weavejester/cljfmt/releases/latest/download/cljfmt-${CLJFMT_VERSION}-linux-${CLJFMT_ARCH}.tar.gz" \
+        tgz-bin cljfmt \
     # gleam (static musl binary — Gleam formatter)
     && GLEAM_VERSION=$(ghlatest gleam-lang/gleam) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/gleam-lang/gleam/releases/latest/download/gleam-v${GLEAM_VERSION}-${UNAME_ARCH}-unknown-linux-musl.tar.gz" \
-      | tar -xz -C /usr/local/bin gleam
+    && install-release gleam \
+        "https://github.com/gleam-lang/gleam/releases/latest/download/gleam-v${GLEAM_VERSION}-${UNAME_ARCH}-unknown-linux-musl.tar.gz" \
+        tgz-bin gleam
 
 # ============================================================
 # 10d. Java JAR tools (checkstyle, google-java-format)
