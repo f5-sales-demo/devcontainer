@@ -188,7 +188,7 @@ echo "Starting container ..."
 
 echo "Waiting for entrypoint ..."
 for _ in $(seq 1 90); do
-  if run test -f /run/entrypoint-env.sh; then break; fi
+  if run test -f /home/vscode/.entrypoint-env.sh; then break; fi
   sleep 1
 done
 sleep 5
@@ -199,8 +199,8 @@ sleep 5
 echo ""
 echo "Entrypoint env derivation"
 echo "-------------------------"
-ENV_FILE=$(run cat /run/entrypoint-env.sh)
-assert_file "/run/entrypoint-env.sh exists" "/run/entrypoint-env.sh"
+ENV_FILE=$(run cat /home/vscode/.entrypoint-env.sh)
+assert_file "/home/vscode/.entrypoint-env.sh exists" "/home/vscode/.entrypoint-env.sh"
 assert_contains "ANTHROPIC_API_KEY derived" "$ENV_FILE" "ANTHROPIC_API_KEY=$TEST_KEY"
 assert_contains "ANTHROPIC_BASE_URL derived" "$ENV_FILE" "ANTHROPIC_BASE_URL=${TEST_URL}/anthropic"
 assert_contains "ANTHROPIC_API_ENDPOINT derived" "$ENV_FILE" "ANTHROPIC_API_ENDPOINT=${TEST_URL}/anthropic"
@@ -237,7 +237,7 @@ assert_contains "System zshenv sources env" "$(run cat /etc/zsh/zshenv)" "entryp
 assert_file "vscode .zshenv" "/home/vscode/.zshenv"
 assert_contains "User zshenv sources env" "$(run cat /home/vscode/.zshenv)" "entrypoint-env"
 PROFILED=$(run readlink /etc/profile.d/99-entrypoint-env.sh)
-assert_eq "profile.d symlink" "$PROFILED" "/run/entrypoint-env.sh"
+assert_eq "profile.d symlink" "$PROFILED" "/home/vscode/.entrypoint-env.sh"
 SHELL_KEY=$(zrun 'echo $ANTHROPIC_API_KEY')
 assert_eq "zsh -c inherits ANTHROPIC_API_KEY" "$SHELL_KEY" "$TEST_KEY"
 

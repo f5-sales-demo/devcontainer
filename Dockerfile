@@ -1003,24 +1003,27 @@ WORKDIR /
 # Drop the default postgres-user cluster and replace with one owned by vscode.
 # Auth is set to 'trust' for local socket connections (single-user container).
 # hadolint ignore=DL3059,SC2046
-RUN PG_VER=$(dpkg -l 'postgresql-*' | awk '/^ii.*postgresql-[0-9]/{gsub(/postgresql-/,"");print \$2;exit}') \
-    && pg_dropcluster --stop $(pg_lsclusters -h | awk 'NR==1{print $1, $2}') 2>/dev/null || true \
+RUN pg_dropcluster --stop $(pg_lsclusters -h | awk 'NR==1{print $1, $2}') 2>/dev/null || true \
     && mkdir -p /etc/postgresql /var/log/postgresql \
        /home/${USERNAME}/.local/run/postgresql \
        /home/${USERNAME}/.local/lib/postgresql \
     && chown -R ${USERNAME}:${USERNAME} \
        /etc/postgresql /var/log/postgresql \
        /home/${USERNAME}/.local/run/postgresql \
-       /home/${USERNAME}/.local/lib/postgresql \
-    && su - ${USERNAME} -c "pg_createcluster \
-       --datadir=/home/${USERNAME}/.local/lib/postgresql/data \
-       --socketdir=/home/${USERNAME}/.local/run/postgresql \
-       --start-conf=manual $PG_VER main" \
-    && PG_HBA=$(find /etc/postgresql /home/${USERNAME}/.local/lib/postgresql \
+       /home/${USERNAME}/.local/lib/postgresql
+USER ${USERNAME}
+# hadolint ignore=DL3059
+RUN PG_VER=$(dpkg -l 'postgresql-*' | awk '/^ii.*postgresql-[0-9]/{gsub(/postgresql-/,"");print \$2;exit}') \
+    && pg_createcluster \
+       --datadir="$HOME/.local/lib/postgresql/data" \
+       --socketdir="$HOME/.local/run/postgresql" \
+       --start-conf=manual "$PG_VER" main \
+    && PG_HBA=$(find /etc/postgresql "$HOME/.local/lib/postgresql" \
        -name pg_hba.conf -print -quit 2>/dev/null) \
     && if [ -n "$PG_HBA" ]; then \
         sed -i 's/peer/trust/g; s/scram-sha-256/trust/g' "$PG_HBA"; \
       fi
+USER root
 
 # RabbitMQ: configure user-writable data and log directories.
 # hadolint ignore=DL3059
@@ -1572,8 +1575,8 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     # which hang automated scripts on "overwrite? (y/n)" prompts. Custom zsh files in
     # $ZSH_CUSTOM are sourced AFTER plugins, so the unalias wins.
     && echo 'unalias rm cp mv 2>/dev/null || true' > "$HOME/.oh-my-zsh/custom/disable-interactive-safety.zsh" \
-    && echo '[ -f /run/entrypoint-env.sh ] && . /run/entrypoint-env.sh' >> "$HOME/.zshenv" \
-    && mkdir -p /etc/zsh && echo '[ -f /run/entrypoint-env.sh ] && . /run/entrypoint-env.sh' >> /etc/zsh/zshenv \
+    && echo '[ -f "$HOME/.entrypoint-env.sh" ] && . "$HOME/.entrypoint-env.sh"' >> "$HOME/.zshenv" \
+    && mkdir -p /etc/zsh && echo '[ -f /home/vscode/.entrypoint-env.sh ] && . /home/vscode/.entrypoint-env.sh' >> /etc/zsh/zshenv \
     && echo '[ -d /workspace ] && cd /workspace' >> "$HOME/.zshrc"
 
 # ============================================================
