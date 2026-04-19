@@ -1520,6 +1520,10 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && echo 'export BAT_THEME="Coldark-Dark"' >> "$HOME/.zshrc" \
     && echo 'export BROWSER="browsh"' >> "$HOME/.zshrc" \
     && sed -i '/^source \$ZSH\/oh-my-zsh.sh/i export ZSH_DOTENV_PROMPT=false' "$HOME/.zshrc" \
+    # Override common-aliases plugin's interactive safety shims (rm -i, cp -i, mv -i),
+    # which hang automated scripts on "overwrite? (y/n)" prompts. Custom zsh files in
+    # $ZSH_CUSTOM are sourced AFTER plugins, so the unalias wins.
+    && echo 'unalias rm cp mv 2>/dev/null || true' > "$HOME/.oh-my-zsh/custom/disable-interactive-safety.zsh" \
     && echo '[ -f /run/entrypoint-env.sh ] && . /run/entrypoint-env.sh' >> "$HOME/.zshenv"
 
 # ============================================================
