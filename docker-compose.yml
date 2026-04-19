@@ -1,3 +1,4 @@
+---
 services:
   dev:
     image: ghcr.io/f5xc-salesdemos/devcontainer:latest
@@ -31,4 +32,5 @@ services:
     tty: true
     init: true
     restart: unless-stopped
+    entrypoint: ["/usr/local/bin/entrypoint.sh"]
     command: zsh
