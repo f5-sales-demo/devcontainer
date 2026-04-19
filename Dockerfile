@@ -1542,7 +1542,8 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     # which hang automated scripts on "overwrite? (y/n)" prompts. Custom zsh files in
     # $ZSH_CUSTOM are sourced AFTER plugins, so the unalias wins.
     && echo 'unalias rm cp mv 2>/dev/null || true' > "$HOME/.oh-my-zsh/custom/disable-interactive-safety.zsh" \
-    && echo '[ -f /run/entrypoint-env.sh ] && . /run/entrypoint-env.sh' >> "$HOME/.zshenv"
+    && echo '[ -f /run/entrypoint-env.sh ] && . /run/entrypoint-env.sh' >> "$HOME/.zshenv" \
+    && mkdir -p /etc/zsh && echo '[ -f /run/entrypoint-env.sh ] && . /run/entrypoint-env.sh' >> /etc/zsh/zshenv
 
 # ============================================================
 # 16. User shell bootstrap (baked in — eliminates runtime setup)
