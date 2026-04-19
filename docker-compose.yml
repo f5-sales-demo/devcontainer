@@ -32,5 +32,6 @@ services:
     tty: true
     init: true
     restart: unless-stopped
+    user: vscode
     entrypoint: ["/usr/local/bin/entrypoint.sh"]
     command: zsh
