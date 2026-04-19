@@ -1003,7 +1003,8 @@ WORKDIR /
 # Drop the default postgres-user cluster and replace with one owned by vscode.
 # Auth is set to 'trust' for local socket connections (single-user container).
 # hadolint ignore=DL3059,SC2046
-RUN pg_dropcluster --stop $(pg_lsclusters -h | awk 'NR==1{print $1, $2}') 2>/dev/null || true \
+RUN PG_VER=$(dpkg -l 'postgresql-*' | awk '/^ii.*postgresql-[0-9]/{gsub(/postgresql-/,"");print \$2;exit}') \
+    && pg_dropcluster --stop $(pg_lsclusters -h | awk 'NR==1{print $1, $2}') 2>/dev/null || true \
     && mkdir -p /etc/postgresql /var/log/postgresql \
        /home/${USERNAME}/.local/run/postgresql \
        /home/${USERNAME}/.local/lib/postgresql \
@@ -1014,8 +1015,7 @@ RUN pg_dropcluster --stop $(pg_lsclusters -h | awk 'NR==1{print $1, $2}') 2>/dev
     && su - ${USERNAME} -c "pg_createcluster \
        --datadir=/home/${USERNAME}/.local/lib/postgresql/data \
        --socketdir=/home/${USERNAME}/.local/run/postgresql \
-       --start-conf=manual \
-       $(dpkg -l 'postgresql-*' | awk '/^ii.*postgresql-[0-9]/{gsub(/postgresql-/,\"\");print \$2;exit}') main" \
+       --start-conf=manual $PG_VER main" \
     && PG_HBA=$(find /etc/postgresql /home/${USERNAME}/.local/lib/postgresql \
        -name pg_hba.conf -print -quit 2>/dev/null) \
     && if [ -n "$PG_HBA" ]; then \
