@@ -45,7 +45,7 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 if ! curl --connect-timeout 30 --retry 8 --retry-all-errors --retry-max-time 300 \
-          -fsSL -o "${tmp}" "${url}"; then
+  -fsSL -o "${tmp}" "${url}"; then
   echo "install-release: ${name}: curl failed from ${url}" >&2
   exit 1
 fi
@@ -58,37 +58,37 @@ fi
 target="/usr/local/bin/${dest}"
 
 case "${type}" in
-  raw-bin)
-    install -m 0755 "${tmp}" "${target}"
-    ;;
-  tgz-bin)
-    scratch="$(mktemp -d --tmpdir "install-release-${name}-xtr.XXXXXX")"
-    if ! tar -xzf "${tmp}" -C "${scratch}" "${extract_path}"; then
-      echo "install-release: ${name}: tar -xzf failed extracting '${extract_path}'" >&2
-      exit 1
-    fi
-    if [ ! -f "${scratch}/${extract_path}" ]; then
-      echo "install-release: ${name}: extracted path '${extract_path}' not found in archive" >&2
-      exit 1
-    fi
-    install -m 0755 "${scratch}/${extract_path}" "${target}"
-    ;;
-  zip-bin)
-    scratch="$(mktemp -d --tmpdir "install-release-${name}-xtr.XXXXXX")"
-    if ! unzip -q "${tmp}" "${extract_path}" -d "${scratch}"; then
-      echo "install-release: ${name}: unzip failed extracting '${extract_path}'" >&2
-      exit 1
-    fi
-    if [ ! -f "${scratch}/${extract_path}" ]; then
-      echo "install-release: ${name}: extracted path '${extract_path}' not found in archive" >&2
-      exit 1
-    fi
-    install -m 0755 "${scratch}/${extract_path}" "${target}"
-    ;;
-  *)
-    echo "install-release: ${name}: unknown TYPE '${type}' (expected raw-bin | tgz-bin | zip-bin)" >&2
+raw-bin)
+  install -m 0755 "${tmp}" "${target}"
+  ;;
+tgz-bin)
+  scratch="$(mktemp -d --tmpdir "install-release-${name}-xtr.XXXXXX")"
+  if ! tar -xzf "${tmp}" -C "${scratch}" "${extract_path}"; then
+    echo "install-release: ${name}: tar -xzf failed extracting '${extract_path}'" >&2
     exit 1
-    ;;
+  fi
+  if [ ! -f "${scratch}/${extract_path}" ]; then
+    echo "install-release: ${name}: extracted path '${extract_path}' not found in archive" >&2
+    exit 1
+  fi
+  install -m 0755 "${scratch}/${extract_path}" "${target}"
+  ;;
+zip-bin)
+  scratch="$(mktemp -d --tmpdir "install-release-${name}-xtr.XXXXXX")"
+  if ! unzip -q "${tmp}" "${extract_path}" -d "${scratch}"; then
+    echo "install-release: ${name}: unzip failed extracting '${extract_path}'" >&2
+    exit 1
+  fi
+  if [ ! -f "${scratch}/${extract_path}" ]; then
+    echo "install-release: ${name}: extracted path '${extract_path}' not found in archive" >&2
+    exit 1
+  fi
+  install -m 0755 "${scratch}/${extract_path}" "${target}"
+  ;;
+*)
+  echo "install-release: ${name}: unknown TYPE '${type}' (expected raw-bin | tgz-bin | zip-bin)" >&2
+  exit 1
+  ;;
 esac
 
 echo "    -> ${target}"
