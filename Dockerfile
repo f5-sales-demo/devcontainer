@@ -999,12 +999,34 @@ RUN rm -rf /opt/firecrawl/.git
 
 WORKDIR /
 
-# Relax PostgreSQL auth for local socket connections (entrypoint manages lifecycle)
-# hadolint ignore=DL3059
-RUN PG_HBA=$(find /etc/postgresql -name pg_hba.conf -print -quit 2>/dev/null) \
+# PostgreSQL: create a vscode-owned cluster so the entrypoint can start it without sudo.
+# Drop the default postgres-user cluster and replace with one owned by vscode.
+# Auth is set to 'trust' for local socket connections (single-user container).
+# hadolint ignore=DL3059,SC2046
+RUN pg_dropcluster --stop $(pg_lsclusters -h | awk 'NR==1{print $1, $2}') 2>/dev/null || true \
+    && mkdir -p /home/${USERNAME}/.local/run/postgresql \
+       /home/${USERNAME}/.local/lib/postgresql \
+    && chown -R ${USERNAME}:${USERNAME} \
+       /home/${USERNAME}/.local/run/postgresql \
+       /home/${USERNAME}/.local/lib/postgresql \
+    && su - ${USERNAME} -c "pg_createcluster \
+       --datadir=/home/${USERNAME}/.local/lib/postgresql/data \
+       --socketdir=/home/${USERNAME}/.local/run/postgresql \
+       --start-conf=manual \
+       $(dpkg -l 'postgresql-*' | awk '/^ii.*postgresql-[0-9]/{gsub(/postgresql-/,\"\");print \$2;exit}') main" \
+    && PG_HBA=$(find /home/${USERNAME}/.local/lib/postgresql -name pg_hba.conf -print -quit 2>/dev/null) \
     && if [ -n "$PG_HBA" ]; then \
         sed -i 's/peer/trust/g; s/scram-sha-256/trust/g' "$PG_HBA"; \
       fi
+
+# RabbitMQ: configure user-writable data and log directories.
+# hadolint ignore=DL3059
+RUN mkdir -p /home/${USERNAME}/.local/lib/rabbitmq \
+       /home/${USERNAME}/.local/log/rabbitmq \
+    && chown -R ${USERNAME}:${USERNAME} \
+       /home/${USERNAME}/.local/lib/rabbitmq \
+       /home/${USERNAME}/.local/log/rabbitmq \
+       /var/lib/rabbitmq /var/log/rabbitmq /etc/rabbitmq 2>/dev/null || true
 
 # ============================================================
 # 12. pip tools
@@ -1501,6 +1523,7 @@ USER $USERNAME
 # ============================================================
 # hadolint ignore=DL3059
 # checkov:skip=CKV2_DOCKER_1:sudo here is a zsh plugin name in a sed argument, not a system call
+# trivy:ignore:DS-0013
 RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     && git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git \
       "${ZSH_CUSTOM}/plugins/zsh-autosuggestions" \
@@ -1543,7 +1566,8 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     # $ZSH_CUSTOM are sourced AFTER plugins, so the unalias wins.
     && echo 'unalias rm cp mv 2>/dev/null || true' > "$HOME/.oh-my-zsh/custom/disable-interactive-safety.zsh" \
     && echo '[ -f /run/entrypoint-env.sh ] && . /run/entrypoint-env.sh' >> "$HOME/.zshenv" \
-    && mkdir -p /etc/zsh && echo '[ -f /run/entrypoint-env.sh ] && . /run/entrypoint-env.sh' >> /etc/zsh/zshenv
+    && mkdir -p /etc/zsh && echo '[ -f /run/entrypoint-env.sh ] && . /run/entrypoint-env.sh' >> /etc/zsh/zshenv \
+    && echo '[ -d /workspace ] && cd /workspace' >> "$HOME/.zshrc"
 
 # ============================================================
 # 16. User shell bootstrap (baked in — eliminates runtime setup)

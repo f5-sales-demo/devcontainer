@@ -3,10 +3,16 @@
 # Configure user environment (env-var-dependent only)
 # ============================================================
 
-# Ensure Rust toolchain dirs are writable (Dockerfile chown can be
-# lost by layer caching or volume mounts).
+# Resolve HOME to the build-time user's home directory.
+# OCI-format builds and init wrappers may run the entrypoint as
+# root with HOME=/root, but all configs live under /home/vscode.
+if [ -d /home/vscode ] && [ "$HOME" != "/home/vscode" ]; then
+  export HOME=/home/vscode
+fi
+
+# Rust toolchain: warn if not writable (fix ownership in Dockerfile, not at runtime)
 if [ -d /usr/local/rustup ] && [ ! -w /usr/local/rustup ]; then
-  sudo chown -R "$(id -u):$(id -g)" /usr/local/rustup /usr/local/cargo 2>/dev/null || true
+  echo 'WARNING: /usr/local/rustup is not writable — Rust toolchain updates will fail' >&2
 fi
 
 if [ -n "$GIT_AUTHOR_NAME" ]; then
@@ -20,10 +26,8 @@ fi
 
 git config --global --add safe.directory /workspace
 
-if [ -n "$TZ" ]; then
-  sudo ln -snf "/usr/share/zoneinfo/$TZ" /etc/localtime
-  echo "$TZ" | sudo tee /etc/timezone >/dev/null
-fi
+# TZ is handled by the TZ env var; glibc reads it directly.
+# No need to write /etc/localtime (requires root).
 
 if [ -n "$SSH_PRIVATE_KEY" ]; then
   _old_umask=$(umask)
@@ -56,7 +60,9 @@ if [ ! -L "$HOME/.agents/skills" ]; then
   ln -sf "$HOME/.claude/skills" "$HOME/.agents/skills"
 fi
 
-sudo cron 2>/dev/null || true
+# Start cron for user-level scheduled tasks (nightly-update)
+# The user crontab is set at build time in the Dockerfile.
+cron 2>/dev/null || true
 
 # ============================================================
 # gogcli (gog) — restore OAuth credentials and refresh token
@@ -133,6 +139,12 @@ if [ -n "$LITELLM_BASE_URL" ]; then
   export ANTHROPIC_DEFAULT_HAIKU_MODEL="claude-haiku-4-5"
   export ANTHROPIC_DEFAULT_SONNET_MODEL="claude-sonnet-4-6"
   export ANTHROPIC_DEFAULT_OPUS_MODEL="pd-claude-opus-4-7"
+  export ANTHROPIC_API_ENDPOINT="${LITELLM_BASE_URL}/anthropic"
+  # xcsh/pi/omp model defaults (PI_* env vars)
+  export PI_DEFAULT_MODEL="anthropic/claude-sonnet-4-6"
+  export PI_SMOL_MODEL="anthropic/claude-haiku-4-5"
+  export PI_SLOW_MODEL="anthropic/pd-claude-opus-4-7"
+  export PI_PLAN_MODEL="anthropic/pd-claude-opus-4-7"
 fi
 
 # ============================================================
@@ -287,6 +299,8 @@ providers:
       type: openai-compat
 EOF
   unset _xcsh_models
+  # Set default model roles so xcsh works without --model flag
+  xcsh config set modelRoles '{"default":"anthropic/claude-sonnet-4-6","smol":"anthropic/claude-haiku-4-5","slow":"anthropic/pd-claude-opus-4-7","plan":"anthropic/pd-claude-opus-4-7"}' >/dev/null 2>&1 || true
 fi
 
 # ============================================================
@@ -364,8 +378,10 @@ fix_chrome_symlink() {
   chrome_bin=$(find "$HOME/.cache/ms-playwright" \
     -name chrome -path '*/chromium-*/chrome-linux*/chrome' -print -quit 2>/dev/null || true)
   if [ -n "$chrome_bin" ]; then
-    sudo mkdir -p /opt/google/chrome
-    sudo ln -sf "$chrome_bin" /opt/google/chrome/chrome
+    mkdir -p "$HOME/.local/opt/google/chrome"
+    ln -sf "$chrome_bin" "$HOME/.local/opt/google/chrome/chrome"
+    # Add to PATH so chrome-browser.sh and MCP servers find it
+    export PATH="$HOME/.local/opt/google/chrome:$PATH"
   fi
 }
 fix_chrome_symlink
@@ -748,36 +764,39 @@ if [ "${ENABLE_FIRECRAWL:-true}" = "true" ] && [ -d /opt/firecrawl ]; then
   # Redis (daemonised, logs to /tmp/redis.log)
   redis-server --daemonize yes --logfile /tmp/redis.log 2>/dev/null
 
-  # PostgreSQL — ensure runtime dir exists and start cluster
-  sudo mkdir -p /var/run/postgresql
-  sudo chown postgres:postgres /var/run/postgresql
+  # PostgreSQL — vscode-owned cluster (set up in Dockerfile)
+  _pg_socket="$HOME/.local/run/postgresql"
+  mkdir -p "$_pg_socket" 2>/dev/null || true
   _pg_cluster=$(pg_lsclusters -h 2>/dev/null | awk 'NR==1{print $1, $2}')
   if [ -n "$_pg_cluster" ]; then
     # shellcheck disable=SC2086
-    sudo pg_ctlcluster $_pg_cluster start 2>/dev/null || true
+    pg_ctlcluster $_pg_cluster start 2>/dev/null || true
   fi
   unset _pg_cluster
 
   # Wait for PostgreSQL readiness (up to 5s)
   for _i in $(seq 1 10); do
-    pg_isready -h /var/run/postgresql -q 2>/dev/null && break
+    pg_isready -h "$_pg_socket" -q 2>/dev/null && break
     sleep 0.5
   done
   unset _i
 
   # Initialise firecrawl database on first run
-  if pg_isready -h /var/run/postgresql -q 2>/dev/null; then
-    if ! psql -h /var/run/postgresql -U postgres -lqt 2>/dev/null | grep -qw firecrawl; then
-      createdb -h /var/run/postgresql -U postgres firecrawl 2>/dev/null
-      psql -h /var/run/postgresql -U postgres -d firecrawl \
+  if pg_isready -h "$_pg_socket" -q 2>/dev/null; then
+    if ! psql -h "$_pg_socket" -lqt 2>/dev/null | grep -qw firecrawl; then
+      createdb -h "$_pg_socket" firecrawl 2>/dev/null || true
+      psql -h "$_pg_socket" -d firecrawl \
         -f /opt/firecrawl/apps/nuq-postgres/nuq.sql >/dev/null 2>&1 || true
     fi
   fi
+  unset _pg_socket
 
-  # RabbitMQ (required for extract endpoint)
-  sudo rabbitmq-server -detached 2>/dev/null || true
+  # RabbitMQ — user-writable dirs (set up in Dockerfile)
+  RABBITMQ_MNESIA_BASE="$HOME/.local/lib/rabbitmq" \
+    RABBITMQ_LOG_BASE="$HOME/.local/log/rabbitmq" \
+    rabbitmq-server >/dev/null 2>&1 &
   for _i in $(seq 1 10); do
-    sudo rabbitmqctl status >/dev/null 2>&1 && break
+    rabbitmqctl status >/dev/null 2>&1 && break
     sleep 1
   done
   unset _i
@@ -857,16 +876,16 @@ start_chrome_browser
 # Tailscale (userspace networking)
 # ============================================================
 if [ "${ENABLE_TAILSCALE:-false}" = "true" ]; then
-  sudo tailscaled --tun=userspace-networking --state=/var/lib/tailscale/tailscaled.state >/dev/null 2>&1 &
+  tailscaled --tun=userspace-networking --state="$HOME/.local/tailscale/tailscaled.state" >/dev/null 2>&1 &
   if [ -n "$TAILSCALE_AUTHKEY" ]; then
     (
       retries=0
       while [ $retries -lt 50 ]; do
-        sudo tailscale status >/dev/null 2>&1 && break
+        tailscale status >/dev/null 2>&1 && break
         sleep 0.1
         retries=$((retries + 1))
       done
-      sudo tailscale up --authkey="$TAILSCALE_AUTHKEY" --accept-routes >/dev/null 2>&1
+      tailscale up --authkey="$TAILSCALE_AUTHKEY" --accept-routes >/dev/null 2>&1
     ) &
   fi
 fi
@@ -901,6 +920,7 @@ ENVEOF
     ANTHROPIC_DEFAULT_SONNET_MODEL ANTHROPIC_DEFAULT_OPUS_MODEL \
     OPENAI_API_KEY OPENAI_BASE_URL \
     ANTHROPIC_OAUTH_TOKEN \
+    PI_DEFAULT_MODEL PI_SMOL_MODEL PI_SLOW_MODEL PI_PLAN_MODEL \
     GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL; do
     eval "_val=\${${_var}:-}"
     [ -n "$_val" ] && printf 'export %s=%q\n' "$_var" "$_val"
