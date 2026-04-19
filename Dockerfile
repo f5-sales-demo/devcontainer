@@ -1004,9 +1004,11 @@ WORKDIR /
 # Auth is set to 'trust' for local socket connections (single-user container).
 # hadolint ignore=DL3059,SC2046
 RUN pg_dropcluster --stop $(pg_lsclusters -h | awk 'NR==1{print $1, $2}') 2>/dev/null || true \
-    && mkdir -p /home/${USERNAME}/.local/run/postgresql \
+    && mkdir -p /etc/postgresql /var/log/postgresql \
+       /home/${USERNAME}/.local/run/postgresql \
        /home/${USERNAME}/.local/lib/postgresql \
     && chown -R ${USERNAME}:${USERNAME} \
+       /etc/postgresql /var/log/postgresql \
        /home/${USERNAME}/.local/run/postgresql \
        /home/${USERNAME}/.local/lib/postgresql \
     && su - ${USERNAME} -c "pg_createcluster \
@@ -1014,7 +1016,8 @@ RUN pg_dropcluster --stop $(pg_lsclusters -h | awk 'NR==1{print $1, $2}') 2>/dev
        --socketdir=/home/${USERNAME}/.local/run/postgresql \
        --start-conf=manual \
        $(dpkg -l 'postgresql-*' | awk '/^ii.*postgresql-[0-9]/{gsub(/postgresql-/,\"\");print \$2;exit}') main" \
-    && PG_HBA=$(find /home/${USERNAME}/.local/lib/postgresql -name pg_hba.conf -print -quit 2>/dev/null) \
+    && PG_HBA=$(find /etc/postgresql /home/${USERNAME}/.local/lib/postgresql \
+       -name pg_hba.conf -print -quit 2>/dev/null) \
     && if [ -n "$PG_HBA" ]; then \
         sed -i 's/peer/trust/g; s/scram-sha-256/trust/g' "$PG_HBA"; \
       fi
@@ -1026,7 +1029,11 @@ RUN mkdir -p /home/${USERNAME}/.local/lib/rabbitmq \
     && chown -R ${USERNAME}:${USERNAME} \
        /home/${USERNAME}/.local/lib/rabbitmq \
        /home/${USERNAME}/.local/log/rabbitmq \
-       /var/lib/rabbitmq /var/log/rabbitmq /etc/rabbitmq 2>/dev/null || true
+       /var/lib/rabbitmq /var/log/rabbitmq /etc/rabbitmq \
+    && chmod 600 /var/lib/rabbitmq/.erlang.cookie \
+    && cp /var/lib/rabbitmq/.erlang.cookie /home/${USERNAME}/.erlang.cookie \
+    && chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.erlang.cookie \
+    && chmod 400 /home/${USERNAME}/.erlang.cookie
 
 # ============================================================
 # 12. pip tools
