@@ -1003,7 +1003,7 @@ WORKDIR /
 # Drop the default postgres-user cluster and replace with one owned by vscode.
 # Auth is set to 'trust' for local socket connections (single-user container).
 # hadolint ignore=DL3059,SC2046
-RUN PG_VER=$(dpkg -l 'postgresql-*' | awk '/^ii.*postgresql-[0-9]/{gsub(/postgresql-/,"");print \$2;exit}') \
+RUN PG_VER=$(dpkg -l 'postgresql-*' | awk '/^ii.*postgresql-[0-9]/{gsub(/postgresql-/,"");print $2;exit}') \
     && pg_dropcluster --stop $(pg_lsclusters -h | awk 'NR==1{print $1, $2}') 2>/dev/null || true \
     && mkdir -p /etc/postgresql /var/log/postgresql \
        /home/${USERNAME}/.local/run/postgresql \
