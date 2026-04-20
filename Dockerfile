@@ -1375,9 +1375,13 @@ RUN mkdir -p "/home/${USERNAME}/.agents" \
 # hadolint ignore=DL3059
 RUN npx playwright install-deps
 
-# Fix ownership of dirs created by root under /home/vscode (e.g. .cache from playwright)
+# Fix ownership of dirs created by root under /home/vscode.
+# Earlier stages create intermediate parents (e.g. /home/vscode/.local from the
+# postgres setup's mkdir -p, /home/vscode/.cache from playwright) that chown -R
+# on their leaf paths does not cover. Widening the chown to the entire home dir
+# ensures the USER switch below lands on a tree vscode fully owns.
 # hadolint ignore=DL3059
-RUN chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.cache
+RUN chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
 
 # ============================================================
 # User setup
