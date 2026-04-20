@@ -1565,7 +1565,6 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     # $ZSH_CUSTOM are sourced AFTER plugins, so the unalias wins.
     && echo 'unalias rm cp mv 2>/dev/null || true' > "$HOME/.oh-my-zsh/custom/disable-interactive-safety.zsh" \
     && echo '[ -f /run/entrypoint-env.sh ] && . /run/entrypoint-env.sh' >> "$HOME/.zshenv" \
-    && mkdir -p /etc/zsh && echo '[ -f /run/entrypoint-env.sh ] && . /run/entrypoint-env.sh' >> /etc/zsh/zshenv \
     && echo '[ -d /workspace ] && cd /workspace' >> "$HOME/.zshrc"
 
 # ============================================================
@@ -1663,9 +1662,14 @@ COPY --chown=${USERNAME}:${USERNAME} codex-config/sync-agents.sh /opt/codex-conf
 # 17a. Sync Claude Code plugin agents → Codex .toml format
 # Converts ~/.claude/plugins/cache/*/agents/*.md to ~/.codex/agents/*.toml
 # so Codex can natively discover the same agents as Claude Code.
+# chmod as root (modifies /opt/); run as vscode so output files under
+# ~/.codex/ are owned by vscode, not root.
 # hadolint ignore=DL3059
-RUN chmod +x /opt/codex-config/sync-agents.sh \
-    && /opt/codex-config/sync-agents.sh
+RUN chmod +x /opt/codex-config/sync-agents.sh
+USER $USERNAME
+# hadolint ignore=DL3059
+RUN /opt/codex-config/sync-agents.sh
+USER root
 COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
 COPY --chown=${USERNAME}:${USERNAME} omp-config/settings.json /home/${USERNAME}/.omp/agent/settings.json
 COPY --chown=${USERNAME}:${USERNAME} omp-config/config.yml /home/${USERNAME}/.omp/agent/config.yml
@@ -1680,7 +1684,10 @@ COPY --chown=${USERNAME}:${USERNAME} crush-config/crush.json /home/${USERNAME}/.
 # to eliminate the ~13.5 s first-run npm download delay.
 #   Phase 1: reify ~/.config/opencode/package.json
 #   Phase 2: pre-install oh-my-openagent plugin into cache
+# Runs as vscode so node_modules under ~/.config and ~/.cache
+# are owned by vscode, not root.
 # ────────────────────────────────────────────────────────────
+USER $USERNAME
 # hadolint ignore=DL3059
 RUN printf '{"dependencies":{"@opencode-ai/plugin":"^1.4.3"}}\n' \
        > /home/${USERNAME}/.config/opencode/package.json \
@@ -1691,13 +1698,16 @@ RUN printf '{"dependencies":{"@opencode-ai/plugin":"^1.4.3"}}\n' \
     && npm install --no-audit --no-fund --prefix /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent
 
 # Map CLAUDE_CODE_OAUTH_TOKEN → ANTHROPIC_OAUTH_TOKEN for tools
-# that read the Anthropic-native env var (e.g. Pi).
+# that read the Anthropic-native env var (e.g. Pi). Writes the bridge
+# into vscode's ~/.profile (bash login) and ~/.zshenv (all zsh shells);
+# equivalent to /etc/profile.d + /etc/zsh/zshenv for a single-user
+# container and requires no root-owned config files.
 # hadolint ignore=SC2016
-RUN printf '#!/bin/bash\nif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then\n  export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"\nfi\n' \
-      > /etc/profile.d/anthropic-oauth.sh \
-    && chmod +x /etc/profile.d/anthropic-oauth.sh \
+RUN printf 'if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then\n  export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"\nfi\n' \
+      >> "$HOME/.profile" \
     && printf 'if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then\n  export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"\nfi\n' \
-      >> /etc/zsh/zshenv
+      >> "$HOME/.zshenv"
+USER root
 
 # ============================================================
 # 18. Build fingerprint — bake commit SHA + date into the image
