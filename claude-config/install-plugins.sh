@@ -83,31 +83,6 @@ for KEY in $KEYS; do
         fi
       fi
     fi
-  elif [ "$NAME" = "claude-mem" ]; then
-    # External plugin — clone repo, copy only the plugin/ subdirectory
-    EXISTING=$(find "${CACHE_DIR}/${NAME}" -name "plugin.json" -path "*/.claude-plugin/*" 2>/dev/null | head -1)
-    if [ -n "$EXISTING" ]; then
-      DEST=$(dirname "$(dirname "$EXISTING")")
-      VERSION=$(basename "$DEST")
-    else
-      git clone --depth=1 --single-branch --branch main \
-        https://github.com/thedotmack/claude-mem.git /tmp/claude-mem-clone
-      cp -a /tmp/claude-mem-clone/plugin/. "$DEST/"
-      rm -rf /tmp/claude-mem-clone
-      if [ -f "${DEST}/.claude-plugin/plugin.json" ]; then
-        V=$(jq -r '.version // empty' "${DEST}/.claude-plugin/plugin.json")
-        if [ -n "$V" ] && [ "$V" != "$VERSION" ]; then
-          VERSION="$V"
-          NEW_DEST="${CACHE_DIR}/${NAME}/${VERSION}"
-          if [ "$DEST" != "$NEW_DEST" ]; then
-            mkdir -p "$NEW_DEST"
-            cp -a "${DEST}/." "$NEW_DEST/"
-            rm -rf "$DEST"
-            DEST="$NEW_DEST"
-          fi
-        fi
-      fi
-    fi
   else
     echo "WARNING: no source found for plugin '${NAME}' in marketplace '${MKT}', skipping"
     rm -rf "$DEST"
@@ -142,10 +117,9 @@ find "${PLUGIN_BASE}/marketplaces" "${PLUGIN_BASE}/cache" \
 
 # Ensure every enabled cached plugin has a marketplace directory entry.
 # Claude Code resolves plugin paths from marketplaces/<mkt>/plugins/<name>/
-# Plugins installed from external sources (GitHub clones like superpowers,
-# claude-mem) only exist in cache — create marketplace symlinks so Claude
-# Code can find them and run their hooks without "Plugin directory does not
-# exist" errors.
+# Plugins installed from external sources (GitHub clones like superpowers)
+# only exist in cache — create marketplace symlinks so Claude Code can find
+# them and run their hooks without "Plugin directory does not exist" errors.
 for KEY in $KEYS; do
   NAME=$(echo "$KEY" | cut -d@ -f1)
   MKT=$(echo "$KEY" | cut -d@ -f2)
@@ -194,7 +168,7 @@ for MKT_DIR in "${PLUGIN_BASE}/marketplaces"/*/; do
 done
 
 # Second pass: neutralize hooks.json at non-standard paths (monorepo marketplaces)
-# e.g. thedotmack/cursor-hooks/hooks.json (not under plugins/)
+# e.g. <mkt>/cursor-hooks/hooks.json (not under plugins/)
 while IFS= read -r HF; do
   [ -f "$HF" ] || continue
   # Skip files already handled by the standard loop above

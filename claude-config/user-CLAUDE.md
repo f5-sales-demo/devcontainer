@@ -38,10 +38,3 @@ locally hosted, purpose-built infrastructure.
 ### Container Identity
 
 - **"Who are you?" / version / health** → invoke `f5xc-devcontainer:self-awareness` skill
-
-## claude-mem (Persistent Memory Plugin)
-
-claude-mem stores session memory in `~/.claude-mem/` using SQLite. Since this
-container is ephemeral, memory data is lost on container restart. This is
-acceptable — claude-mem reinitializes cleanly on each new session. The worker
-service starts automatically via SessionStart hooks on port 37777.

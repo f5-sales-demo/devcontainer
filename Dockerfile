@@ -1340,16 +1340,12 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
         https://github.com/f5xc-salesdemos/marketplace.git \
         "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" \
     && git clone --depth=1 --single-branch --branch main \
-        https://github.com/thedotmack/claude-mem.git \
-        "${PLUGIN_BASE}/marketplaces/thedotmack" \
-    && git clone --depth=1 --single-branch --branch main \
         https://github.com/f5xc-salesdemos/codex-plugin-cc.git \
         "${PLUGIN_BASE}/marketplaces/openai-codex" \
     && TS="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
-    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"thedotmack":{"source":{"source":"github","repo":"thedotmack/claude-mem"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":false},"openai-codex":{"source":{"source":"github","repo":"f5xc-salesdemos/codex-plugin-cc"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":false}}' \
+    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"openai-codex":{"source":{"source":"github","repo":"f5xc-salesdemos/codex-plugin-cc"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":false}}' \
         "${PLUGIN_BASE}/marketplaces/claude-plugins-official" "$TS" \
         "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" "$TS" \
-        "${PLUGIN_BASE}/marketplaces/thedotmack" "$TS" \
         "${PLUGIN_BASE}/marketplaces/openai-codex" "$TS" \
         > "${PLUGIN_BASE}/known_marketplaces.json" \
     && printf '{"fetchedAt":"%s","plugins":[]}' "$TS" \
@@ -1357,14 +1353,6 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
     && /opt/claude-config/install-plugins.sh \
         "${PLUGIN_BASE}" /opt/claude-config/settings.json \
     && chown -R ${USERNAME}:${USERNAME} "${PLUGIN_BASE}"
-
-# claude-mem runtime dependencies (tree-sitter native parsers + worker)
-# hadolint ignore=DL3016,DL3059
-RUN CMEM_PKG=$(find /home/${USERNAME}/.claude/plugins/cache/thedotmack/claude-mem \
-      -name "package.json" -not -path "*/node_modules/*" -maxdepth 3 -print -quit 2>/dev/null) \
-    && if [ -n "$CMEM_PKG" ]; then \
-        npm install --legacy-peer-deps --prefix "$(dirname "$CMEM_PKG")"; \
-    fi
 
 # 12m. Claude Code skills (git-cloned external skills)
 # hadolint ignore=DL3059

@@ -74,8 +74,8 @@ for hf in "$PLUGIN_BASE"/marketplaces/*/plugins/*/hooks/hooks.json; do
 done
 
 # ── 4. Neutralize non-standard-path hooks.json (monorepo marketplaces) ────
-# Some marketplaces (e.g. thedotmack) have hooks.json at non-standard paths
-# like <mkt>/cursor-hooks/hooks.json instead of <mkt>/plugins/<name>/hooks/.
+# Some marketplaces have hooks.json at non-standard paths like
+# <mkt>/cursor-hooks/hooks.json instead of <mkt>/plugins/<name>/hooks/.
 # These are missed by the glob in step 3. Find them and neutralize unless
 # they are part of an enabled plugin's standard directory.
 while IFS= read -r hf; do
@@ -85,7 +85,8 @@ while IFS= read -r hf; do
   hd=$(dirname "$hf")
 
   # Check if this hooks.json is inside a directory that an enabled plugin
-  # symlinks to (e.g. thedotmack/plugin/ -> cache/thedotmack/claude-mem/)
+  # symlinks to (external-cloned plugins have marketplace dirs symlinked
+  # into the cache entry).
   hf_parent=$(dirname "$hd")
   hf_parent_real=$(readlink -f "$hf_parent" 2>/dev/null || echo "$hf_parent")
   skip=false
