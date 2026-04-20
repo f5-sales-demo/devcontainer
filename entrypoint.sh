@@ -661,7 +661,6 @@ if [ -f "$SETTINGS" ] && [ -f "$TEMPLATE" ] && command -v jq >/dev/null 2>&1; th
   fi
 fi
 
-
 # ============================================================
 # Firecrawl — self-hosted web scraper
 # API on port 3002, Playwright on port 3000.
