@@ -614,7 +614,8 @@ else
     test "$MISSING_CACHE" -eq 0
 
   # Test 20e: non-standard path hooks.json files are neutralized unless they
-  # belong to an enabled plugin's directory (e.g., thedotmack/plugin/ is claude-mem)
+  # belong to an enabled plugin's directory (external-cloned plugins have
+  # marketplace dirs symlinked into their cache entry).
   NON_STD_ACTIVE=0
   while IFS= read -r hf; do
     [ -f "$hf" ] || continue

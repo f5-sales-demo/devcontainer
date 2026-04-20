@@ -58,7 +58,6 @@
     "f5xc-devcontainer@f5xc-salesdemos-marketplace": true,
     "f5xc-platform@f5xc-salesdemos-marketplace": true,
     "f5xc-meddpicc@f5xc-salesdemos-marketplace": true,
-    "claude-mem@thedotmack": true,
     "codex@openai-codex": true
   },
   "extraKnownMarketplaces": {
@@ -90,18 +89,6 @@
             "type": "command",
             "command": "/opt/claude-config/neutralize-hooks.sh",
             "timeout": 10
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "for _i in 1 2 3; do curl -sf http://localhost:37777/api/readiness >/dev/null 2>&1 && exit 0; sleep 1; done; exit 0",
-            "timeout": 5
           }
         ]
       }

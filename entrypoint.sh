@@ -120,10 +120,6 @@ fi
 if [ -n "$LITELLM_API_KEY" ]; then
   export OPENAI_API_KEY="$LITELLM_API_KEY"
   export ANTHROPIC_API_KEY="$LITELLM_API_KEY"
-  # claude-mem strips ANTHROPIC_API_KEY from process.env for security;
-  # it only reads the key from its own ~/.claude-mem/.env file.
-  mkdir -p "$HOME/.claude-mem"
-  printf 'ANTHROPIC_API_KEY=%s\n' "$LITELLM_API_KEY" >"$HOME/.claude-mem/.env"
 fi
 if [ -n "$LITELLM_BASE_URL" ]; then
   export OPENAI_BASE_URL="${LITELLM_BASE_URL}/openai/v1"
@@ -433,15 +429,6 @@ if [ "${ENABLE_VNC:-false}" = "true" ]; then
 fi
 
 # ============================================================
-# Clean up stale processes on claude-mem worker port (issue #676)
-# Prevents port 37777 conflict when SessionStart hook triggers
-# the claude-mem worker before a previous instance has released.
-# ============================================================
-if command -v fuser >/dev/null 2>&1; then
-  fuser -k 37777/tcp >/dev/null 2>&1 || true
-fi
-
-# ============================================================
 # Fix plugin script permissions and neutralize disabled hooks
 #
 # Upstream bug requiring workaround:
@@ -536,7 +523,7 @@ neutralize_non_enabled_hooks() {
   done
 
   # Second pass: neutralize hooks.json at non-standard paths (monorepo marketplaces)
-  # e.g. thedotmack/cursor-hooks/hooks.json (not under plugins/)
+  # e.g. <mkt>/cursor-hooks/hooks.json (not under plugins/)
   local plugin_base="${HOME}/.claude/plugins"
   local hf hd hf_parent hf_parent_real skip link link_target link_name link_mkt current
   while IFS= read -r hf; do
@@ -609,44 +596,9 @@ neutralize_non_enabled_hooks() {
   done
 }
 
-# Wrap claude-mem hook commands with exit-0 guard to prevent
-# non-zero exit codes (from signal deaths during daemon spawn races)
-# from surfacing as "hook error" warnings in Claude Code.
-# The hook handlers already exit 0 on worker-unavailable errors;
-# the only failure mode that leaks non-zero is a signal kill of
-# the bun process during daemon restart attempts in PR()/TD().
-wrap_cmem_hooks_with_guard() {
-  local cmem_hooks
-  cmem_hooks=$(find "${HOME}/.claude/plugins/cache/thedotmack/claude-mem" \
-    -name "hooks.json" -path "*/hooks/hooks.json" -print -quit 2>/dev/null)
-  [ -f "$cmem_hooks" ] || return 0
-
-  # Only patch if not already patched (idempotent)
-  grep -q '|| exit 0' "$cmem_hooks" 2>/dev/null && return 0
-
-  # Use jq to wrap UserPromptSubmit commands with ( ... ) || exit 0
-  local tmp="${cmem_hooks}.tmp"
-  if jq '
-    if .hooks.UserPromptSubmit then
-      .hooks.UserPromptSubmit |= map(
-        .hooks |= map(
-          if .command and (.command | test("\\|\\| exit 0$") | not) then
-            .command = "( " + .command + " ) || exit 0"
-          else . end
-        )
-      )
-    else . end
-  ' "$cmem_hooks" >"$tmp" 2>/dev/null; then
-    mv -f "$tmp" "$cmem_hooks"
-  else
-    rm -f "$tmp"
-  fi
-}
-
 ensure_marketplace_dirs
 find "${HOME}/.claude/plugins" -name "*.sh" -type f -exec chmod +x {} + 2>/dev/null || true
 neutralize_non_enabled_hooks
-wrap_cmem_hooks_with_guard
 
 # Persistent background daemon (Layer 1)
 # Phase 1: poll every 1-2s for 60s (catches initial dual plugin syncs
@@ -666,7 +618,6 @@ wrap_cmem_hooks_with_guard
     find "${HOME}/.claude/plugins" -name "*.sh" -type f \
       ! -perm -u+x -exec chmod +x {} + 2>/dev/null
     neutralize_non_enabled_hooks
-    wrap_cmem_hooks_with_guard
     elapsed=$((elapsed + $([ "$elapsed" -lt 10 ] && echo 1 || echo 2)))
   done
 
@@ -682,7 +633,6 @@ wrap_cmem_hooks_with_guard
       find "${HOME}/.claude/plugins" -name "*.sh" -type f \
         ! -perm -u+x -exec chmod +x {} + 2>/dev/null
       neutralize_non_enabled_hooks
-      wrap_cmem_hooks_with_guard
     done
   else
     while true; do
@@ -691,7 +641,6 @@ wrap_cmem_hooks_with_guard
       find "${HOME}/.claude/plugins" -name "*.sh" -type f \
         ! -perm -u+x -exec chmod +x {} + 2>/dev/null
       neutralize_non_enabled_hooks
-      wrap_cmem_hooks_with_guard
     done
   fi
 ) >/dev/null 2>&1 &
@@ -712,41 +661,6 @@ if [ -f "$SETTINGS" ] && [ -f "$TEMPLATE" ] && command -v jq >/dev/null 2>&1; th
   fi
 fi
 
-# ============================================================
-# claude-mem worker pre-start (issue #882b)
-# Start the claude-mem worker early so it is healthy before
-# Claude Code's SessionStart hooks fire.  The plugin's hooks
-# poll localhost:37777/health with an 8-second timeout — on a
-# cold start this is not enough time, producing two
-# "SessionStart:startup hook error" warnings.  Pre-starting
-# the worker here (after fuser killed stale instances and
-# after plugin permissions are fixed) eliminates the race.
-# The subsequent Firecrawl / Chrome startup provides 10-15 s
-# of natural delay before the user starts Claude Code.
-# ============================================================
-_CMEM_ROOT=$(find "$HOME/.claude/plugins/cache/thedotmack/claude-mem" \
-  -maxdepth 1 -type d -name '[0-9]*' 2>/dev/null | sort -V | tail -1)
-if [ -n "$_CMEM_ROOT" ] && [ -f "$_CMEM_ROOT/scripts/worker-service.cjs" ]; then
-  # Locate bun runtime (mirrors bun-runner.js discovery: PATH then ~/.bun/bin).
-  _CMEM_BUN=""
-  if command -v bun >/dev/null 2>&1; then
-    _CMEM_BUN=$(command -v bun)
-  elif [ -x "$HOME/.bun/bin/bun" ]; then
-    _CMEM_BUN="$HOME/.bun/bin/bun"
-  fi
-  if [ -n "$_CMEM_BUN" ]; then
-    # Run the worker daemon directly with --daemon flag.  This starts the HTTP
-    # server in-process without the two-stage fork that worker-service.cjs
-    # "start" uses (fork + setsid + SIGKILL parent).  No fork means no SIGKILL,
-    # no "Killed" output from bash.  disown removes the job from bash's table.
-    # Health gate before exec "$@" (end of file) guarantees the worker is
-    # registered before Claude Code's plugin hooks can fire.
-    CLAUDE_MEM_WORKER_PORT=37777 "$_CMEM_BUN" \
-      "$_CMEM_ROOT/scripts/worker-service.cjs" --daemon >/dev/null 2>&1 &
-    disown
-  fi
-fi
-unset _CMEM_ROOT _CMEM_BUN
 
 # ============================================================
 # Firecrawl — self-hosted web scraper
@@ -889,18 +803,6 @@ if [ "${ENABLE_TAILSCALE:-false}" = "true" ]; then
     ) &
   fi
 fi
-
-# Wait for claude-mem worker health AND readiness before dropping to shell.
-# Health = HTTP server listening.  Readiness = full initialisation complete.
-# The worker was started earlier in the entrypoint; Firecrawl, Chrome, and
-# Tailscale startup have given it 10-30 s to initialise.  This synchronous
-# gate prevents Claude Code's plugin hooks from encountering an unregistered
-# worker and triggering the daemon fork's SIGKILL on hook processes.
-for _i in 1 2 3 4 5 6 7 8 9 10; do
-  curl -sf http://localhost:37777/api/readiness >/dev/null 2>&1 && break
-  curl -sf http://localhost:37777/health >/dev/null 2>&1 || true
-  sleep 1
-done
 
 # ============================================================
 # Persist derived env vars for podman-exec shells.
