@@ -716,7 +716,12 @@ RUN curl ${CURL_RETRY} -fsSLo /usr/local/bin/phpcs \
 # 10f. PowerShell modules (PSScriptAnalyzer + arm-ttk)
 # ============================================================
 # hadolint ignore=DL3059
-RUN pwsh -NoProfile -Command 'Set-PSRepository PSGallery -InstallationPolicy Trusted; Install-Module -Name PSScriptAnalyzer -Scope AllUsers -Force' \
+RUN ARCH=$(dpkg --print-architecture) \
+    && if [ "$ARCH" = "amd64" ]; then \
+        pwsh -NoProfile -Command 'Set-PSRepository PSGallery -InstallationPolicy Trusted; Install-Module -Name PSScriptAnalyzer -Scope AllUsers -Force'; \
+    else \
+        echo "SKIP: PSScriptAnalyzer install not supported on ${ARCH} (illegal instruction in .NET JIT)"; \
+    fi \
     && git clone --depth=1 https://github.com/Azure/arm-ttk.git /usr/lib/microsoft/arm-ttk \
     && rm -rf /usr/lib/microsoft/arm-ttk/.git
 ENV ARM_TTK_PSD1="/usr/lib/microsoft/arm-ttk/arm-ttk/arm-ttk.psd1"
