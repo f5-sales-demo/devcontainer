@@ -7,9 +7,19 @@
 # Or manually:
 #   podman compose -f docker-compose.yml -f docker-compose.build.yml build
 #   podman compose -f docker-compose.yml -f docker-compose.build.yml up -d
+#
+# cache_from: localname without tag is required — podman rejects refs with tags.
+# Use the local image (tagged from previous build or pulled from GHCR) as a
+# layer cache source so unchanged Dockerfile instructions are never re-executed.
+# After the first successful build, retag the result:
+#   podman tag localhost/devcontainer:local localhost/devcontainer
 services:
   dev:
     platform: linux/arm64
     build:
       context: .
       dockerfile: Dockerfile
+      tags:
+        - localhost/devcontainer:local
+      cache_from:
+        - localhost/devcontainer
