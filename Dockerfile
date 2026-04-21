@@ -1290,6 +1290,25 @@ RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
       -e "/opt/hermes-agent[all]" 2>&1 | grep -v "missing.*RECORD") \
     && npm --prefix /opt/hermes-agent install --ignore-scripts 2>/dev/null || true
 
+# ============================================================
+# 12o. Maki — AI coding agent (Rust binary from GitHub release)
+#      Uses the dynamic-provider mechanism (~/.maki/providers/)
+#      to route requests to the LiteLLM Anthropic passthrough;
+#      the provider script is COPY'd in section 17.
+# ============================================================
+ARG MAKI_VERSION=v0.2.6
+# hadolint ignore=DL3059
+RUN UNAME_ARCH=$(uname -m) \
+    && case "$UNAME_ARCH" in \
+         x86_64|amd64)  MAKI_TARGET=x86_64-unknown-linux-musl ;; \
+         aarch64|arm64) MAKI_TARGET=aarch64-unknown-linux-musl ;; \
+         *) echo "unsupported arch for maki: $UNAME_ARCH" && exit 1 ;; \
+       esac \
+    && curl ${CURL_RETRY} -fsSL \
+         "https://github.com/tontinton/maki/releases/download/${MAKI_VERSION}/maki-${MAKI_VERSION}-${MAKI_TARGET}.tar.gz" \
+       | tar xz -C /usr/local/bin maki \
+    && chmod +x /usr/local/bin/maki
+
 # Pre-stage plugin install script and settings for section 12l
 COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
 COPY claude-config/settings.json /opt/claude-config/settings.json
@@ -1381,6 +1400,7 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
     ~/.hermes/hooks \
     ~/.hermes/image_cache \
     ~/.hermes/audio_cache \
+    ~/.maki/providers \
     ~/.ssh
 
 # Bun JavaScript runtime and package manager
@@ -1655,6 +1675,7 @@ COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-openagent.json /home/
 COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.config/opencode/opencode-permissions.json
 COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
 COPY --chown=${USERNAME}:${USERNAME} crush-config/crush.json /home/${USERNAME}/.config/crush/crush.json
+COPY --chown=${USERNAME}:${USERNAME} maki-config/litellm /home/${USERNAME}/.maki/providers/litellm
 
 # ────────────────────────────────────────────────────────────
 # OpenCode npm pre-warm: pre-install base SDK and plugin deps

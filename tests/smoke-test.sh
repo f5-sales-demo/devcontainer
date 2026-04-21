@@ -31,7 +31,7 @@ PASS=0
 FAIL=0
 SKIP=0
 
-# shellcheck disable=SC2329
+# shellcheck disable=SC2329,SC2317
 cleanup() {
   "$RT" stop "$CONTAINER" >/dev/null 2>&1 || true
   "$RT" rm "$CONTAINER" >/dev/null 2>&1 || true
@@ -310,6 +310,16 @@ assert_contains "xcsh: default role = sonnet" "$XCSH_ROLES" "claude-sonnet-4-6"
 assert_contains "xcsh: slow role = opus" "$XCSH_ROLES" "pd-claude-opus-4-7"
 assert_contains "xcsh: smol role = haiku" "$XCSH_ROLES" "claude-haiku-4-5"
 
+# Maki: dynamic provider script staged, executable, base URL substituted
+assert_file "maki provider script" "/home/vscode/.maki/providers/litellm"
+MAKI_INFO=$(run /home/vscode/.maki/providers/litellm info)
+assert_contains "Maki: info reports anthropic base" "$MAKI_INFO" '"base":"anthropic"'
+MAKI_SCRIPT=$(run cat /home/vscode/.maki/providers/litellm)
+assert_not_contains "Maki: no __MAKI_BASE_URL__ placeholder" "$MAKI_SCRIPT" "__MAKI_BASE_URL__"
+assert_contains "Maki: base URL rendered" "$MAKI_SCRIPT" "${TEST_URL}/anthropic/v1/messages"
+MAKI_MODELS=$(run /home/vscode/.maki/providers/litellm models)
+assert_contains "Maki: opus in models list" "$MAKI_MODELS" "pd-claude-opus-4-7"
+
 # ============================================================
 # 5. AI assistant CLIs
 # ============================================================
@@ -323,6 +333,7 @@ assert_bin_ver "omp" "omp --version" "[0-9]"
 assert_bin_ver "xcsh" "xcsh --version" "xcsh"
 assert_bin_ver "opencode" "opencode --version" "."
 assert_bin_ver "codex" "codex --version" "codex"
+assert_bin_ver "maki" "maki --version" "maki"
 
 # ============================================================
 # 5b. AI functional tests (LIVE mode only)
@@ -366,6 +377,14 @@ if [ "$LIVE_API" = true ]; then
     ok "opencode prompt"
   else fail "opencode prompt (got: $(echo "$_out" | head -1))"; fi
 
+  # -m litellm/... forces the dynamic provider (~/.maki/providers/litellm);
+  # without it, maki defaults to claude-opus-4-6 via the built-in anthropic
+  # provider and hits api.anthropic.com, which our LiteLLM key can't auth to.
+  _out=$(timeout 60 "$RT" exec -u vscode "$CONTAINER" zsh -c "maki -p --yolo --exit-on-done -m litellm/claude-sonnet-4-6 '$PROMPT'" 2>&1 || true)
+  if echo "$_out" | grep -qi "$EXPECTED"; then
+    ok "maki prompt"
+  else fail "maki prompt (got: $(echo "$_out" | head -1))"; fi
+
   _out=$("$RT" exec -u vscode "$CONTAINER" zsh -c 'curl -sf "$ANTHROPIC_BASE_URL/v1/messages" -X POST -H "x-api-key: $ANTHROPIC_API_KEY" -H "content-type: application/json" -H "anthropic-version: 2023-06-01" -d "{\"model\":\"claude-sonnet-4-6\",\"max_tokens\":5,\"messages\":[{\"role\":\"user\",\"content\":\"reply only: hello\"}]}" | jq -r ".content[0].text"' 2>&1 || true)
   if echo "$_out" | grep -qi "hello"; then
     ok "API direct curl"
@@ -377,6 +396,7 @@ else
   skip "xcsh prompt (no live API)"
   skip "codex prompt (no live API)"
   skip "opencode prompt (no live API)"
+  skip "maki prompt (no live API)"
   skip "API direct curl (no live API)"
 fi
 
