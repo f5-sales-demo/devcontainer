@@ -336,6 +336,23 @@ if [ -n "$LITELLM_BASE_URL" ]; then
 fi
 
 # ============================================================
+# Maki — render base URL placeholder in the LiteLLM dynamic provider.
+# ~/.maki/providers/litellm carries __MAKI_BASE_URL__; resolve it at
+# container start to the LiteLLM Anthropic /v1/messages endpoint
+# (maki POSTs the request body directly to base_url with no path
+# appended, so base_url must be the full endpoint URL — not just
+# the /anthropic root). The script reads LITELLM_API_KEY live at
+# resolve time (no key baked into the file).
+# ============================================================
+if [ -n "$LITELLM_BASE_URL" ]; then
+  _maki_provider="$HOME/.maki/providers/litellm"
+  if [ -f "$_maki_provider" ]; then
+    sed -i "s|__MAKI_BASE_URL__|${LITELLM_BASE_URL}/anthropic/v1/messages|g" "$_maki_provider"
+  fi
+  unset _maki_provider
+fi
+
+# ============================================================
 # Proxy sanity probe.
 #
 # After all per-tool configs are rendered, POST a 1-token request
