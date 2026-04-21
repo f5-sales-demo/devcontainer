@@ -994,13 +994,13 @@ WORKDIR /opt/firecrawl/apps/api
 # hadolint ignore=DL3059
 RUN npx tsc
 
+# Final playwright-service build + .git cleanup consolidated into one RUN
+# (previously two) to shave one layer off the overlayfs depth count.
 WORKDIR /opt/firecrawl/apps/playwright-service-ts
 # hadolint ignore=DL3059
 RUN pnpm install --ignore-scripts && npx tsc \
-    && PLAYWRIGHT_BROWSERS_PATH=/home/vscode/.cache/ms-playwright npx playwright install chromium
-
-# hadolint ignore=DL3059
-RUN rm -rf /opt/firecrawl/.git
+    && PLAYWRIGHT_BROWSERS_PATH=/home/vscode/.cache/ms-playwright npx playwright install chromium \
+    && rm -rf /opt/firecrawl/.git
 
 WORKDIR /
 
@@ -1171,63 +1171,31 @@ RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install sslyze
 
-# signal-cli (Signal messenger CLI — Java application)
-# hadolint ignore=DL3059
+# ============================================================
+# Language ecosystem installs, consolidated to one layer.
+#   signal-cli (Java CLI tarball, /opt + symlink)
+#   12c. Ruby: rubocop family + ruby-lsp (gem)
+#   12e. Perl: Perl::Critic extension modules (cpanm)
+#   12f. Lua: luacheck (luarocks)
+#   12g. R: lintr + purrr
+#   12h. Ruby security: wpscan, evil-winrm (gem)
+# ============================================================
+# hadolint ignore=DL3028,DL3059
 RUN SIGNAL_CLI_VERSION="0.14.1" \
     && curl -fsSL "https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}.tar.gz" \
       -o /tmp/signal-cli.tar.gz \
     && tar xf /tmp/signal-cli.tar.gz -C /opt \
     && ln -sf "/opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli" /usr/local/bin/signal-cli \
-    && rm /tmp/signal-cli.tar.gz
-
-# ============================================================
-# 12c. Ruby linters (rubocop + extensions)
-# ============================================================
-# hadolint ignore=DL3028,DL3059
-RUN gem install --no-document \
-    rubocop \
-    rubocop-performance \
-    rubocop-rails \
-    rubocop-rake \
-    rubocop-rspec \
-    rubocop-minitest \
-    htmlbeautifier \
-    standardrb \
-    origami \
-    ruby-lsp
-
-# ============================================================
-# 12e. Perl linter modules (Perl::Critic extensions via cpanm)
-#      Core Perl::Critic is from APT (libperl-critic-perl).
-# ============================================================
-# hadolint ignore=DL3059
-RUN cpanm --notest \
-    Perl::Critic::Bangs \
-    Perl::Critic::Community \
-    Perl::Critic::Lax \
-    Perl::Critic::More \
-    Perl::Critic::StricterSubs \
-    Perl::Critic::Tics
-
-# ============================================================
-# 12f. Lua linter (luacheck via luarocks)
-# ============================================================
-# hadolint ignore=DL3059
-RUN luarocks install luacheck
-
-# ============================================================
-# 12g. R linter (lintr)
-# ============================================================
-# hadolint ignore=DL3059
-RUN Rscript -e 'install.packages(c("lintr", "purrr"), repos="https://cloud.r-project.org")'
-
-# ============================================================
-# 12h. Security Ruby gems (wpscan, evil-winrm)
-# ============================================================
-# hadolint ignore=DL3028,DL3059
-RUN gem install --no-document \
-    wpscan \
-    evil-winrm
+    && rm /tmp/signal-cli.tar.gz \
+    && gem install --no-document \
+        rubocop rubocop-performance rubocop-rails rubocop-rake \
+        rubocop-rspec rubocop-minitest htmlbeautifier standardrb \
+        origami ruby-lsp wpscan evil-winrm \
+    && cpanm --notest \
+        Perl::Critic::Bangs Perl::Critic::Community Perl::Critic::Lax \
+        Perl::Critic::More Perl::Critic::StricterSubs Perl::Critic::Tics \
+    && luarocks install luacheck \
+    && Rscript -e 'install.packages(c("lintr", "purrr"), repos="https://cloud.r-project.org")'
 
 # ============================================================
 # 12i. Git-cloned security tools (testssl.sh, exploitdb,
@@ -1615,12 +1583,16 @@ COPY --chown=${USERNAME}:${USERNAME} configs/init.lua /home/${USERNAME}/.config/
 COPY --chown=${USERNAME}:${USERNAME} configs/setup-nvim.sh /tmp/setup-nvim.sh
 # hadolint ignore=DL3059
 RUN bash /tmp/setup-nvim.sh && rm /tmp/setup-nvim.sh
-COPY --chown=${USERNAME}:${USERNAME} configs/.hushlogin /home/${USERNAME}/.hushlogin
-COPY --chown=${USERNAME}:${USERNAME} configs/.inputrc /home/${USERNAME}/.inputrc
-COPY --chown=${USERNAME}:${USERNAME} configs/.tmux.conf /home/${USERNAME}/.tmux.conf
-COPY --chown=${USERNAME}:${USERNAME} configs/.nanorc /home/${USERNAME}/.nanorc
-COPY --chown=${USERNAME}:${USERNAME} configs/.lessfilter /home/${USERNAME}/.lessfilter
-COPY --chown=${USERNAME}:${USERNAME} configs/.digrc /home/${USERNAME}/.digrc
+# Six dotfiles into one COPY — trailing slash on dest requires it to be a
+# directory, and each source is copied under it with the same basename.
+COPY --chown=${USERNAME}:${USERNAME} \
+    configs/.hushlogin \
+    configs/.inputrc \
+    configs/.tmux.conf \
+    configs/.nanorc \
+    configs/.lessfilter \
+    configs/.digrc \
+    /home/${USERNAME}/
 RUN chmod +x /home/${USERNAME}/.lessfilter
 
 # ============================================================
