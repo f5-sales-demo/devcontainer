@@ -8,6 +8,7 @@
 !xcsh-config/
 !opencode-config/
 !crush-config/
+!maki-config/
 !.devcontainer/scripts/
 !scripts/
 !configs/
