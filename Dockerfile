@@ -600,6 +600,8 @@ RUN true \
     && install-release editorconfig-checker \
         "https://github.com/editorconfig-checker/editorconfig-checker/releases/latest/download/ec-linux-${DPKG_ARCH}.tar.gz" \
         tgz-bin editorconfig-checker "bin/ec-linux-${DPKG_ARCH}" \
+    # trivy (install script auto-detects arch)
+    && curl ${CURL_RETRY} -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin \
     # clj-kondo (zip contains a single clj-kondo binary)
     && CLJ_KONDO_VERSION=$(ghlatest clj-kondo/clj-kondo) \
     && if [ "$DPKG_ARCH" = "amd64" ]; then CK_ARCH="amd64"; else CK_ARCH="aarch64"; fi \
