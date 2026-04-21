@@ -7,33 +7,33 @@ set -euo pipefail
 BASE_URL='__MAKI_BASE_URL__'
 
 case "${1:-}" in
-  info)
-    printf '{"display_name":"LiteLLM (Anthropic)","base":"anthropic","has_auth":true}\n'
-    ;;
-  models)
-    cat <<'JSON'
+info)
+  printf '{"display_name":"LiteLLM (Anthropic)","base":"anthropic","has_auth":true}\n'
+  ;;
+models)
+  cat <<'JSON'
 [
   {"id":"pd-claude-opus-4-7","tier":"strong","context_window":1000000,"max_output_tokens":128000},
   {"id":"claude-sonnet-4-6","tier":"medium","context_window":200000,"max_output_tokens":64000},
   {"id":"claude-haiku-4-5","tier":"fast","context_window":200000,"max_output_tokens":8192}
 ]
 JSON
-    ;;
-  resolve)
-    if [ -z "${LITELLM_API_KEY:-}" ]; then
-      echo 'LITELLM_API_KEY is not set' >&2
-      exit 1
-    fi
-    jq -nc \
-      --arg url "$BASE_URL" \
-      --arg key "$LITELLM_API_KEY" \
-      '{base_url:$url, headers:{"x-api-key":$key,"anthropic-version":"2023-06-01"}}'
-    ;;
-  login|logout|refresh)
-    printf '{"ok":true}\n'
-    ;;
-  *)
-    echo "unknown subcommand: ${1:-<none>}" >&2
-    exit 2
-    ;;
+  ;;
+resolve)
+  if [ -z "${LITELLM_API_KEY:-}" ]; then
+    echo 'LITELLM_API_KEY is not set' >&2
+    exit 1
+  fi
+  jq -nc \
+    --arg url "$BASE_URL" \
+    --arg key "$LITELLM_API_KEY" \
+    '{base_url:$url, headers:{"x-api-key":$key,"anthropic-version":"2023-06-01"}}'
+  ;;
+login | logout | refresh)
+  printf '{"ok":true}\n'
+  ;;
+*)
+  echo "unknown subcommand: ${1:-<none>}" >&2
+  exit 2
+  ;;
 esac
