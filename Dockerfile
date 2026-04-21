@@ -974,20 +974,26 @@ ENV NODE_PATH=/usr/lib/node_modules
 # 11a. Firecrawl — self-hosted web scraper (API on port 3002)
 #      Requires Redis + PostgreSQL (started in entrypoint.sh).
 # ============================================================
-# Firecrawl clone + per-workspace pnpm/tsc/napi builds consolidated into
-# one RUN to keep the final-stage layer count under overlayfs's depth
-# limit. `cd` inside the RUN replaces the prior WORKDIR hops.
-# hadolint ignore=DL3003,DL3059
-RUN git clone --depth=1 https://github.com/mendableai/firecrawl.git /opt/firecrawl \
-    && cd /opt/firecrawl/apps/api \
-    && pnpm install --ignore-scripts \
-    && cd /opt/firecrawl/apps/api/node_modules/@mendable/firecrawl-rs \
-    && npx napi build --platform --release \
-    && cd /opt/firecrawl/apps/api \
-    && npx tsc \
-    && cd /opt/firecrawl/apps/playwright-service-ts \
-    && pnpm install --ignore-scripts \
-    && npx tsc \
+# hadolint ignore=DL3059
+RUN git clone --depth=1 https://github.com/mendableai/firecrawl.git /opt/firecrawl
+
+WORKDIR /opt/firecrawl/apps/api
+# hadolint ignore=DL3059
+RUN pnpm install --ignore-scripts
+
+WORKDIR /opt/firecrawl/apps/api/node_modules/@mendable/firecrawl-rs
+# hadolint ignore=DL3059
+RUN npx napi build --platform --release
+
+WORKDIR /opt/firecrawl/apps/api
+# hadolint ignore=DL3059
+RUN npx tsc
+
+# Final playwright-service build + .git cleanup consolidated into one RUN
+# (previously two) to shave one layer off the overlayfs depth count.
+WORKDIR /opt/firecrawl/apps/playwright-service-ts
+# hadolint ignore=DL3059
+RUN pnpm install --ignore-scripts && npx tsc \
     && PLAYWRIGHT_BROWSERS_PATH=/home/vscode/.cache/ms-playwright npx playwright install chromium \
     && rm -rf /opt/firecrawl/.git
 
