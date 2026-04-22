@@ -1,0 +1,11 @@
+{
+  "customSets": [
+    {
+      "label": "Getting Started",
+      "description": "Installation, configuration, and first-run guides",
+      "paths": ["getting-started*", "install*", "configuration*"]
+    }
+  ],
+  "promote": ["index*", "getting-started*", "install*"],
+  "demote": ["troubleshooting*"]
+}
