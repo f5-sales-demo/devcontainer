@@ -9,8 +9,8 @@
         "apiKey": "{env:ANTHROPIC_API_KEY}"
       },
       "models": {
-        "pd-claude-opus-4-7": {
-          "name": "Claude Opus 4.7 (PD)",
+        "claude-opus-4-6": {
+          "name": "Claude Opus 4.6",
           "modalities": {
             "input": ["text", "image"],
             "output": ["text"]
@@ -69,7 +69,7 @@
       }
     }
   },
-  "model": "anthropic-proxy/pd-claude-opus-4-7",
+  "model": "anthropic-proxy/claude-opus-4-6",
   "small_model": "anthropic-proxy/claude-sonnet-4-6",
   "plugin": ["oh-my-openagent"],
   "mcp": {},

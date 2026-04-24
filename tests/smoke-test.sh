@@ -209,14 +209,14 @@ assert_contains "OPENAI_BASE_URL derived" "$ENV_FILE" "OPENAI_BASE_URL=${TEST_UR
 assert_contains "ANTHROPIC_SMALL_FAST_MODEL" "$ENV_FILE" "claude-haiku-4-5"
 assert_contains "ANTHROPIC_DEFAULT_HAIKU_MODEL" "$ENV_FILE" "claude-haiku-4-5"
 assert_contains "ANTHROPIC_DEFAULT_SONNET_MODEL" "$ENV_FILE" "claude-sonnet-4-6"
-assert_contains "ANTHROPIC_DEFAULT_OPUS_MODEL" "$ENV_FILE" "pd-claude-opus-4-7"
+assert_contains "ANTHROPIC_DEFAULT_OPUS_MODEL" "$ENV_FILE" "claude-opus-4-6"
 assert_contains "GIT_COMMITTER_NAME derived" "$ENV_FILE" "GIT_COMMITTER_NAME="
 assert_contains "GIT_COMMITTER_EMAIL derived" "$ENV_FILE" "GIT_COMMITTER_EMAIL=smoke@test.local"
 
 assert_contains "PI_DEFAULT_MODEL set" "$ENV_FILE" "PI_DEFAULT_MODEL=anthropic/claude-sonnet-4-6"
 assert_contains "PI_SMOL_MODEL set" "$ENV_FILE" "PI_SMOL_MODEL=anthropic/claude-haiku-4-5"
-assert_contains "PI_SLOW_MODEL set" "$ENV_FILE" "PI_SLOW_MODEL=anthropic/pd-claude-opus-4-7"
-assert_contains "PI_PLAN_MODEL set" "$ENV_FILE" "PI_PLAN_MODEL=anthropic/pd-claude-opus-4-7"
+assert_contains "PI_SLOW_MODEL set" "$ENV_FILE" "PI_SLOW_MODEL=anthropic/claude-opus-4-6"
+assert_contains "PI_PLAN_MODEL set" "$ENV_FILE" "PI_PLAN_MODEL=anthropic/claude-opus-4-6"
 
 # Verify shell inheritance of PI_* model vars (xcsh/pi/omp read these)
 SHELL_PI_DEFAULT=$(zrun 'echo $PI_DEFAULT_MODEL')
@@ -224,7 +224,7 @@ assert_eq "zsh inherits PI_DEFAULT_MODEL" "$SHELL_PI_DEFAULT" "anthropic/claude-
 SHELL_PI_SMOL=$(zrun 'echo $PI_SMOL_MODEL')
 assert_eq "zsh inherits PI_SMOL_MODEL" "$SHELL_PI_SMOL" "anthropic/claude-haiku-4-5"
 SHELL_PI_SLOW=$(zrun 'echo $PI_SLOW_MODEL')
-assert_eq "zsh inherits PI_SLOW_MODEL" "$SHELL_PI_SLOW" "anthropic/pd-claude-opus-4-7"
+assert_eq "zsh inherits PI_SLOW_MODEL" "$SHELL_PI_SLOW" "anthropic/claude-opus-4-6"
 
 # ============================================================
 # 2. Shell sourcing
@@ -264,7 +264,7 @@ echo "--------------------"
 # Claude Code
 CS=$(run cat /home/vscode/.claude/settings.json)
 assert_contains "Claude: sonnet model in settings" "$CS" "claude-sonnet-4-6"
-assert_contains "Claude: opus model in settings" "$CS" "pd-claude-opus-4-7"
+assert_contains "Claude: opus model in settings" "$CS" "claude-opus-4-6"
 assert_contains "Claude: haiku model in settings" "$CS" "claude-haiku-4-5"
 CJ=$(run cat /home/vscode/.claude.json)
 assert_contains "Claude: auto-approve key" "$CJ" "customApiKeyResponses"
@@ -273,21 +273,21 @@ assert_contains "Claude: auto-approve key" "$CJ" "customApiKeyResponses"
 CRUSH=$(run cat /home/vscode/.config/crush/crush.json)
 assert_not_contains "Crush: no __CRUSH_BASE_URL__ placeholder" "$CRUSH" "__CRUSH_BASE_URL__"
 assert_contains "Crush: base_url rendered" "$CRUSH" "${TEST_URL}/anthropic"
-assert_contains "Crush: opus model" "$CRUSH" "pd-claude-opus-4-7"
+assert_contains "Crush: opus model" "$CRUSH" "claude-opus-4-6"
 assert_contains "Crush: auto-update disabled" "$CRUSH" "disable_provider_auto_update"
 
 # Pi
 PI=$(run cat /home/vscode/.pi/agent/settings.json)
 assert_contains "Pi: provider=anthropic" "$PI" "anthropic"
-assert_contains "Pi: model=opus" "$PI" "pd-claude-opus-4-7"
+assert_contains "Pi: model=opus" "$PI" "claude-opus-4-6"
 
 # OMP
 OMP_S=$(run cat /home/vscode/.omp/agent/settings.json)
 assert_contains "OMP: provider=anthropic" "$OMP_S" "anthropic"
-assert_contains "OMP: model=opus" "$OMP_S" "pd-claude-opus-4-7"
+assert_contains "OMP: model=opus" "$OMP_S" "claude-opus-4-6"
 OMP_C=$(run cat /home/vscode/.omp/agent/config.yml)
 assert_contains "OMP: haiku role" "$OMP_C" "claude-haiku-4-5"
-assert_contains "OMP: opus default role" "$OMP_C" "pd-claude-opus-4-7"
+assert_contains "OMP: opus default role" "$OMP_C" "claude-opus-4-6"
 
 # Codex
 CODEX=$(run cat /home/vscode/.codex/config.toml)
@@ -298,7 +298,7 @@ assert_contains "Codex: reads OPENAI_API_KEY" "$CODEX" 'env_key = "OPENAI_API_KE
 # OpenCode
 OC=$(run cat /home/vscode/.config/opencode/opencode.json)
 assert_contains "OpenCode: anthropic-proxy provider" "$OC" "anthropic-proxy"
-assert_contains "OpenCode: opus model" "$OC" "pd-claude-opus-4-7"
+assert_contains "OpenCode: opus model" "$OC" "claude-opus-4-6"
 assert_contains "OpenCode: sonnet model" "$OC" "claude-sonnet-4-6"
 assert_contains "OpenCode: openai-proxy provider" "$OC" "openai-proxy"
 
@@ -307,7 +307,7 @@ assert_file "xcsh models.json" "/home/vscode/.xcsh/agent/models.json"
 assert_file "xcsh models.yml" "/home/vscode/.xcsh/agent/models.yml"
 XCSH_ROLES=$(zrun 'xcsh config get modelRoles 2>/dev/null')
 assert_contains "xcsh: default role = sonnet" "$XCSH_ROLES" "claude-sonnet-4-6"
-assert_contains "xcsh: slow role = opus" "$XCSH_ROLES" "pd-claude-opus-4-7"
+assert_contains "xcsh: slow role = opus" "$XCSH_ROLES" "claude-opus-4-6"
 assert_contains "xcsh: smol role = haiku" "$XCSH_ROLES" "claude-haiku-4-5"
 
 # Maki: dynamic provider script staged, executable, base URL substituted
@@ -318,7 +318,7 @@ MAKI_SCRIPT=$(run cat /home/vscode/.maki/providers/litellm)
 assert_not_contains "Maki: no __MAKI_BASE_URL__ placeholder" "$MAKI_SCRIPT" "__MAKI_BASE_URL__"
 assert_contains "Maki: base URL rendered" "$MAKI_SCRIPT" "${TEST_URL}/anthropic/v1/messages"
 MAKI_MODELS=$(run /home/vscode/.maki/providers/litellm models)
-assert_contains "Maki: opus in models list" "$MAKI_MODELS" "pd-claude-opus-4-7"
+assert_contains "Maki: opus in models list" "$MAKI_MODELS" "claude-opus-4-6"
 
 # ============================================================
 # 5. AI assistant CLIs
