@@ -1624,60 +1624,59 @@ RUN chmod +x /home/${USERNAME}/.lessfilter
 # ============================================================
 USER root
 
-# --- System-wide scripts and managed policy ---
-COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
-COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
+# Stage the entire build context into one layer, then distribute in a single
+# RUN. Replaces 21 single-file COPY instructions (~26 layers with the chmod RUN)
+# with 3 layers total: 1 COPY (stage), 1 RUN (distribute), 1 RUN (sync-agents
+# as vscode). Brings the image under overlay2's 128-layer mount ceiling.
+# File ownership under /home/${USERNAME} is repaired by the final chown -R in
+# section 19, so we omit -o/-g on install(1). File mode 755 is set for all
+# shell scripts, 644 for static configs; install(1) -D creates leading dirs.
+# .dockerignore already allowlists every source referenced below, so the
+# staging layer contains only the expected payload (< a few MB).
+# hadolint ignore=DL3059
+COPY . /tmp/cfg
 
-COPY claude-config/chrome-browser.sh /usr/local/lib/chrome-browser.sh
-COPY claude-config/statusline.sh /opt/claude-config/statusline.sh
-COPY claude-config/api-key-helper.sh /opt/claude-config/api-key-helper.sh
-COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
-COPY claude-config/neutralize-hooks.sh /opt/claude-config/neutralize-hooks.sh
-COPY .devcontainer/scripts/post-start.sh /opt/devcontainer/post-start.sh
-COPY scripts/nightly-update.sh /opt/devcontainer/nightly-update.sh
-RUN chmod +x /opt/claude-config/self-test.sh \
-      /usr/local/lib/chrome-browser.sh \
-      /opt/claude-config/statusline.sh /opt/claude-config/api-key-helper.sh \
-      /opt/claude-config/install-plugins.sh \
-      /opt/claude-config/neutralize-hooks.sh \
-      /opt/devcontainer/post-start.sh \
-      /opt/devcontainer/nightly-update.sh \
+# hadolint ignore=DL3059
+RUN set -e \
+    # --- System-wide scripts (mode 755, root-owned) ---
+    && install -D -m 755 /tmp/cfg/claude-config/self-test.sh        /opt/claude-config/self-test.sh \
+    && install -D -m 755 /tmp/cfg/claude-config/statusline.sh       /opt/claude-config/statusline.sh \
+    && install -D -m 755 /tmp/cfg/claude-config/api-key-helper.sh   /opt/claude-config/api-key-helper.sh \
+    && install -D -m 755 /tmp/cfg/claude-config/install-plugins.sh  /opt/claude-config/install-plugins.sh \
+    && install -D -m 755 /tmp/cfg/claude-config/neutralize-hooks.sh /opt/claude-config/neutralize-hooks.sh \
+    && install -D -m 755 /tmp/cfg/claude-config/chrome-browser.sh   /usr/local/lib/chrome-browser.sh \
+    && install -D -m 755 /tmp/cfg/.devcontainer/scripts/post-start.sh /opt/devcontainer/post-start.sh \
+    && install -D -m 755 /tmp/cfg/scripts/nightly-update.sh         /opt/devcontainer/nightly-update.sh \
+    && install -D -m 755 /tmp/cfg/codex-config/sync-agents.sh       /opt/codex-config/sync-agents.sh \
+    # --- Managed policy (root-owned, mode 644) ---
+    && install -D -m 644 /tmp/cfg/claude-config/CLAUDE.md           /etc/claude-code/CLAUDE.md \
+    # --- Home-scoped configs (vscode via later chown -R in section 19) ---
+    && install -D -m 644 /tmp/cfg/claude-config/settings.json                 /home/${USERNAME}/.claude/settings.json \
+    && install -D -m 644 /tmp/cfg/claude-config/claude.json                   /home/${USERNAME}/.claude.json \
+    && install -D -m 644 /tmp/cfg/claude-config/user-CLAUDE.md                /home/${USERNAME}/.claude/CLAUDE.md \
+    && install -D -m 644 /tmp/cfg/codex-config/config.toml                    /home/${USERNAME}/.codex/config.toml \
+    && install -D -m 644 /tmp/cfg/pi-config/settings.json                     /home/${USERNAME}/.pi/agent/settings.json \
+    && install -D -m 644 /tmp/cfg/omp-config/settings.json                    /home/${USERNAME}/.omp/agent/settings.json \
+    && install -D -m 644 /tmp/cfg/omp-config/config.yml                       /home/${USERNAME}/.omp/agent/config.yml \
+    && install -D -m 644 /tmp/cfg/opencode-config/opencode.json               /home/${USERNAME}/.config/opencode/opencode.json \
+    && install -D -m 644 /tmp/cfg/opencode-config/oh-my-openagent.json        /home/${USERNAME}/.config/opencode/oh-my-openagent.json \
+    && install -D -m 644 /tmp/cfg/opencode-config/opencode-permissions.json   /home/${USERNAME}/.config/opencode/opencode-permissions.json \
+    && install -D -m 644 /tmp/cfg/hermes-config/config.yaml                   /home/${USERNAME}/.hermes/config.yaml \
+    && install -D -m 644 /tmp/cfg/crush-config/crush.json                     /home/${USERNAME}/.config/crush/crush.json \
+    && install -D -m 755 /tmp/cfg/maki-config/litellm                         /home/${USERNAME}/.maki/providers/litellm \
+    # --- Misc system setup previously in the chmod-RUN ---
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
     && mkdir -p /etc/claude-code/.claude/rules \
-    && echo "0 3 * * * /opt/devcontainer/nightly-update.sh" \
-      | crontab -u ${USERNAME} -
+    && echo "0 3 * * * /opt/devcontainer/nightly-update.sh" | crontab -u ${USERNAME} - \
+    # --- Remove staging dir so its contents do not bloat the image ---
+    && rm -rf /tmp/cfg
 
-# --- Claude Code: settings.json + claude.json → final $HOME paths ---
-COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.json /home/${USERNAME}/.claude/settings.json
-COPY --chown=${USERNAME}:${USERNAME} claude-config/claude.json /home/${USERNAME}/.claude.json
-COPY --chown=${USERNAME}:${USERNAME} claude-config/user-CLAUDE.md /home/${USERNAME}/.claude/CLAUDE.md
-
-
-
-# --- Codex + Pi + Hermes: bake static defaults ---
-COPY --chown=${USERNAME}:${USERNAME} codex-config/config.toml /home/${USERNAME}/.codex/config.toml
-COPY --chown=${USERNAME}:${USERNAME} codex-config/sync-agents.sh /opt/codex-config/sync-agents.sh
-
-# 17a. Sync Claude Code plugin agents → Codex .toml format
-# Converts ~/.claude/plugins/cache/*/agents/*.md to ~/.codex/agents/*.toml
-# so Codex can natively discover the same agents as Claude Code.
-# chmod as root (modifies /opt/); run as vscode so output files under
-# ~/.codex/ are owned by vscode, not root.
-# hadolint ignore=DL3059
-RUN chmod +x /opt/codex-config/sync-agents.sh
+# 17a. Sync Claude Code plugin agents → Codex .toml format.
+# Runs as vscode so output files under ~/.codex/ are vscode-owned.
 USER $USERNAME
 # hadolint ignore=DL3059
 RUN /opt/codex-config/sync-agents.sh
 USER root
-COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
-COPY --chown=${USERNAME}:${USERNAME} omp-config/settings.json /home/${USERNAME}/.omp/agent/settings.json
-COPY --chown=${USERNAME}:${USERNAME} omp-config/config.yml /home/${USERNAME}/.omp/agent/config.yml
-COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json /home/${USERNAME}/.config/opencode/opencode.json
-COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-openagent.json /home/${USERNAME}/.config/opencode/oh-my-openagent.json
-COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.config/opencode/opencode-permissions.json
-COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
-COPY --chown=${USERNAME}:${USERNAME} crush-config/crush.json /home/${USERNAME}/.config/crush/crush.json
-COPY --chown=${USERNAME}:${USERNAME} maki-config/litellm /home/${USERNAME}/.maki/providers/litellm
 
 # ────────────────────────────────────────────────────────────
 # OpenCode npm pre-warm: pre-install base SDK and plugin deps
