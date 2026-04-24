@@ -184,7 +184,14 @@ GIT_AUTHOR_EMAIL=smoke@test.local
 EOF
 
 echo "Starting container ..."
-"$RT" compose -f "$COMPOSE_DIR/docker-compose.yml" up -d >/dev/null 2>&1
+# Emit stderr so a failed create/start surfaces the runtime error
+# (previously `>/dev/null 2>&1` hid the reason — set -e would then exit
+# the script with only "Starting container ..." visible in CI logs).
+if ! _compose_out=$("$RT" compose -f "$COMPOSE_DIR/docker-compose.yml" up -d 2>&1); then
+  echo "ERROR: container start failed — $RT compose output:" >&2
+  echo "$_compose_out" >&2
+  exit 1
+fi
 
 echo "Waiting for entrypoint ..."
 for _ in $(seq 1 90); do
