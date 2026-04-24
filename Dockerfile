@@ -1625,7 +1625,7 @@ RUN chmod +x /home/${USERNAME}/.lessfilter
 USER root
 
 # Stage the entire build context into one layer, then distribute in a single
-# RUN. Replaces 21 single-file COPYs (~26 layers including the chmod RUNs)
+# RUN. Replaces 21 single-file COPY instructions (~26 layers with the chmod RUN)
 # with 3 layers total: 1 COPY (stage), 1 RUN (distribute), 1 RUN (sync-agents
 # as vscode). Brings the image under overlay2's 128-layer mount ceiling.
 # File ownership under /home/${USERNAME} is repaired by the final chown -R in
