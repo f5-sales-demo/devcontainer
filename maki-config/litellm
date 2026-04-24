@@ -13,8 +13,8 @@ info)
 models)
   cat <<'JSON'
 [
-  {"id":"pd-claude-opus-4-7","tier":"strong","context_window":1000000,"max_output_tokens":128000},
-  {"id":"claude-sonnet-4-6","tier":"medium","context_window":200000,"max_output_tokens":64000},
+  {"id":"claude-opus-4-6","tier":"strong","context_window":1000000,"max_output_tokens":128000},
+  {"id":"claude-sonnet-4-6","tier":"medium","context_window":1000000,"max_output_tokens":64000},
   {"id":"claude-haiku-4-5","tier":"fast","context_window":200000,"max_output_tokens":8192}
 ]
 JSON

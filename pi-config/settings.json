@@ -1,4 +1,4 @@
 {
   "defaultProvider": "anthropic",
-  "defaultModel": "pd-claude-opus-4-7"
+  "defaultModel": "claude-opus-4-6"
 }

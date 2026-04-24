@@ -4,7 +4,7 @@
 # ~/.hermes/.env at container startup.
 
 model:
-  default: "pd-claude-opus-4-7"
+  default: "claude-opus-4-6"
   provider: "auto"
   base_url: "__HERMES_BASE_URL__"
 
