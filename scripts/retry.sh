@@ -10,7 +10,10 @@
 set -eu
 
 max=5
-if [ "${1:-}" -gt 0 ] 2>/dev/null; then max="$1"; shift; fi
+if [ "${1:-}" -gt 0 ] 2>/dev/null; then
+  max="$1"
+  shift
+fi
 
 n=0
 delay=5
