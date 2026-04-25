@@ -1447,12 +1447,10 @@ RUN npm exec chrome-devtools-mcp@0.20.2 -- --version 2>/dev/null || true
 # hadolint ignore=DL3059
 RUN npx -y oh-my-openagent install --no-tui \
     --claude=max20 --openai=no --gemini=no --copilot=no \
-    && rm -f ~/.config/opencode/*.bak.*
-
-# Pre-download Trivy vulnerability databases so first scan is instant.
-# Runs as vscode so cache lands in ~/.cache/trivy with correct ownership.
-# hadolint ignore=DL3059
-RUN trivy image --download-db-only --no-progress \
+    && rm -f ~/.config/opencode/*.bak.* \
+    # Pre-download Trivy vulnerability databases so first scan is instant.
+    # Runs as vscode so cache lands in ~/.cache/trivy with correct ownership.
+    && trivy image --download-db-only --no-progress \
     && trivy image --download-java-db-only --no-progress
 
 # ============================================================
