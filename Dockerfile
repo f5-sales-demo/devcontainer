@@ -22,23 +22,34 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Retry flags for all curl downloads — handles transient network
 # errors AND HTTP errors (e.g. CDN 404/502) with exponential backoff
 # (1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s). Bounded to 300s total.
+# Package manager retry config — npm, pip, uv honour these env vars
+# so every install/ci/exec operation gets automatic retries.
 # shellcheck disable=SC2140
-ENV CURL_RETRY="--connect-timeout 30 --retry 8 --retry-all-errors --retry-max-time 300"
+ENV CURL_RETRY="--connect-timeout 30 --retry 8 --retry-all-errors --retry-max-time 300" \
+    PIP_RETRIES=5 \
+    PIP_TIMEOUT=60 \
+    npm_config_fetch_retries=5 \
+    npm_config_fetch_retry_mintimeout=8000 \
+    npm_config_fetch_retry_maxtimeout=120000 \
+    UV_HTTP_TIMEOUT=120
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# ghlatest + install-release: resolve latest GitHub release versions and
-# atomic download-then-extract for GitHub release assets.
-COPY scripts/ghlatest.sh scripts/install-release.sh /usr/local/bin/
+# ghlatest + install-release + retry: resolve latest GitHub release versions,
+# atomic download-then-extract for release assets, and generic command retry
+# with exponential backoff (used for git clone, npm, pip, etc.).
+COPY scripts/ghlatest.sh scripts/install-release.sh scripts/retry.sh /usr/local/bin/
 RUN mv /usr/local/bin/ghlatest.sh /usr/local/bin/ghlatest \
     && mv /usr/local/bin/install-release.sh /usr/local/bin/install-release \
-    && chmod +x /usr/local/bin/ghlatest /usr/local/bin/install-release
+    && mv /usr/local/bin/retry.sh /usr/local/bin/retry \
+    && chmod +x /usr/local/bin/ghlatest /usr/local/bin/install-release /usr/local/bin/retry
 
 # ============================================================
 # 1. APT repository setup
 # ============================================================
 # hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN echo 'APT::Acquire::Retries "3";' > /etc/apt/apt.conf.d/99retries \
+    && apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl gnupg software-properties-common apt-transport-https \
     # NodeSource
     && curl ${CURL_RETRY} -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
@@ -287,7 +298,10 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
 # ============================================================
 RUN update-alternatives --install /usr/bin/python3 python3 "/usr/bin/python${PYTHON_VERSION}" 1 \
     && update-alternatives --install /usr/bin/python  python  "/usr/bin/python${PYTHON_VERSION}" 1 \
-    && curl ${CURL_RETRY} -fsSL https://bootstrap.pypa.io/get-pip.py | "python${PYTHON_VERSION}"
+    && curl ${CURL_RETRY} -fsSLo /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py \
+    && [ -s /tmp/get-pip.py ] \
+    && "python${PYTHON_VERSION}" /tmp/get-pip.py \
+    && rm /tmp/get-pip.py
 
 # ============================================================
 # 4. Go (latest stable — resolved at build time)
@@ -303,8 +317,10 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH="/usr/local/cargo/bin:${PATH}"
-RUN curl ${CURL_RETRY} --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-    | sh -s -- -y --default-toolchain stable --no-modify-path \
+RUN curl ${CURL_RETRY} --proto '=https' --tlsv1.2 -sSfo /tmp/rustup-init.sh https://sh.rustup.rs \
+    && [ -s /tmp/rustup-init.sh ] \
+    && sh /tmp/rustup-init.sh -y --default-toolchain stable --no-modify-path \
+    && rm /tmp/rustup-init.sh \
     && rustup toolchain install nightly --profile minimal \
     && rustup component add clippy rustfmt rust-analyzer rust-src \
     && rustup component add --toolchain nightly clippy rustfmt rust-analyzer rust-src \
@@ -439,7 +455,10 @@ RUN true \
       "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" \
     && chmod +x /usr/local/bin/yt-dlp \
     # uv (latest — omit version from installer URL)
-    && curl ${CURL_RETRY} -fsSL "https://astral.sh/uv/install.sh" | sh \
+    && curl ${CURL_RETRY} -fsSLo /tmp/uv-install.sh "https://astral.sh/uv/install.sh" \
+    && [ -s /tmp/uv-install.sh ] \
+    && sh /tmp/uv-install.sh \
+    && rm /tmp/uv-install.sh \
     && mv "$HOME/.local/bin/uv" /usr/local/bin/uv \
     && mv "$HOME/.local/bin/uvx" /usr/local/bin/uvx 2>/dev/null || true \
     # neovim (latest — version-free asset name; map aarch64→arm64)
@@ -528,7 +547,10 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
       "https://github.com/nushell/nushell/releases/latest/download/nu-${NU_VERSION}-${UNAME_ARCH}-unknown-linux-gnu.tar.gz" \
       | tar -xz --strip-components=1 -C /usr/local/bin nu-${NU_VERSION}-${UNAME_ARCH}-unknown-linux-gnu/nu \
     # mise
-    && curl -fsSL https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh \
+    && curl ${CURL_RETRY} -fsSLo /tmp/mise-install.sh https://mise.run \
+    && [ -s /tmp/mise-install.sh ] \
+    && MISE_INSTALL_PATH=/usr/local/bin/mise sh /tmp/mise-install.sh \
+    && rm /tmp/mise-install.sh \
     # dagu (resolve version — asset name contains version)
     && DAGU_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
       "https://github.com/daguflow/dagu/releases/latest" | sed 's|.*/||;s|^v||') \
@@ -591,7 +613,10 @@ RUN true \
         "https://github.com/editorconfig-checker/editorconfig-checker/releases/latest/download/ec-linux-${DPKG_ARCH}.tar.gz" \
         tgz-bin editorconfig-checker "bin/ec-linux-${DPKG_ARCH}" \
     # trivy (install script auto-detects arch)
-    && curl ${CURL_RETRY} -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin \
+    && curl ${CURL_RETRY} -sfLo /tmp/trivy-install.sh https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+    && [ -s /tmp/trivy-install.sh ] \
+    && sh /tmp/trivy-install.sh -b /usr/local/bin \
+    && rm /tmp/trivy-install.sh \
     # clj-kondo (zip contains a single clj-kondo binary)
     && CLJ_KONDO_VERSION=$(ghlatest clj-kondo/clj-kondo) \
     && if [ "$DPKG_ARCH" = "amd64" ]; then CK_ARCH="amd64"; else CK_ARCH="aarch64"; fi \
@@ -714,7 +739,7 @@ RUN ARCH=$(dpkg --print-architecture) \
     else \
         echo "SKIP: PSScriptAnalyzer install not supported on ${ARCH} (illegal instruction in .NET JIT)"; \
     fi \
-    && git clone --depth=1 https://github.com/Azure/arm-ttk.git /usr/lib/microsoft/arm-ttk \
+    && retry git clone --depth=1 https://github.com/Azure/arm-ttk.git /usr/lib/microsoft/arm-ttk \
     && rm -rf /usr/lib/microsoft/arm-ttk/.git
 ENV ARM_TTK_PSD1="/usr/lib/microsoft/arm-ttk/arm-ttk/arm-ttk.psd1" \
     DOTNET_CLI_TELEMETRY_OPTOUT=1
@@ -794,7 +819,7 @@ RUN true \
     # --- OSINT: cloud & IP recon (go install) ---
     && GOBIN=/usr/local/bin go install github.com/jreisinger/checkip@v0.49.0 \
     && GOBIN=/usr/local/bin go install github.com/Macmod/goblob@v1.2.2 \
-    && git clone --depth=1 --branch v2.0 https://github.com/redhuntlabs/bucketloot.git /tmp/bucketloot \
+    && retry git clone --depth=1 --branch v2.0 https://github.com/redhuntlabs/bucketloot.git /tmp/bucketloot \
     && go build -C /tmp/bucketloot -o /usr/local/bin/bucketloot . && rm -rf /tmp/bucketloot \
     && rm -f /usr/local/bin/LICENSE* /usr/local/bin/README*
 
@@ -973,7 +998,7 @@ ENV NODE_PATH=/usr/lib/node_modules
 # ============================================================
 # hadolint ignore=DL3059
 # trivy:ignore:DS-0013
-RUN git clone --depth=1 https://github.com/mendableai/firecrawl.git /opt/firecrawl \
+RUN retry git clone --depth=1 https://github.com/mendableai/firecrawl.git /opt/firecrawl \
     && cd /opt/firecrawl/apps/api \
     && pnpm install --ignore-scripts \
     && cd node_modules/@mendable/firecrawl-rs \
@@ -1183,18 +1208,18 @@ RUN SIGNAL_CLI_VERSION="0.14.1" \
 #      SecLists, docker-bench-security, recon-ng, spiderfoot)
 # ============================================================
 # hadolint ignore=DL3059
-RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.sh \
+RUN retry git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.sh \
     && ln -s /opt/testssl.sh/testssl.sh /usr/local/bin/testssl \
-    && git clone --depth=1 https://gitlab.com/exploit-database/exploitdb.git /opt/exploitdb \
+    && retry git clone --depth=1 https://gitlab.com/exploit-database/exploitdb.git /opt/exploitdb \
     && ln -s /opt/exploitdb/searchsploit /usr/local/bin/searchsploit \
-    && git clone --depth=1 https://github.com/danielmiessler/SecLists.git /opt/seclists \
-    && git clone --depth=1 https://github.com/docker/docker-bench-security.git /opt/docker-bench-security \
+    && retry git clone --depth=1 https://github.com/danielmiessler/SecLists.git /opt/seclists \
+    && retry git clone --depth=1 https://github.com/docker/docker-bench-security.git /opt/docker-bench-security \
     && ln -s /opt/docker-bench-security/docker-bench-security.sh /usr/local/bin/docker-bench-security \
     # recon-ng and spiderfoot are not on PyPI — install from git
-    && git clone --depth=1 https://github.com/lanmaster53/recon-ng.git /opt/recon-ng \
+    && retry git clone --depth=1 https://github.com/lanmaster53/recon-ng.git /opt/recon-ng \
     && pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r /opt/recon-ng/REQUIREMENTS \
     && ln -s /opt/recon-ng/recon-ng /usr/local/bin/recon-ng \
-    && git clone --depth=1 https://github.com/smicallef/spiderfoot.git /opt/spiderfoot \
+    && retry git clone --depth=1 https://github.com/smicallef/spiderfoot.git /opt/spiderfoot \
     # Spiderfoot pins lxml>=4.9.2,<5 but lxml 4.x Cython C code is
     # incompatible with Python 3.13 (removed _PyObject_NextNotImplemented,
     # changed _PyLong_AsByteArray).  Strip the <5 upper bound so pip uses
@@ -1212,7 +1237,7 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
 # ============================================================
 # hadolint ignore=DL3059
 # trivy:ignore:DS-0013
-RUN git clone --depth=1 https://github.com/mitre-attack/attack-navigator.git /tmp/attack-navigator \
+RUN retry git clone --depth=1 https://github.com/mitre-attack/attack-navigator.git /tmp/attack-navigator \
     && cd /tmp/attack-navigator/nav-app \
     && npm ci --ignore-scripts \
     && NODE_OPTIONS="--max-old-space-size=4096" npx ng build --configuration production 2>&1 | grep -v "chunkSizeWarningLimit" \
@@ -1229,7 +1254,7 @@ RUN git clone --depth=1 https://github.com/mitre-attack/attack-navigator.git /tm
 #      Runs on port 8888 (HTTP) / 8443 (HTTPS).
 # ============================================================
 # hadolint ignore=DL3013,DL3059
-RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
+RUN retry git clone --depth=1 --recurse-submodules --shallow-submodules \
       https://github.com/mitre/caldera.git /opt/caldera \
     && rm -rf /opt/caldera/.git /opt/caldera/plugins/*/.git \
     && uv venv --python python3.12 /opt/caldera/.venv \
@@ -1253,7 +1278,7 @@ RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
 #      Config baked to ~/.hermes/config.yaml (section 17).
 # ============================================================
 # hadolint ignore=DL3059
-RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
+RUN retry git clone --depth=1 --recurse-submodules --shallow-submodules \
       https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent \
     && rm -rf /opt/hermes-agent/.git \
     && (uv pip install --system --break-system-packages \
@@ -1287,13 +1312,13 @@ RUN chmod +x /opt/claude-config/install-plugins.sh
 # hadolint ignore=DL3059
 RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
     && mkdir -p "${PLUGIN_BASE}/marketplaces" \
-    && git clone --depth=1 --single-branch --branch main \
+    && retry git clone --depth=1 --single-branch --branch main \
         https://github.com/anthropics/claude-plugins-official.git \
         "${PLUGIN_BASE}/marketplaces/claude-plugins-official" \
-    && git clone --depth=1 --single-branch --branch main \
+    && retry git clone --depth=1 --single-branch --branch main \
         https://github.com/f5xc-salesdemos/marketplace.git \
         "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" \
-    && git clone --depth=1 --single-branch --branch main \
+    && retry git clone --depth=1 --single-branch --branch main \
         https://github.com/f5xc-salesdemos/codex-plugin-cc.git \
         "${PLUGIN_BASE}/marketplaces/openai-codex" \
     && TS="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
@@ -1310,7 +1335,7 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
 
 # 12m. Claude Code skills + 12n. Codex ~/.agents/skills symlink
 # hadolint ignore=DL3059
-RUN git clone --depth=1 --single-branch --branch main \
+RUN retry git clone --depth=1 --single-branch --branch main \
       https://github.com/zarazhangrui/frontend-slides.git \
       "/home/${USERNAME}/.claude/skills/frontend-slides" \
     && chown -R ${USERNAME}:${USERNAME} "/home/${USERNAME}/.claude" \
@@ -1353,7 +1378,10 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
 
 # Bun JavaScript runtime and package manager
 # hadolint ignore=DL3059
-RUN curl -fsSL https://bun.sh/install | bash
+RUN curl ${CURL_RETRY} -fsSLo /tmp/bun-install.sh https://bun.sh/install \
+    && [ -s /tmp/bun-install.sh ] \
+    && bash /tmp/bun-install.sh \
+    && rm /tmp/bun-install.sh
 
 # Install native Claude Code binary (replaces npm package)
 # Retry up to 4 times with exponential back-off to handle transient
@@ -1464,20 +1492,20 @@ USER $USERNAME
 # checkov:skip=CKV2_DOCKER_1:sudo here is a zsh plugin name in a sed argument, not a system call
 # trivy:ignore:DS-0013
 RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
-    && git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git \
+    && retry git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git \
       "${ZSH_CUSTOM}/plugins/zsh-autosuggestions" \
-    && git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git \
+    && retry git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git \
       "${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting" \
-    && git clone --depth=1 https://github.com/conda-incubator/conda-zsh-completion.git \
+    && retry git clone --depth=1 https://github.com/conda-incubator/conda-zsh-completion.git \
       "${ZSH_CUSTOM}/plugins/conda-zsh-completion" \
-    && git clone --depth=1 https://github.com/z-shell/zsh-eza.git \
+    && retry git clone --depth=1 https://github.com/z-shell/zsh-eza.git \
       "${ZSH_CUSTOM}/plugins/zsh-eza" \
-    && git clone --depth=1 https://github.com/cda0/zsh-tfenv.git \
+    && retry git clone --depth=1 https://github.com/cda0/zsh-tfenv.git \
       "${ZSH_CUSTOM}/plugins/zsh-tfenv" \
     && mkdir -p "${ZSH_CUSTOM}/plugins/gh-clone-complete" \
-    && git clone --depth=1 https://github.com/wbingli/zsh-claudecode-completion.git \
+    && retry git clone --depth=1 https://github.com/wbingli/zsh-claudecode-completion.git \
       "${ZSH_CUSTOM}/plugins/zsh-claudecode-completion" \
-    && git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
+    && retry git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
       "${ZSH_CUSTOM}/themes/powerlevel10k" \
     && "${ZSH_CUSTOM}/themes/powerlevel10k/gitstatus/install" \
     && sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$HOME/.zshrc" \
@@ -1531,10 +1559,10 @@ RUN mkdir -p "$HOME/.npm-global/lib/node_modules" "$HOME/.npm-global/bin" \
          [ -e "$HOME/.npm-global/lib/node_modules/$name" ] && continue; \
          ln -sf "$pkg" "$HOME/.npm-global/lib/node_modules/$name"; \
        done \
-    && git clone --depth=1 https://github.com/tfutils/tfenv.git "$HOME/.tfenv" \
+    && retry git clone --depth=1 https://github.com/tfutils/tfenv.git "$HOME/.tfenv" \
     && "$HOME/.tfenv/bin/tfenv" install latest \
     && "$HOME/.tfenv/bin/tfenv" use latest \
-    && git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" \
+    && retry git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" \
     && zsh -c "autoload -U compinit && compinit" 2>/dev/null || true
 
 # gogcli (gog) native zsh completions (generated from gog help-json schema)
