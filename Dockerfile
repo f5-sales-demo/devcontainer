@@ -30,7 +30,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # ghlatest + install-release: resolve latest GitHub release versions and
 # atomic download-then-extract for GitHub release assets.
 COPY scripts/ghlatest.sh scripts/install-release.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/ghlatest /usr/local/bin/install-release
+RUN mv /usr/local/bin/ghlatest.sh /usr/local/bin/ghlatest \
+    && mv /usr/local/bin/install-release.sh /usr/local/bin/install-release \
+    && chmod +x /usr/local/bin/ghlatest /usr/local/bin/install-release
 
 # ============================================================
 # 1. APT repository setup
