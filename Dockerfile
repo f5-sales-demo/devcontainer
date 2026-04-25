@@ -969,8 +969,8 @@ ENV NODE_PATH=/usr/lib/node_modules
 # 11a. Firecrawl — self-hosted web scraper (API on port 3002)
 #      Requires Redis + PostgreSQL (started in entrypoint.sh).
 # ============================================================
-# trivy:ignore:DS-0013
 # hadolint ignore=DL3059
+# trivy:ignore:DS-0013
 RUN git clone --depth=1 https://github.com/mendableai/firecrawl.git /opt/firecrawl \
     && cd /opt/firecrawl/apps/api \
     && pnpm install --ignore-scripts \
@@ -1208,8 +1208,8 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
 # 12j. ATT&CK Navigator (MITRE threat matrix visualization)
 #      Angular app — built at image time, served as static files.
 # ============================================================
-# trivy:ignore:DS-0013
 # hadolint ignore=DL3059
+# trivy:ignore:DS-0013
 RUN git clone --depth=1 https://github.com/mitre-attack/attack-navigator.git /tmp/attack-navigator \
     && cd /tmp/attack-navigator/nav-app \
     && npm ci --ignore-scripts \
