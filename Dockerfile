@@ -27,11 +27,9 @@ ENV CURL_RETRY="--connect-timeout 30 --retry 8 --retry-all-errors --retry-max-ti
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# ghlatest: resolve latest GitHub release version (used by sections 9-10)
-COPY scripts/ghlatest.sh /usr/local/bin/ghlatest
-# install-release: atomic download-then-extract for GitHub release assets.
-# Replaces curl|tar pipes that silently corrupt on mid-stream retries.
-COPY scripts/install-release.sh /usr/local/bin/install-release
+# ghlatest + install-release: resolve latest GitHub release versions and
+# atomic download-then-extract for GitHub release assets.
+COPY scripts/ghlatest.sh scripts/install-release.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/ghlatest /usr/local/bin/install-release
 
 # ============================================================
@@ -184,19 +182,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && locale-gen en_US.UTF-8 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Pre-seed wireshark debconf — allow non-root packet capture via dumpcap
-# hadolint ignore=DL3059
-RUN echo "wireshark-common wireshark-common/install-setuid boolean true" \
-      | debconf-set-selections
-
-# Pre-seed MS core fonts EULA — non-interactive acceptance
-# hadolint ignore=DL3059
-RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" \
-      | debconf-set-selections
-
-# Install Microsoft core fonts (Arial, Times New Roman, Courier New, Verdana, etc.)
+# Pre-seed debconf + install MS core fonts in one layer
 # hadolint ignore=DL3008,DL3059
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN echo "wireshark-common wireshark-common/install-setuid boolean true" | debconf-set-selections \
+    && echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections \
+    && apt-get update && apt-get install -y --no-install-recommends \
     ttf-mscorefonts-installer \
     && fc-cache -fv \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -264,16 +254,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # OSINT: media metadata & forensics
     exiv2 \
     mediainfo \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Create expected binary names for tools Ubuntu renames
-RUN ln -sf /usr/bin/fdfind /usr/local/bin/fd \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/fdfind /usr/local/bin/fd \
     && ln -sf /usr/bin/batcat /usr/local/bin/bat
 
-ENV LANG=en_US.UTF-8
-ENV LC_ALL=en_US.UTF-8
-ENV TERM=xterm-256color
-ENV COLORTERM=truecolor
+ENV LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    TERM=xterm-256color \
+    COLORTERM=truecolor
 
 # PowerShell — Microsoft only publishes amd64 .deb packages;
 # arm64 resolves latest version from GitHub and uses the tar.gz.
@@ -726,8 +714,8 @@ RUN ARCH=$(dpkg --print-architecture) \
     fi \
     && git clone --depth=1 https://github.com/Azure/arm-ttk.git /usr/lib/microsoft/arm-ttk \
     && rm -rf /usr/lib/microsoft/arm-ttk/.git
-ENV ARM_TTK_PSD1="/usr/lib/microsoft/arm-ttk/arm-ttk/arm-ttk.psd1"
-ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+ENV ARM_TTK_PSD1="/usr/lib/microsoft/arm-ttk/arm-ttk/arm-ttk.psd1" \
+    DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 # ============================================================
 # 10g. Security binary tools (pentest & recon)
@@ -982,29 +970,18 @@ ENV NODE_PATH=/usr/lib/node_modules
 #      Requires Redis + PostgreSQL (started in entrypoint.sh).
 # ============================================================
 # hadolint ignore=DL3059
-RUN git clone --depth=1 https://github.com/mendableai/firecrawl.git /opt/firecrawl
-
-WORKDIR /opt/firecrawl/apps/api
-# hadolint ignore=DL3059
-RUN pnpm install --ignore-scripts
-
-WORKDIR /opt/firecrawl/apps/api/node_modules/@mendable/firecrawl-rs
-# hadolint ignore=DL3059
-RUN npx napi build --platform --release
-
-WORKDIR /opt/firecrawl/apps/api
-# hadolint ignore=DL3059
-RUN npx tsc
-
-# Final playwright-service build + .git cleanup consolidated into one RUN
-# (previously two) to shave one layer off the overlayfs depth count.
-WORKDIR /opt/firecrawl/apps/playwright-service-ts
-# hadolint ignore=DL3059
-RUN pnpm install --ignore-scripts && npx tsc \
+# trivy:ignore:DS-0013
+RUN git clone --depth=1 https://github.com/mendableai/firecrawl.git /opt/firecrawl \
+    && cd /opt/firecrawl/apps/api \
+    && pnpm install --ignore-scripts \
+    && cd node_modules/@mendable/firecrawl-rs \
+    && npx napi build --platform --release \
+    && cd /opt/firecrawl/apps/api \
+    && npx tsc \
+    && cd /opt/firecrawl/apps/playwright-service-ts \
+    && pnpm install --ignore-scripts && npx tsc \
     && PLAYWRIGHT_BROWSERS_PATH=/home/vscode/.cache/ms-playwright npx playwright install chromium \
     && rm -rf /opt/firecrawl/.git
-
-WORKDIR /
 
 # PostgreSQL: create a vscode-owned cluster so the entrypoint can start it without sudo.
 # Drop the default postgres-user cluster and replace with one owned by vscode.
@@ -1232,12 +1209,10 @@ RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
 #      Angular app — built at image time, served as static files.
 # ============================================================
 # hadolint ignore=DL3059
-RUN git clone --depth=1 https://github.com/mitre-attack/attack-navigator.git /tmp/attack-navigator
-
-WORKDIR /tmp/attack-navigator/nav-app
-
-# hadolint ignore=DL3059
-RUN npm ci --ignore-scripts \
+# trivy:ignore:DS-0013
+RUN git clone --depth=1 https://github.com/mitre-attack/attack-navigator.git /tmp/attack-navigator \
+    && cd /tmp/attack-navigator/nav-app \
+    && npm ci --ignore-scripts \
     && NODE_OPTIONS="--max-old-space-size=4096" npx ng build --configuration production 2>&1 | grep -v "chunkSizeWarningLimit" \
     && mkdir -p /opt/attack-navigator \
     && cp -r dist/browser/* /opt/attack-navigator/ \
@@ -1246,33 +1221,24 @@ RUN npm ci --ignore-scripts \
       > /usr/local/bin/attack-navigator \
     && chmod +x /usr/local/bin/attack-navigator
 
-WORKDIR /
-
 # ============================================================
 # 12k. CALDERA (MITRE adversary emulation platform)
 #      Installed in /opt/caldera with isolated Python 3.12 venv.
 #      Runs on port 8888 (HTTP) / 8443 (HTTPS).
 # ============================================================
-# hadolint ignore=DL3059
+# hadolint ignore=DL3013,DL3059
 RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
       https://github.com/mitre/caldera.git /opt/caldera \
-    && rm -rf /opt/caldera/.git /opt/caldera/plugins/*/.git
-
-# hadolint ignore=DL3013,DL3059
-RUN uv venv --python python3.12 /opt/caldera/.venv \
+    && rm -rf /opt/caldera/.git /opt/caldera/plugins/*/.git \
+    && uv venv --python python3.12 /opt/caldera/.venv \
     && uv pip install --python /opt/caldera/.venv/bin/python \
-      -r /opt/caldera/requirements.txt
-
-# Build VueJS frontend (magma plugin) if present
-# hadolint ignore=DL3059
-RUN if [ -d /opt/caldera/plugins/magma ]; then \
+      -r /opt/caldera/requirements.txt \
+    && if [ -d /opt/caldera/plugins/magma ]; then \
       npm --prefix /opt/caldera/plugins/magma ci \
       && npm --prefix /opt/caldera/plugins/magma run build \
       && rm -rf /opt/caldera/plugins/magma/node_modules; \
-    fi
-
-# hadolint ignore=DL3059
-RUN printf '#!/bin/sh\ncd /opt/caldera\nexec .venv/bin/python server.py --insecure "$@"\n' \
+    fi \
+    && printf '#!/bin/sh\ncd /opt/caldera\nexec .venv/bin/python server.py --insecure "$@"\n' \
       > /usr/local/bin/caldera \
     && chmod +x /usr/local/bin/caldera
 
@@ -1290,17 +1256,10 @@ RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
     && rm -rf /opt/hermes-agent/.git \
     && (uv pip install --system --break-system-packages \
       -e "/opt/hermes-agent[all]" 2>&1 | grep -v "missing.*RECORD") \
-    && npm --prefix /opt/hermes-agent install --ignore-scripts 2>/dev/null || true
-
-# ============================================================
-# 12o. Maki — AI coding agent (Rust binary from GitHub release)
-#      Uses the dynamic-provider mechanism (~/.maki/providers/)
-#      to route requests to the LiteLLM Anthropic passthrough;
-#      the provider script is COPY'd in section 17.
-# ============================================================
-ARG MAKI_VERSION=v0.2.6
-# hadolint ignore=DL3059
-RUN UNAME_ARCH=$(uname -m) \
+    && npm --prefix /opt/hermes-agent install --ignore-scripts 2>/dev/null || true \
+    # 12o. Maki — AI coding agent (Rust binary from GitHub release)
+    && MAKI_VERSION=v0.2.6 \
+    && UNAME_ARCH=$(uname -m) \
     && case "$UNAME_ARCH" in \
          x86_64|amd64)  MAKI_TARGET=x86_64-unknown-linux-musl ;; \
          aarch64|arm64) MAKI_TARGET=aarch64-unknown-linux-musl ;; \
@@ -1312,8 +1271,7 @@ RUN UNAME_ARCH=$(uname -m) \
     && chmod +x /usr/local/bin/maki
 
 # Pre-stage plugin install script and settings for section 12l
-COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
-COPY claude-config/settings.json /opt/claude-config/settings.json
+COPY claude-config/install-plugins.sh claude-config/settings.json /opt/claude-config/
 RUN chmod +x /opt/claude-config/install-plugins.sh
 
 # ============================================================
@@ -1348,34 +1306,20 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
         "${PLUGIN_BASE}" /opt/claude-config/settings.json \
     && chown -R ${USERNAME}:${USERNAME} "${PLUGIN_BASE}"
 
-# 12m. Claude Code skills (git-cloned external skills)
+# 12m. Claude Code skills + 12n. Codex ~/.agents/skills symlink
 # hadolint ignore=DL3059
 RUN git clone --depth=1 --single-branch --branch main \
       https://github.com/zarazhangrui/frontend-slides.git \
       "/home/${USERNAME}/.claude/skills/frontend-slides" \
-    && chown -R ${USERNAME}:${USERNAME} "/home/${USERNAME}/.claude"
-
-# 12n. Share Claude Code skills with Codex via ~/.agents/skills symlink
-# Codex discovers user skills from ~/.agents/skills/. A whole-directory symlink
-# lets both agents share ~/.claude/skills/ as the single source of truth.
-# hadolint ignore=DL3059
-RUN mkdir -p "/home/${USERNAME}/.agents" \
+    && chown -R ${USERNAME}:${USERNAME} "/home/${USERNAME}/.claude" \
+    && mkdir -p "/home/${USERNAME}/.agents" \
     && ln -s "/home/${USERNAME}/.claude/skills" "/home/${USERNAME}/.agents/skills" \
     && chown -h ${USERNAME}:${USERNAME} "/home/${USERNAME}/.agents" "/home/${USERNAME}/.agents/skills"
 
-# ============================================================
-# 13. Playwright system dependencies (requires root for apt)
-# ============================================================
+# 13. Playwright system dependencies + fix ownership of dirs created by root
 # hadolint ignore=DL3059
-RUN npx playwright install-deps
-
-# Fix ownership of dirs created by root under /home/vscode.
-# Earlier stages create intermediate parents (e.g. /home/vscode/.local from the
-# postgres setup's mkdir -p, /home/vscode/.cache from playwright) that chown -R
-# on their leaf paths does not cover. Widening the chown to the entire home dir
-# ensures the USER switch below lands on a tree vscode fully owns.
-# hadolint ignore=DL3059
-RUN chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
+RUN npx playwright install-deps \
+    && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
 
 # ============================================================
 # User setup
@@ -1408,10 +1352,6 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
 # Bun JavaScript runtime and package manager
 # hadolint ignore=DL3059
 RUN curl -fsSL https://bun.sh/install | bash
-USER root
-RUN ln -s /home/vscode/.bun/bin/bun /usr/local/bin/bun \
-    && ln -s /home/vscode/.bun/bin/bunx /usr/local/bin/bunx
-USER $USERNAME
 
 # Install native Claude Code binary (replaces npm package)
 # Retry up to 4 times with exponential back-off to handle transient
@@ -1422,20 +1362,11 @@ RUN for attempt in 1 2 3 4; do \
       echo "claude install attempt $attempt failed, retrying in $((attempt * 15))s..."; \
       sleep "$((attempt * 15))"; \
     done
-USER root
-RUN npm uninstall -g @anthropic-ai/claude-code
-USER $USERNAME
 
 # Playwright Chromium browser binary (runs as vscode — cache to ~/.cache/ms-playwright)
 # hadolint ignore=DL3059
 RUN (npx playwright install 2>&1 | grep -v "not in your PATH") \
     && playwright-cli install --skills || true
-USER root
-RUN CHROME_BIN="$(find /home/vscode/.cache/ms-playwright \
-        -name chrome -path '*/chromium-*/chrome-linux*/chrome' -print -quit)" \
-    && mkdir -p /opt/google/chrome \
-    && ln -sf "$CHROME_BIN" /opt/google/chrome/chrome
-USER $USERNAME
 
 # Chrome DevTools MCP: pre-cache the package (runs as vscode so npm caches
 # to ~/.npm/_npx; --headless is passed via .mcp.json args in each content repo)
@@ -1462,11 +1393,19 @@ RUN npx -y oh-my-openagent install --no-tui \
 #     Linux binaries — arm64 falls back to Homebrew for those
 #     two only.
 # ============================================================
-ENV FORCE_AUTOUPDATE_PLUGINS=true
-ENV PATH="/home/vscode/.local/bin:${PATH}"
+ENV FORCE_AUTOUPDATE_PLUGINS=true \
+    PATH="/home/vscode/.local/bin:${PATH}"
 
+# Consolidated root block: bun symlinks, npm cleanup, chrome symlink, linuxbrew dir
 USER root
-RUN mkdir -p /home/linuxbrew && chown ${USERNAME}:${USERNAME} /home/linuxbrew
+RUN ln -s /home/vscode/.bun/bin/bun /usr/local/bin/bun \
+    && ln -s /home/vscode/.bun/bin/bunx /usr/local/bin/bunx \
+    && npm uninstall -g @anthropic-ai/claude-code \
+    && CHROME_BIN="$(find /home/vscode/.cache/ms-playwright \
+        -name chrome -path '*/chromium-*/chrome-linux*/chrome' -print -quit)" \
+    && mkdir -p /opt/google/chrome \
+    && ln -sf "$CHROME_BIN" /opt/google/chrome/chrome \
+    && mkdir -p /home/linuxbrew && chown ${USERNAME}:${USERNAME} /home/linuxbrew
 USER $USERNAME
 
 # hadolint ignore=DL3059
@@ -1607,8 +1546,6 @@ COPY --chown=${USERNAME}:${USERNAME} \
 # Neovim plugins (lazy.nvim plugin manager + avante.nvim AI assistant)
 COPY --chown=${USERNAME}:${USERNAME} configs/init.lua /home/${USERNAME}/.config/nvim/init.lua
 COPY --chown=${USERNAME}:${USERNAME} configs/setup-nvim.sh /tmp/setup-nvim.sh
-# hadolint ignore=DL3059
-RUN bash /tmp/setup-nvim.sh && rm /tmp/setup-nvim.sh
 # Six dotfiles into one COPY — trailing slash on dest requires it to be a
 # directory, and each source is copied under it with the same basename.
 COPY --chown=${USERNAME}:${USERNAME} \
@@ -1619,7 +1556,9 @@ COPY --chown=${USERNAME}:${USERNAME} \
     configs/.lessfilter \
     configs/.digrc \
     /home/${USERNAME}/
-RUN chmod +x /home/${USERNAME}/.lessfilter
+# hadolint ignore=DL3059
+RUN bash /tmp/setup-nvim.sh && rm /tmp/setup-nvim.sh \
+    && chmod +x /home/${USERNAME}/.lessfilter
 
 # ============================================================
 # 17. All tool configuration — baked to final paths
@@ -1629,16 +1568,15 @@ RUN chmod +x /home/${USERNAME}/.lessfilter
 USER root
 
 # --- System-wide scripts and managed policy ---
-COPY claude-config/self-test.sh /opt/claude-config/self-test.sh
+COPY claude-config/self-test.sh \
+     claude-config/statusline.sh \
+     claude-config/api-key-helper.sh \
+     claude-config/install-plugins.sh \
+     claude-config/neutralize-hooks.sh \
+     /opt/claude-config/
 COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
-
 COPY claude-config/chrome-browser.sh /usr/local/lib/chrome-browser.sh
-COPY claude-config/statusline.sh /opt/claude-config/statusline.sh
-COPY claude-config/api-key-helper.sh /opt/claude-config/api-key-helper.sh
-COPY claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh
-COPY claude-config/neutralize-hooks.sh /opt/claude-config/neutralize-hooks.sh
-COPY .devcontainer/scripts/post-start.sh /opt/devcontainer/post-start.sh
-COPY scripts/nightly-update.sh /opt/devcontainer/nightly-update.sh
+COPY .devcontainer/scripts/post-start.sh scripts/nightly-update.sh /opt/devcontainer/
 RUN chmod +x /opt/claude-config/self-test.sh \
       /usr/local/lib/chrome-browser.sh \
       /opt/claude-config/statusline.sh /opt/claude-config/api-key-helper.sh \
@@ -1652,9 +1590,8 @@ RUN chmod +x /opt/claude-config/self-test.sh \
       | crontab -u ${USERNAME} -
 
 # --- Claude Code: settings.json + claude.json → final $HOME paths ---
-COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.json /home/${USERNAME}/.claude/settings.json
+COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.json claude-config/user-CLAUDE.md /home/${USERNAME}/.claude/
 COPY --chown=${USERNAME}:${USERNAME} claude-config/claude.json /home/${USERNAME}/.claude.json
-COPY --chown=${USERNAME}:${USERNAME} claude-config/user-CLAUDE.md /home/${USERNAME}/.claude/CLAUDE.md
 
 
 
@@ -1663,22 +1600,13 @@ COPY --chown=${USERNAME}:${USERNAME} codex-config/config.toml /home/${USERNAME}/
 COPY --chown=${USERNAME}:${USERNAME} codex-config/sync-agents.sh /opt/codex-config/sync-agents.sh
 
 # 17a. Sync Claude Code plugin agents → Codex .toml format
-# Converts ~/.claude/plugins/cache/*/agents/*.md to ~/.codex/agents/*.toml
-# so Codex can natively discover the same agents as Claude Code.
-# chmod as root (modifies /opt/); run as vscode so output files under
-# ~/.codex/ are owned by vscode, not root.
-# hadolint ignore=DL3059
-RUN chmod +x /opt/codex-config/sync-agents.sh
 USER $USERNAME
 # hadolint ignore=DL3059
-RUN /opt/codex-config/sync-agents.sh
+RUN chmod +x /opt/codex-config/sync-agents.sh && /opt/codex-config/sync-agents.sh
 USER root
 COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
-COPY --chown=${USERNAME}:${USERNAME} omp-config/settings.json /home/${USERNAME}/.omp/agent/settings.json
-COPY --chown=${USERNAME}:${USERNAME} omp-config/config.yml /home/${USERNAME}/.omp/agent/config.yml
-COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json /home/${USERNAME}/.config/opencode/opencode.json
-COPY --chown=${USERNAME}:${USERNAME} opencode-config/oh-my-openagent.json /home/${USERNAME}/.config/opencode/oh-my-openagent.json
-COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode-permissions.json /home/${USERNAME}/.config/opencode/opencode-permissions.json
+COPY --chown=${USERNAME}:${USERNAME} omp-config/settings.json omp-config/config.yml /home/${USERNAME}/.omp/agent/
+COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json opencode-config/oh-my-openagent.json opencode-config/opencode-permissions.json /home/${USERNAME}/.config/opencode/
 COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
 COPY --chown=${USERNAME}:${USERNAME} crush-config/crush.json /home/${USERNAME}/.config/crush/crush.json
 COPY --chown=${USERNAME}:${USERNAME} maki-config/litellm /home/${USERNAME}/.maki/providers/litellm
@@ -1692,42 +1620,25 @@ COPY --chown=${USERNAME}:${USERNAME} maki-config/litellm /home/${USERNAME}/.maki
 # are owned by vscode, not root.
 # ────────────────────────────────────────────────────────────
 USER $USERNAME
-# hadolint ignore=DL3059
+# hadolint ignore=DL3059,SC2016
 RUN printf '{"dependencies":{"@opencode-ai/plugin":"^1.4.3"}}\n' \
        > /home/${USERNAME}/.config/opencode/package.json \
     && npm install --no-audit --no-fund --prefix /home/${USERNAME}/.config/opencode \
     && mkdir -p /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent \
     && printf '{"dependencies":{"oh-my-openagent":"latest"}}\n' \
        > /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent/package.json \
-    && npm install --no-audit --no-fund --prefix /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent
-
-# Map CLAUDE_CODE_OAUTH_TOKEN → ANTHROPIC_OAUTH_TOKEN for tools
-# that read the Anthropic-native env var (e.g. Pi). Writes the bridge
-# into vscode's ~/.profile (bash login) and ~/.zshenv (all zsh shells);
-# equivalent to /etc/profile.d + /etc/zsh/zshenv for a single-user
-# container and requires no root-owned config files.
-# hadolint ignore=SC2016
-RUN printf 'if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then\n  export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"\nfi\n' \
+    && npm install --no-audit --no-fund --prefix /home/${USERNAME}/.cache/opencode/packages/oh-my-openagent \
+    && printf 'if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then\n  export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"\nfi\n' \
       >> "$HOME/.profile" \
     && printf 'if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_OAUTH_TOKEN" ]; then\n  export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"\nfi\n' \
       >> "$HOME/.zshenv"
+
+# 18. Build fingerprint + 19. Entrypoint
 USER root
-
-# ============================================================
-# 18. Build fingerprint — bake commit SHA + date into the image
-#     so Claude Code can identify its own version at runtime.
-# ============================================================
-RUN printf 'BUILD_COMMIT=%s\nBUILD_DATE=%s\nIMAGE=ghcr.io/f5xc-salesdemos/devcontainer\nREPO=https://github.com/f5xc-salesdemos/devcontainer\n' \
-      "${BUILD_COMMIT}" "${BUILD_DATE}" > /etc/devcontainer-version
-
-# ============================================================
-# 19. Entrypoint (absolute last COPY — most volatile file)
-# ============================================================
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-# chmod the entrypoint and ensure the entire home directory (including hidden
-# files/folders created by earlier root-owned stages such as .claude/, .config/,
-# .codex/, .pi/, .omp/) is owned by the runtime user.
-RUN chmod +x /usr/local/bin/entrypoint.sh \
+RUN printf 'BUILD_COMMIT=%s\nBUILD_DATE=%s\nIMAGE=ghcr.io/f5xc-salesdemos/devcontainer\nREPO=https://github.com/f5xc-salesdemos/devcontainer\n' \
+      "${BUILD_COMMIT}" "${BUILD_DATE}" > /etc/devcontainer-version \
+    && chmod +x /usr/local/bin/entrypoint.sh \
     && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
 
 USER $USERNAME
