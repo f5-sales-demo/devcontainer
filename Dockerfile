@@ -1449,6 +1449,12 @@ RUN npx -y oh-my-openagent install --no-tui \
     --claude=max20 --openai=no --gemini=no --copilot=no \
     && rm -f ~/.config/opencode/*.bak.*
 
+# Pre-download Trivy vulnerability databases so first scan is instant.
+# Runs as vscode so cache lands in ~/.cache/trivy with correct ownership.
+# hadolint ignore=DL3059
+RUN trivy image --download-db-only --no-progress \
+    && trivy image --download-java-db-only --no-progress
+
 # ============================================================
 # 14. Language formatters (GitHub binaries + source build)
 #     Replaces the previous Homebrew section. Each tool is
