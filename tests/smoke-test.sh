@@ -528,7 +528,8 @@ echo "Utilities"
 echo "---------"
 for util in \
   git jq yq fzf fd rg bat eza tree tmux htop nvim \
-  ffmpeg qrencode dos2unix curl wget socat dig mtr; do
+  ffmpeg qrencode dos2unix curl wget socat dig mtr \
+  ab wrk hey; do
   assert_bin "$util"
 done
 
