@@ -14,13 +14,16 @@ set -euo pipefail
 #   Not set → render-only test with dummy values (functional tests skipped)
 # ============================================================
 
-# Auto-detect container runtime
-if command -v podman >/dev/null 2>&1; then
-  RT=podman
-elif command -v docker >/dev/null 2>&1; then
+# Auto-detect container runtime.
+# Prefer docker: CI runners have Docker daemon running; podman's rootless
+# socket is often not started, causing "Cannot connect to Docker daemon"
+# when podman compose delegates to the docker-compose plugin.
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
   RT=docker
+elif command -v podman >/dev/null 2>&1; then
+  RT=podman
 else
-  echo "Error: neither podman nor docker found" >&2
+  echo "Error: neither docker nor podman found" >&2
   exit 1
 fi
 
