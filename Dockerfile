@@ -311,7 +311,7 @@ RUN update-alternatives --install /usr/bin/python3 python3 "/usr/bin/python${PYT
     && update-alternatives --install /usr/bin/python  python  "/usr/bin/python${PYTHON_VERSION}" 1 \
     && curl ${CURL_RETRY} -fsSLo /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py \
     && [ -s /tmp/get-pip.py ] \
-    && "python${PYTHON_VERSION}" /tmp/get-pip.py \
+    && retry "python${PYTHON_VERSION}" /tmp/get-pip.py \
     && rm /tmp/get-pip.py
 
 # ============================================================
@@ -330,7 +330,7 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     PATH="/usr/local/cargo/bin:${PATH}"
 RUN curl ${CURL_RETRY} --proto '=https' --tlsv1.2 -sSfo /tmp/rustup-init.sh https://sh.rustup.rs \
     && [ -s /tmp/rustup-init.sh ] \
-    && sh /tmp/rustup-init.sh -y --default-toolchain stable --no-modify-path \
+    && retry sh /tmp/rustup-init.sh -y --default-toolchain stable --no-modify-path \
     && rm /tmp/rustup-init.sh \
     && rustup toolchain install nightly --profile minimal \
     && rustup component add clippy rustfmt rust-analyzer rust-src \
@@ -468,7 +468,7 @@ RUN true \
     # uv (latest — omit version from installer URL)
     && curl ${CURL_RETRY} -fsSLo /tmp/uv-install.sh "https://astral.sh/uv/install.sh" \
     && [ -s /tmp/uv-install.sh ] \
-    && sh /tmp/uv-install.sh \
+    && retry sh /tmp/uv-install.sh \
     && rm /tmp/uv-install.sh \
     && mv "$HOME/.local/bin/uv" /usr/local/bin/uv \
     && mv "$HOME/.local/bin/uvx" /usr/local/bin/uvx 2>/dev/null || true \
@@ -560,7 +560,7 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # mise
     && curl ${CURL_RETRY} -fsSLo /tmp/mise-install.sh https://mise.run \
     && [ -s /tmp/mise-install.sh ] \
-    && MISE_INSTALL_PATH=/usr/local/bin/mise sh /tmp/mise-install.sh \
+    && retry env MISE_INSTALL_PATH=/usr/local/bin/mise sh /tmp/mise-install.sh \
     && rm /tmp/mise-install.sh \
     # dagu (resolve version — asset name contains version)
     && DAGU_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
@@ -626,7 +626,7 @@ RUN true \
     # trivy (install script auto-detects arch)
     && curl ${CURL_RETRY} -sfLo /tmp/trivy-install.sh https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
     && [ -s /tmp/trivy-install.sh ] \
-    && sh /tmp/trivy-install.sh -b /usr/local/bin \
+    && retry sh /tmp/trivy-install.sh -b /usr/local/bin \
     && rm /tmp/trivy-install.sh \
     # clj-kondo (zip contains a single clj-kondo binary)
     && CLJ_KONDO_VERSION=$(ghlatest clj-kondo/clj-kondo) \
@@ -640,14 +640,14 @@ RUN true \
         "https://github.com/dotenv-linter/dotenv-linter/releases/latest/download/dotenv-linter-linux-${DL_ARCH}.tar.gz" \
         tgz-bin dotenv-linter \
     # gopls (Go LSP server — pulled via Go module proxy, not curl)
-    && GOBIN=/usr/local/bin go install golang.org/x/tools/gopls@v0.21.1 \
+    && retry env GOBIN=/usr/local/bin go install golang.org/x/tools/gopls@v0.21.1 \
     # hey (HTTP load generator — Go binary)
-    && GOBIN=/usr/local/bin go install github.com/rakyll/hey@v0.1.5 \
+    && retry env GOBIN=/usr/local/bin go install github.com/rakyll/hey@v0.1.5 \
     # golangci-lint: stage the vendor install script to a file before running,
     # so a partial-download doesn't get piped into sh.
     && curl ${CURL_RETRY} -fsSLo /tmp/golangci-lint-install.sh https://golangci-lint.run/install.sh \
     && [ -s /tmp/golangci-lint-install.sh ] \
-    && sh /tmp/golangci-lint-install.sh -b /usr/local/bin \
+    && retry sh /tmp/golangci-lint-install.sh -b /usr/local/bin \
     && rm /tmp/golangci-lint-install.sh \
     # goreleaser
     && if [ "$UNAME_ARCH" = "x86_64" ]; then GR_ARCH="x86_64"; else GR_ARCH="arm64"; fi \
@@ -662,7 +662,7 @@ RUN true \
     && curl ${CURL_RETRY} -fsSLo /tmp/kustomize-install.sh \
         https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh \
     && [ -s /tmp/kustomize-install.sh ] \
-    && bash /tmp/kustomize-install.sh \
+    && retry bash /tmp/kustomize-install.sh \
     && rm /tmp/kustomize-install.sh \
     && mv kustomize /usr/local/bin/ \
     # protolint (version in asset name)
@@ -830,8 +830,8 @@ RUN true \
       && chmod +x /usr/local/bin/bettercap; \
     fi \
     # --- OSINT: cloud & IP recon (go install) ---
-    && GOBIN=/usr/local/bin go install github.com/jreisinger/checkip@v0.49.0 \
-    && GOBIN=/usr/local/bin go install github.com/Macmod/goblob@v1.2.2 \
+    && retry env GOBIN=/usr/local/bin go install github.com/jreisinger/checkip@v0.49.0 \
+    && retry env GOBIN=/usr/local/bin go install github.com/Macmod/goblob@v1.2.2 \
     && retry git clone --depth=1 --branch v2.0 https://github.com/redhuntlabs/bucketloot.git /tmp/bucketloot \
     && go build -C /tmp/bucketloot -o /usr/local/bin/bucketloot . && rm -rf /tmp/bucketloot \
     # wrk (HTTP benchmarking — compiled with system OpenSSL)
@@ -946,7 +946,7 @@ RUN UNAME_ARCH=$(uname -m) \
 # 11. npm global tools
 # ============================================================
 # hadolint ignore=DL3016,DL3059
-RUN npm install -g \
+RUN retry npm install -g \
     pnpm \
     turbo \
     @anthropic-ai/claude-code \
@@ -1070,7 +1070,7 @@ RUN mkdir -p /home/${USERNAME}/.local/lib/rabbitmq \
 # packages without pip RECORD files (typing_extensions, packaging, etc.).
 # pip cannot upgrade these normally, so we skip the uninstall check.
 # hadolint ignore=DL3013,DL3059
-RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
+RUN retry pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
     "cryptography>=43,<47" \
     "pyopenssl>=24.3,<=25.3.0" \
     "packaging>=24,<26" \
@@ -1123,7 +1123,7 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root
 #      social, media, and forensic investigation tools.
 # ============================================================
 # hadolint ignore=DL3013,DL3059
-RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
+RUN retry pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
     # Username & email recon
     sherlock-project \
     maigret \
@@ -1169,9 +1169,9 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root
 # --ignore-installed: Debian system packages (blinker, etc.) lack
 # pip RECORD files and block uninstall.
 # hadolint ignore=DL3013,DL3059
-RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
+RUN retry pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
     scapy impacket arjun hashid \
-    && pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
+    && retry pip install --no-cache-dir --break-system-packages --ignore-installed --root-user-action=ignore \
     pwntools volatility3 "packaging>=24,<26"
 
 # uv-isolated tools (notebooklm-mcp-cli, checkov, prowler, fierce)
@@ -1179,19 +1179,19 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed --root
 # prowler pins pydantic==1.x, boto3==1.26 — incompatible with global env.
 # fierce pins dnspython==1.16.0 — incompatible with global dnspython 2.x.
 # hadolint ignore=DL3059
-RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+RUN retry env UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install notebooklm-mcp-cli \
-    && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    && retry env UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install --python python3.12 checkov \
-    && (UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    && (retry env UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install prowler 2>&1 | grep -v "missing.*RECORD") \
-    && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    && retry env UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install fierce \
-    && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    && retry env UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install mitmproxy \
-    && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    && retry env UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install kube-hunter \
-    && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    && retry env UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install sslyze
 
 # ============================================================
@@ -1234,7 +1234,7 @@ RUN retry git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/te
     && ln -s /opt/docker-bench-security/docker-bench-security.sh /usr/local/bin/docker-bench-security \
     # recon-ng and spiderfoot are not on PyPI — install from git
     && retry git clone --depth=1 https://github.com/lanmaster53/recon-ng.git /opt/recon-ng \
-    && pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r /opt/recon-ng/REQUIREMENTS \
+    && retry pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r /opt/recon-ng/REQUIREMENTS \
     && ln -s /opt/recon-ng/recon-ng /usr/local/bin/recon-ng \
     && retry git clone --depth=1 https://github.com/smicallef/spiderfoot.git /opt/spiderfoot \
     # Spiderfoot pins lxml>=4.9.2,<5 but lxml 4.x Cython C code is
@@ -1242,7 +1242,7 @@ RUN retry git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/te
     # changed _PyLong_AsByteArray).  Strip the <5 upper bound so pip uses
     # the already-installed lxml 6.x cp313 wheel.
     && sed -i 's/lxml>=4\.9\.2,<5/lxml>=4.9.2/' /opt/spiderfoot/requirements.txt \
-    && pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r /opt/spiderfoot/requirements.txt \
+    && retry pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r /opt/spiderfoot/requirements.txt \
     && printf '#!/bin/sh\nexec python3 /opt/spiderfoot/sf.py "$@"\n' > /usr/local/bin/spiderfoot \
     && chmod +x /usr/local/bin/spiderfoot \
     && rm -rf /opt/testssl.sh/.git /opt/exploitdb/.git /opt/seclists/.git \
@@ -1275,7 +1275,7 @@ RUN retry git clone --depth=1 --recurse-submodules --shallow-submodules \
       https://github.com/mitre/caldera.git /opt/caldera \
     && rm -rf /opt/caldera/.git /opt/caldera/plugins/*/.git \
     && uv venv --python python3.12 /opt/caldera/.venv \
-    && uv pip install --python /opt/caldera/.venv/bin/python \
+    && retry uv pip install --python /opt/caldera/.venv/bin/python \
       -r /opt/caldera/requirements.txt \
     && if [ -d /opt/caldera/plugins/magma ]; then \
       npm --prefix /opt/caldera/plugins/magma ci \
@@ -1298,7 +1298,7 @@ RUN retry git clone --depth=1 --recurse-submodules --shallow-submodules \
 RUN retry git clone --depth=1 --recurse-submodules --shallow-submodules \
       https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent \
     && rm -rf /opt/hermes-agent/.git \
-    && (uv pip install --system --break-system-packages \
+    && (retry uv pip install --system --break-system-packages \
       -e "/opt/hermes-agent[all]" 2>&1 | grep -v "missing.*RECORD") \
     && npm --prefix /opt/hermes-agent install --ignore-scripts 2>/dev/null || true \
     # 12o. Maki — AI coding agent (Rust binary from GitHub release)
@@ -1399,7 +1399,7 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
 # hadolint ignore=DL3059
 RUN curl ${CURL_RETRY} -fsSLo /tmp/bun-install.sh https://bun.sh/install \
     && [ -s /tmp/bun-install.sh ] \
-    && bash /tmp/bun-install.sh \
+    && retry bash /tmp/bun-install.sh \
     && rm /tmp/bun-install.sh
 
 # Install native Claude Code binary (replaces npm package)
@@ -1414,18 +1414,18 @@ RUN for attempt in 1 2 3 4; do \
 
 # Playwright Chromium browser binary (runs as vscode — cache to ~/.cache/ms-playwright)
 # hadolint ignore=DL3059
-RUN (npx playwright install 2>&1 | grep -v "not in your PATH") \
+RUN (retry npx playwright install 2>&1 | grep -v "not in your PATH") \
     && playwright-cli install --skills || true
 
 # Chrome DevTools MCP: pre-cache the package (runs as vscode so npm caches
 # to ~/.npm/_npx; --headless is passed via .mcp.json args in each content repo)
 # hadolint ignore=DL3059
-RUN npm exec chrome-devtools-mcp@0.20.2 -- --version 2>/dev/null || true
+RUN retry npm exec chrome-devtools-mcp@0.20.2 -- --version 2>/dev/null || true
 
 # oh-my-openagent (OpenCode plugin system — "ultrawork" / "ulw" command)
 # Build-time install uses npx oh-my-openagent for config scaffolding.
 # hadolint ignore=DL3059
-RUN npx -y oh-my-openagent install --no-tui \
+RUN retry npx -y oh-my-openagent install --no-tui \
     --claude=max20 --openai=no --gemini=no --copilot=no \
     && rm -f ~/.config/opencode/*.bak.* \
     # Pre-download Trivy vulnerability databases so first scan is instant.
@@ -1606,7 +1606,7 @@ COPY --chown=${USERNAME}:${USERNAME} \
     configs/.digrc \
     /home/${USERNAME}/
 # hadolint ignore=DL3059
-RUN bash /tmp/setup-nvim.sh && rm /tmp/setup-nvim.sh \
+RUN retry bash /tmp/setup-nvim.sh && rm /tmp/setup-nvim.sh \
     && chmod +x /home/${USERNAME}/.lessfilter
 
 # ============================================================
