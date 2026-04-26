@@ -197,10 +197,17 @@ if ! _compose_out=$("$RT" compose -f "$COMPOSE_DIR/docker-compose.yml" up -d 2>&
 fi
 
 echo "Waiting for entrypoint ..."
-for _ in $(seq 1 90); do
+for _wait in $(seq 1 90); do
   if run test -f /run/entrypoint-env.sh; then break; fi
+  if ! "$RT" inspect "$CONTAINER" --format '{{.State.Running}}' 2>/dev/null | grep -q true; then
+    echo "ERROR: container exited before entrypoint completed" >&2
+    echo "--- container logs ---" >&2
+    "$RT" logs "$CONTAINER" 2>&1 | tail -30 >&2
+    exit 1
+  fi
   sleep 1
 done
+unset _wait
 sleep 5
 
 # ============================================================
