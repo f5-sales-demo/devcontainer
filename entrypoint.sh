@@ -372,7 +372,7 @@ fi
 # regression surfaces immediately instead of at first tool invocation.
 # ============================================================
 if [ -n "$LITELLM_BASE_URL" ] && [ -n "$LITELLM_API_KEY" ] && command -v curl >/dev/null 2>&1; then
-  _probe_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+  _probe_status=$(curl -sS --connect-timeout 5 --max-time 10 -o /dev/null -w '%{http_code}' \
     -X POST "${LITELLM_BASE_URL}/anthropic/v1/messages" \
     -H "x-api-key: ${LITELLM_API_KEY}" \
     -H 'content-type: application/json' \
