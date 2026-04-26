@@ -216,8 +216,13 @@ sleep 5
 echo ""
 echo "Entrypoint env derivation"
 echo "-------------------------"
-ENV_FILE=$(run cat /run/entrypoint-env.sh)
-assert_file "/run/entrypoint-env.sh exists" "/run/entrypoint-env.sh"
+ENV_FILE=$(run cat /run/entrypoint-env.sh 2>/dev/null || true)
+if [ -z "$ENV_FILE" ]; then
+  fail "/run/entrypoint-env.sh missing or empty — dumping container logs:"
+  "$RT" logs "$CONTAINER" 2>&1 | tail -50
+else
+  ok "/run/entrypoint-env.sh exists"
+fi
 assert_contains "ANTHROPIC_API_KEY derived" "$ENV_FILE" "ANTHROPIC_API_KEY=$TEST_KEY"
 assert_contains "ANTHROPIC_BASE_URL derived" "$ENV_FILE" "ANTHROPIC_BASE_URL=${TEST_URL}/anthropic"
 assert_contains "ANTHROPIC_API_ENDPOINT derived" "$ENV_FILE" "ANTHROPIC_API_ENDPOINT=${TEST_URL}/anthropic"
