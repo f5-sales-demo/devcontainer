@@ -97,6 +97,11 @@ RUN echo 'APT::Acquire::Retries "3";' > /etc/apt/apt.conf.d/99retries \
       && printf 'Package: *\nPin: origin packages.mozilla.org\nPin-Priority: 1000\n' \
         > /etc/apt/preferences.d/mozilla; \
     fi \
+    # Docker CE (CLI-only — no daemon; DooD via host socket)
+    && curl ${CURL_RETRY} -fsSL https://download.docker.com/linux/ubuntu/gpg \
+      | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+      > /etc/apt/sources.list.d/docker.list \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
@@ -140,6 +145,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Locale
     locales \
     locales-all \
+    # Docker CLI (DooD — no daemon; talks to host via mounted socket)
+    docker-ce-cli \
+    docker-buildx-plugin \
+    docker-compose-plugin \
     # Additional tools
     dos2unix \
     eza \
@@ -1346,6 +1355,8 @@ RUN retry git clone --depth=1 --single-branch --branch main \
 # 13. Playwright system dependencies + fix ownership of dirs created by root
 # hadolint ignore=DL3059
 RUN npx playwright install-deps \
+    && groupadd -f docker \
+    && usermod -aG docker ${USERNAME} \
     && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
 
 # ============================================================
