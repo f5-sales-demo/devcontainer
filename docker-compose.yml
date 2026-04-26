@@ -28,7 +28,7 @@ services:
     cpus: 2
     pids_limit: 4096
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock
     tmpfs:
       - /tmp:size=256m
     stdin_open: true
