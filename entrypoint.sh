@@ -15,6 +15,16 @@ if [ -d /usr/local/rustup ] && [ ! -w /usr/local/rustup ]; then
   echo 'WARNING: /usr/local/rustup is not writable — Rust toolchain updates will fail' >&2
 fi
 
+# Docker-outside-of-Docker: detect host container runtime socket.
+# Supports Docker (/var/run/docker.sock) and Podman (rootless socket).
+if [ -z "$DOCKER_HOST" ]; then
+  if [ -S /var/run/docker.sock ]; then
+    export DOCKER_HOST="unix:///var/run/docker.sock"
+  elif [ -S "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/podman/podman.sock" ]; then
+    export DOCKER_HOST="unix://${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/podman/podman.sock"
+  fi
+fi
+
 if [ -n "$GIT_AUTHOR_NAME" ]; then
   git config --global user.name "$GIT_AUTHOR_NAME"
   export GIT_COMMITTER_NAME="${GIT_COMMITTER_NAME:-$GIT_AUTHOR_NAME}"
