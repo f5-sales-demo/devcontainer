@@ -117,6 +117,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg poppler-utils qrencode \
     # Network tools
     dnsutils net-tools iputils-ping traceroute tcpdump nmap netcat-openbsd jnettop \
+    # HTTP benchmarking (ab = ApacheBench)
+    apache2-utils \
     # CLI browsers (xdg-open fallback for gh auth login)
     lynx w3m elinks links2 \
     # Tailscale VPN
@@ -639,6 +641,8 @@ RUN true \
         tgz-bin dotenv-linter \
     # gopls (Go LSP server — pulled via Go module proxy, not curl)
     && GOBIN=/usr/local/bin go install golang.org/x/tools/gopls@v0.21.1 \
+    # hey (HTTP load generator — Go binary)
+    && GOBIN=/usr/local/bin go install github.com/rakyll/hey@v0.1.5 \
     # golangci-lint: stage the vendor install script to a file before running,
     # so a partial-download doesn't get piped into sh.
     && curl ${CURL_RETRY} -fsSLo /tmp/golangci-lint-install.sh https://golangci-lint.run/install.sh \
@@ -830,6 +834,10 @@ RUN true \
     && GOBIN=/usr/local/bin go install github.com/Macmod/goblob@v1.2.2 \
     && retry git clone --depth=1 --branch v2.0 https://github.com/redhuntlabs/bucketloot.git /tmp/bucketloot \
     && go build -C /tmp/bucketloot -o /usr/local/bin/bucketloot . && rm -rf /tmp/bucketloot \
+    # wrk (HTTP benchmarking — compiled with system OpenSSL)
+    && retry git clone --depth=1 https://github.com/wg/wrk.git /tmp/wrk \
+    && make -C /tmp/wrk WITH_OPENSSL=/usr -j"$(nproc)" \
+    && install -m 755 /tmp/wrk/wrk /usr/local/bin/wrk && rm -rf /tmp/wrk \
     && rm -f /usr/local/bin/LICENSE* /usr/local/bin/README*
 
 # ============================================================
