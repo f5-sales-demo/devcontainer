@@ -106,7 +106,7 @@ assert_bin_ver() {
   out=$("$RT" exec -u vscode "$CONTAINER" zsh -c "$cmd" 2>&1 || true)
   if echo "$out" | grep -qi "$pattern"; then
     ok "$name"
-  else fail "$name (version check failed)"; fi
+  else fail "$name (version check failed: got '$(echo "$out" | head -1)')"; fi
 }
 
 run() { "$RT" exec -u vscode "$CONTAINER" "$@" 2>/dev/null; }
