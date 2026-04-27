@@ -10,6 +10,13 @@ if [ -d /home/vscode ] && [ "$HOME" != "/home/vscode" ]; then
   export HOME=/home/vscode
 fi
 
+# JAVA_HOME: resolve dynamically (path includes architecture suffix)
+if [ -z "$JAVA_HOME" ]; then
+  _jvm=$(find /usr/lib/jvm -maxdepth 1 -name "java-*-openjdk-*" -type d 2>/dev/null | sort -V | tail -1)
+  [ -n "$_jvm" ] && export JAVA_HOME="$_jvm"
+  unset _jvm
+fi
+
 # Rust toolchain: warn if not writable (fix ownership in Dockerfile, not at runtime)
 if [ -d /usr/local/rustup ] && [ ! -w /usr/local/rustup ]; then
   echo 'WARNING: /usr/local/rustup is not writable — Rust toolchain updates will fail' >&2
@@ -173,6 +180,7 @@ ENVEOF
     OPENAI_API_KEY OPENAI_BASE_URL \
     ANTHROPIC_OAUTH_TOKEN \
     PI_DEFAULT_MODEL PI_SMOL_MODEL PI_SLOW_MODEL PI_PLAN_MODEL \
+    JAVA_HOME \
     GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL; do
     eval "_val=\${${_var}:-}"
     [ -n "$_val" ] && printf 'export %s=%q\n' "$_var" "$_val"
