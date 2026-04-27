@@ -443,24 +443,28 @@ RUN true \
     && chmod +x /usr/local/bin/kubectl \
     # helm (resolve version via GitHub redirect)
     && HELM_VERSION=$(ghlatest helm/helm) \
-    && curl ${CURL_RETRY} -fsSL "https://get.helm.sh/helm-v${HELM_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
-      | tar -xz --strip-components=1 -C /usr/local/bin "linux-${DPKG_ARCH}/helm" \
+    && install-release helm \
+        "https://get.helm.sh/helm-v${HELM_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
+        tgz-bin helm "linux-${DPKG_ARCH}/helm" \
     # tflint (latest — version-free asset name)
     && curl ${CURL_RETRY} -fsSL "https://github.com/terraform-linters/tflint/releases/latest/download/tflint_linux_${DPKG_ARCH}.zip" \
       -o /tmp/tflint.zip \
     && unzip -q /tmp/tflint.zip -d /usr/local/bin && rm /tmp/tflint.zip \
     # terraform-docs (resolve version — asset name contains version)
     && TERRAFORM_DOCS_VERSION=$(ghlatest terraform-docs/terraform-docs) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/terraform-docs/terraform-docs/releases/latest/download/terraform-docs-v${TERRAFORM_DOCS_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin terraform-docs \
+    && install-release terraform-docs \
+        "https://github.com/terraform-docs/terraform-docs/releases/latest/download/terraform-docs-v${TERRAFORM_DOCS_VERSION}-linux-${DPKG_ARCH}.tar.gz" \
+        tgz-bin terraform-docs \
     # act (latest — version-free asset name)
     && if [ "$UNAME_ARCH" = "x86_64" ]; then ACT_ARCH="x86_64"; else ACT_ARCH="arm64"; fi \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/nektos/act/releases/latest/download/act_Linux_${ACT_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin act \
+    && install-release act \
+        "https://github.com/nektos/act/releases/latest/download/act_Linux_${ACT_ARCH}.tar.gz" \
+        tgz-bin act \
     # actionlint (resolve version — asset name contains version)
     && ACTIONLINT_VERSION=$(ghlatest rhysd/actionlint) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/rhysd/actionlint/releases/latest/download/actionlint_${ACTIONLINT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin actionlint \
+    && install-release actionlint \
+        "https://github.com/rhysd/actionlint/releases/latest/download/actionlint_${ACTIONLINT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin actionlint \
     # yt-dlp (already latest)
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/yt-dlp \
       "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" \
@@ -496,9 +500,9 @@ RUN true \
     && rm /tmp/vscode_cli.tar.gz \
     # oc (OpenShift CLI) — stable channel uses version-free filenames
     && if [ "$DPKG_ARCH" = "amd64" ]; then OC_ARCHIVE="openshift-client-linux.tar.gz"; else OC_ARCHIVE="openshift-client-linux-arm64.tar.gz"; fi \
-    && curl ${CURL_RETRY} -fsSL \
-      "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/${OC_ARCHIVE}" \
-      | tar -xz -C /usr/local/bin oc \
+    && install-release oc \
+        "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/${OC_ARCHIVE}" \
+        tgz-bin oc \
     # yq v4 (latest — version-free asset name)
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/yq \
       "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${DPKG_ARCH}" \
@@ -522,9 +526,9 @@ RUN true \
     && rm -rf /tmp/ibmcloud.tar.gz /tmp/Bluemix_CLI \
     # fzf (resolve version — asset name contains version)
     && FZF_VERSION=$(ghlatest junegunn/fzf) \
-    && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/junegunn/fzf/releases/latest/download/fzf-${FZF_VERSION}-linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin fzf \
+    && install-release fzf \
+        "https://github.com/junegunn/fzf/releases/latest/download/fzf-${FZF_VERSION}-linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin fzf \
     # hadolint (latest — version-free asset name)
     && if [ "$DPKG_ARCH" = "amd64" ]; then HL_ARCH="x86_64"; else HL_ARCH="arm64"; fi \
     && curl ${CURL_RETRY} -fsSLo /usr/local/bin/hadolint \
@@ -532,16 +536,16 @@ RUN true \
     && chmod +x /usr/local/bin/hadolint \
     # codex (latest — version-free asset name, self-updates at runtime)
     && if [ "$DPKG_ARCH" = "amd64" ]; then CODEX_ARCH="x86_64"; else CODEX_ARCH="aarch64"; fi \
-    && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/openai/codex/releases/latest/download/codex-${CODEX_ARCH}-unknown-linux-gnu.tar.gz" \
-      | tar -xz -C /usr/local/bin \
-    && mv /usr/local/bin/codex-${CODEX_ARCH}-unknown-linux-gnu /usr/local/bin/codex \
+    && install-release codex \
+        "https://github.com/openai/codex/releases/latest/download/codex-${CODEX_ARCH}-unknown-linux-gnu.tar.gz" \
+        tgz-bin codex "codex-${CODEX_ARCH}-unknown-linux-gnu" \
     && chmod +x /usr/local/bin/codex \
     && chown ${USERNAME}:${USERNAME} /usr/local/bin/codex \
     # gogcli (resolve version — asset name contains version)
     && GOGCLI_VERSION=$(ghlatest steipete/gogcli) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/steipete/gogcli/releases/latest/download/gogcli_${GOGCLI_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin gog
+    && install-release gog \
+        "https://github.com/steipete/gogcli/releases/latest/download/gogcli_${GOGCLI_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin gog
 
 # ============================================================
 # 10b-2. claude-skills CLI tools
@@ -554,9 +558,9 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # nushell
     && NU_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
       "https://github.com/nushell/nushell/releases/latest" | sed 's|.*/||;s|^v||') \
-    && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/nushell/nushell/releases/latest/download/nu-${NU_VERSION}-${UNAME_ARCH}-unknown-linux-gnu.tar.gz" \
-      | tar -xz --strip-components=1 -C /usr/local/bin nu-${NU_VERSION}-${UNAME_ARCH}-unknown-linux-gnu/nu \
+    && install-release nu \
+        "https://github.com/nushell/nushell/releases/latest/download/nu-${NU_VERSION}-${UNAME_ARCH}-unknown-linux-gnu.tar.gz" \
+        tgz-bin nu "nu-${NU_VERSION}-${UNAME_ARCH}-unknown-linux-gnu/nu" \
     # mise
     && curl ${CURL_RETRY} -fsSLo /tmp/mise-install.sh https://mise.run \
     && [ -s /tmp/mise-install.sh ] \
@@ -565,16 +569,18 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # dagu (resolve version — asset name contains version)
     && DAGU_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
       "https://github.com/daguflow/dagu/releases/latest" | sed 's|.*/||;s|^v||') \
-    && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/daguflow/dagu/releases/latest/download/dagu_${DAGU_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin dagu \
+    && install-release dagu \
+        "https://github.com/daguflow/dagu/releases/latest/download/dagu_${DAGU_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin dagu \
     # wasmtime
     && WASMTIME_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
       "https://github.com/bytecodealliance/wasmtime/releases/latest" | sed 's|.*/||;s|^v||') \
-    && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/bytecodealliance/wasmtime/releases/latest/download/wasmtime-v${WASMTIME_VERSION}-${UNAME_ARCH}-linux.tar.xz" \
-      | tar -xJ --strip-components=1 -C /usr/local/bin \
-        wasmtime-v${WASMTIME_VERSION}-${UNAME_ARCH}-linux/wasmtime \
+    && curl ${CURL_RETRY} -fsSLo /tmp/wasmtime.tar.xz \
+        "https://github.com/bytecodealliance/wasmtime/releases/latest/download/wasmtime-v${WASMTIME_VERSION}-${UNAME_ARCH}-linux.tar.xz" \
+    && [ -s /tmp/wasmtime.tar.xz ] \
+    && tar -xJf /tmp/wasmtime.tar.xz --strip-components=1 -C /usr/local/bin \
+        "wasmtime-v${WASMTIME_VERSION}-${UNAME_ARCH}-linux/wasmtime" \
+    && rm /tmp/wasmtime.tar.xz \
     # pastel — color manipulation CLI (https://github.com/sharkdp/pastel)
     && PASTEL_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
       "https://github.com/sharkdp/pastel/releases/latest" | sed 's|.*/||;s|^v||') \
@@ -585,9 +591,11 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
     # superfile — terminal file manager (https://github.com/yorukot/superfile)
     && SPF_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
       "https://github.com/yorukot/superfile/releases/latest" | sed 's|.*/||') \
-    && curl ${CURL_RETRY} -fsSL \
-      "https://github.com/yorukot/superfile/releases/latest/download/superfile-linux-${SPF_VERSION}-${DPKG_ARCH}.tar.gz" \
-      | tar -xz --strip-components=3 -C /usr/local/bin
+    && curl ${CURL_RETRY} -fsSLo /tmp/superfile.tar.gz \
+        "https://github.com/yorukot/superfile/releases/latest/download/superfile-linux-${SPF_VERSION}-${DPKG_ARCH}.tar.gz" \
+    && [ -s /tmp/superfile.tar.gz ] \
+    && tar -xzf /tmp/superfile.tar.gz --strip-components=3 -C /usr/local/bin \
+    && rm /tmp/superfile.tar.gz
 
 # ============================================================
 # 10c. iTerm2 terminal image utilities
@@ -779,49 +787,58 @@ RUN true \
     && unzip -oq /tmp/httpx.zip -d /usr/local/bin && rm /tmp/httpx.zip \
     # --- Web fuzzing ---
     && FFUF_VERSION=$(ghlatest ffuf/ffuf) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/ffuf/ffuf/releases/download/v${FFUF_VERSION}/ffuf_${FFUF_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin ffuf \
+    && install-release ffuf \
+        "https://github.com/ffuf/ffuf/releases/download/v${FFUF_VERSION}/ffuf_${FFUF_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin ffuf \
     && if [ "$UNAME_ARCH" = "x86_64" ]; then GB_ARCH="x86_64"; else GB_ARCH="arm64"; fi \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/OJ/gobuster/releases/latest/download/gobuster_Linux_${GB_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin gobuster \
+    && install-release gobuster \
+        "https://github.com/OJ/gobuster/releases/latest/download/gobuster_Linux_${GB_ARCH}.tar.gz" \
+        tgz-bin gobuster \
     && if [ "$DPKG_ARCH" = "amd64" ]; then \
-      curl ${CURL_RETRY} -fsSL "https://github.com/epi052/feroxbuster/releases/latest/download/x86_64-linux-feroxbuster.tar.gz" \
-        | tar -xz -C /usr/local/bin feroxbuster; \
+      install-release feroxbuster \
+        "https://github.com/epi052/feroxbuster/releases/latest/download/x86_64-linux-feroxbuster.tar.gz" \
+        tgz-bin feroxbuster; \
     else \
-      curl ${CURL_RETRY} -fsSL "https://github.com/epi052/feroxbuster/releases/latest/download/aarch64-linux-feroxbuster.zip" \
-        -o /tmp/feroxbuster.zip \
-      && unzip -oq /tmp/feroxbuster.zip -d /usr/local/bin && rm /tmp/feroxbuster.zip; \
+      install-release feroxbuster \
+        "https://github.com/epi052/feroxbuster/releases/latest/download/aarch64-linux-feroxbuster.zip" \
+        zip-bin feroxbuster; \
     fi \
-    && chmod +x /usr/local/bin/feroxbuster \
-    # --- XSS scanner (binary is named dalfox-linux-ARCH inside archive) ---
-    && curl ${CURL_RETRY} -fsSL "https://github.com/hahwul/dalfox/releases/latest/download/dalfox-linux-${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin \
-    && mv /usr/local/bin/dalfox-linux-${DPKG_ARCH} /usr/local/bin/dalfox \
-    # --- Domain & URL enumeration (extract only the binary) ---
-    && curl ${CURL_RETRY} -fsSL "https://github.com/owasp-amass/amass/releases/latest/download/amass_linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz --strip-components=1 -C /usr/local/bin "amass_linux_${DPKG_ARCH}/amass" \
+    # --- XSS scanner ---
+    && install-release dalfox \
+        "https://github.com/hahwul/dalfox/releases/latest/download/dalfox-linux-${DPKG_ARCH}.tar.gz" \
+        tgz-bin dalfox "dalfox-linux-${DPKG_ARCH}" \
+    # --- Domain & URL enumeration ---
+    && install-release amass \
+        "https://github.com/owasp-amass/amass/releases/latest/download/amass_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin amass "amass_linux_${DPKG_ARCH}/amass" \
     && GAU_VERSION=$(ghlatest lc/gau) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/lc/gau/releases/download/v${GAU_VERSION}/gau_${GAU_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin gau \
+    && install-release gau \
+        "https://github.com/lc/gau/releases/download/v${GAU_VERSION}/gau_${GAU_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin gau \
     && if [ "$DPKG_ARCH" = "amd64" ]; then \
       WAYBACK_VERSION=$(ghlatest tomnomnom/waybackurls) \
-      && curl ${CURL_RETRY} -fsSL "https://github.com/tomnomnom/waybackurls/releases/download/v${WAYBACK_VERSION}/waybackurls-linux-amd64-${WAYBACK_VERSION}.tgz" \
-        | tar -xz -C /usr/local/bin waybackurls; \
+      && install-release waybackurls \
+        "https://github.com/tomnomnom/waybackurls/releases/download/v${WAYBACK_VERSION}/waybackurls-linux-amd64-${WAYBACK_VERSION}.tgz" \
+        tgz-bin waybackurls; \
     fi \
     # --- Supply chain & secret scanning ---
     && TRUFFLEHOG_VERSION=$(ghlatest trufflesecurity/trufflehog) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin trufflehog \
+    && install-release trufflehog \
+        "https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin trufflehog \
     && GRYPE_VERSION=$(ghlatest anchore/grype) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/anchore/grype/releases/download/v${GRYPE_VERSION}/grype_${GRYPE_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin grype \
+    && install-release grype \
+        "https://github.com/anchore/grype/releases/download/v${GRYPE_VERSION}/grype_${GRYPE_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin grype \
     && SYFT_VERSION=$(ghlatest anchore/syft) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/anchore/syft/releases/download/v${SYFT_VERSION}/syft_${SYFT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin syft \
+    && install-release syft \
+        "https://github.com/anchore/syft/releases/download/v${SYFT_VERSION}/syft_${SYFT_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin syft \
     # --- Kubernetes security ---
     && KUBEBENCH_VERSION=$(ghlatest aquasecurity/kube-bench) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/aquasecurity/kube-bench/releases/download/v${KUBEBENCH_VERSION}/kube-bench_${KUBEBENCH_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin kube-bench \
+    && install-release kube-bench \
+        "https://github.com/aquasecurity/kube-bench/releases/download/v${KUBEBENCH_VERSION}/kube-bench_${KUBEBENCH_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin kube-bench \
     # --- Network attack (amd64 only) ---
     && if [ "$DPKG_ARCH" = "amd64" ]; then \
       curl ${CURL_RETRY} -fsSL "https://github.com/bettercap/bettercap/releases/latest/download/bettercap_linux_amd64.zip" \
@@ -847,8 +864,9 @@ RUN true \
 RUN DPKG_ARCH=$(dpkg --print-architecture) \
     && if [ "$DPKG_ARCH" = "amd64" ]; then TIRITH_ARCH="x86_64-unknown-linux-gnu"; \
       else TIRITH_ARCH="aarch64-unknown-linux-gnu"; fi \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/sheeki03/tirith/releases/latest/download/tirith-${TIRITH_ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin tirith
+    && install-release tirith \
+        "https://github.com/sheeki03/tirith/releases/latest/download/tirith-${TIRITH_ARCH}.tar.gz" \
+        tgz-bin tirith
 
 # ============================================================
 # 10h. OWASP ZAP (web app scanner — replaces Burp Suite)
@@ -857,8 +875,10 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
 # hadolint ignore=DL3059
 RUN true \
     && ZAP_VERSION=$(ghlatest zaproxy/zaproxy) \
-    && curl ${CURL_RETRY} -fsSL "https://github.com/zaproxy/zaproxy/releases/latest/download/ZAP_${ZAP_VERSION}_Linux.tar.gz" \
-      | tar -xz -C /opt \
+    && curl ${CURL_RETRY} -fsSLo /tmp/zap.tar.gz "https://github.com/zaproxy/zaproxy/releases/latest/download/ZAP_${ZAP_VERSION}_Linux.tar.gz" \
+    && [ -s /tmp/zap.tar.gz ] \
+    && tar -xzf /tmp/zap.tar.gz -C /opt \
+    && rm /tmp/zap.tar.gz \
     && mv /opt/ZAP_${ZAP_VERSION} /opt/zaproxy \
     && printf '#!/bin/sh\nexec /opt/zaproxy/zap.sh "$@"\n' > /usr/local/bin/zap \
     && chmod +x /usr/local/bin/zap
@@ -1309,10 +1329,9 @@ RUN retry git clone --depth=1 --recurse-submodules --shallow-submodules \
          aarch64|arm64) MAKI_TARGET=aarch64-unknown-linux-musl ;; \
          *) echo "unsupported arch for maki: $UNAME_ARCH" && exit 1 ;; \
        esac \
-    && curl ${CURL_RETRY} -fsSL \
+    && install-release maki \
          "https://github.com/tontinton/maki/releases/download/${MAKI_VERSION}/maki-${MAKI_VERSION}-${MAKI_TARGET}.tar.gz" \
-       | tar xz -C /usr/local/bin maki \
-    && chmod +x /usr/local/bin/maki
+         tgz-bin maki
 
 # Pre-stage plugin install script and settings for section 12l
 COPY claude-config/install-plugins.sh claude-config/settings.json /opt/claude-config/
