@@ -496,7 +496,7 @@ assert_bin_ver "npm" "npm --version" "."
 assert_bin_ver "pnpm" "pnpm --version" "."
 assert_bin_ver "pip" "pip --version" "pip"
 assert_bin_ver "uv" "uv --version" "uv"
-assert_bin_ver "mvn" "MAVEN_OPTS='-Xmx256m' mvn --version 2>&1 | head -1" "Maven"
+assert_bin_ver "mvn" "MAVEN_OPTS='-Xmx256m -Djansi.tmpdir=/home/vscode/.cache' mvn --version 2>&1 | head -1" "Maven"
 assert_bin_ver "gradle" "gradle --version 2>&1 | grep Gradle" "Gradle"
 assert_bin_ver "gem" "gem --version" "."
 
