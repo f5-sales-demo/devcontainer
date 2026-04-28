@@ -265,6 +265,8 @@ else
 fi
 SHELL_KEY=$(zrun 'echo $ANTHROPIC_API_KEY')
 assert_eq "zsh -c inherits ANTHROPIC_API_KEY" "$SHELL_KEY" "$TEST_KEY"
+NOMATCH_STATUS=$(zrun '[[ -o nomatch ]] && echo ON || echo OFF')
+assert_eq "zsh NOMATCH unset (glob safety)" "$NOMATCH_STATUS" "OFF"
 
 # ============================================================
 # 3. Environment
