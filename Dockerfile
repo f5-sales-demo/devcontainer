@@ -1570,7 +1570,9 @@ RUN ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}" \
     # which hang automated scripts on "overwrite? (y/n)" prompts. Custom zsh files in
     # $ZSH_CUSTOM are sourced AFTER plugins, so the unalias wins.
     && echo 'unalias rm cp mv 2>/dev/null || true' > "$HOME/.oh-my-zsh/custom/disable-interactive-safety.zsh" \
+    && echo 'unsetopt NOMATCH' >> "$HOME/.zshenv" \
     && echo '[ -f "$HOME/.local/run/entrypoint-env.sh" ] && . "$HOME/.local/run/entrypoint-env.sh"' >> "$HOME/.zshenv" \
+    && echo 'unsetopt NOMATCH' >> "$HOME/.zshrc" \
     && echo '[ -d /workspace ] && cd /workspace' >> "$HOME/.zshrc"
 
 # ============================================================
