@@ -1023,6 +1023,7 @@ RUN retry npm install -g \
     opencode-ai \
     @charmland/crush \
     @kilocode/cli \
+    @salesforce/cli \
     opencode-claude-auth \
     js-deobfuscator
 
@@ -1375,6 +1376,11 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
 RUN retry git clone --depth=1 --single-branch --branch main \
       https://github.com/zarazhangrui/frontend-slides.git \
       "/home/${USERNAME}/.claude/skills/frontend-slides" \
+    && retry git clone --depth=1 --single-branch --branch main \
+      https://github.com/forcedotcom/afv-library.git \
+      "/tmp/afv-library" \
+    && cp -r /tmp/afv-library/skills/* "/home/${USERNAME}/.claude/skills/" \
+    && rm -rf /tmp/afv-library \
     && chown -R ${USERNAME}:${USERNAME} "/home/${USERNAME}/.claude" \
     && mkdir -p "/home/${USERNAME}/.agents" \
     && ln -s "/home/${USERNAME}/.claude/skills" "/home/${USERNAME}/.agents/skills" \

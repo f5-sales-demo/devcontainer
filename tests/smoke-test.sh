@@ -368,6 +368,7 @@ assert_bin_ver "opencode" "opencode --version" "."
 assert_bin_ver "codex" "codex --version" "codex"
 assert_bin_ver "maki" "maki --version" "maki"
 assert_bin_ver "kilo" "kilo --version" "[0-9]"
+assert_bin_ver "sf" "sf --version" "[0-9]"
 
 # ============================================================
 # 5b. AI functional tests (LIVE mode only)
