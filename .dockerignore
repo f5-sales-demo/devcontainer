@@ -9,6 +9,7 @@
 !opencode-config/
 !crush-config/
 !maki-config/
+!kilocode-config/
 !.devcontainer/scripts/
 !scripts/
 !configs/
