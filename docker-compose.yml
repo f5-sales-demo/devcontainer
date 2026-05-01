@@ -30,7 +30,7 @@ services:
     volumes:
       - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock
     tmpfs:
-      - /tmp:size=256m
+      - /tmp:size=1g
     stdin_open: true
     tty: true
     init: true

@@ -745,13 +745,17 @@ fi
 # Disable with ENABLE_FIRECRAWL=false.
 # ============================================================
 if [ "${ENABLE_FIRECRAWL:-true}" = "true" ] && [ -d /opt/firecrawl ]; then
+  # Firecrawl logs — on overlay, not tmpfs (tmpfs is too small for unbounded logs)
+  _FC_LOG_DIR="$HOME/.local/log/firecrawl"
+  mkdir -p "$_FC_LOG_DIR"
+
   # Shared env vars for all firecrawl processes
   _FC_REDIS_URL=redis://localhost:6379
   _FC_DB_URL=postgresql://postgres@localhost:5432/firecrawl
   _FC_RABBITMQ_URL=amqp://localhost:5672
 
-  # Redis (daemonised, logs to /tmp/redis.log)
-  redis-server --daemonize yes --logfile /tmp/redis.log 2>/dev/null
+  # Redis (daemonised)
+  redis-server --daemonize yes --logfile "${_FC_LOG_DIR}/redis.log" 2>/dev/null
 
   # PostgreSQL — vscode-owned cluster (set up in Dockerfile)
   _pg_socket="$HOME/.local/run/postgresql"
@@ -793,7 +797,7 @@ if [ "${ENABLE_FIRECRAWL:-true}" = "true" ] && [ -d /opt/firecrawl ]; then
   # Playwright microservice (port 3000)
   (cd /opt/firecrawl/apps/playwright-service-ts &&
     PLAYWRIGHT_BROWSERS_PATH=/home/vscode/.cache/ms-playwright \
-      PORT=3000 nohup node dist/api.js >/tmp/firecrawl-playwright.log 2>&1 &)
+      PORT=3000 nohup node dist/api.js >"${_FC_LOG_DIR}/firecrawl-playwright.log" 2>&1 &)
 
   # Firecrawl API (port 3002)
   # OPENAI_BASE_URL and OPENAI_API_KEY are passed through from the
@@ -811,7 +815,7 @@ if [ "${ENABLE_FIRECRAWL:-true}" = "true" ] && [ -d /opt/firecrawl ]; then
       MODEL_NAME="${FIRECRAWL_MODEL_NAME:-gpt-4.1-mini}" \
       PORT=3002 HOST=0.0.0.0 \
       NUM_WORKERS_PER_QUEUE=4 \
-      nohup node dist/src/index.js >/tmp/firecrawl-api.log 2>&1 &)
+      nohup node dist/src/index.js >"${_FC_LOG_DIR}/firecrawl-api.log" 2>&1 &)
 
   # NuQ prefetch worker (moves jobs from PostgreSQL to RabbitMQ prefetch queue)
   (cd /opt/firecrawl/apps/api &&
@@ -822,7 +826,7 @@ if [ "${ENABLE_FIRECRAWL:-true}" = "true" ] && [ -d /opt/firecrawl ]; then
       NUQ_RABBITMQ_URL="${_FC_RABBITMQ_URL}" \
       NUQ_PREFETCH_WORKER_PORT=3006 \
       USE_DB_AUTHENTICATION=false \
-      nohup node dist/src/services/worker/nuq-prefetch-worker.js >/tmp/firecrawl-nuq-prefetch-worker.log 2>&1 &)
+      nohup node dist/src/services/worker/nuq-prefetch-worker.js >"${_FC_LOG_DIR}/firecrawl-nuq-prefetch-worker.log" 2>&1 &)
 
   # NuQ scrape worker (processes scrape jobs via RabbitMQ prefetch)
   (cd /opt/firecrawl/apps/api &&
@@ -837,7 +841,7 @@ if [ "${ENABLE_FIRECRAWL:-true}" = "true" ] && [ -d /opt/firecrawl ]; then
       OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
       OPENAI_BASE_URL="${OPENAI_BASE_URL:-}" \
       MODEL_NAME="${FIRECRAWL_MODEL_NAME:-gpt-4.1-mini}" \
-      nohup node dist/src/services/worker/nuq-worker.js >/tmp/firecrawl-nuq-worker.log 2>&1 &)
+      nohup node dist/src/services/worker/nuq-worker.js >"${_FC_LOG_DIR}/firecrawl-nuq-worker.log" 2>&1 &)
 
   # Extract worker (processes extract jobs from RabbitMQ)
   (cd /opt/firecrawl/apps/api &&
@@ -851,7 +855,7 @@ if [ "${ENABLE_FIRECRAWL:-true}" = "true" ] && [ -d /opt/firecrawl ]; then
       OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
       OPENAI_BASE_URL="${OPENAI_BASE_URL:-}" \
       MODEL_NAME="${FIRECRAWL_MODEL_NAME:-gpt-4.1-mini}" \
-      nohup node dist/src/services/extract-worker.js >/tmp/firecrawl-extract-worker.log 2>&1 &)
+      nohup node dist/src/services/extract-worker.js >"${_FC_LOG_DIR}/firecrawl-extract-worker.log" 2>&1 &)
 
   unset _FC_REDIS_URL _FC_DB_URL _FC_RABBITMQ_URL
 fi
