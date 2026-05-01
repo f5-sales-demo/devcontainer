@@ -347,6 +347,12 @@ assert_contains "Maki: base URL rendered" "$MAKI_SCRIPT" "${TEST_URL}/anthropic/
 MAKI_MODELS=$(run /home/vscode/.maki/providers/litellm models)
 assert_contains "Maki: opus in models list" "$MAKI_MODELS" "claude-opus-4-6"
 
+# Kilo Code CLI: config staged, base URL rendered
+KILO_CFG=$(run cat /home/vscode/.config/kilo/kilo.jsonc)
+assert_not_contains "Kilo: no __KILO_BASE_URL__ placeholder" "$KILO_CFG" "__KILO_BASE_URL__"
+assert_contains "Kilo: base URL rendered" "$KILO_CFG" "${TEST_URL}/anthropic/v1"
+assert_contains "Kilo: opus model" "$KILO_CFG" "claude-opus-4-6"
+
 # ============================================================
 # 5. AI assistant CLIs
 # ============================================================
@@ -361,6 +367,7 @@ assert_bin_ver "xcsh" "xcsh --version" "xcsh"
 assert_bin_ver "opencode" "opencode --version" "."
 assert_bin_ver "codex" "codex --version" "codex"
 assert_bin_ver "maki" "maki --version" "maki"
+assert_bin_ver "kilo" "kilo --version" "[0-9]"
 
 # ============================================================
 # 5b. AI functional tests (LIVE mode only)
@@ -412,6 +419,11 @@ if [ "$LIVE_API" = true ]; then
     ok "maki prompt"
   else fail "maki prompt (got: $(echo "$_out" | head -1))"; fi
 
+  _out=$(timeout 60 "$RT" exec -u vscode "$CONTAINER" zsh -c "kilo run '$PROMPT'" 2>&1 || true)
+  if echo "$_out" | grep -qi "$EXPECTED"; then
+    ok "kilo prompt"
+  else fail "kilo prompt (got: $(echo "$_out" | head -1))"; fi
+
   _out=$("$RT" exec -u vscode "$CONTAINER" zsh -c 'curl -sf "$ANTHROPIC_BASE_URL/v1/messages" -X POST -H "x-api-key: $ANTHROPIC_API_KEY" -H "content-type: application/json" -H "anthropic-version: 2023-06-01" -d "{\"model\":\"claude-sonnet-4-6\",\"max_tokens\":5,\"messages\":[{\"role\":\"user\",\"content\":\"reply only: hello\"}]}" | jq -r ".content[0].text"' 2>&1 || true)
   if echo "$_out" | grep -qi "hello"; then
     ok "API direct curl"
@@ -424,6 +436,7 @@ else
   skip "codex prompt (no live API)"
   skip "opencode prompt (no live API)"
   skip "maki prompt (no live API)"
+  skip "kilo prompt (no live API)"
   skip "API direct curl (no live API)"
 fi
 

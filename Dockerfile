@@ -1022,6 +1022,7 @@ RUN retry npm install -g \
     sharp \
     opencode-ai \
     @charmland/crush \
+    @kilocode/cli \
     opencode-claude-auth \
     js-deobfuscator
 
@@ -1412,6 +1413,7 @@ RUN mkdir -p ~/.cache ~/.local/bin ~/.claude ~/.claude/plans ~/.config/nvim \
     ~/.hermes/image_cache \
     ~/.hermes/audio_cache \
     ~/.maki/providers \
+    ~/.config/kilo \
     ~/.ssh
 
 # Bun JavaScript runtime and package manager
@@ -1680,6 +1682,7 @@ COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json opencode-conf
 COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
 COPY --chown=${USERNAME}:${USERNAME} crush-config/crush.json /home/${USERNAME}/.config/crush/crush.json
 COPY --chown=${USERNAME}:${USERNAME} maki-config/litellm /home/${USERNAME}/.maki/providers/litellm
+COPY --chown=${USERNAME}:${USERNAME} kilocode-config/kilo.jsonc /home/${USERNAME}/.config/kilo/kilo.jsonc
 
 # ────────────────────────────────────────────────────────────
 # OpenCode npm pre-warm: pre-install base SDK and plugin deps
