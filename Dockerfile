@@ -537,8 +537,8 @@ RUN true \
     # codex (latest — version-free asset name, self-updates at runtime)
     && if [ "$DPKG_ARCH" = "amd64" ]; then CODEX_ARCH="x86_64"; else CODEX_ARCH="aarch64"; fi \
     && install-release codex \
-        "https://github.com/openai/codex/releases/latest/download/codex-${CODEX_ARCH}-unknown-linux-gnu.tar.gz" \
-        tgz-bin codex "codex-${CODEX_ARCH}-unknown-linux-gnu" \
+        "https://github.com/openai/codex/releases/latest/download/codex-${CODEX_ARCH}-unknown-linux-musl.tar.gz" \
+        tgz-bin codex "codex-${CODEX_ARCH}-unknown-linux-musl" \
     && chmod +x /usr/local/bin/codex \
     && chown ${USERNAME}:${USERNAME} /usr/local/bin/codex \
     # gogcli (resolve version — asset name contains version)
