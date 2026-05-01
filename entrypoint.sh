@@ -382,6 +382,19 @@ if [ -n "$LITELLM_BASE_URL" ]; then
 fi
 
 # ============================================================
+# Kilo Code CLI — render base URL placeholder into kilo.jsonc.
+# The @ai-sdk/anthropic SDK appends /messages to baseURL, so
+# baseURL must include /v1 (not just /anthropic).
+# ============================================================
+if [ -n "$LITELLM_BASE_URL" ]; then
+  _kilo_config="$HOME/.config/kilo/kilo.jsonc"
+  if [ -f "$_kilo_config" ]; then
+    sed -i "s|__KILO_BASE_URL__|${LITELLM_BASE_URL}/anthropic/v1|g" "$_kilo_config"
+  fi
+  unset _kilo_config
+fi
+
+# ============================================================
 # Maki — render base URL placeholder in the LiteLLM dynamic provider.
 # ~/.maki/providers/litellm carries __MAKI_BASE_URL__; resolve it at
 # container start to the LiteLLM Anthropic /v1/messages endpoint
