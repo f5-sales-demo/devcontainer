@@ -58,6 +58,9 @@
     "f5xc-devcontainer@f5xc-salesdemos-marketplace": true,
     "f5xc-platform@f5xc-salesdemos-marketplace": true,
     "f5xc-meddpicc@f5xc-salesdemos-marketplace": true,
+    "f5xc-firecrawl@f5xc-salesdemos-marketplace": true,
+    "osint-framework@f5xc-salesdemos-marketplace": true,
+    "salesforce@f5xc-salesdemos-marketplace": true,
     "codex@openai-codex": true
   },
   "extraKnownMarketplaces": {
