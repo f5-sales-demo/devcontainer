@@ -22,11 +22,11 @@ if [ -d /usr/local/rustup ] && [ ! -w /usr/local/rustup ]; then
   echo 'WARNING: /usr/local/rustup is not writable — Rust toolchain updates will fail' >&2
 fi
 
-# Docker-outside-of-Docker: set DOCKER_HOST to the mounted socket.
-# The host socket (Docker or Podman) is always mounted to /var/run/docker.sock
-# inside the container via the DOCKER_SOCK compose variable.
-# Rootless Podman users: set DOCKER_SOCK in .env to their socket path,
-# e.g. DOCKER_SOCK=/run/user/1000/podman/podman.sock  (no sudo needed).
+# Docker-outside-of-Docker: point DOCKER_HOST at the mounted host runtime socket.
+# devcontainer.sh detects the host's Podman socket and bind-mounts it to
+# /var/run/docker.sock inside the container (the canonical path most tooling
+# expects, regardless of whether the host runtime is Podman or Docker).
+# To override, set DOCKER_SOCK in .env before running ./devcontainer.sh.
 if [ -z "$DOCKER_HOST" ]; then
   if [ -S /var/run/docker.sock ]; then
     export DOCKER_HOST="unix:///var/run/docker.sock"
