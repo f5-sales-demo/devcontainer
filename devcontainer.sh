@@ -331,8 +331,8 @@ fi
 if [ -z "${DOCKER_SOCK:-}" ]; then
   if [ "$(uname)" = "Darwin" ]; then
     _detected_sock=$(podman machine ssh -- 'echo /run/user/$(id -u)/podman/podman.sock' 2>/dev/null | tr -d '\r' || true)
-    if [ -n "$_detected_sock" ] && \
-       podman machine ssh -- "test -S $_detected_sock" >/dev/null 2>&1; then
+    if [ -n "$_detected_sock" ] &&
+      podman machine ssh -- "test -S $_detected_sock" >/dev/null 2>&1; then
       export DOCKER_SOCK="$_detected_sock"
       ok "Podman socket: $DOCKER_SOCK (in machine VM)"
     else
