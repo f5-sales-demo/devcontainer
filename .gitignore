@@ -132,6 +132,7 @@ tsconfig.tsbuildinfo
 .worktrees/
 .codex/
 playground/
+.devcontainer-name
 
 # Documentation build artifacts
 docs/_data/
