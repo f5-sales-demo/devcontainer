@@ -323,5 +323,39 @@ if [ ! -f .env ]; then
   warn "No .env file found. Container will start with defaults only."
 fi
 
+# Podman host socket for Docker-outside-of-Docker.
+# On macOS the container runs inside the podman-machine VM, so we use the
+# VM-internal rootless socket path (the Mac-side proxy socket lives on
+# virtiofs, where podman's statfs validation fails). On Linux we use the
+# local rootless socket directly. Override by setting DOCKER_SOCK in .env.
+if [ -z "${DOCKER_SOCK:-}" ]; then
+  if [ "$(uname)" = "Darwin" ]; then
+    _detected_sock=$(podman machine ssh -- 'echo /run/user/$(id -u)/podman/podman.sock' 2>/dev/null | tr -d '\r' || true)
+    if [ -n "$_detected_sock" ] &&
+      podman machine ssh -- "test -S $_detected_sock" >/dev/null 2>&1; then
+      export DOCKER_SOCK="$_detected_sock"
+      ok "Podman socket: $DOCKER_SOCK (in machine VM)"
+    else
+      fail "Podman socket not available in machine VM."
+      info "Start the podman machine: podman machine start"
+      info "Or set DOCKER_SOCK in .env to override detection."
+      fatal "Cannot start container without a host runtime socket."
+    fi
+    unset _detected_sock
+  else
+    _detected_sock="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/podman/podman.sock"
+    if [ -S "$_detected_sock" ]; then
+      export DOCKER_SOCK="$_detected_sock"
+      ok "Podman socket: $DOCKER_SOCK"
+    else
+      fail "Podman socket not found at: $_detected_sock"
+      info "Start the user socket: systemctl --user start podman.socket"
+      info "Or set DOCKER_SOCK in .env to override detection."
+      fatal "Cannot start container without a host runtime socket."
+    fi
+    unset _detected_sock
+  fi
+fi
+
 echo ""
 exec podman compose up -d "$@"

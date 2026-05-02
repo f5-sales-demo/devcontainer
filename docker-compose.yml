@@ -28,7 +28,9 @@ services:
     cpus: 2
     pids_limit: 4096
     volumes:
-      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock
+      # :z relabels the source for shared SELinux access (needed for the
+      # rootless podman socket inside the podman-machine VM).
+      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock:z
     tmpfs:
       - /tmp:size=1g
     stdin_open: true
@@ -36,5 +38,15 @@ services:
     init: true
     restart: unless-stopped
     user: vscode
+    # Join the root group so vscode can read/write the bind-mounted host
+    # podman socket, which appears inside the container as root:root 0660.
+    group_add:
+      - "0"
+    security_opt:
+      # Disable SELinux confinement so the container (which gets MCS
+      # categories like s0:c48,c336) can connect to the bind-mounted host
+      # podman socket (labeled s0 with no categories — connect requires
+      # write, and MCS rules forbid writing to a less-categorized object).
+      - label=disable
     entrypoint: ["/usr/local/bin/entrypoint.sh"]
     command: zsh
