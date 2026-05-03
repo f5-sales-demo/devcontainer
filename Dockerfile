@@ -1033,6 +1033,17 @@ RUN retry npm install -g \
     opencode-claude-auth \
     js-deobfuscator
 
+# Patch vscode-markdown-languageservice: the compiled vscodeUri.js uses a
+# default import (`import uri from 'vscode-uri'`) but vscode-uri's ESM entry
+# only provides named exports.  Node >= 22 enforces this strictly, so the
+# markdown language server crashes on startup without this fix.
+# Upstream: https://github.com/microsoft/vscode-markdown-languageservice
+# hadolint ignore=DL3059
+RUN printf '%s\n' \
+      "import { URI, Utils } from 'vscode-uri';" \
+      "export { URI, Utils };" \
+    > /usr/lib/node_modules/vscode-langservers-extracted/node_modules/vscode-markdown-languageservice/out/util/vscodeUri.js
+
 # Ensure Node.js can resolve globally-installed packages at the system prefix
 # even after npm prefix is changed to $HOME/.npm-global later.
 ENV NODE_PATH=/usr/lib/node_modules
