@@ -485,7 +485,7 @@ RUN true \
 
 # ============================================================
 # 10b. Additional binary tools (code CLI, oc, yq, terragrunt,
-#      ibmcloud, fzf, hadolint, codex)
+#      ibmcloud, fzf, hadolint, codex, glab)
 #      All resolve latest versions at build time except IBM Cloud CLI.
 # ============================================================
 # hadolint ignore=DL3059
@@ -545,7 +545,13 @@ RUN true \
     && GOGCLI_VERSION=$(ghlatest steipete/gogcli) \
     && install-release gog \
         "https://github.com/steipete/gogcli/releases/latest/download/gogcli_${GOGCLI_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-        tgz-bin gog
+        tgz-bin gog \
+    # glab — GitLab CLI (resolve version from GitLab permalink redirect)
+    && GLAB_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+        "https://gitlab.com/gitlab-org/cli/-/releases/permalink/latest" | sed 's|.*/||;s|^v||') \
+    && install-release glab \
+        "https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VERSION}/downloads/glab_${GLAB_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin glab bin/glab
 
 # ============================================================
 # 10b-2. claude-skills CLI tools
