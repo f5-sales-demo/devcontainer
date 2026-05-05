@@ -1154,7 +1154,10 @@ RUN retry pip install --no-cache-dir --break-system-packages --ignore-installed 
     multidict \
     propcache \
     tabulate \
-    yarl
+    yarl \
+    pytest-xdist \
+    anyio \
+    requests-mock
 
 # ============================================================
 # 12a. OSINT Framework pip tools (osint-framework plugin)
