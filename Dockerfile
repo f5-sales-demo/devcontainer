@@ -1147,14 +1147,6 @@ RUN retry pip install --no-cache-dir --break-system-packages --ignore-installed 
     # Recon (recon-ng, spiderfoot installed via git clone below)
     theHarvester \
     asciinema \
-    aiohappyeyeballs \
-    aiohttp \
-    aiosignal \
-    frozenlist \
-    multidict \
-    propcache \
-    tabulate \
-    yarl \
     pytest-xdist \
     anyio \
     requests-mock
