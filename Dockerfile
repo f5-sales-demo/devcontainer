@@ -12,8 +12,8 @@ ARG USERNAME=vscode
 ARG NODE_MAJOR=24
 ARG PYTHON_VERSION=3.13
 ARG JAVA_VERSION=25
-ARG MAVEN_VERSION=3.9.14
-ARG BROWSH_VERSION=1.8.2
+ARG MAVEN_VERSION=3.9.15
+ARG BROWSH_VERSION=1.8.3
 ARG GHIDRA_VERSION=12.0.4
 ARG GHIDRA_DATE=20260303
 
@@ -411,7 +411,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # ARGs don't cross FROM boundaries — redeclare what final needs
 ARG USERNAME=vscode
-ARG IBMCLOUD_VERSION=2.41.1
+ARG IBMCLOUD_VERSION=2.43.0
 ARG GHIDRA_VERSION=12.0.4
 ARG GHIDRA_DATE=20260303
 ARG BUILD_COMMIT=unknown
@@ -853,7 +853,7 @@ RUN true \
       && chmod +x /usr/local/bin/bettercap; \
     fi \
     # --- OSINT: cloud & IP recon (go install) ---
-    && retry env GOBIN=/usr/local/bin go install github.com/jreisinger/checkip@v0.49.0 \
+    && retry env GOBIN=/usr/local/bin go install github.com/jreisinger/checkip@v0.53.1 \
     && retry env GOBIN=/usr/local/bin go install github.com/Macmod/goblob@v1.2.2 \
     && retry git clone --depth=1 --branch v2.0 https://github.com/redhuntlabs/bucketloot.git /tmp/bucketloot \
     && go build -C /tmp/bucketloot -o /usr/local/bin/bucketloot . && rm -rf /tmp/bucketloot \
@@ -943,10 +943,10 @@ RUN true \
     && chmod +x /usr/local/bin/taplo \
     # jdtls (Eclipse JDT Language Server for Java — Python wrapper + plugin jars)
     && JDTLS_TARBALL=$(curl ${CURL_RETRY} -fsSL \
-      "https://download.eclipse.org/jdtls/milestones/1.57.0/latest.txt") \
+      "https://download.eclipse.org/jdtls/milestones/1.58.0/latest.txt") \
     && mkdir -p /opt/jdtls \
     && curl ${CURL_RETRY} -fsSL \
-      "https://download.eclipse.org/jdtls/milestones/1.57.0/${JDTLS_TARBALL}" \
+      "https://download.eclipse.org/jdtls/milestones/1.58.0/${JDTLS_TARBALL}" \
       | tar xzf - --no-same-owner -C /opt/jdtls \
     && chmod +x /opt/jdtls/bin/jdtls \
     && ln -s /opt/jdtls/bin/jdtls /usr/local/bin/jdtls
@@ -955,7 +955,7 @@ RUN true \
 # 10l-2. C# language server (csharp-ls via dotnet global tool)
 # ============================================================
 # hadolint ignore=DL3059
-RUN dotnet tool install csharp-ls --version 0.16.0 --tool-path /usr/local/bin
+RUN dotnet tool install csharp-ls --version 0.24.0 --tool-path /usr/local/bin
 
 # ============================================================
 # 10l. Zig cross-compilation toolchain (needed by napi-rs
@@ -1000,7 +1000,7 @@ RUN retry npm install -g \
     @biomejs/biome \
     stylelint \
     htmlhint \
-    "textlint@<15.5.3" \
+    textlint \
     textlint-rule-terminology \
     jscpd \
     @coffeelint/cli \
@@ -1238,7 +1238,7 @@ RUN retry env UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
 #   12h. Ruby security: wpscan, evil-winrm (gem)
 # ============================================================
 # hadolint ignore=DL3028,DL3059
-RUN SIGNAL_CLI_VERSION="0.14.1" \
+RUN SIGNAL_CLI_VERSION="0.14.3" \
     && curl -fsSL "https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}.tar.gz" \
       -o /tmp/signal-cli.tar.gz \
     && tar xf /tmp/signal-cli.tar.gz -C /opt \
@@ -1336,7 +1336,7 @@ RUN retry git clone --depth=1 --recurse-submodules --shallow-submodules \
       -e "/opt/hermes-agent[all]" 2>&1 | grep -v "missing.*RECORD") \
     && npm --prefix /opt/hermes-agent install --ignore-scripts 2>/dev/null || true \
     # 12o. Maki — AI coding agent (Rust binary from GitHub release)
-    && MAKI_VERSION=v0.2.6 \
+    && MAKI_VERSION=v0.2.9 \
     && UNAME_ARCH=$(uname -m) \
     && case "$UNAME_ARCH" in \
          x86_64|amd64)  MAKI_TARGET=x86_64-unknown-linux-musl ;; \
@@ -1459,7 +1459,7 @@ RUN (retry npx playwright install 2>&1 | grep -v "not in your PATH") \
 # Chrome DevTools MCP: pre-cache the package (runs as vscode so npm caches
 # to ~/.npm/_npx; --headless is passed via .mcp.json args in each content repo)
 # hadolint ignore=DL3059
-RUN retry npm exec chrome-devtools-mcp@0.20.2 -- --version 2>/dev/null || true
+RUN retry npm exec chrome-devtools-mcp@0.24.0 -- --version 2>/dev/null || true
 
 # oh-my-openagent (OpenCode plugin system — "ultrawork" / "ulw" command)
 # Build-time install uses npx oh-my-openagent for config scaffolding.
