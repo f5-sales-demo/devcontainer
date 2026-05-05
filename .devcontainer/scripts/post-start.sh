@@ -72,5 +72,15 @@ else
   echo "    Create a token at https://github.com/settings/tokens"
 fi
 
+# Salesforce CLI authentication status
+echo ""
+echo "  Salesforce CLI:"
+if sf org list auth 2>&1 | grep -q "Username"; then
+  sf org list auth 2>&1 | head -5 | sed 's/^/    /'
+else
+  echo "    Not authenticated (SFDX_AUTH_URL not set)"
+  echo "    To enable: add SFDX_AUTH_URL=force://... to .env"
+fi
+
 echo ""
 echo "Ready! Start coding in /workspace"

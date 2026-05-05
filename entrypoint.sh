@@ -69,6 +69,16 @@ if [ -n "$GH_TOKEN" ]; then
   gh auth setup-git 2>/dev/null || true
 fi
 
+# ============================================================
+# Salesforce CLI — authenticate from SFDX auth URL
+# ============================================================
+if [ -n "$SFDX_AUTH_URL" ]; then
+  _sf_tmp="$(mktemp)"
+  echo "$SFDX_AUTH_URL" >"$_sf_tmp"
+  sf org login sfdx-url --sfdx-url-file "$_sf_tmp" --set-default --alias SFDC >/dev/null 2>&1 || true
+  rm -f "$_sf_tmp"
+fi
+
 # Ensure Homebrew npm global directory exists (issue #677)
 mkdir -p "${HOME}/.npm-global/lib" 2>/dev/null || true
 
