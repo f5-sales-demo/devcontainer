@@ -296,31 +296,233 @@ fi
 
 # --- detect environment ---
 
-# Timezone: macOS symlink -> IANA name, Linux -> /etc/timezone, fallback UTC
-if [ -L /etc/localtime ]; then
-  export TZ
-  TZ=$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')
-elif [ -f /etc/timezone ]; then
-  export TZ
-  TZ=$(cat /etc/timezone)
+# Source .env so auto-detect respects manual overrides.
+# Variables already set in .env will not be overwritten.
+if [ -f .env ]; then
+  set -a
+  # shellcheck source=/dev/null
+  . ./.env 2>/dev/null || true
+  set +a
+  ok ".env loaded"
+else
+  warn "No .env file found. Container will start with auto-detected values only."
 fi
-ok "Timezone: ${TZ:-UTC}"
 
-# GitHub token: fresh from gh CLI
-if command -v gh >/dev/null 2>&1; then
-  if gh auth status >/dev/null 2>&1; then
-    export GH_TOKEN
-    GH_TOKEN=$(gh auth token 2>/dev/null)
-    ok "GitHub: authenticated"
-  else
-    warn "GitHub: gh is installed but not authenticated (run: gh auth login)"
+# Timezone: macOS symlink -> IANA name, Linux -> /etc/timezone, fallback UTC
+if [ -z "${TZ:-}" ]; then
+  if [ -L /etc/localtime ]; then
+    export TZ
+    TZ=$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')
+  elif [ -f /etc/timezone ]; then
+    export TZ
+    TZ=$(cat /etc/timezone)
+  fi
+  ok "Timezone: ${TZ:-UTC} (auto-detected)"
+else
+  ok "Timezone: $TZ (.env)"
+fi
+
+# Git config: author name and email
+if [ -z "${GIT_AUTHOR_EMAIL:-}" ]; then
+  if command -v git >/dev/null 2>&1; then
+    _git_email=$(git config user.email 2>/dev/null || true)
+    if [ -n "$_git_email" ]; then
+      export GIT_AUTHOR_EMAIL="$_git_email"
+      ok "Git: email=$_git_email (auto-detected)"
+    else
+      warn "Git: user.email not configured (run: git config --global user.email you@example.com)"
+    fi
+    unset _git_email
   fi
 else
-  warn "GitHub: gh CLI not found — GH_TOKEN will not be set"
+  ok "Git: email=$GIT_AUTHOR_EMAIL (.env)"
+fi
+if [ -z "${GIT_AUTHOR_NAME:-}" ]; then
+  if command -v git >/dev/null 2>&1; then
+    _git_name=$(git config user.name 2>/dev/null || true)
+    if [ -n "$_git_name" ]; then
+      export GIT_AUTHOR_NAME="$_git_name"
+      ok "Git: name=$_git_name (auto-detected)"
+    else
+      warn "Git: user.name not configured (run: git config --global user.name 'Your Name')"
+    fi
+    unset _git_name
+  fi
+else
+  ok "Git: name=$GIT_AUTHOR_NAME (.env)"
 fi
 
-if [ ! -f .env ]; then
-  warn "No .env file found. Container will start with defaults only."
+# SSH key: ed25519 private key (base64-encoded)
+if [ -z "${SSH_PRIVATE_KEY:-}" ]; then
+  if [ -f "$HOME/.ssh/id_ed25519" ]; then
+    export SSH_PRIVATE_KEY
+    SSH_PRIVATE_KEY=$(base64 < "$HOME/.ssh/id_ed25519")
+    ok "SSH: id_ed25519 (auto-detected)"
+  fi
+else
+  ok "SSH: private key (.env)"
+fi
+
+# GitHub token: fresh from gh CLI
+if [ -z "${GH_TOKEN:-}" ]; then
+  if command -v gh >/dev/null 2>&1; then
+    if gh auth status >/dev/null 2>&1; then
+      export GH_TOKEN
+      GH_TOKEN=$(gh auth token 2>/dev/null)
+      ok "GitHub: authenticated (auto-detected)"
+    else
+      warn "GitHub: gh is installed but not authenticated (run: gh auth login)"
+    fi
+  else
+    warn "GitHub: gh CLI not found — GH_TOKEN will not be set"
+  fi
+else
+  ok "GitHub: authenticated (.env)"
+fi
+
+# GitLab token: from glab CLI
+if [ -z "${GITLAB_TOKEN:-}" ]; then
+  if command -v glab >/dev/null 2>&1; then
+    if glab auth status >/dev/null 2>&1; then
+      export GITLAB_TOKEN
+      GITLAB_TOKEN=$(glab config get token --host gitlab.com 2>/dev/null || true)
+      if [ -n "$GITLAB_TOKEN" ]; then
+        _glab_user=$(glab api /user --jq '.username' 2>/dev/null || true)
+        ok "GitLab: authenticated${_glab_user:+ ($_glab_user)} (auto-detected)"
+        unset _glab_user
+      fi
+    else
+      warn "GitLab: glab is installed but not authenticated (run: glab auth login)"
+    fi
+  fi
+else
+  ok "GitLab: authenticated (.env)"
+fi
+
+# Azure CLI: forward host login session
+if [ -z "${AZURE_CONFIG_BASE64:-}" ]; then
+  if command -v az >/dev/null 2>&1; then
+    if az account show >/dev/null 2>&1; then
+      _az_user=$(az account show --query user.name -o tsv 2>/dev/null || true)
+      export AZURE_CONFIG_BASE64
+      AZURE_CONFIG_BASE64=$( (cd "$HOME/.azure" && tar czf - \
+        azureProfile.json msal_token_cache.json msal_token_cache.bin \
+        clouds.config service_principal_entries.json az.json 2>/dev/null) | base64)
+      ok "Azure CLI: authenticated${_az_user:+ ($_az_user)} (auto-detected)"
+      unset _az_user
+    else
+      warn "Azure CLI: az is installed but not authenticated (run: az login)"
+    fi
+  fi
+else
+  ok "Azure CLI: authenticated (.env)"
+fi
+
+# Salesforce CLI: sfdx auth URL for org login
+if [ -z "${SFDX_AUTH_URL:-}" ]; then
+  if command -v sf >/dev/null 2>&1; then
+    if sf org list auth 2>/dev/null | grep -q Username; then
+      _sfdx_url=$(sf org display --verbose --json 2>/dev/null | jq -r '.result.sfdxAuthUrl // empty' 2>/dev/null || true)
+      if [ -n "$_sfdx_url" ]; then
+        export SFDX_AUTH_URL="$_sfdx_url"
+        ok "Salesforce: authenticated (auto-detected)"
+      else
+        warn "Salesforce: sf authenticated but could not extract auth URL"
+      fi
+      unset _sfdx_url
+    else
+      warn "Salesforce: sf is installed but not authenticated (run: sf org login web)"
+    fi
+  fi
+else
+  ok "Salesforce: authenticated (.env)"
+fi
+
+# Claude Code OAuth: extract from macOS keychain
+if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+  if [ "$(uname)" = "Darwin" ]; then
+    _claude_token=$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null \
+      | python3 -c "import sys,json; print(json.load(sys.stdin).get('claudeAiOauth',{}).get('accessToken',''))" 2>/dev/null || true)
+    if [ -n "$_claude_token" ]; then
+      export CLAUDE_CODE_OAUTH_TOKEN="$_claude_token"
+      ok "Claude Code: OAuth token (auto-detected from keychain)"
+    fi
+    unset _claude_token
+  fi
+else
+  ok "Claude Code: OAuth token (.env)"
+fi
+
+# Google gog CLI: OAuth credentials and tokens
+if command -v gog >/dev/null 2>&1; then
+  if gog auth list --plain 2>/dev/null | head -1 | grep -q .; then
+    if [ -z "${GOG_ACCOUNT:-}" ]; then
+      export GOG_ACCOUNT
+      GOG_ACCOUNT=$(gog auth list --plain 2>/dev/null | head -1 | cut -f1)
+      ok "gog: account=$GOG_ACCOUNT (auto-detected)"
+    else
+      ok "gog: account=$GOG_ACCOUNT (.env)"
+    fi
+    if [ -z "${GOG_CREDENTIALS_JSON:-}" ]; then
+      _cred_path=$(gog auth status --plain 2>/dev/null | grep credentials_path | cut -f2)
+      if [ -n "$_cred_path" ] && [ -f "$_cred_path" ]; then
+        export GOG_CREDENTIALS_JSON
+        GOG_CREDENTIALS_JSON=$(base64 < "$_cred_path")
+        ok "gog: credentials (auto-detected)"
+      fi
+      unset _cred_path
+    else
+      ok "gog: credentials (.env)"
+    fi
+    if [ -z "${GOG_TOKEN_JSON:-}" ] && [ -n "${GOG_ACCOUNT:-}" ]; then
+      _gog_tmp=$(mktemp)
+      if gog auth tokens export "$GOG_ACCOUNT" --out "$_gog_tmp" --overwrite 2>/dev/null; then
+        export GOG_TOKEN_JSON
+        GOG_TOKEN_JSON=$(base64 < "$_gog_tmp")
+        ok "gog: tokens (auto-detected)"
+      fi
+      rm -f "$_gog_tmp"
+      unset _gog_tmp
+    elif [ -n "${GOG_TOKEN_JSON:-}" ]; then
+      ok "gog: tokens (.env)"
+    fi
+  fi
+fi
+
+# Google Workspace CLI (gws): OAuth credentials
+if [ -f "$HOME/.config/gws/client_secret.json" ] || [ -n "${GWS_CLIENT_SECRET_JSON:-}" ]; then
+  if [ -z "${GWS_CLIENT_SECRET_JSON:-}" ]; then
+    export GWS_CLIENT_SECRET_JSON
+    GWS_CLIENT_SECRET_JSON=$(base64 < "$HOME/.config/gws/client_secret.json")
+    ok "gws: client_secret (auto-detected)"
+  else
+    ok "gws: client_secret (.env)"
+  fi
+  if [ -z "${GWS_ENCRYPTION_KEY:-}" ]; then
+    _gws_key=$(security find-generic-password -s "gws-cli" -w 2>/dev/null \
+      || cat "$HOME/.config/gws/.encryption_key" 2>/dev/null || true)
+    if [ -n "$_gws_key" ]; then
+      export GWS_ENCRYPTION_KEY="$_gws_key"
+      ok "gws: encryption key (auto-detected)"
+    fi
+    unset _gws_key
+  else
+    ok "gws: encryption key (.env)"
+  fi
+  if [ -z "${GWS_CREDENTIALS_ENC:-}" ] && [ -f "$HOME/.config/gws/credentials.enc" ]; then
+    export GWS_CREDENTIALS_ENC
+    GWS_CREDENTIALS_ENC=$(base64 < "$HOME/.config/gws/credentials.enc")
+    ok "gws: credentials (auto-detected)"
+  elif [ -n "${GWS_CREDENTIALS_ENC:-}" ]; then
+    ok "gws: credentials (.env)"
+  fi
+  if [ -z "${GWS_TOKEN_CACHE:-}" ] && [ -f "$HOME/.config/gws/token_cache.json" ]; then
+    export GWS_TOKEN_CACHE
+    GWS_TOKEN_CACHE=$(base64 < "$HOME/.config/gws/token_cache.json")
+    ok "gws: token_cache (auto-detected)"
+  elif [ -n "${GWS_TOKEN_CACHE:-}" ]; then
+    ok "gws: token_cache (.env)"
+  fi
 fi
 
 # Podman host socket for Docker-outside-of-Docker.
