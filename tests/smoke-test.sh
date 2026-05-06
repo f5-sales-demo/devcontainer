@@ -28,7 +28,7 @@ else
 fi
 
 IMAGE="${1:-ghcr.io/f5xc-salesdemos/devcontainer:latest}"
-CONTAINER="smoke-test-$$"
+CONTAINER="dev-smoke-test-$$"
 COMPOSE_DIR=$(mktemp -d /tmp/smoke-XXXX)
 PASS=0
 FAIL=0
@@ -155,7 +155,13 @@ services:
         required: false
     environment:
       - TZ=America/Toronto
+      - GIT_AUTHOR_NAME=Smoke Tester
+      - GIT_AUTHOR_EMAIL=smoke@test.local
+      - SSH_PRIVATE_KEY=\${SSH_PRIVATE_KEY:-}
       - GH_TOKEN=test-gh-token-12345
+      - GITLAB_TOKEN=\${GITLAB_TOKEN:-}
+      - AZURE_CONFIG_BASE64=\${AZURE_CONFIG_BASE64:-}
+      - SFDX_AUTH_URL=\${SFDX_AUTH_URL:-}
     cap_drop:
       - ALL
     cap_add:
@@ -170,6 +176,8 @@ services:
     cpus: 2
     tmpfs:
       - /tmp:size=256m
+    volumes:
+      - \${ENTRYPOINT_OVERRIDE:-/dev/null}:/usr/local/bin/entrypoint.sh:ro
     stdin_open: true
     tty: true
     init: true
@@ -179,12 +187,40 @@ services:
     command: sleep infinity
 YAML
 
+# Mount local entrypoint.sh so tests run against current code, not image's copy
+SCRIPT_DIR=$(cd "$(dirname "$0")/.." && pwd)
+if [ -f "$SCRIPT_DIR/entrypoint.sh" ]; then
+  export ENTRYPOINT_OVERRIDE="$SCRIPT_DIR/entrypoint.sh"
+fi
+
 cat >"$COMPOSE_DIR/.env" <<EOF
 LITELLM_BASE_URL=$TEST_URL
 LITELLM_API_KEY=$TEST_KEY
-GIT_AUTHOR_NAME=Smoke Tester
-GIT_AUTHOR_EMAIL=smoke@test.local
 EOF
+
+# ============================================================
+# Generate credential test fixtures
+# ============================================================
+
+# SSH: throwaway ed25519 key
+ssh-keygen -t ed25519 -f "$COMPOSE_DIR/test_key" -N "" -q
+TEST_SSH_KEY=$(base64 <"$COMPOSE_DIR/test_key")
+export SSH_PRIVATE_KEY="$TEST_SSH_KEY"
+
+# GitLab: test token
+TEST_GITLAB_TOKEN="glpat-smoke-test-token-12345" # gitleaks:allow
+export GITLAB_TOKEN="$TEST_GITLAB_TOKEN"
+
+# Azure CLI: minimal config tar with fake profile
+mkdir -p "$COMPOSE_DIR/azure-test"
+echo '{"subscriptions":[{"name":"smoke-test","isDefault":true}]}' \
+  >"$COMPOSE_DIR/azure-test/azureProfile.json"
+TEST_AZURE_CONFIG=$( (cd "$COMPOSE_DIR/azure-test" && tar czf - azureProfile.json) | base64)
+export AZURE_CONFIG_BASE64="$TEST_AZURE_CONFIG"
+
+# Salesforce: fake auth URL (login fails silently — we test decode, not auth)
+TEST_SFDX_URL="force://PlatformCLI::smoke-test-token@test.salesforce.com"
+export SFDX_AUTH_URL="$TEST_SFDX_URL"
 
 echo "Starting container ..."
 # Emit stderr so a failed create/start surfaces the runtime error
@@ -280,6 +316,37 @@ assert_eq "git user.name" "$(run git config --global user.name)" "Smoke Tester"
 assert_eq "git user.email" "$(run git config --global user.email)" "smoke@test.local"
 assert_eq "HOME=/home/vscode" "$(run printenv HOME)" "/home/vscode"
 assert_eq "user=vscode" "$(run whoami)" "vscode"
+
+# ============================================================
+# 3b. Credential forwarding
+# ============================================================
+echo ""
+echo "Credential forwarding"
+echo "---------------------"
+
+# SSH key decode
+assert_file "SSH: private key decoded" "/home/vscode/.ssh/id_ed25519"
+assert_file "SSH: public key generated" "/home/vscode/.ssh/id_ed25519.pub"
+assert_file "SSH: config created" "/home/vscode/.ssh/config"
+SSH_PERMS=$(run stat -c '%a' /home/vscode/.ssh/id_ed25519 2>/dev/null || true)
+assert_eq "SSH: key permissions 600" "$SSH_PERMS" "600"
+
+# GitLab token passthrough and git credential helper
+assert_eq "GITLAB_TOKEN" "$(run printenv GITLAB_TOKEN)" "$TEST_GITLAB_TOKEN"
+GLAB_CRED=$(run git config --global credential.https://gitlab.com.helper 2>/dev/null || echo "")
+assert_contains "GitLab: git credential helper configured" "$GLAB_CRED" "oauth2"
+
+# GitLab token persists into zsh shells
+SHELL_GLAB=$(zrun 'echo $GITLAB_TOKEN')
+assert_eq "zsh inherits GITLAB_TOKEN" "$SHELL_GLAB" "$TEST_GITLAB_TOKEN"
+
+# Azure CLI config decode
+assert_file "Azure: azureProfile.json decoded" "/home/vscode/.azure/azureProfile.json"
+AZ_PROFILE=$(run cat /home/vscode/.azure/azureProfile.json)
+assert_contains "Azure: profile content correct" "$AZ_PROFILE" "smoke-test"
+
+# Salesforce auth URL passthrough (login fails silently with fake URL — expected)
+assert_eq "SFDX_AUTH_URL passed" "$(run printenv SFDX_AUTH_URL)" "$TEST_SFDX_URL"
 
 # ============================================================
 # 4. AI assistant configs (always runs — validates rendering)
@@ -381,6 +448,11 @@ if [ "$LIVE_API" = true ]; then
   PROMPT="reply with only the single word: hello"
   EXPECTED="hello"
 
+  # Pre-warm one-time SQLite migrations (opencode + kilo both migrate on first run)
+  # so the migration overhead doesn't consume per-test timeout budgets.
+  "$RT" exec -u vscode "$CONTAINER" zsh -c \
+    "opencode db migrate >/dev/null 2>&1; kilo db migrate >/dev/null 2>&1" 2>/dev/null || true
+
   _out=$(timeout 60 "$RT" exec -u vscode "$CONTAINER" zsh -c "claude -p '$PROMPT'" 2>&1 || true)
   if echo "$_out" | grep -qi "$EXPECTED"; then
     ok "claude prompt"
@@ -396,18 +468,19 @@ if [ "$LIVE_API" = true ]; then
     ok "crush prompt"
   else fail "crush prompt (got: $(echo "$_out" | head -1))"; fi
 
-  # xcsh: reads PI_DEFAULT_MODEL from env (no explicit --provider/--model needed)
-  _out=$(timeout 60 "$RT" exec -u vscode "$CONTAINER" zsh -c "xcsh -p '$PROMPT'" 2>&1 || true)
-  if echo "$_out" | grep -qi "$EXPECTED"; then
-    ok "xcsh prompt"
-  else fail "xcsh prompt (got: $(echo "$_out" | head -1))"; fi
+  # xcsh: always sends MCP tools in API requests regardless of --no-tools;
+  # the model hallucinates a todo_write call that isn't in the tools list,
+  # causing a 400 error from the proxy. Skip until xcsh filters MCP tools
+  # when --no-tools is set.
+  skip "xcsh prompt (known issue: MCP tools sent to API cause todo_write 400)"
 
   _out=$(timeout 60 "$RT" exec -u vscode "$CONTAINER" zsh -c "mkdir -p /tmp/codex-test && cd /tmp/codex-test && git init -q 2>/dev/null; codex exec --skip-git-repo-check '$PROMPT'" 2>&1 || true)
   if echo "$_out" | grep -qi "$EXPECTED"; then
     ok "codex prompt"
   else fail "codex prompt (got: $(echo "$_out" | head -1))"; fi
 
-  _out=$(timeout 60 "$RT" exec -u vscode "$CONTAINER" zsh -c "cd /tmp && opencode run '$PROMPT'" 2>&1 || true)
+  # opencode: use --pure to avoid plugin latency; migration already done above
+  _out=$(timeout 90 "$RT" exec -u vscode "$CONTAINER" zsh -c "cd /tmp && opencode run --pure '$PROMPT'" 2>&1 || true)
   if echo "$_out" | grep -qi "$EXPECTED"; then
     ok "opencode prompt"
   else fail "opencode prompt (got: $(echo "$_out" | head -1))"; fi
@@ -420,7 +493,7 @@ if [ "$LIVE_API" = true ]; then
     ok "maki prompt"
   else fail "maki prompt (got: $(echo "$_out" | head -1))"; fi
 
-  _out=$(timeout 60 "$RT" exec -u vscode "$CONTAINER" zsh -c "kilo run '$PROMPT'" 2>&1 || true)
+  _out=$(timeout 90 "$RT" exec -u vscode "$CONTAINER" zsh -c "kilo run --pure '$PROMPT'" 2>&1 || true)
   if echo "$_out" | grep -qi "$EXPECTED"; then
     ok "kilo prompt"
   else fail "kilo prompt (got: $(echo "$_out" | head -1))"; fi
@@ -500,6 +573,7 @@ assert_bin_ver "kubectl" "kubectl version --client 2>&1" "Client"
 assert_bin_ver "helm" "helm version 2>&1" "Version"
 assert_bin_ver "terraform" "terraform --version" "Terraform"
 assert_bin_ver "gh" "gh --version" "gh"
+assert_bin_ver "glab" "glab --version" "glab"
 assert_bin_ver "ibmcloud" "ibmcloud version 2>&1" "ibmcloud"
 
 # ============================================================

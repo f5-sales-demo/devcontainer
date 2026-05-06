@@ -72,6 +72,21 @@ else
   echo "    Create a token at https://github.com/settings/tokens"
 fi
 
+# GitLab CLI authentication status
+echo ""
+echo "  GitLab CLI:"
+if [ -n "${GITLAB_TOKEN:-}" ]; then
+  if glab auth status 2>&1 | head -3 | sed 's/^/    /'; then
+    :
+  else
+    echo "    WARNING: GITLAB_TOKEN is set but glab auth failed"
+    echo "    Check that your token is valid and not expired"
+  fi
+else
+  echo "    Not authenticated (GITLAB_TOKEN not set)"
+  echo "    To enable: add GITLAB_TOKEN=glpat-... to .env"
+fi
+
 # Salesforce CLI authentication status
 echo ""
 echo "  Salesforce CLI:"
@@ -80,6 +95,16 @@ if sf org list auth 2>&1 | grep -q "Username"; then
 else
   echo "    Not authenticated (SFDX_AUTH_URL not set)"
   echo "    To enable: add SFDX_AUTH_URL=force://... to .env"
+fi
+
+# Azure CLI authentication status
+echo ""
+echo "  Azure CLI:"
+if az account show >/dev/null 2>&1; then
+  az account show --query "{user:user.name, subscription:name, tenant:tenantId}" -o table 2>&1 | sed 's/^/    /'
+else
+  echo "    Not authenticated"
+  echo "    To enable: add AZURE_CONFIG_BASE64 to .env (see .env.example)"
 fi
 
 echo ""

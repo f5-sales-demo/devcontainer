@@ -70,6 +70,15 @@ if [ -n "$GH_TOKEN" ]; then
 fi
 
 # ============================================================
+# GitLab CLI — GITLAB_TOKEN env var is read natively by glab.
+# Configure git credential helper for HTTPS operations.
+# ============================================================
+if [ -n "${GITLAB_TOKEN:-}" ]; then
+  git config --global credential.https://gitlab.com.helper \
+    '!f() { echo "username=oauth2"; echo "password=$GITLAB_TOKEN"; }; f'
+fi
+
+# ============================================================
 # Salesforce CLI — authenticate from SFDX auth URL
 # ============================================================
 if [ -n "$SFDX_AUTH_URL" ]; then
@@ -77,6 +86,16 @@ if [ -n "$SFDX_AUTH_URL" ]; then
   echo "$SFDX_AUTH_URL" >"$_sf_tmp"
   sf org login sfdx-url --sfdx-url-file "$_sf_tmp" --set-default --alias SFDC >/dev/null 2>&1 || true
   rm -f "$_sf_tmp"
+fi
+
+# ============================================================
+# Azure CLI — restore config from base64-encoded tar archive
+# ============================================================
+if [ -n "${AZURE_CONFIG_BASE64:-}" ]; then
+  mkdir -p "$HOME/.azure"
+  echo "$AZURE_CONFIG_BASE64" | base64 -d | tar xzf - -C "$HOME/.azure" 2>/dev/null || true
+  chmod 600 "$HOME/.azure/msal_token_cache"* 2>/dev/null || true
+  chmod 600 "$HOME/.azure/service_principal_entries.json" 2>/dev/null || true
 fi
 
 # Ensure Homebrew npm global directory exists (issue #677)
@@ -189,6 +208,7 @@ ENVEOF
     ANTHROPIC_DEFAULT_SONNET_MODEL ANTHROPIC_DEFAULT_OPUS_MODEL \
     OPENAI_API_KEY OPENAI_BASE_URL \
     ANTHROPIC_OAUTH_TOKEN \
+    GITLAB_TOKEN \
     PI_DEFAULT_MODEL PI_SMOL_MODEL PI_SLOW_MODEL PI_PLAN_MODEL \
     JAVA_HOME \
     GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL; do
@@ -442,6 +462,22 @@ if [ -n "$LITELLM_BASE_URL" ] && [ -n "$LITELLM_API_KEY" ] && command -v curl >/
       "${_probe_status:-no-response}" >&2
   fi
   unset _probe_status
+fi
+
+# ============================================================
+# OpenCode + Kilo — pre-warm SQLite migration on first boot.
+# Both tools run a one-time migration on their first invocation;
+# doing it here avoids the delay on first interactive use.
+# ============================================================
+if command -v opencode >/dev/null 2>&1; then
+  if [ ! -f "$HOME/.local/share/opencode/opencode.db" ]; then
+    opencode db migrate >/dev/null 2>&1 || true
+  fi
+fi
+if command -v kilo >/dev/null 2>&1; then
+  if [ ! -f "$HOME/.local/share/kilo/kilo.db" ]; then
+    kilo db migrate >/dev/null 2>&1 || true
+  fi
 fi
 
 # Re-sync Codex agents from Claude Code plugins (catches plugin updates)
