@@ -955,7 +955,7 @@ RUN true \
 # 10l-2. C# language server (csharp-ls via dotnet global tool)
 # ============================================================
 # hadolint ignore=DL3059
-RUN dotnet tool install csharp-ls --version 0.24.0 --tool-path /usr/local/bin
+RUN dotnet tool install csharp-ls --version 0.20.0 --tool-path /usr/local/bin
 
 # ============================================================
 # 10l. Zig cross-compilation toolchain (needed by napi-rs
