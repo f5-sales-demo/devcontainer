@@ -356,7 +356,7 @@ fi
 if [ -z "${SSH_PRIVATE_KEY:-}" ]; then
   if [ -f "$HOME/.ssh/id_ed25519" ]; then
     export SSH_PRIVATE_KEY
-    SSH_PRIVATE_KEY=$(base64 < "$HOME/.ssh/id_ed25519")
+    SSH_PRIVATE_KEY=$(base64 <"$HOME/.ssh/id_ed25519")
     ok "SSH: id_ed25519 (auto-detected)"
   fi
 else
@@ -441,8 +441,8 @@ fi
 # Claude Code OAuth: extract from macOS keychain
 if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
   if [ "$(uname)" = "Darwin" ]; then
-    _claude_token=$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null \
-      | python3 -c "import sys,json; print(json.load(sys.stdin).get('claudeAiOauth',{}).get('accessToken',''))" 2>/dev/null || true)
+    _claude_token=$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null |
+      python3 -c "import sys,json; print(json.load(sys.stdin).get('claudeAiOauth',{}).get('accessToken',''))" 2>/dev/null || true)
     if [ -n "$_claude_token" ]; then
       export CLAUDE_CODE_OAUTH_TOKEN="$_claude_token"
       ok "Claude Code: OAuth token (auto-detected from keychain)"
@@ -467,7 +467,7 @@ if command -v gog >/dev/null 2>&1; then
       _cred_path=$(gog auth status --plain 2>/dev/null | grep credentials_path | cut -f2)
       if [ -n "$_cred_path" ] && [ -f "$_cred_path" ]; then
         export GOG_CREDENTIALS_JSON
-        GOG_CREDENTIALS_JSON=$(base64 < "$_cred_path")
+        GOG_CREDENTIALS_JSON=$(base64 <"$_cred_path")
         ok "gog: credentials (auto-detected)"
       fi
       unset _cred_path
@@ -478,7 +478,7 @@ if command -v gog >/dev/null 2>&1; then
       _gog_tmp=$(mktemp)
       if gog auth tokens export "$GOG_ACCOUNT" --out "$_gog_tmp" --overwrite 2>/dev/null; then
         export GOG_TOKEN_JSON
-        GOG_TOKEN_JSON=$(base64 < "$_gog_tmp")
+        GOG_TOKEN_JSON=$(base64 <"$_gog_tmp")
         ok "gog: tokens (auto-detected)"
       fi
       rm -f "$_gog_tmp"
@@ -493,14 +493,14 @@ fi
 if [ -f "$HOME/.config/gws/client_secret.json" ] || [ -n "${GWS_CLIENT_SECRET_JSON:-}" ]; then
   if [ -z "${GWS_CLIENT_SECRET_JSON:-}" ]; then
     export GWS_CLIENT_SECRET_JSON
-    GWS_CLIENT_SECRET_JSON=$(base64 < "$HOME/.config/gws/client_secret.json")
+    GWS_CLIENT_SECRET_JSON=$(base64 <"$HOME/.config/gws/client_secret.json")
     ok "gws: client_secret (auto-detected)"
   else
     ok "gws: client_secret (.env)"
   fi
   if [ -z "${GWS_ENCRYPTION_KEY:-}" ]; then
-    _gws_key=$(security find-generic-password -s "gws-cli" -w 2>/dev/null \
-      || cat "$HOME/.config/gws/.encryption_key" 2>/dev/null || true)
+    _gws_key=$(security find-generic-password -s "gws-cli" -w 2>/dev/null ||
+      cat "$HOME/.config/gws/.encryption_key" 2>/dev/null || true)
     if [ -n "$_gws_key" ]; then
       export GWS_ENCRYPTION_KEY="$_gws_key"
       ok "gws: encryption key (auto-detected)"
@@ -511,14 +511,14 @@ if [ -f "$HOME/.config/gws/client_secret.json" ] || [ -n "${GWS_CLIENT_SECRET_JS
   fi
   if [ -z "${GWS_CREDENTIALS_ENC:-}" ] && [ -f "$HOME/.config/gws/credentials.enc" ]; then
     export GWS_CREDENTIALS_ENC
-    GWS_CREDENTIALS_ENC=$(base64 < "$HOME/.config/gws/credentials.enc")
+    GWS_CREDENTIALS_ENC=$(base64 <"$HOME/.config/gws/credentials.enc")
     ok "gws: credentials (auto-detected)"
   elif [ -n "${GWS_CREDENTIALS_ENC:-}" ]; then
     ok "gws: credentials (.env)"
   fi
   if [ -z "${GWS_TOKEN_CACHE:-}" ] && [ -f "$HOME/.config/gws/token_cache.json" ]; then
     export GWS_TOKEN_CACHE
-    GWS_TOKEN_CACHE=$(base64 < "$HOME/.config/gws/token_cache.json")
+    GWS_TOKEN_CACHE=$(base64 <"$HOME/.config/gws/token_cache.json")
     ok "gws: token_cache (auto-detected)"
   elif [ -n "${GWS_TOKEN_CACHE:-}" ]; then
     ok "gws: token_cache (.env)"

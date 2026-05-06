@@ -204,7 +204,7 @@ EOF
 
 # SSH: throwaway ed25519 key
 ssh-keygen -t ed25519 -f "$COMPOSE_DIR/test_key" -N "" -q
-TEST_SSH_KEY=$(base64 < "$COMPOSE_DIR/test_key")
+TEST_SSH_KEY=$(base64 <"$COMPOSE_DIR/test_key")
 export SSH_PRIVATE_KEY="$TEST_SSH_KEY"
 
 # GitLab: test token
