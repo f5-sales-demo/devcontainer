@@ -407,7 +407,7 @@ if [ -z "${AZURE_CONFIG_BASE64:-}" ]; then
       export AZURE_CONFIG_BASE64
       AZURE_CONFIG_BASE64=$( (cd "$HOME/.azure" && tar czf - \
         azureProfile.json msal_token_cache.json msal_token_cache.bin \
-        clouds.config service_principal_entries.json az.json 2>/dev/null) | base64)
+        clouds.config service_principal_entries.json az.json 2>/dev/null || true) | base64)
       ok "Azure CLI: authenticated${_az_user:+ ($_az_user)} (auto-detected)"
       unset _az_user
     else
