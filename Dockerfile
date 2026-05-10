@@ -1660,6 +1660,7 @@ USER root
 # --- System-wide scripts and managed policy ---
 COPY claude-config/self-test.sh \
      claude-config/statusline.sh \
+     claude-config/subagent-statusline.sh \
      claude-config/api-key-helper.sh \
      claude-config/install-plugins.sh \
      claude-config/neutralize-hooks.sh \
@@ -1669,7 +1670,8 @@ COPY claude-config/chrome-browser.sh /usr/local/lib/chrome-browser.sh
 COPY .devcontainer/scripts/post-start.sh scripts/nightly-update.sh /opt/devcontainer/
 RUN chmod +x /opt/claude-config/self-test.sh \
       /usr/local/lib/chrome-browser.sh \
-      /opt/claude-config/statusline.sh /opt/claude-config/api-key-helper.sh \
+      /opt/claude-config/statusline.sh /opt/claude-config/subagent-statusline.sh \
+      /opt/claude-config/api-key-helper.sh \
       /opt/claude-config/install-plugins.sh \
       /opt/claude-config/neutralize-hooks.sh \
       /opt/devcontainer/post-start.sh \
