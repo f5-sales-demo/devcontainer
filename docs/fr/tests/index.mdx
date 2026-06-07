@@ -1,0 +1,20 @@
+---
+title: Tests d'intégration
+description: >-
+  Tests automatisés qui vérifient le fonctionnement de bout en bout des piles
+  d'exécution du devcontainer.
+sidebar:
+  order: 7
+i18n:
+  sourceHash: 4a499717bb7d
+  translator: machine
+---
+
+Ces tests valident que les principaux sous-systèmes du devcontainer fonctionnent ensemble au moment de l'exécution. Ils ne sont pas intégrés dans l'image Docker — exécutez-les à l'intérieur d'un conteneur en cours d'exécution pour vérifier ses capacités.
+
+## Tests disponibles
+
+| Test | Ce qu'il démontre |
+| ---- | ---- |
+| [Screen Recording](/devcontainer/tests/screen-recording/) | L'affichage Xvfb, Chromium avec interface graphique (Playwright) et l'enregistrement ffmpeg produisent un fichier MP4 valide |
+| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Le lien symbolique Chrome, le correctif headless et la navigation MCP produisent une capture d'écran valide |

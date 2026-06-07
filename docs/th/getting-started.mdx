@@ -1,0 +1,282 @@
+---
+title: เริ่มต้นใช้งาน
+description: ดาวน์โหลดไฟล์เดียว เริ่มคอนเทนเนอร์ แล้วเชื่อมต่อ — ไม่ต้องใช้ Git หรือการโคลน
+sidebar:
+  order: 2
+i18n:
+  sourceHash: 05053fe9259c
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::tip[ติดตั้งด่วนสำหรับ macOS]
+หากคุณใช้ macOS กับ Apple Silicon ข้ามหน้านี้แล้วใช้ [ตัวติดตั้งบรรทัดเดียว](/devcontainer/install/):
+
+```bash
+curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
+```
+
+ตัวติดตั้งจะจัดการแพ็กเกจ Homebrew, การตั้งค่า iTerm2, การติดตั้ง Podman และดาวน์โหลดทุกอย่างที่คุณต้องการ
+::::
+
+## ข้อกำหนดเบื้องต้น
+
+### Container Runtime
+
+คุณต้องมี container runtime บนเครื่องของคุณ สามารถใช้ Docker หรือ Podman ก็ได้
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+| แพลตฟอร์ม | การติดตั้ง |
+|----------|---------|
+| macOS | [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) |
+| Windows | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) (WSL2 backend) |
+| Linux | [Docker Engine](https://docs.docker.com/engine/install/) หรือ [Docker Desktop for Linux](https://docs.docker.com/desktop/install/linux/) |
+
+ตรวจสอบว่าใช้งานได้:
+
+```bash
+docker --version
+docker compose version
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+| แพลตฟอร์ม | การติดตั้ง |
+|----------|---------|
+| macOS | [Podman Desktop for Mac](https://podman-desktop.io/docs/installation/macos-install) |
+| Windows | [Podman Desktop for Windows](https://podman-desktop.io/docs/installation/windows-install) |
+| Linux | [Podman](https://podman.io/docs/installation#installing-on-linux) + [Podman Compose](https://github.com/containers/podman-compose#installation) |
+
+ตรวจสอบว่าใช้งานได้:
+
+```bash
+podman --version
+podman-compose version
+```
+
+:::note[เฉพาะ Linux]
+Podman บน Linux รันคอนเทนเนอร์โดยตรง (ไม่มี VM) ตรวจสอบให้แน่ใจว่า Podman socket เปิดใช้งานอยู่เพื่อให้ `podman-compose` สามารถเชื่อมต่อได้:
+
+```bash
+systemctl --user enable --now podman.socket
+```
+:::
+
+</TabItem>
+</Tabs>
+
+### ทรัพยากรระบบ
+
+| ทรัพยากร | ขั้นต่ำ | แนะนำ |
+|----------|---------|-------------|
+| ดิสก์ | 5 GB | 10 GB+ |
+| RAM | 8 GB จัดสรรให้ container runtime | 12 GB+ |
+| CPU | 2 คอร์ | 4+ คอร์ |
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+ปรับขีดจำกัดทรัพยากรใน Docker Desktop &rarr; Settings &rarr; Resources
+
+</TabItem>
+<TabItem label="Podman">
+
+บน **macOS/Windows** ปรับขีดจำกัดทรัพยากรใน Podman Desktop &rarr; Settings &rarr; Resources หรือผ่าน CLI:
+
+```bash
+podman machine set --cpus 4 --memory 12288
+podman machine stop && podman machine start
+```
+
+บน **Linux** คอนเทนเนอร์ใช้ทรัพยากรของโฮสต์โดยตรง — ไม่จำเป็นต้องตั้งค่าทรัพยากร
+
+</TabItem>
+</Tabs>
+
+## 1. ตั้งค่า
+
+สร้างโฟลเดอร์และดาวน์โหลดไฟล์ compose:
+
+```bash
+mkdir devcontainer && cd devcontainer
+curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/docker-compose.yml
+```
+
+## 2. เพิ่มข้อมูลรับรองการยืนยันตัวตน (ไม่บังคับ)
+
+สร้างไฟล์ `.env` ในโฟลเดอร์เดียวกันเพื่อตั้งค่า Claude Code ล่วงหน้า เลือกหนึ่งในตัวเลือกต่อไปนี้:
+
+### ตัวเลือก A: Claude Max (OAuth)
+
+```ini
+CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
+```
+
+### ตัวเลือก B: LiteLLM หรือ Anthropic-compatible proxy
+
+หากคุณมี LiteLLM instance หรือ Anthropic-compatible proxy อื่น ให้ตั้งค่าตัวแปรสองตัวนี้:
+
+```ini
+LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
+LITELLM_API_KEY=your-api-key
+```
+
+ตั้งค่าเฉพาะโดเมน — คอนเทนเนอร์จะสร้าง URL suffix เฉพาะผู้ให้บริการโดยอัตโนมัติ (เช่น `/anthropic` สำหรับ Claude Code)
+
+### ดึงค่าอัตโนมัติจากข้อมูลรับรองในเครื่อง
+
+หากคุณมี `git` และ `gh` ตั้งค่าไว้บนเครื่องโฮสต์ คุณสามารถเติมค่า `.env` ส่วนใหญ่ได้โดยอัตโนมัติ เริ่มจากคัดลอกเทมเพลต:
+
+```bash
+cp .env.example .env
+```
+
+จากนั้นรันคำสั่งที่ตรงกับการตั้งค่าของคุณ:
+
+```bash
+# Git identity
+echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
+echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
+
+# Timezone
+echo "TZ=$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')" >> .env
+
+# GitHub CLI token (requires: gh auth login)
+echo "GH_TOKEN=$(gh auth token)" >> .env
+
+# SSH key (if you use SSH for git)
+echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
+```
+
+จากนั้นแก้ไข `.env` เพื่อเพิ่ม OAuth token หรือการตั้งค่า LiteLLM proxy (ดูตัวเลือกด้านบน)
+
+:::tip[AI assistants]
+ไฟล์ `.env.example` มีเครื่องหมาย `@auto-detect` บนทุกตัวแปรที่สามารถเติมค่าจากเครื่องมือในเครื่องได้ AI assistants เช่น Claude Code สามารถสแกนหาเครื่องหมายเหล่านี้และรันคำสั่งที่เกี่ยวข้องเพื่อสร้างไฟล์ `.env` ที่สมบูรณ์โดยอัตโนมัติ
+:::
+
+## 3. เริ่มต้น
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose pull && podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+การรันครั้งแรกจะดึง pre-built image จาก ghcr.io (~1 นาที ขึ้นอยู่กับการเชื่อมต่อของคุณ) การเริ่มต้นครั้งถัดไปจะใช้ cached image และใช้เวลาเพียงไม่กี่วินาที
+
+## 4. เชื่อมต่อ
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose exec dev zsh
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose exec dev zsh
+```
+
+</TabItem>
+</Tabs>
+
+## 5. ตรวจสอบ
+
+```bash
+# AI tools
+claude --version
+codex --version
+pi --version
+
+# Languages
+node --version
+python3 --version
+go version
+
+# Cloud CLIs
+aws --version
+az --version
+terraform --version
+```
+
+ทดสอบการเชื่อมต่อ AI:
+
+```bash
+claude -p "Say hello"
+```
+
+## 6. โปรเจกต์แรกของคุณ
+
+```bash
+cd /workspace
+git clone https://github.com/your-org/your-project.git
+cd your-project
+claude
+```
+
+## 7. หน้าจอระยะไกล (noVNC)
+
+คอนเทนเนอร์มีหน้าจอเสมือนสำหรับดู AI agents ควบคุมเบราว์เซอร์ เปิด `http://localhost:6080/vnc.html` เพื่อเชื่อมต่อ ดู [หน้าจอระยะไกล (noVNC)](./vnc) สำหรับรายละเอียด
+
+## 8. ระบบอัตโนมัติเบราว์เซอร์ (Chrome DevTools MCP)
+
+Claude Code สามารถนำทางหน้าเว็บ ถ่ายภาพหน้าจอ และตรวจสอบ DOM โดยใช้เซิร์ฟเวอร์ Chrome DevTools MCP ที่ติดตั้งมาให้ ไม่ต้องตั้งค่า — ทำงานโดยอัตโนมัติในโหมด headless ดู [Chrome DevTools MCP](./chrome) สำหรับรายละเอียด
+
+## 9. หยุดและเริ่มใหม่
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+# หยุด (เก็บข้อมูลไว้)
+docker compose down
+
+# เริ่มใหม่
+docker compose up -d
+
+# ลบทุกอย่างและเริ่มต้นใหม่
+docker compose down -v
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+# หยุด (เก็บข้อมูลไว้)
+podman-compose down
+
+# เริ่มใหม่ (pull เพื่อให้ได้ image ล่าสุด)
+podman-compose pull && podman-compose up -d
+
+# ลบทุกอย่างและเริ่มต้นใหม่
+podman-compose down -v
+podman-compose pull && podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+โค้ดของคุณใน `/workspace` และ home directory จะคงอยู่แม้รีสตาร์ท ดู [การตั้งค่า — การคงอยู่ของข้อมูล](./configuration#data-persistence) สำหรับรายละเอียด
+
+---
+
+สำหรับการ build ในเครื่องและการปรับแต่ง Dockerfile ดู [การพัฒนาในเครื่อง](./local-development) สำหรับการรวมกับ VS Code ดู [VS Code](./vscode) สำหรับตัวเลือกหน้าจอระยะไกล ดู [หน้าจอระยะไกล (noVNC)](./vnc)

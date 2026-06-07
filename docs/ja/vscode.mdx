@@ -1,0 +1,83 @@
+---
+title: VS Code
+description: VS Code の「Reopen in Container」ワークフローで Dev Container を使用します。
+sidebar:
+  order: 6
+i18n:
+  sourceHash: defce3bee2ff
+  translator: machine
+---
+
+## 前提条件
+
+1. [VS Code](https://code.visualstudio.com/)
+2. [Dev Containers 拡張機能](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
+3. マシン上で Docker または Podman が実行されていること（[Getting Started](./getting-started#container-runtime) を参照）。VS Code Dev Containers は [Podman をバックエンドとして](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman)もサポートしています。
+
+## クイックスタート
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+code devcontainer
+```
+
+VS Code が `.devcontainer/devcontainer.json` を検出し、**「Reopen in Container」** という通知を表示します。それをクリックするか、コマンドパレットを使用してください：
+
+> **Dev Containers: Reopen in Container**
+
+VS Code がイメージをビルド（またはプル）し、コンテナを起動し、拡張機能をインストールして、コンテナ内のターミナルを開きます。
+
+## 仕組み
+
+`.devcontainer/devcontainer.json` ファイルは、VS Code に Docker Compose を使用するよう指示します：
+
+```json
+"dockerComposeFile": ["../docker-compose.yml", "../docker-compose.build.yml"],
+"service": "dev",
+"workspaceFolder": "/workspace"
+```
+
+devcontainer の設定にはビルドファイルが明示的に含まれているため、「Reopen in Container」または「Rebuild Container」を使用する際に、VS Code がローカルでイメージをビルドできます。
+
+## 拡張機能
+
+拡張機能はコンテナ内に自動的にインストールされます：
+
+| 拡張機能 | 説明 |
+|-----------|-------------|
+| Python | Python 言語サポート |
+| ESLint | JavaScript/TypeScript リンティング |
+| Prettier | コードフォーマッティング |
+| Docker | Dockerfile と compose のサポート |
+| Terraform | HCL 言語サポート |
+| Go | Go 言語サポート |
+| Rust Analyzer | Rust 言語サポート |
+| YAML | YAML 言語サポート |
+| Kubernetes | Kubernetes マニフェストサポート |
+
+拡張機能を追加するには、`.devcontainer/devcontainer.json` 内の `customizations.vscode.extensions` 配列を編集してください。
+
+## ポートフォワーディング
+
+VS Code は compose ファイルで定義されたポートを自動的にフォワードします。noVNC ディスプレイは `http://localhost:6080/vnc.html` で利用可能です — ポートの準備ができると VS Code が通知します。
+
+追加のポートは、VS Code の **Ports** パネルからオンデマンドでフォワードできます。
+
+## Devcontainer CLI による代替方法
+
+VS Code UI よりもコマンドラインを好む場合：
+
+```bash
+npm install -g @devcontainers/cli
+
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . zsh
+```
+
+## リビルド
+
+`Dockerfile` や compose ファイルを変更した後：
+
+> **Dev Containers: Rebuild Container**
+
+これによりイメージがリビルドされ、コンテナが再起動されます。名前付きボリューム（`workspace`、`home`）はリビルド後も保持されます。

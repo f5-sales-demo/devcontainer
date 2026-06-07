@@ -1,0 +1,82 @@
+---
+title: Instalación Rápida
+description: Un solo comando para instalar y configurar el devcontainer en macOS.
+sidebar:
+  order: 0
+i18n:
+  sourceHash: 4095803fd538
+  translator: machine
+---
+
+## Instalación en una línea
+
+```bash
+curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
+```
+
+Este único comando se encarga de toda la configuración inicial:
+
+1. Instala los paquetes de Homebrew (podman, podman-compose, gh, iterm2, nerd fonts)
+2. Configura iTerm2 (fuente, campana, historial de desplazamiento, tema oscuro, atajo de teclado Shift+Enter)
+3. Inicializa y ajusta la máquina Podman (16 GB de RAM, 4 CPUs, 220 GB de disco, zram, swappiness)
+4. Descarga `docker-compose.yml`, `devcontainer.sh` y la plantilla `.env` en el directorio actual
+
+:::note[Se requiere Homebrew]
+Si Homebrew no está instalado, el script finaliza con instrucciones.
+Es posible que su departamento de TI proporcione Homebrew como software gestionado — consulte con ellos primero.
+:::
+
+## Después de la instalación
+
+Edite `.env` con sus credenciales:
+
+```bash
+vi .env
+```
+
+Luego inicie el contenedor:
+
+```bash
+./devcontainer.sh
+```
+
+El script detecta su zona horaria y obtiene un token de GitHub actualizado desde `gh auth token` en cada invocación.
+
+## Qué se crea
+
+Después de ejecutar el instalador, su directorio contendrá:
+
+| Archivo | Propósito |
+|---|---|
+| `devcontainer.sh` | Script de inicio (ejecútelo para iniciar el contenedor) |
+| `docker-compose.yml` | Definición del servicio del contenedor |
+| `.env` | Sus credenciales (desde la plantilla, edítelo antes del primer inicio) |
+
+## Inicios posteriores
+
+```bash
+./devcontainer.sh
+```
+
+## Conectar
+
+```bash
+podman exec -it devcontainer zsh
+```
+
+## Actualizar
+
+Descargue la imagen más reciente y reinicie:
+
+```bash
+podman compose pull
+./devcontainer.sh
+```
+
+## Compilación local
+
+Compile la imagen localmente desde el código fuente (solo arm64):
+
+```bash
+./devcontainer.sh build
+```

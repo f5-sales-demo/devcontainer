@@ -1,0 +1,74 @@
+---
+title: Pantalla Remota (noVNC)
+description: >-
+  Observe e interactúe con navegadores con interfaz gráfica a través de una
+  pantalla virtual en su navegador.
+sidebar:
+  order: 3
+i18n:
+  sourceHash: f872c1a2dace
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+El contenedor ejecuta una pila de pantalla virtual (Xvfb + x11vnc + noVNC + fluxbox) para que pueda observar a los agentes de IA controlar un navegador e intervenir cuando sea necesario — por ejemplo, para gestionar solicitudes de inicio de sesión o MFA.
+
+## Conexión
+
+1. Abra `http://localhost:6080/vnc.html` en su navegador y haga clic en **Connect**
+2. Verá un escritorio ligero de fluxbox — esta es la pantalla virtual del contenedor
+
+Los agentes de IA que utilizan `@playwright/mcp` en modo con interfaz gráfica renderizan Chromium en esta pantalla. Puede hacer clic y escribir directamente en la ventana de noVNC para intervenir en cualquier momento — no es necesario pausar/reanudar.
+
+## Lanzamiento Manual del Navegador
+
+Para abrir un navegador manualmente dentro del contenedor:
+
+```bash
+chromium --no-sandbox &
+```
+
+Para ejecutar pruebas de Playwright en modo con interfaz gráfica:
+
+```bash
+npx playwright test --headed
+```
+
+## Variables de Entorno
+
+| Variable | Valor por defecto | Descripción |
+|----------|---------|-------------|
+| `ENABLE_VNC` | `true` | Establezca en `false` para deshabilitar la pila VNC |
+| `VNC_RESOLUTION` | `1280x1024x24` | Resolución de la pantalla virtual (AnchoxAltoxProfundidad) |
+| `DISPLAY` | `:99` | Número de pantalla X11 |
+| `NOVNC_HOST_PORT` | `6080` | Puerto del lado del host para noVNC (modifique para evitar conflictos con otros contenedores) |
+
+Establezca estas variables en su archivo `.env` o en `.devcontainer/devcontainer.json` bajo `containerEnv`.
+
+## Deshabilitar la Pila VNC
+
+Para operación exclusivamente sin interfaz gráfica, establezca `ENABLE_VNC=false` en `.env` y reinicie el contenedor:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+## Solución de Problemas
+
+Consulte [Solución de Problemas — Pantalla Remota](./troubleshooting#remote-display-novnc) para soluciones a pantallas negras, errores de conexión rechazada y conflictos de puertos.

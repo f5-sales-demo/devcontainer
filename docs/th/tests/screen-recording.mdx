@@ -1,0 +1,208 @@
+---
+title: Screen Recording Test
+description: >-
+  พิสูจน์ว่า Xvfb, headed Chromium (ผ่าน Playwright) และการบันทึกหน้าจอด้วย
+  ffmpeg ทำงานร่วมกันได้ภายใน devcontainer
+sidebar:
+  order: 1
+i18n:
+  sourceHash: 554592b3bf22
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+การทดสอบนี้ตรวจสอบ VNC/browser stack ทั้งหมดโดยการบันทึกเซสชันเบราว์เซอร์แบบ headed เป็นไฟล์ MP4 โดยพิสูจน์ว่า:
+
+- **Xvfb** กำลังทำงานและรับการเชื่อมต่อบน `:99`
+- **Chromium** สามารถเปิดในโหมด headed บนจอแสดงผลเสมือนได้
+- **ffmpeg** สามารถจับภาพจอแสดงผลผ่าน x11grab ได้
+- **MP4** ที่ได้เป็นวิดีโอที่ถูกต้องและเล่นได้
+
+## วิธีการทำงาน
+
+1. สำรวจ `xdpyinfo -display :99` จนกว่าจอแสดงผล X จะพร้อม (รูปแบบเดียวกับ entrypoint)
+2. เริ่มบันทึก ffmpeg ที่ 10 fps
+3. เปิด headed Chromium ผ่าน `sync_api` ของ Playwright
+4. นำทางไปยัง `https://example.com` (หยุด 3 วินาที) จากนั้น `https://httpbin.org` (หยุด 3 วินาที)
+5. ส่ง SIGTERM ไปยัง ffmpeg เพื่อจบไฟล์ MP4 อย่างสมบูรณ์
+6. รายงานเส้นทางผลลัพธ์และขนาดไฟล์
+
+## สคริปต์
+
+บันทึกไฟล์ต่อไปนี้เป็น `vnc-browser-test.py` ภายในคอนเทนเนอร์ หรือคัดลอกจากไดเรกทอรี `docs/tests/` ของ repo นี้:
+
+```python
+#!/usr/bin/env python3
+"""VNC/browser stack integration test.
+
+Proves that Xvfb, headed Chromium (via Playwright), and ffmpeg screen
+recording all work together inside the devcontainer by recording a
+browser navigating to two websites and producing an MP4 video.
+
+Usage: python3 vnc-browser-test.py [output_path]
+Default output: /tmp/recording.mp4
+"""
+
+import os
+import signal
+import subprocess
+import sys
+import time
+
+DISPLAY = os.environ.get("DISPLAY", ":99")
+DEFAULT_OUTPUT = "/tmp/recording.mp4"
+RESOLUTION = "1280x1024"
+FRAMERATE = "10"
+XVFB_TIMEOUT = 50  # iterations (~5 s at 0.1 s each)
+SITES = [
+    ("https://example.com", 3),
+    ("https://httpbin.org", 3),
+]
+
+
+def wait_for_xvfb():
+    """Poll xdpyinfo until the X display is ready (mirrors entrypoint.sh)."""
+    print(f"Waiting for Xvfb on {DISPLAY} ...")
+    for i in range(XVFB_TIMEOUT):
+        result = subprocess.run(
+            ["xdpyinfo", "-display", DISPLAY],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        if result.returncode == 0:
+            print(f"  Display ready after {i * 0.1:.1f}s")
+            return
+        time.sleep(0.1)
+    sys.exit(f"ERROR: Xvfb display {DISPLAY} not ready after {XVFB_TIMEOUT * 0.1:.1f}s")
+
+
+def start_recording(output_path):
+    """Start ffmpeg x11grab recording and return the process."""
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-f", "x11grab",
+        "-video_size", RESOLUTION,
+        "-framerate", FRAMERATE,
+        "-i", f"{DISPLAY}.0",
+        "-c:v", "libx264",
+        "-preset", "ultrafast",
+        "-pix_fmt", "yuv420p",
+        output_path,
+    ]
+    print(f"Starting ffmpeg recording -> {output_path}")
+    return subprocess.Popen(
+        cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    )
+
+
+def stop_recording(proc):
+    """Send SIGTERM and wait for ffmpeg to finalize the MP4."""
+    print("Stopping ffmpeg ...")
+    proc.send_signal(signal.SIGTERM)
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+
+
+def browse_sites():
+    """Launch headed Chromium via Playwright and visit each site."""
+    from playwright.sync_api import sync_playwright  # noqa: PLC0415
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(
+            headless=False,
+            args=[
+                "--no-sandbox",
+                "--disable-gpu",
+                f"--display={DISPLAY}",
+            ],
+        )
+        page = browser.new_page(viewport={"width": 1280, "height": 1024})
+
+        for url, pause in SITES:
+            print(f"  Navigating to {url} ...")
+            try:
+                page.goto(url, timeout=15000)
+            except Exception as exc:  # noqa: BLE001
+                print(f"  Warning: navigation error ({exc}), continuing")
+            time.sleep(pause)
+
+        browser.close()
+
+
+def main():
+    output_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_OUTPUT
+
+    wait_for_xvfb()
+
+    ffmpeg = start_recording(output_path)
+    # Give ffmpeg a moment to initialize before browser activity
+    time.sleep(1)
+
+    try:
+        browse_sites()
+    finally:
+        stop_recording(ffmpeg)
+
+    if os.path.isfile(output_path):
+        size = os.path.getsize(output_path)
+        print(f"\nSUCCESS: {output_path} ({size:,} bytes)")
+    else:
+        sys.exit(f"ERROR: output file not created: {output_path}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## การรันการทดสอบ
+
+<Tabs>
+<TabItem label="ภายในคอนเทนเนอร์ที่กำลังทำงาน">
+
+```bash
+python3 vnc-browser-test.py /tmp/recording.mp4
+```
+
+</TabItem>
+<TabItem label="รันครั้งเดียวด้วย podman">
+
+```bash
+podman run --rm \
+  -v $(pwd)/output:/output \
+  ghcr.io/f5xc-salesdemos/devcontainer:latest \
+  python3 vnc-browser-test.py /output/recording.mp4
+```
+
+</TabItem>
+</Tabs>
+
+## ผลลัพธ์ที่คาดหวัง
+
+```text
+Waiting for Xvfb on :99 ...
+  Display ready after 0.3s
+Starting ffmpeg recording -> /tmp/recording.mp4
+  Navigating to https://example.com ...
+  Navigating to https://httpbin.org ...
+Stopping ffmpeg ...
+
+SUCCESS: /tmp/recording.mp4 (1,234,567 bytes)
+```
+
+ไฟล์ MP4 ควรแสดงหน้าต่าง Chromium ที่เรนเดอร์เว็บไซต์ทั้งสองบนเดสก์ท็อป fluxbox เล่นกลับด้วย `ffplay`, `vlc` หรือดาวน์โหลดจากคอนเทนเนอร์เพื่อตรวจสอบ
+
+## ความหมายเมื่อเกิดความล้มเหลว
+
+| อาการ | สาเหตุที่น่าจะเป็น |
+| ---- | ---- |
+| `Xvfb display :99 not ready` | Xvfb ไม่ได้เริ่มต้น — ตรวจสอบว่า entrypoint ได้รัน VNC stack แล้ว |
+| `ffmpeg: x11grab error` | จอแสดงผลไม่ตรงกันหรือ ffmpeg ไม่รองรับ x11grab |
+| `Playwright launch error` | Chromium ไม่ได้ติดตั้งหรือขาด `--no-sandbox` |
+| MP4 มีขนาด 0 ไบต์ | ffmpeg ถูกหยุดก่อนที่จะเขียนเสร็จ — ตรวจสอบการจัดการ SIGTERM |

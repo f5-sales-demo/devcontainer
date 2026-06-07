@@ -1,0 +1,71 @@
+---
+title: Chrome DevTools MCP
+description: >-
+  أتمتة المتصفح، ولقطات الشاشة، وفحص DOM عبر نسخة Chrome بدون واجهة رسومية
+  مشتركة.
+sidebar:
+  order: 4
+i18n:
+  sourceHash: a7b2a02aac42
+  translator: machine
+---
+
+تتضمن الحاوية خادم [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) مُعدّ مسبقاً يمنح Claude Code إمكانيات أتمتة المتصفح بدون واجهة رسومية. يمكنك التنقل في صفحات الويب، والتقاط لقطات شاشة، وفحص DOM، والتفاعل مع عناصر الصفحة — دون الحاجة إلى أي إعداد إضافي.
+
+## كيف يعمل
+
+يقوم نقطة الدخول بتشغيل Chrome مستمر بدون واجهة رسومية مع تصحيح الأخطاء عن بُعد على المنفذ 9222. خادم chrome-devtools-mcp MCP مسجّل في إعدادات Claude Code ويتصل بهذا المتصفح المشترك عبر `--browserUrl`. تتشارك جميع الجلسات نسخة متصفح واحدة وملف تعريف ارتباط واحد — تبقى عمليات تسجيل الدخول وملفات تعريف الارتباط والمصادقة محفوظة عبر المشاريع.
+
+## الأدوات المتاحة
+
+| الأداة | الوصف |
+|------|-------------|
+| `navigate_page` | الانتقال إلى عنوان URL والانتظار حتى تحميل الصفحة |
+| `take_screenshot` | التقاط لقطة شاشة بصيغة PNG للصفحة الحالية |
+| `take_snapshot` | الحصول على لقطة شجرة إمكانية الوصول للصفحة |
+| `click` | النقر على عنصر في الصفحة |
+| `type` | كتابة نص في حقل إدخال |
+| `hover` | تمرير المؤشر فوق عنصر |
+| `scroll` | تمرير الصفحة أو عنصر محدد |
+| `evaluate` | تنفيذ JavaScript في سياق الصفحة |
+| `get_console_logs` | استرجاع رسائل سجل وحدة التحكم |
+| `get_page_info` | الحصول على البيانات الوصفية للصفحة (العنوان، عنوان URL، إلخ) |
+
+## البنية المعمارية
+
+تستخدم حزمة المتصفح أربعة مكونات تعمل معاً:
+
+1. **Playwright Chromium** — ملف Chromium الثنائي المتوافق مع ARM64 يُثبَّت أثناء البناء عبر `npx playwright install --with-deps chromium`
+2. **رابط Chrome الرمزي** — يربط المسار المتوقع من Puppeteer (`/opt/google/chrome/chrome`) بملف Playwright الثنائي
+3. **عملية Chrome المشتركة** — يتم تشغيلها بواسطة `chrome-browser.sh` مع `--remote-debugging-port=9222`، وتُعيد التشغيل تلقائياً عند التعطل
+4. **تسجيل MCP العام** — يسجّل `settings.json` خادم chrome-devtools-mcp مع `--browserUrl=http://localhost:9222`
+
+لا يتوفر لدى Google Chrome حزمة `.deb` لمعمارية ARM64، كما أن حزمة `chromium-browser` عبر apt في Ubuntu 24.04 تُعيد التوجيه إلى snap (الذي لا يعمل في الحاويات). يُعد Chromium المُجمَّع مع Playwright الخيار الوحيد الموثوق لحاويات ARM64.
+
+## التحقق
+
+تأكد من أن الإعداد يعمل داخل الحاوية:
+
+```bash
+# Chrome binary responds
+/opt/google/chrome/chrome --version
+
+# Symlink is correct
+ls -la /opt/google/chrome/chrome
+
+# Remote debugging is active
+curl http://localhost:9222/json/version
+
+# Self-test includes Chrome checks
+claude-self-test
+```
+
+## الوضع بواجهة رسومية (VNC)
+
+عندما يكون `ENABLE_VNC=true`، تقوم نقطة الدخول بتشغيل حزمة VNC قبل تشغيل Chrome. يكتشف سكريبت `chrome-browser.sh` أن `DISPLAY` مُعيَّن ويشغّل Chrome في الوضع بواجهة رسومية على الشاشة الافتراضية، حتى تتمكن من رؤية المتصفح في عارض VNC.
+
+افتح `http://localhost:6080/vnc.html` لرؤية الشاشة الافتراضية. راجع [العرض عن بُعد (noVNC)](./vnc) للتفاصيل.
+
+## استكشاف الأخطاء وإصلاحها
+
+راجع [استكشاف الأخطاء وإصلاحها — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) لحلول المشاكل الشائعة بما في ذلك فشل تصحيح الأخطاء عن بُعد، وأخطاء قفل الملف الشخصي، وأدوات MCP المكررة.

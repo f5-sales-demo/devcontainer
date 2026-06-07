@@ -1,0 +1,84 @@
+---
+title: Schnellinstallation
+description: >-
+  Ein einzelner Befehl zur Installation und Konfiguration des Devcontainers
+  unter macOS.
+sidebar:
+  order: 0
+i18n:
+  sourceHash: 4095803fd538
+  translator: machine
+---
+
+## Einzeiler-Installation
+
+```bash
+curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
+```
+
+Dieser einzelne Befehl übernimmt die vollständige Ersteinrichtung:
+
+1. Installiert Homebrew-Pakete (podman, podman-compose, gh, iterm2, Nerd Fonts)
+2. Konfiguriert iTerm2 (Schriftart, Signalton, Scrollback, dunkles Theme, Shift+Enter-Tastenkombination)
+3. Initialisiert und optimiert die Podman-Maschine (16 GB RAM, 4 CPUs, 220 GB Festplatte, zram, Swappiness)
+4. Lädt `docker-compose.yml`, `devcontainer.sh` und die `.env`-Vorlage in das aktuelle Verzeichnis herunter
+
+:::note[Homebrew erforderlich]
+Falls Homebrew nicht installiert ist, bricht das Skript mit entsprechenden Anweisungen ab.
+Ihre IT-Abteilung stellt Homebrew möglicherweise als verwaltete Software bereit — erkundigen Sie sich zuerst dort.
+:::
+
+## Nach der Installation
+
+Bearbeiten Sie `.env` mit Ihren Zugangsdaten:
+
+```bash
+vi .env
+```
+
+Starten Sie dann den Container:
+
+```bash
+./devcontainer.sh
+```
+
+Das Skript erkennt Ihre Zeitzone und ruft bei jedem Aufruf ein aktuelles GitHub-Token über `gh auth token` ab.
+
+## Was erstellt wird
+
+Nach Ausführung des Installers enthält Ihr Verzeichnis folgende Dateien:
+
+| Datei | Zweck |
+|---|---|
+| `devcontainer.sh` | Startskript (führen Sie dieses aus, um den Container zu starten) |
+| `docker-compose.yml` | Container-Service-Definition |
+| `.env` | Ihre Zugangsdaten (aus Vorlage, vor dem ersten Start bearbeiten) |
+
+## Weitere Starts
+
+```bash
+./devcontainer.sh
+```
+
+## Verbinden
+
+```bash
+podman exec -it devcontainer zsh
+```
+
+## Aktualisieren
+
+Laden Sie das neueste Image herunter und starten Sie neu:
+
+```bash
+podman compose pull
+./devcontainer.sh
+```
+
+## Lokaler Build
+
+Erstellen Sie das Image lokal aus dem Quellcode (nur arm64):
+
+```bash
+./devcontainer.sh build
+```

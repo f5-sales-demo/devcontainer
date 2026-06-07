@@ -1,0 +1,74 @@
+---
+title: Remote-Anzeige (noVNC)
+description: >-
+  Beobachten und interagieren Sie mit sichtbaren Browsern über eine virtuelle
+  Anzeige in Ihrem Browser.
+sidebar:
+  order: 3
+i18n:
+  sourceHash: f872c1a2dace
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Der Container führt einen virtuellen Anzeige-Stack (Xvfb + x11vnc + noVNC + fluxbox) aus, sodass Sie KI-Agenten bei der Steuerung eines Browsers beobachten und bei Bedarf eingreifen können — beispielsweise um Login- oder MFA-Aufforderungen zu behandeln.
+
+## Verbindung herstellen
+
+1. Öffnen Sie `http://localhost:6080/vnc.html` in Ihrem Browser und klicken Sie auf **Connect**
+2. Sie sehen einen leichtgewichtigen Fluxbox-Desktop — dies ist die virtuelle Anzeige des Containers
+
+KI-Agenten, die `@playwright/mcp` im sichtbaren Modus verwenden, rendern Chromium in diese Anzeige. Sie können jederzeit im noVNC-Fenster klicken und tippen, um einzugreifen — kein Pausieren/Fortsetzen erforderlich.
+
+## Manueller Browser-Start
+
+Um einen Browser manuell innerhalb des Containers zu öffnen:
+
+```bash
+chromium --no-sandbox &
+```
+
+Um Playwright-Tests im sichtbaren Modus auszuführen:
+
+```bash
+npx playwright test --headed
+```
+
+## Umgebungsvariablen
+
+| Variable | Standard | Beschreibung |
+|----------|----------|-------------|
+| `ENABLE_VNC` | `true` | Auf `false` setzen, um den VNC-Stack zu deaktivieren |
+| `VNC_RESOLUTION` | `1280x1024x24` | Auflösung der virtuellen Anzeige (BxHxFarbtiefe) |
+| `DISPLAY` | `:99` | X11-Anzeigenummer |
+| `NOVNC_HOST_PORT` | `6080` | Host-seitiger Port für noVNC (ändern, um Konflikte mit anderen Containern zu vermeiden) |
+
+Setzen Sie diese in Ihrer `.env`-Datei oder in `.devcontainer/devcontainer.json` unter `containerEnv`.
+
+## VNC-Stack deaktivieren
+
+Für den reinen Headless-Betrieb setzen Sie `ENABLE_VNC=false` in `.env` und starten den Container neu:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+## Fehlerbehebung
+
+Siehe [Fehlerbehebung — Remote-Anzeige](./troubleshooting#remote-display-novnc) für Lösungen bei schwarzen Bildschirmen, Verbindungsfehlern und Port-Konflikten.

@@ -1,0 +1,221 @@
+---
+title: Desenvolvimento Local
+description: 'Clone o repositório, compile localmente e personalize a imagem Docker.'
+sidebar:
+  order: 5
+i18n:
+  sourceHash: 2173727ec1af
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Esta página é destinada a desenvolvedores que desejam clonar o repositório, compilar a imagem localmente ou personalizar o Dockerfile. Se você deseja apenas usar o contêiner pré-compilado, consulte [Primeiros Passos](./getting-started).
+
+## Clonar o Repositório
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+cd devcontainer
+```
+
+## Estrutura do Projeto
+
+```text
+.
+├── Dockerfile                  # Multi-stage image build
+├── docker-compose.yml          # Base compose — pulls pre-built image
+├── docker-compose.build.yml    # Build override — use explicitly with -f
+├── .devcontainer/              # VS Code Dev Container config
+│   └── devcontainer.json
+├── entrypoint.sh               # Container startup script
+├── .env.example                # Example environment variables
+├── docs/                       # Documentation site (Starlight)
+├── claude-config/              # Claude Code configuration files
+├── codex-config/               # Codex configuration
+├── pi-config/                  # Pi configuration
+└── omp-config/                 # Oh-My-Pi (omp) configuration
+```
+
+## Arquivo de Build
+
+O arquivo `docker-compose.build.yml` adiciona suporte a build local. Ele **não** é mesclado automaticamente — você deve passá-lo explicitamente com as flags `-f`. Isso significa que `docker compose up -d` (ou `podman-compose up -d`) sempre puxa a imagem pré-compilada do GHCR, independentemente de você ter clonado o repositório ou não.
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+Você pode verificar que um simples `docker compose up` usa apenas a imagem pré-compilada (sem contexto `build:`):
+
+```bash
+docker compose config
+```
+
+Compare com a configuração explícita de build:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+Você pode verificar que um simples `podman-compose up` usa apenas a imagem pré-compilada (sem contexto `build:`):
+
+```bash
+podman-compose config
+```
+
+Compare com a configuração explícita de build:
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
+</TabItem>
+</Tabs>
+
+## Compilando Localmente
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+</Tabs>
+
+Isso mescla o arquivo de build com o arquivo compose base, compila a imagem a partir do `Dockerfile` local e inicia o contêiner. A flag `--build` força uma recompilação mesmo que uma imagem em cache exista.
+
+## Arquitetura de Build em Dois Estágios
+
+O Dockerfile usa um build em dois estágios otimizado para cache de camadas do Docker:
+
+### Estágio 1: `deps` (fundações estáveis, ~4,5 GB)
+
+Essas camadas só são recompiladas quando um ARG de versão é atualizado ou os pacotes APT mudam. Em alterações típicas apenas de ferramentas, o BuildKit pula este estágio inteiro.
+
+| Seção | Conteúdo |
+|-------|----------|
+| 1. Repositórios APT | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft, Google Cloud, Dart SDK |
+| 2. Pacotes APT | Ferramentas de sistema, Node.js, Python, Java, Terraform, GitHub CLI, Docker engine, Azure CLI, PowerShell, locales |
+| 2b. Pacotes APT de segurança | Análise de rede, scanners web, ferramentas de senhas, engenharia reversa, forense (~80 pacotes) |
+| 3. Bootstrap Python | Symlinks + pip via get-pip.py |
+| 4. Go | Tarball oficial (última versão estável, resolvida no momento do build) |
+| 5. Rust | rustup (sistema inteiro, última versão estável) |
+| 6. Maven + Gradle | Downloads binários para `/opt` |
+| 7. Stack VNC | Xvfb, x11vnc, noVNC, fluxbox — exibição remota via navegador |
+| 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (últimos lançamentos) |
+
+### Estágio 2: `final` (ferramentas voláteis + configuração do usuário, ~1,5 GB)
+
+Essas camadas mudam com mais frequência (atualizações npm/pip, alterações de configuração), mas são recompiladas rapidamente porque o estágio pesado `deps` está em cache.
+
+| Seção | Conteúdo |
+|-------|----------|
+| 9. AWS CLI v2 | Instalador oficial |
+| 10. Ferramentas binárias | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv |
+| 10b. Binários adicionais | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint, codex |
+| 10c. Binários do Super-linter | shfmt, gitleaks, editorconfig-checker, trivy, clj-kondo, dotenv-linter, golangci-lint, goreleaser, kubeconform, protolint, scalafmt, ktlint |
+| 10d. Ferramentas Java JAR | checkstyle, google-java-format (scripts wrapper) |
+| 10e. Linters PHP | phpcs, phpstan, psalm (downloads PHAR) |
+| 10f. Módulos PowerShell | PSScriptAnalyzer, arm-ttk |
+| 10g. Binários de segurança | nuclei, subfinder, httpx, ffuf, gobuster, feroxbuster, dalfox, amass, trufflehog, grype, syft, bettercap (amd64) |
+| 10h. OWASP ZAP | Scanner de aplicações web baseado em Java |
+| 10i. Ghidra | Framework de engenharia reversa |
+| 10j. Metasploit | Framework de exploração (somente amd64) |
+| 11. Ferramentas npm globais | claude-code, prettier, markdownlint-cli2, devcontainers-cli, playwright, pi-coding-agent, oh-my-pi |
+| 12. Ferramentas pip | pre-commit, ansible, black, pylint, yamllint, playwright |
+| 12c. Linters Ruby | rubocop + extensões |
+| 12e. Módulos de linter Perl | Extensões Perl::Critic |
+| 12f. Linter Lua | luacheck |
+| 12g. Linter R | lintr |
+| 12h. Gems Ruby de segurança | wpscan, evil-winrm |
+| 12i. Ferramentas de segurança clonadas via Git | testssl.sh, exploitdb (searchsploit), SecLists, docker-bench-security, recon-ng, spiderfoot |
+| 13. Navegadores Playwright | Chromium + dependências do sistema via `playwright install --with-deps` |
+| 13b. Chrome DevTools MCP | Symlink do Chrome + pré-cache MCP + patch headless |
+| 14. Homebrew | Linuxbrew (dependências de assistentes IA + formatadores) |
+| 15. Plugins ZSH | Plugins personalizados oh-my-zsh |
+| 16. Bootstrap do Shell | npm-global, tfenv, compinit |
+| 17. Configuração Claude Code + Codex | Memória de reconhecimento de ferramentas, política gerenciada, script de auto-teste, configuração Codex |
+| 18. Entrypoint | Script de inicialização do contêiner (último COPY absoluto) |
+
+## Adicionando Ferramentas
+
+Edite o `Dockerfile` e adicione sua ferramenta na seção apropriada. Recompile após adicionar:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+</Tabs>
+
+Ou no VS Code: **Dev Containers &rarr; Rebuild Container**.
+
+### Pacotes APT
+
+Adicione ao bloco `apt-get install` da seção 2:
+
+```dockerfile
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    your-package-here \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+### Ferramentas npm
+
+Adicione ao bloco `npm install -g` da seção 11:
+
+```dockerfile
+RUN npm install -g \
+    your-npm-tool
+```
+
+### Ferramentas pip
+
+Adicione ao bloco `pip install` da seção 12:
+
+```dockerfile
+RUN pip install --no-cache-dir --break-system-packages \
+    your-python-tool
+```
+
+### Downloads binários
+
+Adicione à seção 10 ou crie uma nova camada `RUN` com detecção de arquitetura:
+
+```dockerfile
+RUN ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL "https://example.com/tool-linux-${ARCH}.tar.gz" \
+       | tar -xz -C /usr/local/bin tool
+```
+
+## Cache de Build
+
+O CI usa **cache baseado em registro** — as camadas de build são armazenadas no GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) em vez do cache do GitHub Actions. Isso evita o limite de 10 GB do cache do GHA, que causava recompilações completas frequentes para esta imagem multi-arquitetura de ~6 GB.
+
+A arquitetura em dois estágios funciona com o cache de registro de forma que:
+
+- **Atualizações de versão de ferramentas** (npm, pip, ferramentas binárias) — recompila apenas o estágio `final` (~5 min)
+- **Alterações em arquivos de configuração** (`claude-config/`, `entrypoint.sh`) — recompila apenas as últimas camadas (~1 min)
+- **Alterações nas fundações** (pacotes APT, versões Go/Rust/Java) — recompilação completa de ambos os estágios (~30 min)

@@ -1,0 +1,69 @@
+---
+title: Chrome DevTools MCP
+description: 透過共享的無頭 Chrome 實例進行瀏覽器自動化、截圖和 DOM 檢查。
+sidebar:
+  order: 4
+i18n:
+  sourceHash: a7b2a02aac42
+  translator: machine
+---
+
+容器包含一個預先配置的 [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) 伺服器，為 Claude Code 提供無頭瀏覽器自動化功能。瀏覽網頁、截取螢幕截圖、檢查 DOM 並與頁面元素互動——無需額外設定。
+
+## 運作方式
+
+入口點會啟動一個持久的無頭 Chrome，並在連接埠 9222 上啟用遠端除錯。chrome-devtools-mcp MCP 伺服器已註冊在 Claude Code 設定中，並透過 `--browserUrl` 連接到此共享瀏覽器。所有工作階段共享單一瀏覽器實例和 cookie 儲存區——登入狀態、cookie 和驗證資訊會在各專案間持續保留。
+
+## 可用工具
+
+| 工具 | 描述 |
+|------|------|
+| `navigate_page` | 導航至 URL 並等待頁面載入 |
+| `take_screenshot` | 擷取當前頁面的 PNG 螢幕截圖 |
+| `take_snapshot` | 取得頁面的無障礙樹狀結構快照 |
+| `click` | 點擊頁面上的元素 |
+| `type` | 在輸入欄位中輸入文字 |
+| `hover` | 將滑鼠懸停在元素上 |
+| `scroll` | 捲動頁面或特定元素 |
+| `evaluate` | 在頁面上下文中執行 JavaScript |
+| `get_console_logs` | 擷取主控台日誌訊息 |
+| `get_page_info` | 取得頁面中繼資料（標題、URL 等） |
+
+## 架構
+
+瀏覽器堆疊使用四個協同運作的元件：
+
+1. **Playwright Chromium** — 在建置時透過 `npx playwright install --with-deps chromium` 安裝的 ARM64 相容 Chromium 二進位檔
+2. **Chrome 符號連結** — 將 Puppeteer 預期的路徑（`/opt/google/chrome/chrome`）橋接到 Playwright 二進位檔
+3. **共享 Chrome 程序** — 由 `chrome-browser.sh` 啟動，帶有 `--remote-debugging-port=9222` 參數，當機時自動重啟
+4. **全域 MCP 註冊** — `settings.json` 以 `--browserUrl=http://localhost:9222` 註冊 chrome-devtools-mcp
+
+Google Chrome 沒有 ARM64 的 `.deb` 套件，而 Ubuntu 24.04 的 `chromium-browser` apt 套件會重新導向至 snap（在容器中無法運作）。Playwright 內建的 Chromium 是 ARM64 容器中唯一可靠的選項。
+
+## 驗證
+
+在容器內確認設定是否正常運作：
+
+```bash
+# Chrome 二進位檔回應
+/opt/google/chrome/chrome --version
+
+# 符號連結正確
+ls -la /opt/google/chrome/chrome
+
+# 遠端除錯已啟用
+curl http://localhost:9222/json/version
+
+# 自我測試包含 Chrome 檢查
+claude-self-test
+```
+
+## 有頭模式（VNC）
+
+當 `ENABLE_VNC=true` 時，入口點會在啟動 Chrome 之前先啟動 VNC 堆疊。`chrome-browser.sh` 腳本會偵測到 `DISPLAY` 已設定，並在虛擬顯示器上以有頭模式執行 Chrome，因此您可以在 VNC 檢視器中看到瀏覽器。
+
+開啟 `http://localhost:6080/vnc.html` 以查看虛擬顯示器。詳情請參閱[遠端顯示（noVNC）](./vnc)。
+
+## 疑難排解
+
+請參閱[疑難排解 — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) 以取得常見問題的解決方案，包括遠端除錯失敗、設定檔鎖定錯誤和重複的 MCP 工具。

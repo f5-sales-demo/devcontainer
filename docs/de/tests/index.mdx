@@ -1,0 +1,20 @@
+---
+title: Integrationstests
+description: >-
+  Automatisierte Tests, die überprüfen, ob die Laufzeit-Stacks des Devcontainers
+  durchgängig funktionieren.
+sidebar:
+  order: 7
+i18n:
+  sourceHash: 4a499717bb7d
+  translator: machine
+---
+
+Diese Tests validieren, dass die Hauptsubsysteme des Devcontainers zur Laufzeit zusammenarbeiten. Sie sind nicht in das Docker-Image eingebettet — führen Sie sie innerhalb eines laufenden Containers aus, um dessen Fähigkeiten zu überprüfen.
+
+## Verfügbare Tests
+
+| Test | Was er beweist |
+| ---- | ---- |
+| [Bildschirmaufnahme](/devcontainer/tests/screen-recording/) | Xvfb-Display, Chromium mit Benutzeroberfläche (Playwright) und ffmpeg-Aufnahme erzeugen eine gültige MP4-Datei |
+| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Chrome-Symlink, Headless-Patch und MCP-Navigation erzeugen einen gültigen Screenshot |

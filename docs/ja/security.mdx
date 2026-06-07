@@ -1,0 +1,172 @@
+---
+title: セキュリティ
+description: 分離モデルがホストマシンと企業環境をどのように保護するか。
+sidebar:
+  order: 7
+i18n:
+  sourceHash: f7bae54e89ef
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## 背景
+
+2025年2月、LayerX Security Researchは、AnthropicのClaude Desktop Extensions（DXT）フレームワークにおける重大なゼロクリック・リモートコード実行脆弱性を公開しました。拡張機能はサンドボックスなしでフルシステム権限で実行され、言語モデルとローカルオペレーティングシステム間の実行ブリッジとして機能します。
+
+多くの企業セキュリティチームは現在、AIコーディングツールを企業エンドポイント上で直接ではなく、専用の仮想マシン、コンテナ、または使い捨て環境内でのみ実行することを要求しています。
+
+**このdevcontainerはその要件を満たします。**
+
+## 分離モデル
+
+```
++------------------------------------------------+
+|  Host Machine (corporate endpoint)             |
+|                                                |
+|  - No AI tool binaries installed               |
+|  - No AI tool extensions or plugins            |
+|  - Only Docker is required                     |
+|                                                |
+|  +------------------------------------------+  |
+|  |  Docker Container (isolated)             |  |
+|  |                                          |  |
+|  |  AI tools run here:                      |  |
+|  |  - Claude Code CLI                       |  |
+|  |  - Codex                                 |  |
+|  |                                          |  |
+|  |  No access to:                           |  |
+|  |  x Host filesystem                       |  |
+|  |  x Host keychain / credential store      |  |
+|  |  x Host clipboard                        |  |
+|  |  x Host network interfaces               |  |
+|  |  x Other host applications               |  |
+|  +------------------------------------------+  |
++------------------------------------------------+
+```
+
+## セキュリティ制御
+
+### ホストボリュームマウントなし
+
+すべてのデータはDockerの名前付きボリュームに保存されます — ホストディレクトリのバインドマウントではありません。コンテナ内部が侵害されても、ホストマシン上のファイルにアクセスすることは**できません**。ボリュームの詳細については[設定 — データの永続化](./configuration#data-persistence)を参照してください。
+
+### 共有資格情報ストアなし
+
+コンテナはmacOSキーチェーン、Windows資格情報マネージャー、ブラウザプロファイル、またはホストのSSHエージェントにアクセスできません。SSH鍵は起動時にbase64エンコードされた環境変数を介して注入され、コンテナ内にのみ存在します。
+
+### クリップボード同期なし
+
+Dockerコンテナはホストとクリップボードの状態を共有しません。コピー/ペーストを通じてデータが漏洩することはありません。
+
+### ネットワーク分離
+
+コンテナは、サポートされている2つの認証モードのいずれかで外部と通信します：
+
+- **LiteLLMプロキシモード** — DockerのNATを通じてLiteLLMプロキシへのアウトバウンドHTTPS。
+- **OAuthモード** — DockerのNATを通じてAnthropicへの直接アウトバウンドHTTPS。
+
+コンテナはVPNトンネル、企業ネットワークインターフェース、またはホスト上の他のサービスにアクセスできません。
+
+### 設計上のエフェメラル性
+
+環境全体を数秒で破棄して再作成できます。コンテナは使い捨てとして扱ってください。
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down -v
+docker compose pull && docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down -v
+podman-compose pull && podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+### CLIのみのツール
+
+この環境はAIツールを**コマンドラインインターフェースのみ**で実行します。デスクトップアプリケーション、ブラウザ拡張機能、DXTフレームワークはありません。この分離モデルのきっかけとなった脆弱性は、コンテナ内でのCLI使用には適用されません。
+
+### コンテナの堅牢化
+
+`docker-compose.yml`は複数の多層防御策を適用します：
+
+- **ケーパビリティの削除** — すべてのLinuxケーパビリティが削除され（`cap_drop: ALL`）、最小限のセットのみが再追加されます：`CHOWN`、`DAC_OVERRIDE`、`FOWNER`（エントリーポイントでのボリュームパーミッション修正用）、`SETUID`/`SETGID`（sudo用）、`NET_RAW`（ping/tcpdump用）、`NET_ADMIN`（Wiresharkやbettercapなどのパケットキャプチャツール用）。
+- **リソース制限** — CPU（4コア）、メモリ（8 GB）、PID数（4096）が`mem_limit`、`cpus`、`pids_limit`を介して制限され、リソース枯渇攻撃を防止します。
+- **`/tmp`用のtmpfs** — `/tmp`ディレクトリは256 MBのtmpfsとしてマウントされ、一時ファイルをメモリに保持し、コンテナの書き込み可能レイヤーへの永続化を防ぎます。
+- **デフォルトでTLS検証が有効** — `NODE_TLS_REJECT_UNAUTHORIZED`は設定されていないため、Node.jsはデフォルトでTLS証明書を検証します。自己署名証明書を受け入れる必要があるユーザー（内部プロキシなど）は、`.env`ファイルに`NODE_TLS_REJECT_UNAUTHORIZED=0`を追加してオプトインできます。
+- **SSH鍵のumask** — SSH秘密鍵は`umask 077`の下で書き込まれるため、作成から`chmod`呼び出しの間でさえ、ファイルが一時的にでも全ユーザーに読み取り可能になることはありません。
+
+### セキュリティおよびペネトレーションテストツール
+
+コンテナには、認可されたテストシナリオ向けに約80のセキュリティおよびペネトレーションテストツールがプリインストールされています。ツールはカテゴリ別に整理されています：
+
+| カテゴリ | ツール（例） |
+|----------|-----------------|
+| ネットワーク分析 | tshark、wireshark、masscan、hping3、bettercap（amd64）、netdiscover |
+| Webスキャナー | nikto、sqlmap、dirb、whatweb、sslscan、OWASP ZAP、dalfox、feroxbuster |
+| パスワードと認証 | hydra、john、hashcat、medusa、ncrack |
+| リバースエンジニアリング | radare2、Ghidra、gdb、binwalk、strace、ltrace |
+| 偵察 | subfinder、amass、httpx、nuclei、gau、waybackurls、recon-ng、spiderfoot |
+| ファジングと列挙 | ffuf、gobuster、SecLists |
+| サプライチェーンとシークレット | trufflehog、grype、syft、gitleaks、trivy |
+| エクスプロイトフレームワーク | Metasploit（amd64）、searchsploit（ExploitDB） |
+
+一部のツール（bettercap、Metasploit）は、アップストリームのパッケージング制約によりamd64でのみ利用可能です。パケットキャプチャツール（tshark、bettercap）には`NET_ADMIN`ケーパビリティが必要であり、デフォルトの`docker-compose.yml`に含まれています。
+
+完全なリストについては、コンテナ内で`claude-self-test`を実行してください（セクション7ですべてのセキュリティツールをチェックします）。
+
+## コンプライアンスチェックリスト
+
+| 要件 | ステータス |
+|---|---|
+| ホストエンドポイントにAIツール未インストール | はい |
+| 分離されたVMまたはコンテナで実行 | はい |
+| ホストファイル共有へのアクセスなし | はい |
+| クリップボード同期なし | はい |
+| 共有資格情報ストアなし | はい |
+| 本番ネットワークへのVPNスプリットトンネリングなし | はい |
+| 環境が使い捨て可能 | はい |
+| デスクトップ拡張機能やプラグインなし | はい |
+| Linuxケーパビリティの削除（最小権限） | はい |
+| リソース制限の適用（CPU/メモリ/PID） | はい |
+| デフォルトでTLS証明書検証が有効 | はい |
+| 内部サービスがlocalhostのみにバインド | はい |
+
+## ベストプラクティス
+
+1. **ホストマシンにAIコーディングツールをインストールしないでください。** 代わりにこのコンテナを使用してください。
+2. **`docker-compose.yml`にバインドマウントを追加しないでください。** 名前付きボリュームの構成は意図的なものです。
+3. **コンテナ内で使用するSSH鍵を定期的にローテーション**してください。
+4. **共有前に`.env`を確認してください。** API鍵が含まれており、SSH秘密鍵が含まれている場合もあります。
+5. **定期的に更新**してセキュリティパッチを適用してください：
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+</TabItem>
+<TabItem label="Podman">
+
+   ```bash
+   podman-compose pull && podman-compose up -d
+   ```
+
+</TabItem>
+</Tabs>
+## 参考文献
+
+- [LayerX: Claude Desktop Extensions RCE](https://layerxsecurity.com/blog/claude-desktop-extensions-rce/)
+- [Dev Containers Specification](https://containers.dev/)
+- [Docker Security Best Practices](https://docs.docker.com/engine/security/)

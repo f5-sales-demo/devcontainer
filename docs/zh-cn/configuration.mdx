@@ -1,0 +1,229 @@
+---
+title: 配置
+description: 环境变量、构建层、数据持久化和自定义设置。
+sidebar:
+  order: 2
+  label: 配置
+i18n:
+  sourceHash: 0eca3d50d0f5
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+所有配置都存放在项目根目录的 `.env` 文件中。该文件已被 gitignore —— 永远不会被提交。
+
+## 环境变量
+
+### AI 提供商
+
+容器支持两种**互斥**的认证模式（按优先级排序）：
+
+- **LiteLLM 代理** — 设置 `LITELLM_BASE_URL` 和 `LITELLM_API_KEY` 以通过 LiteLLM 代理路由（见下文）。
+- **OAuth 模式** — 仅设置 `CLAUDE_CODE_OAUTH_TOKEN`（见下文）。
+
+请勿混合使用模式 —— 请仅使用其中一种。
+
+### Claude Max（OAuth）
+
+| 变量 | 描述 | 示例 |
+|----------|-------------|---------|
+| `CLAUDE_CODE_OAUTH_TOKEN` | 来自 Claude Max 订阅的 OAuth 令牌 | `sk-ant-oat01-...` |
+
+设置后，Claude Code 将使用 OAuth 直接与 Anthropic 进行认证 —— 无需 API 密钥或代理。您可以从 Claude Code 设置或 [Anthropic 控制台](https://console.anthropic.com/) 获取令牌。
+
+### LiteLLM 代理
+
+如果您的 LiteLLM（或其他）代理已经支持原生 Anthropic Messages API —— 包括 `web_search`、流式传输和工具调用 —— 请将 `LITELLM_BASE_URL` 设置为代理域名。容器会自动派生特定提供商的 URL：
+
+- Anthropic 端点 → `${LITELLM_BASE_URL}/anthropic`（Claude Code 使用）
+- OpenAI 兼容端点 → `${LITELLM_BASE_URL}/openai/v1`
+
+| 变量 | 描述 | 示例 |
+|----------|-------------|---------|
+| `LITELLM_BASE_URL` | LiteLLM 代理的域名（不含路径后缀） | `https://litellm.example.com` |
+| `LITELLM_API_KEY` | 代理认证的 API 密钥 | `your-api-key` 或默认为 `litellm-proxy` |
+
+用户只需设置域名 —— 提供商路径后缀会自动添加。
+在运行时，入口点会从 `LITELLM_API_KEY` 派生 `ANTHROPIC_API_KEY`，这样 Claude Code 就可以使用代理凭据，而无需单独的面向用户的变量。
+
+在此模式下，模型名称**不会**被重新映射。Claude Code 发送其标准模型标识符（例如 `claude-sonnet-4-6`），LiteLLM 会将其路由到您配置的后端。
+
+### TLS 证书验证
+
+默认情况下，Node.js 会验证所有 HTTPS 连接的 TLS 证书。如果您的上游 API 提供商使用自签名证书（在内部 Open WebUI 或 LiteLLM 代理中很常见），您可以通过在 `.env` 文件中添加以下内容来禁用验证：
+
+```ini
+NODE_TLS_REJECT_UNAUTHORIZED=0
+```
+
+**不建议**在生产环境中使用此设置。仅当您信任容器与 API 端点之间的网络路径时才设置此选项。
+
+### AI 编码代理
+
+除 Claude Code 外，容器还包含多个 AI 编码代理：
+
+| 代理 | 命令 | 提供商 |
+|-------|---------|----------|
+| [Codex](https://github.com/openai/codex) | `codex` | OpenAI 兼容 |
+| [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | 多提供商（运行时配置） |
+| [Oh-My-Pi](https://github.com/can1357/oh-my-pi) | `omp` | 多提供商（运行时配置） |
+
+Pi 和 Oh-My-Pi 作为全局 npm 包安装。Codex 是一个独立的二进制文件，在运行时自动更新。
+
+### 远程显示（noVNC）
+
+容器运行虚拟显示栈，用于观看和交互有界面的浏览器。有关连接说明和环境变量（`ENABLE_VNC`、`VNC_RESOLUTION`、`DISPLAY`、`NOVNC_HOST_PORT`），请参阅[远程显示（noVNC）](./vnc)。
+
+### Chrome DevTools MCP
+
+容器包含一个预配置的 [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) 服务器，用于无头浏览器自动化。Claude Code 可以导航网页、截取屏幕截图和检查 DOM，无需任何额外设置。详情请参阅 [Chrome DevTools MCP](./chrome)。
+
+### Git
+
+| 变量 | 描述 | 设置方法 |
+|----------|-------------|------------|
+| `GIT_AUTHOR_NAME` | git 提交的用户名 | `git config user.name` |
+| `GIT_AUTHOR_EMAIL` | git 提交的邮箱 | `git config user.email` |
+
+如果主机上已配置 git，可以自动填充这两个值：
+
+```bash
+echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
+echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
+```
+
+### SSH
+
+| 变量 | 描述 | 设置方法 |
+|----------|-------------|------------|
+| `SSH_PRIVATE_KEY` | Base64 编码的私钥 | `base64 < ~/.ssh/id_ed25519` |
+
+### GitHub CLI
+
+| 变量 | 描述 | 设置方法 |
+|----------|-------------|------------|
+| `GH_TOKEN` | 用于 `gh` CLI 和 HTTPS git 的 GitHub 个人访问令牌 | `gh auth token`（如果本地已安装 `gh`） |
+
+当 `.env` 中设置了 `GH_TOKEN` 时，`gh` CLI 会自动认证 —— 无需运行 `gh auth login`。入口点还会运行 `gh auth setup-git`，它会配置 git 凭据助手，使 HTTPS 的 `git clone` 和 `git push` 无需 SSH 密钥即可工作。
+
+如果主机上已安装并认证了 `gh`，可以直接提取令牌：
+
+```bash
+echo "GH_TOKEN=$(gh auth token)" >> .env
+```
+
+否则，请[创建个人访问令牌](https://github.com/settings/tokens)并手动添加。细粒度令牌（推荐）和经典令牌均可使用。细粒度令牌允许您将访问范围限定到特定仓库。经典令牌需要 `repo` 作用域才能访问私有仓库。
+
+要在容器内验证认证状态：
+
+```bash
+gh auth status
+```
+
+## 工具安装方式
+
+每个语言运行时、CLI 和工具都直接在 `Dockerfile` 中于镜像构建时安装。预构建镜像在每次推送到 `main` 时发布到 `ghcr.io/f5xc-salesdemos/devcontainer:latest`，因此大多数用户永远不需要本地构建。
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+运行 `docker compose up -d` 会自动拉取预构建镜像。要在自定义 Dockerfile 后本地构建，请显式传递构建文件：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+详情请参阅[本地开发](./local-development)。
+
+</TabItem>
+<TabItem label="Podman">
+
+运行 `podman-compose up -d` 会自动拉取预构建镜像。要在自定义 Dockerfile 后本地构建，请显式传递构建文件：
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+详情请参阅[本地开发](./local-development)。
+
+</TabItem>
+</Tabs>
+
+Dockerfile 使用两阶段构建，针对 Docker 层缓存进行了优化。有关完整的层结构分解和构建缓存详情，请参阅[本地开发 — 两阶段构建架构](./local-development#two-stage-build-architecture)。
+
+## Claude Code 工具感知
+
+容器包含内置配置，防止 Claude Code 混淆工具名称。工具感知安装在**两个**记忆层级以实现纵深防御：
+
+- **托管策略**（`/etc/claude-code/CLAUDE.md`）—— 在 Docker 构建时安装。这是 Claude Code 记忆层级中优先级最高的层级，即使工作目录中存在较大的项目 `CLAUDE.md` 文件也始终会加载。
+- **用户记忆**（`~/.claude/CLAUDE.md`）—— 在首次启动时由入口点创建。提供备份层和一个可见的、可自定义的用户副本。
+
+### 记忆层级优先级
+
+Claude Code 从多个记忆层级加载指令（从最高到最低优先级）：
+
+1. **托管策略**（`/etc/claude-code/`）—— 始终加载，无法排除
+2. **项目记忆**（`./CLAUDE.md`）—— 按项目目录加载
+3. **用户记忆**（`~/.claude/CLAUDE.md`）—— 为所有会话全局加载
+4. **本地记忆**（`./CLAUDE.local.md`）—— 个人项目级覆盖
+
+如果没有托管策略层级，用户记忆中的工具感知在与较大的项目级 `CLAUDE.md` 竞争时可能会被降低优先级，导致 Claude 丧失对其 PascalCase 工具名称的感知。托管层级保证工具感知始终以最高优先级加载。
+
+### 自检
+
+运行内置自检以验证配置：
+
+```bash
+claude-self-test
+```
+
+这会检查所有配置文件是否就位并包含预期的工具引用。
+
+## 添加工具
+
+要向镜像添加工具，请编辑 `Dockerfile` 并本地重新构建。有关添加 APT 包、npm 工具、pip 工具和二进制下载的说明，请参阅[本地开发 — 添加工具](./local-development#adding-tools)。
+
+## VS Code 扩展
+
+扩展在 `.devcontainer/devcontainer.json` 的 `customizations.vscode.extensions` 下配置，在 VS Code 中打开时会自动安装。
+
+## 数据持久化
+
+所有数据存储在命名卷中 —— 不挂载主机目录：
+
+| 卷 | 挂载点 | 内容 |
+|--------|-------------|----------|
+| `workspace` | `/workspace` | 您克隆的仓库和项目文件 |
+| `home` | `/home/vscode` | Shell 历史记录、工具配置、缓存、SSH 密钥 |
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+两者在容器重启和重建后都会保留。在重启前运行 `docker compose pull` 以获取最新的预构建镜像。
+
+| 操作 | 数据 |
+|--------|------|
+| `docker compose down` | 保留 |
+| `docker compose down -v` | **删除** |
+
+</TabItem>
+<TabItem label="Podman">
+
+两者在容器重启和重建后都会保留。在重启前运行 `podman-compose pull` 以获取最新的预构建镜像。
+
+| 操作 | 数据 |
+|--------|------|
+| `podman-compose down` | 保留 |
+| `podman-compose down -v` | **删除** |
+
+</TabItem>
+</Tabs>
+
+## 端口映射
+
+| 主机 | 容器 | 服务 |
+|------|-----------|---------|
+| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNC 远程显示（仅限 localhost，可通过 `NOVNC_HOST_PORT` 覆盖） |
+
+端口绑定到 `127.0.0.1`，因此只能从您的机器访问，无法从网络访问。

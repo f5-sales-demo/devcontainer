@@ -1,0 +1,83 @@
+---
+title: VS Code
+description: ใช้ Dev Container ด้วยขั้นตอนการทำงาน "Reopen in Container" ของ VS Code
+sidebar:
+  order: 6
+i18n:
+  sourceHash: defce3bee2ff
+  translator: machine
+---
+
+## ข้อกำหนดเบื้องต้น
+
+1. [VS Code](https://code.visualstudio.com/)
+2. [ส่วนขยาย Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
+3. Docker หรือ Podman ที่ทำงานอยู่บนเครื่องของคุณ (ดู [เริ่มต้นใช้งาน](./getting-started#container-runtime)) VS Code Dev Containers ยังรองรับ [Podman เป็น backend](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman) ด้วยเช่นกัน
+
+## เริ่มต้นอย่างรวดเร็ว
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+code devcontainer
+```
+
+VS Code จะตรวจพบ `.devcontainer/devcontainer.json` และแสดงการแจ้งเตือน: **"Reopen in Container"** คลิกที่การแจ้งเตือน หรือใช้ command palette:
+
+> **Dev Containers: Reopen in Container**
+
+VS Code จะ build (หรือ pull) อิมเมจ เริ่มต้นคอนเทนเนอร์ ติดตั้งส่วนขยาย และเปิดเทอร์มินัลภายในคอนเทนเนอร์
+
+## วิธีการทำงาน
+
+ไฟล์ `.devcontainer/devcontainer.json` จะบอก VS Code ให้ใช้ Docker Compose:
+
+```json
+"dockerComposeFile": ["../docker-compose.yml", "../docker-compose.build.yml"],
+"service": "dev",
+"workspaceFolder": "/workspace"
+```
+
+การกำหนดค่า devcontainer จะรวมไฟล์ build ไว้อย่างชัดเจน เพื่อให้ VS Code สามารถ build อิมเมจในเครื่องได้เมื่อคุณใช้ "Reopen in Container" หรือ "Rebuild Container"
+
+## ส่วนขยาย
+
+ส่วนขยายจะถูกติดตั้งโดยอัตโนมัติภายในคอนเทนเนอร์:
+
+| ส่วนขยาย | คำอธิบาย |
+|-----------|-------------|
+| Python | รองรับภาษา Python |
+| ESLint | การตรวจสอบ JavaScript/TypeScript |
+| Prettier | การจัดรูปแบบโค้ด |
+| Docker | รองรับ Dockerfile และ compose |
+| Terraform | รองรับภาษา HCL |
+| Go | รองรับภาษา Go |
+| Rust Analyzer | รองรับภาษา Rust |
+| YAML | รองรับภาษา YAML |
+| Kubernetes | รองรับ Kubernetes manifest |
+
+หากต้องการเพิ่มส่วนขยาย ให้แก้ไขอาร์เรย์ `customizations.vscode.extensions` ในไฟล์ `.devcontainer/devcontainer.json`
+
+## การส่งต่อพอร์ต
+
+VS Code จะส่งต่อพอร์ตที่กำหนดไว้ในไฟล์ compose โดยอัตโนมัติ หน้าจอ noVNC สามารถเข้าถึงได้ที่ `http://localhost:6080/vnc.html` — VS Code จะแจ้งเตือนคุณเมื่อพอร์ตพร้อมใช้งาน
+
+พอร์ตเพิ่มเติมสามารถส่งต่อได้ตามต้องการจากแผง **Ports** ใน VS Code
+
+## ทางเลือก Devcontainer CLI
+
+หากคุณต้องการใช้บรรทัดคำสั่งแทน UI ของ VS Code:
+
+```bash
+npm install -g @devcontainers/cli
+
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . zsh
+```
+
+## การ Rebuild
+
+หลังจากเปลี่ยนแปลง `Dockerfile` หรือไฟล์ compose:
+
+> **Dev Containers: Rebuild Container**
+
+คำสั่งนี้จะ rebuild อิมเมจและรีสตาร์ทคอนเทนเนอร์ Named volumes (`workspace`, `home`) จะคงอยู่ข้ามการ rebuild

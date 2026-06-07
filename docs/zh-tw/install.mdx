@@ -1,0 +1,82 @@
+---
+title: 快速安裝
+description: 一條指令即可在 macOS 上安裝並設定 devcontainer。
+sidebar:
+  order: 0
+i18n:
+  sourceHash: 4095803fd538
+  translator: machine
+---
+
+## 一行安裝
+
+```bash
+curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
+```
+
+這條指令會處理完整的首次執行設定：
+
+1. 安裝 Homebrew 套件（podman、podman-compose、gh、iterm2、nerd fonts）
+2. 設定 iTerm2（字型、鈴聲、捲動緩衝區、深色主題、Shift+Enter 快捷鍵綁定）
+3. 初始化並調校 Podman 虛擬機（16 GB RAM、4 CPUs、220 GB 磁碟、zram、swappiness）
+4. 將 `docker-compose.yml`、`devcontainer.sh` 和 `.env` 範本下載到目前的目錄
+
+:::note[需要 Homebrew]
+如果尚未安裝 Homebrew，腳本會結束並顯示安裝說明。
+您的 IT 部門可能已將 Homebrew 作為受管軟體提供——請先向他們確認。
+:::
+
+## 安裝完成後
+
+編輯 `.env` 填入您的憑證：
+
+```bash
+vi .env
+```
+
+然後啟動容器：
+
+```bash
+./devcontainer.sh
+```
+
+此腳本會偵測您的時區，並在每次執行時透過 `gh auth token` 取得最新的 GitHub token。
+
+## 建立的檔案
+
+執行安裝程式後，您的目錄將包含：
+
+| 檔案 | 用途 |
+|---|---|
+| `devcontainer.sh` | 啟動腳本（執行此檔案以啟動容器） |
+| `docker-compose.yml` | 容器服務定義 |
+| `.env` | 您的憑證（從範本產生，首次啟動前請編輯） |
+
+## 後續啟動
+
+```bash
+./devcontainer.sh
+```
+
+## 連線
+
+```bash
+podman exec -it devcontainer zsh
+```
+
+## 更新
+
+拉取最新映像並重新啟動：
+
+```bash
+podman compose pull
+./devcontainer.sh
+```
+
+## 本機建置
+
+從原始碼在本機建置映像（僅限 arm64）：
+
+```bash
+./devcontainer.sh build
+```

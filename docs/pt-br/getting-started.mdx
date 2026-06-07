@@ -1,0 +1,284 @@
+---
+title: Primeiros Passos
+description: >-
+  Baixe um arquivo, inicie o contêiner e conecte — sem necessidade de Git ou
+  clonagem.
+sidebar:
+  order: 2
+i18n:
+  sourceHash: 05053fe9259c
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::tip[Instalação Rápida no macOS]
+Se você está no macOS com Apple Silicon, pule esta página e use o [instalador de uma linha](/devcontainer/install/):
+
+```bash
+curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
+```
+
+Ele cuida dos pacotes Homebrew, configuração do iTerm2, setup do Podman e baixa tudo o que você precisa.
+::::
+
+## Pré-requisitos
+
+### Runtime de Contêiner
+
+Você precisa de um runtime de contêiner na sua máquina. Docker ou Podman funcionam.
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+| Plataforma | Instalação |
+|----------|---------|
+| macOS | [Docker Desktop para Mac](https://docs.docker.com/desktop/install/mac-install/) |
+| Windows | [Docker Desktop para Windows](https://docs.docker.com/desktop/install/windows-install/) (backend WSL2) |
+| Linux | [Docker Engine](https://docs.docker.com/engine/install/) ou [Docker Desktop para Linux](https://docs.docker.com/desktop/install/linux/) |
+
+Verifique se está funcionando:
+
+```bash
+docker --version
+docker compose version
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+| Plataforma | Instalação |
+|----------|---------|
+| macOS | [Podman Desktop para Mac](https://podman-desktop.io/docs/installation/macos-install) |
+| Windows | [Podman Desktop para Windows](https://podman-desktop.io/docs/installation/windows-install) |
+| Linux | [Podman](https://podman.io/docs/installation#installing-on-linux) + [Podman Compose](https://github.com/containers/podman-compose#installation) |
+
+Verifique se está funcionando:
+
+```bash
+podman --version
+podman-compose version
+```
+
+:::note[Apenas Linux]
+O Podman no Linux executa contêineres diretamente (sem VM). Certifique-se de que o socket do Podman está ativo para que o `podman-compose` possa conectar:
+
+```bash
+systemctl --user enable --now podman.socket
+```
+:::
+
+</TabItem>
+</Tabs>
+
+### Recursos do Sistema
+
+| Recurso | Mínimo | Recomendado |
+|----------|---------|-------------|
+| Disco | 5 GB | 10 GB+ |
+| RAM | 8 GB alocados para o runtime de contêiner | 12 GB+ |
+| CPU | 2 núcleos | 4+ núcleos |
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+Ajuste os limites de recursos em Docker Desktop &rarr; Settings &rarr; Resources.
+
+</TabItem>
+<TabItem label="Podman">
+
+No **macOS/Windows**, ajuste os limites de recursos em Podman Desktop &rarr; Settings &rarr; Resources, ou via CLI:
+
+```bash
+podman machine set --cpus 4 --memory 12288
+podman machine stop && podman machine start
+```
+
+No **Linux**, os contêineres compartilham os recursos do host diretamente — nenhuma configuração de recursos é necessária.
+
+</TabItem>
+</Tabs>
+
+## 1. Configuração
+
+Crie uma pasta e baixe o arquivo compose:
+
+```bash
+mkdir devcontainer && cd devcontainer
+curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/docker-compose.yml
+```
+
+## 2. Adicione Suas Credenciais de Autenticação (Opcional)
+
+Crie um arquivo `.env` na mesma pasta para pré-configurar o Claude Code. Escolha uma das seguintes opções:
+
+### Opção A: Claude Max (OAuth)
+
+```ini
+CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
+```
+
+### Opção B: LiteLLM ou proxy compatível com Anthropic
+
+Se você tem uma instância LiteLLM ou outro proxy compatível com Anthropic, defina estas duas variáveis:
+
+```ini
+LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
+LITELLM_API_KEY=your-api-key
+```
+
+Defina apenas o domínio — o contêiner deriva automaticamente os sufixos de URL específicos do provedor (ex.: `/anthropic` para o Claude Code).
+
+### Preencher automaticamente a partir de credenciais locais
+
+Se você tem `git` e `gh` configurados no seu host, pode preencher a maioria dos valores do `.env` automaticamente. Comece copiando o template:
+
+```bash
+cp .env.example .env
+```
+
+Em seguida, execute os comandos que correspondem à sua configuração:
+
+```bash
+# Git identity
+echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
+echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
+
+# Timezone
+echo "TZ=$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')" >> .env
+
+# GitHub CLI token (requires: gh auth login)
+echo "GH_TOKEN=$(gh auth token)" >> .env
+
+# SSH key (if you use SSH for git)
+echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
+```
+
+Depois edite o `.env` para adicionar seu token OAuth ou configurações de proxy LiteLLM (veja as opções acima).
+
+:::tip[Assistentes de IA]
+O arquivo `.env.example` contém marcadores `@auto-detect` em cada variável que pode ser preenchida a partir de ferramentas locais. Assistentes de IA como o Claude Code podem procurar por esses marcadores e executar os comandos associados para construir um `.env` completo automaticamente.
+:::
+
+## 3. Iniciar
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose pull && podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+A primeira execução baixa a imagem pré-construída do ghcr.io (~1 min dependendo da sua conexão). Inicializações subsequentes usam a imagem em cache e levam segundos.
+
+## 4. Conectar
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose exec dev zsh
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose exec dev zsh
+```
+
+</TabItem>
+</Tabs>
+
+## 5. Verificar
+
+```bash
+# AI tools
+claude --version
+codex --version
+pi --version
+
+# Languages
+node --version
+python3 --version
+go version
+
+# Cloud CLIs
+aws --version
+az --version
+terraform --version
+```
+
+Teste a conexão com a IA:
+
+```bash
+claude -p "Say hello"
+```
+
+## 6. Seu Primeiro Projeto
+
+```bash
+cd /workspace
+git clone https://github.com/your-org/your-project.git
+cd your-project
+claude
+```
+
+## 7. Display Remoto (noVNC)
+
+O contêiner inclui um display virtual para acompanhar agentes de IA controlando um navegador. Abra `http://localhost:6080/vnc.html` para conectar. Veja [Display Remoto (noVNC)](./vnc) para detalhes.
+
+## 8. Automação de Navegador (Chrome DevTools MCP)
+
+O Claude Code pode navegar em páginas web, tirar capturas de tela e inspecionar o DOM usando o servidor Chrome DevTools MCP integrado. Nenhuma configuração necessária — funciona automaticamente em modo headless. Veja [Chrome DevTools MCP](./chrome) para detalhes.
+
+## 9. Parando e Reiniciando
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+# Parar (preserva os dados)
+docker compose down
+
+# Iniciar novamente
+docker compose up -d
+
+# Destruir tudo e começar do zero
+docker compose down -v
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+# Parar (preserva os dados)
+podman-compose down
+
+# Iniciar novamente (pull garante a imagem mais recente)
+podman-compose pull && podman-compose up -d
+
+# Destruir tudo e começar do zero
+podman-compose down -v
+podman-compose pull && podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+Seu código em `/workspace` e o diretório home persistem entre reinicializações. Veja [Configuração — Persistência de Dados](./configuration#data-persistence) para detalhes.
+
+---
+
+Para builds locais e personalização do Dockerfile, veja [Desenvolvimento Local](./local-development). Para integração com VS Code, veja [VS Code](./vscode). Para opções de display remoto, veja [Display Remoto (noVNC)](./vnc).

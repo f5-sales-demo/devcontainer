@@ -1,0 +1,74 @@
+---
+title: Affichage distant (noVNC)
+description: >-
+  Visualisez et interagissez avec les navigateurs en mode graphique via un
+  affichage virtuel dans votre navigateur.
+sidebar:
+  order: 3
+i18n:
+  sourceHash: f872c1a2dace
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Le conteneur exécute une pile d'affichage virtuel (Xvfb + x11vnc + noVNC + fluxbox) afin que vous puissiez observer les agents IA contrôler un navigateur et intervenir si nécessaire — par exemple, pour gérer les invites de connexion ou d'authentification multifacteur (MFA).
+
+## Connexion
+
+1. Ouvrez `http://localhost:6080/vnc.html` dans votre navigateur et cliquez sur **Connect**
+2. Vous verrez un bureau fluxbox léger — il s'agit de l'affichage virtuel du conteneur
+
+Les agents IA utilisant `@playwright/mcp` en mode graphique affichent Chromium sur cet écran. Vous pouvez cliquer et taper directement dans la fenêtre noVNC pour intervenir à tout moment — aucune pause/reprise n'est nécessaire.
+
+## Lancement manuel du navigateur
+
+Pour ouvrir un navigateur manuellement à l'intérieur du conteneur :
+
+```bash
+chromium --no-sandbox &
+```
+
+Pour exécuter les tests Playwright en mode graphique :
+
+```bash
+npx playwright test --headed
+```
+
+## Variables d'environnement
+
+| Variable | Valeur par défaut | Description |
+|----------|---------|-------------|
+| `ENABLE_VNC` | `true` | Définir à `false` pour désactiver la pile VNC |
+| `VNC_RESOLUTION` | `1280x1024x24` | Résolution de l'affichage virtuel (LxHxProfondeur) |
+| `DISPLAY` | `:99` | Numéro d'affichage X11 |
+| `NOVNC_HOST_PORT` | `6080` | Port côté hôte pour noVNC (modifier pour éviter les conflits avec d'autres conteneurs) |
+
+Définissez ces variables dans votre fichier `.env` ou dans `.devcontainer/devcontainer.json` sous `containerEnv`.
+
+## Désactiver la pile VNC
+
+Pour un fonctionnement en mode headless uniquement, définissez `ENABLE_VNC=false` dans `.env` et redémarrez le conteneur :
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+## Dépannage
+
+Consultez [Dépannage — Affichage distant](./troubleshooting#remote-display-novnc) pour des solutions aux écrans noirs, aux erreurs de connexion refusée et aux conflits de ports.

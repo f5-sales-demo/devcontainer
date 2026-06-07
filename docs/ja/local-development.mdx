@@ -1,0 +1,221 @@
+---
+title: ローカル開発
+description: リポジトリのクローン、ローカルビルド、Dockerイメージのカスタマイズ。
+sidebar:
+  order: 5
+i18n:
+  sourceHash: 2173727ec1af
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+このページは、リポジトリをクローンし、イメージをローカルでビルドしたり、Dockerfileをカスタマイズしたい開発者向けです。ビルド済みコンテナを使用するだけであれば、[はじめに](./getting-started)を参照してください。
+
+## リポジトリのクローン
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+cd devcontainer
+```
+
+## プロジェクト構成
+
+```text
+.
+├── Dockerfile                  # Multi-stage image build
+├── docker-compose.yml          # Base compose — pulls pre-built image
+├── docker-compose.build.yml    # Build override — use explicitly with -f
+├── .devcontainer/              # VS Code Dev Container config
+│   └── devcontainer.json
+├── entrypoint.sh               # Container startup script
+├── .env.example                # Example environment variables
+├── docs/                       # Documentation site (Starlight)
+├── claude-config/              # Claude Code configuration files
+├── codex-config/               # Codex configuration
+├── pi-config/                  # Pi configuration
+└── omp-config/                 # Oh-My-Pi (omp) configuration
+```
+
+## ビルドファイル
+
+`docker-compose.build.yml` ファイルはローカルビルドのサポートを追加します。これは自動マージ**されません** — `-f` フラグで明示的に指定する必要があります。つまり、`docker compose up -d`（または `podman-compose up -d`）は、リポジトリをクローンしたかどうかに関係なく、常にGHCRからビルド済みイメージをプルします。
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+通常の `docker compose up` がビルド済みイメージのみを使用する（`build:` コンテキストがない）ことを確認できます：
+
+```bash
+docker compose config
+```
+
+明示的なビルド構成と比較します：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+通常の `podman-compose up` がビルド済みイメージのみを使用する（`build:` コンテキストがない）ことを確認できます：
+
+```bash
+podman-compose config
+```
+
+明示的なビルド構成と比較します：
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
+</TabItem>
+</Tabs>
+
+## ローカルでのビルド
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+</Tabs>
+
+これにより、ビルドファイルがベースのcomposeファイルとマージされ、ローカルの `Dockerfile` からイメージがビルドされ、コンテナが起動します。`--build` フラグは、キャッシュされたイメージが存在する場合でも強制的にリビルドします。
+
+## 2ステージビルドアーキテクチャ
+
+DockerfileはDockerレイヤーキャッシュに最適化された2ステージビルドを使用しています：
+
+### ステージ1: `deps`（安定した基盤、約4.5 GB）
+
+これらのレイヤーは、バージョンARGが更新されるか、APTパッケージが変更された場合にのみリビルドされます。通常のツールのみの変更では、BuildKitはこのステージ全体をスキップします。
+
+| セクション | 内容 |
+|---------|----------|
+| 1. APTリポジトリ | NodeSource、deadsnakes、HashiCorp、GitHub、Docker、Microsoft、Google Cloud、Dart SDK |
+| 2. APTパッケージ | システムツール、Node.js、Python、Java、Terraform、GitHub CLI、Dockerエンジン、Azure CLI、PowerShell、ロケール |
+| 2b. セキュリティAPTパッケージ | ネットワーク分析、Webスキャナー、パスワードツール、リバースエンジニアリング、フォレンジック（約80パッケージ） |
+| 3. Pythonブートストラップ | シンボリックリンク + get-pip.pyによるpip |
+| 4. Go | 公式tarball（最新安定版、ビルド時に解決） |
+| 5. Rust | rustup（システム全体、最新安定版） |
+| 6. Maven + Gradle | `/opt` へのバイナリダウンロード |
+| 7. VNCスタック | Xvfb、x11vnc、noVNC、fluxbox — ブラウザ経由のリモートディスプレイ |
+| 8. Nerdフォント | JetBrainsMono、Hack、FiraCode（最新リリース） |
+
+### ステージ2: `final`（変動の多いツール + ユーザーセットアップ、約1.5 GB）
+
+これらのレイヤーはより頻繁に変更されます（npm/pipの更新、設定変更）が、重い `deps` ステージがキャッシュされているため、素早くリビルドされます。
+
+| セクション | 内容 |
+|---------|----------|
+| 9. AWS CLI v2 | 公式インストーラー |
+| 10. バイナリツール | kubectl、helm、tflint、terraform-docs、act、actionlint、yt-dlp、uv |
+| 10b. 追加バイナリ | VS Code CLI、oc、yq、terragrunt、ibmcloud、fzf、hadolint、codex |
+| 10c. Super-linterバイナリ | shfmt、gitleaks、editorconfig-checker、trivy、clj-kondo、dotenv-linter、golangci-lint、goreleaser、kubeconform、protolint、scalafmt、ktlint |
+| 10d. Java JARツール | checkstyle、google-java-format（ラッパースクリプト） |
+| 10e. PHPリンター | phpcs、phpstan、psalm（PHARダウンロード） |
+| 10f. PowerShellモジュール | PSScriptAnalyzer、arm-ttk |
+| 10g. セキュリティバイナリ | nuclei、subfinder、httpx、ffuf、gobuster、feroxbuster、dalfox、amass、trufflehog、grype、syft、bettercap（amd64） |
+| 10h. OWASP ZAP | Javaベースのウェブアプリケーションスキャナー |
+| 10i. Ghidra | リバースエンジニアリングフレームワーク |
+| 10j. Metasploit | エクスプロイトフレームワーク（amd64のみ） |
+| 11. npmグローバルツール | claude-code、prettier、markdownlint-cli2、devcontainers-cli、playwright、pi-coding-agent、oh-my-pi |
+| 12. pipツール | pre-commit、ansible、black、pylint、yamllint、playwright |
+| 12c. Rubyリンター | rubocop + 拡張機能 |
+| 12e. Perlリンターモジュール | Perl::Critic拡張機能 |
+| 12f. Luaリンター | luacheck |
+| 12g. Rリンター | lintr |
+| 12h. セキュリティRuby gems | wpscan、evil-winrm |
+| 12i. Gitクローンセキュリティツール | testssl.sh、exploitdb（searchsploit）、SecLists、docker-bench-security、recon-ng、spiderfoot |
+| 13. Playwrightブラウザ | Chromium + `playwright install --with-deps` によるシステム依存関係 |
+| 13b. Chrome DevTools MCP | Chromeシンボリックリンク + MCPプリキャッシュ + ヘッドレスパッチ |
+| 14. Homebrew | Linuxbrew（AIアシスタント依存関係 + フォーマッター） |
+| 15. ZSHプラグイン | oh-my-zshカスタムプラグイン |
+| 16. シェルブートストラップ | npm-global、tfenv、compinit |
+| 17. Claude Code + Codex設定 | ツール認識メモリ、マネージドポリシー、セルフテストスクリプト、Codex設定 |
+| 18. エントリーポイント | コンテナ起動スクリプト（絶対的に最後のCOPY） |
+
+## ツールの追加
+
+`Dockerfile` を編集し、適切なセクションにツールを追加します。追加後にリビルドしてください：
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+</Tabs>
+
+または VS Code で: **Dev Containers &rarr; Rebuild Container**。
+
+### APTパッケージ
+
+セクション2の `apt-get install` ブロックに追加します：
+
+```dockerfile
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    your-package-here \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+### npmツール
+
+セクション11の `npm install -g` ブロックに追加します：
+
+```dockerfile
+RUN npm install -g \
+    your-npm-tool
+```
+
+### pipツール
+
+セクション12の `pip install` ブロックに追加します：
+
+```dockerfile
+RUN pip install --no-cache-dir --break-system-packages \
+    your-python-tool
+```
+
+### バイナリダウンロード
+
+セクション10に追加するか、アーキテクチャ検出を含む新しい `RUN` レイヤーを作成します：
+
+```dockerfile
+RUN ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL "https://example.com/tool-linux-${ARCH}.tar.gz" \
+       | tar -xz -C /usr/local/bin tool
+```
+
+## ビルドキャッシュ
+
+CIは**レジストリベースのキャッシュ**を使用しています — ビルドレイヤーはGitHub Actionsキャッシュではなく、GHCR（`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`）に保存されます。これにより、この約6 GBのマルチアーキテクチャイメージで頻繁に完全リビルドを引き起こしていた10 GBのGHAキャッシュ制限を回避できます。
+
+2ステージアーキテクチャはレジストリキャッシュと連携して、以下のように動作します：
+
+- **ツールバージョンの更新**（npm、pip、バイナリツール）— `final` ステージのみリビルド（約5分）
+- **設定ファイルの変更**（`claude-config/`、`entrypoint.sh`）— 最後の数レイヤーのみリビルド（約1分）
+- **基盤の変更**（APTパッケージ、Go/Rust/Javaバージョン）— 両ステージの完全リビルド（約30分）

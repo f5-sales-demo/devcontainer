@@ -1,0 +1,85 @@
+---
+title: VS Code
+description: >-
+  Utilizzare il Dev Container con il flusso di lavoro "Reopen in Container" di
+  VS Code.
+sidebar:
+  order: 6
+i18n:
+  sourceHash: defce3bee2ff
+  translator: machine
+---
+
+## Prerequisiti
+
+1. [VS Code](https://code.visualstudio.com/)
+2. [Estensione Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
+3. Docker o Podman in esecuzione sulla propria macchina (vedere [Per iniziare](./getting-started#container-runtime)). VS Code Dev Containers supporta anche [Podman come backend](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman).
+
+## Avvio rapido
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+code devcontainer
+```
+
+VS Code rileva `.devcontainer/devcontainer.json` e mostra una notifica: **"Reopen in Container"**. Fare clic su di essa, oppure utilizzare la palette dei comandi:
+
+> **Dev Containers: Reopen in Container**
+
+VS Code compila (o scarica) l'immagine, avvia il container, installa le estensioni e apre un terminale all'interno del container.
+
+## Come funziona
+
+Il file `.devcontainer/devcontainer.json` indica a VS Code di utilizzare Docker Compose:
+
+```json
+"dockerComposeFile": ["../docker-compose.yml", "../docker-compose.build.yml"],
+"service": "dev",
+"workspaceFolder": "/workspace"
+```
+
+La configurazione del devcontainer include esplicitamente il file di build, in modo che VS Code possa compilare l'immagine localmente quando si utilizza "Reopen in Container" o "Rebuild Container".
+
+## Estensioni
+
+Le estensioni vengono installate automaticamente all'interno del container:
+
+| Estensione | Descrizione |
+|-----------|-------------|
+| Python | Supporto per il linguaggio Python |
+| ESLint | Linting JavaScript/TypeScript |
+| Prettier | Formattazione del codice |
+| Docker | Supporto per Dockerfile e compose |
+| Terraform | Supporto per il linguaggio HCL |
+| Go | Supporto per il linguaggio Go |
+| Rust Analyzer | Supporto per il linguaggio Rust |
+| YAML | Supporto per il linguaggio YAML |
+| Kubernetes | Supporto per i manifest Kubernetes |
+
+Per aggiungere estensioni, modificare l'array `customizations.vscode.extensions` in `.devcontainer/devcontainer.json`.
+
+## Inoltro delle porte
+
+VS Code inoltra automaticamente le porte definite nel file compose. Il display noVNC è disponibile all'indirizzo `http://localhost:6080/vnc.html` — VS Code invierà una notifica quando la porta è pronta.
+
+Porte aggiuntive possono essere inoltrate su richiesta dal pannello **Ports** in VS Code.
+
+## Alternativa con Devcontainer CLI
+
+Se si preferisce la riga di comando rispetto all'interfaccia grafica di VS Code:
+
+```bash
+npm install -g @devcontainers/cli
+
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . zsh
+```
+
+## Ricostruzione
+
+Dopo aver modificato il `Dockerfile` o i file compose:
+
+> **Dev Containers: Rebuild Container**
+
+Questo ricostruisce l'immagine e riavvia il container. I volumi con nome (`workspace`, `home`) persistono tra le ricostruzioni.

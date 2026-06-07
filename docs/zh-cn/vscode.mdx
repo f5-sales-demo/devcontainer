@@ -1,0 +1,83 @@
+---
+title: VS Code
+description: 使用 VS Code 的"在容器中重新打开"工作流来使用 Dev Container。
+sidebar:
+  order: 6
+i18n:
+  sourceHash: defce3bee2ff
+  translator: machine
+---
+
+## 前提条件
+
+1. [VS Code](https://code.visualstudio.com/)
+2. [Dev Containers 扩展](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
+3. 在您的机器上运行 Docker 或 Podman（参见[入门指南](./getting-started#container-runtime)）。VS Code Dev Containers 也支持[将 Podman 作为后端](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman)。
+
+## 快速开始
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+code devcontainer
+```
+
+VS Code 会检测到 `.devcontainer/devcontainer.json` 并显示通知：**"Reopen in Container"**。点击它，或使用命令面板：
+
+> **Dev Containers: Reopen in Container**
+
+VS Code 会构建（或拉取）镜像、启动容器、安装扩展，并在容器内打开终端。
+
+## 工作原理
+
+`.devcontainer/devcontainer.json` 文件告诉 VS Code 使用 Docker Compose：
+
+```json
+"dockerComposeFile": ["../docker-compose.yml", "../docker-compose.build.yml"],
+"service": "dev",
+"workspaceFolder": "/workspace"
+```
+
+devcontainer 配置显式包含了构建文件，因此当您使用"Reopen in Container"或"Rebuild Container"时，VS Code 可以在本地构建镜像。
+
+## 扩展
+
+扩展会自动安装在容器内：
+
+| 扩展 | 描述 |
+|-----------|-------------|
+| Python | Python 语言支持 |
+| ESLint | JavaScript/TypeScript 代码检查 |
+| Prettier | 代码格式化 |
+| Docker | Dockerfile 和 compose 支持 |
+| Terraform | HCL 语言支持 |
+| Go | Go 语言支持 |
+| Rust Analyzer | Rust 语言支持 |
+| YAML | YAML 语言支持 |
+| Kubernetes | Kubernetes 清单支持 |
+
+要添加扩展，请编辑 `.devcontainer/devcontainer.json` 中的 `customizations.vscode.extensions` 数组。
+
+## 端口转发
+
+VS Code 会自动转发 compose 文件中定义的端口。noVNC 显示界面可通过 `http://localhost:6080/vnc.html` 访问——当端口就绪时，VS Code 会通知您。
+
+您也可以从 VS Code 的 **Ports** 面板中按需转发其他端口。
+
+## Devcontainer CLI 替代方案
+
+如果您更喜欢命令行而不是 VS Code 界面：
+
+```bash
+npm install -g @devcontainers/cli
+
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . zsh
+```
+
+## 重新构建
+
+在更改 `Dockerfile` 或 compose 文件后：
+
+> **Dev Containers: Rebuild Container**
+
+这将重新构建镜像并重启容器。命名卷（`workspace`、`home`）在重新构建后会保留。

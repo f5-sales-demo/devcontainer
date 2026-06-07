@@ -1,0 +1,82 @@
+---
+title: त्वरित इंस्टॉल
+description: macOS पर devcontainer को इंस्टॉल और कॉन्फ़िगर करने के लिए एक कमांड।
+sidebar:
+  order: 0
+i18n:
+  sourceHash: 4095803fd538
+  translator: machine
+---
+
+## वन-लाइन इंस्टॉल
+
+```bash
+curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
+```
+
+यह एकल कमांड पूर्ण प्रथम-रन सेटअप को संभालता है:
+
+1. Homebrew पैकेज इंस्टॉल करता है (podman, podman-compose, gh, iterm2, nerd fonts)
+2. iTerm2 कॉन्फ़िगर करता है (फ़ॉन्ट, बेल, स्क्रॉलबैक, डार्क थीम, Shift+Enter कीबाइंडिंग)
+3. Podman मशीन को इनिशियलाइज़ और ट्यून करता है (16 GB RAM, 4 CPUs, 220 GB डिस्क, zram, swappiness)
+4. वर्तमान डायरेक्टरी में `docker-compose.yml`, `devcontainer.sh`, और `.env` टेम्पलेट डाउनलोड करता है
+
+:::note[Homebrew आवश्यक है]
+यदि Homebrew इंस्टॉल नहीं है, तो स्क्रिप्ट निर्देशों के साथ बाहर निकल जाएगी।
+आपका IT विभाग Homebrew को प्रबंधित सॉफ़्टवेयर के रूप में प्रदान कर सकता है — पहले उनसे जाँच करें।
+:::
+
+## इंस्टॉल के बाद
+
+अपने क्रेडेंशियल्स के साथ `.env` संपादित करें:
+
+```bash
+vi .env
+```
+
+फिर कंटेनर शुरू करें:
+
+```bash
+./devcontainer.sh
+```
+
+स्क्रिप्ट आपके टाइमज़ोन का पता लगाती है और प्रत्येक इन्वोकेशन पर `gh auth token` से एक नया GitHub टोकन प्राप्त करती है।
+
+## क्या बनाया जाता है
+
+इंस्टॉलर चलाने के बाद, आपकी डायरेक्टरी में निम्नलिखित होंगे:
+
+| फ़ाइल | उद्देश्य |
+|---|---|
+| `devcontainer.sh` | लॉन्चर स्क्रिप्ट (कंटेनर शुरू करने के लिए इसे चलाएं) |
+| `docker-compose.yml` | कंटेनर सर्विस डेफिनिशन |
+| `.env` | आपके क्रेडेंशियल्स (टेम्पलेट से, पहले स्टार्ट से पहले संपादित करें) |
+
+## बाद के स्टार्ट
+
+```bash
+./devcontainer.sh
+```
+
+## कनेक्ट करें
+
+```bash
+podman exec -it devcontainer zsh
+```
+
+## अपडेट करें
+
+नवीनतम इमेज पुल करें और पुनः शुरू करें:
+
+```bash
+podman compose pull
+./devcontainer.sh
+```
+
+## लोकल बिल्ड
+
+सोर्स से लोकली इमेज बिल्ड करें (केवल arm64):
+
+```bash
+./devcontainer.sh build
+```

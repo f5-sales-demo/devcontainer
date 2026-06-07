@@ -1,0 +1,208 @@
+---
+title: स्क्रीन रिकॉर्डिंग टेस्ट
+description: >-
+  यह प्रमाणित करता है कि Xvfb, हेडेड Chromium (Playwright के माध्यम से), और
+  ffmpeg स्क्रीन रिकॉर्डिंग सभी devcontainer के अंदर एक साथ काम करते हैं।
+sidebar:
+  order: 1
+i18n:
+  sourceHash: 554592b3bf22
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+यह टेस्ट एक हेडेड ब्राउज़र सेशन को MP4 फ़ाइल में रिकॉर्ड करके पूर्ण VNC/ब्राउज़र स्टैक की पुष्टि करता है। यह प्रमाणित करता है कि:
+
+- **Xvfb** चल रहा है और `:99` पर कनेक्शन स्वीकार कर रहा है
+- **Chromium** वर्चुअल डिस्प्ले पर हेडेड मोड में लॉन्च हो सकता है
+- **ffmpeg** x11grab के माध्यम से डिस्प्ले कैप्चर कर सकता है
+- परिणामी **MP4** एक वैध, प्ले किया जा सकने वाला वीडियो है
+
+## यह कैसे काम करता है
+
+1. जब तक X डिस्प्ले तैयार नहीं हो जाता, `xdpyinfo -display :99` को पोल करता है (एंट्रीपॉइंट के समान पैटर्न)
+2. 10 fps पर डिस्प्ले की ffmpeg रिकॉर्डिंग शुरू करता है
+3. Playwright की `sync_api` के माध्यम से हेडेड Chromium लॉन्च करता है
+4. `https://example.com` (3 सेकंड का विराम), फिर `https://httpbin.org` (3 सेकंड का विराम) पर नेविगेट करता है
+5. स्वच्छ MP4 फ़ाइनलाइज़ेशन के लिए ffmpeg को SIGTERM भेजता है
+6. आउटपुट पथ और फ़ाइल आकार की रिपोर्ट करता है
+
+## स्क्रिप्ट
+
+निम्नलिखित को कंटेनर के अंदर `vnc-browser-test.py` के रूप में सेव करें, या इस रिपो की `docs/tests/` डायरेक्टरी से कॉपी करें:
+
+```python
+#!/usr/bin/env python3
+"""VNC/browser stack integration test.
+
+Proves that Xvfb, headed Chromium (via Playwright), and ffmpeg screen
+recording all work together inside the devcontainer by recording a
+browser navigating to two websites and producing an MP4 video.
+
+Usage: python3 vnc-browser-test.py [output_path]
+Default output: /tmp/recording.mp4
+"""
+
+import os
+import signal
+import subprocess
+import sys
+import time
+
+DISPLAY = os.environ.get("DISPLAY", ":99")
+DEFAULT_OUTPUT = "/tmp/recording.mp4"
+RESOLUTION = "1280x1024"
+FRAMERATE = "10"
+XVFB_TIMEOUT = 50  # iterations (~5 s at 0.1 s each)
+SITES = [
+    ("https://example.com", 3),
+    ("https://httpbin.org", 3),
+]
+
+
+def wait_for_xvfb():
+    """Poll xdpyinfo until the X display is ready (mirrors entrypoint.sh)."""
+    print(f"Waiting for Xvfb on {DISPLAY} ...")
+    for i in range(XVFB_TIMEOUT):
+        result = subprocess.run(
+            ["xdpyinfo", "-display", DISPLAY],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        if result.returncode == 0:
+            print(f"  Display ready after {i * 0.1:.1f}s")
+            return
+        time.sleep(0.1)
+    sys.exit(f"ERROR: Xvfb display {DISPLAY} not ready after {XVFB_TIMEOUT * 0.1:.1f}s")
+
+
+def start_recording(output_path):
+    """Start ffmpeg x11grab recording and return the process."""
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-f", "x11grab",
+        "-video_size", RESOLUTION,
+        "-framerate", FRAMERATE,
+        "-i", f"{DISPLAY}.0",
+        "-c:v", "libx264",
+        "-preset", "ultrafast",
+        "-pix_fmt", "yuv420p",
+        output_path,
+    ]
+    print(f"Starting ffmpeg recording -> {output_path}")
+    return subprocess.Popen(
+        cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    )
+
+
+def stop_recording(proc):
+    """Send SIGTERM and wait for ffmpeg to finalize the MP4."""
+    print("Stopping ffmpeg ...")
+    proc.send_signal(signal.SIGTERM)
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+
+
+def browse_sites():
+    """Launch headed Chromium via Playwright and visit each site."""
+    from playwright.sync_api import sync_playwright  # noqa: PLC0415
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(
+            headless=False,
+            args=[
+                "--no-sandbox",
+                "--disable-gpu",
+                f"--display={DISPLAY}",
+            ],
+        )
+        page = browser.new_page(viewport={"width": 1280, "height": 1024})
+
+        for url, pause in SITES:
+            print(f"  Navigating to {url} ...")
+            try:
+                page.goto(url, timeout=15000)
+            except Exception as exc:  # noqa: BLE001
+                print(f"  Warning: navigation error ({exc}), continuing")
+            time.sleep(pause)
+
+        browser.close()
+
+
+def main():
+    output_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_OUTPUT
+
+    wait_for_xvfb()
+
+    ffmpeg = start_recording(output_path)
+    # Give ffmpeg a moment to initialize before browser activity
+    time.sleep(1)
+
+    try:
+        browse_sites()
+    finally:
+        stop_recording(ffmpeg)
+
+    if os.path.isfile(output_path):
+        size = os.path.getsize(output_path)
+        print(f"\nSUCCESS: {output_path} ({size:,} bytes)")
+    else:
+        sys.exit(f"ERROR: output file not created: {output_path}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## टेस्ट चलाना
+
+<Tabs>
+<TabItem label="चल रहे कंटेनर के अंदर">
+
+```bash
+python3 vnc-browser-test.py /tmp/recording.mp4
+```
+
+</TabItem>
+<TabItem label="podman के साथ एक बार चलाएं">
+
+```bash
+podman run --rm \
+  -v $(pwd)/output:/output \
+  ghcr.io/f5xc-salesdemos/devcontainer:latest \
+  python3 vnc-browser-test.py /output/recording.mp4
+```
+
+</TabItem>
+</Tabs>
+
+## अपेक्षित आउटपुट
+
+```text
+Waiting for Xvfb on :99 ...
+  Display ready after 0.3s
+Starting ffmpeg recording -> /tmp/recording.mp4
+  Navigating to https://example.com ...
+  Navigating to https://httpbin.org ...
+Stopping ffmpeg ...
+
+SUCCESS: /tmp/recording.mp4 (1,234,567 bytes)
+```
+
+MP4 में fluxbox डेस्कटॉप पर दोनों वेबसाइटों को रेंडर करती हुई Chromium विंडो दिखनी चाहिए। सत्यापन के लिए इसे `ffplay`, `vlc` से प्ले करें, या कंटेनर से डाउनलोड करें।
+
+## विफलता का क्या अर्थ है
+
+| लक्षण | संभावित कारण |
+| ---- | ---- |
+| `Xvfb display :99 not ready` | Xvfb शुरू नहीं हुआ — जांचें कि एंट्रीपॉइंट ने VNC स्टैक चलाया है |
+| `ffmpeg: x11grab error` | डिस्प्ले मिसमैच या ffmpeg में x11grab सपोर्ट अनुपलब्ध |
+| `Playwright launch error` | Chromium इंस्टॉल नहीं है या `--no-sandbox` अनुपस्थित है |
+| MP4 0 बाइट्स का है | ffmpeg लिखने से पहले ही किल हो गया — SIGTERM हैंडलिंग की जांच करें |

@@ -1,0 +1,284 @@
+---
+title: शुरुआत करना
+description: >-
+  एक फ़ाइल डाउनलोड करें, कंटेनर शुरू करें, और कनेक्ट करें — कोई Git या क्लोनिंग
+  आवश्यक नहीं।
+sidebar:
+  order: 2
+i18n:
+  sourceHash: 05053fe9259c
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::tip[macOS त्वरित इंस्टॉल]
+यदि आप Apple Silicon वाले macOS पर हैं, तो इस पेज को छोड़ें और [वन-लाइन इंस्टॉलर](/devcontainer/install/) का उपयोग करें:
+
+```bash
+curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
+```
+
+यह Homebrew पैकेज, iTerm2 कॉन्फ़िगरेशन, Podman सेटअप और आवश्यक सब कुछ डाउनलोड करने का काम संभालता है।
+::::
+
+## पूर्वापेक्षाएँ
+
+### कंटेनर रनटाइम
+
+आपकी मशीन पर एक कंटेनर रनटाइम की आवश्यकता है। Docker या Podman दोनों में से कोई भी काम करेगा।
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+| प्लेटफ़ॉर्म | इंस्टॉल |
+|----------|---------|
+| macOS | [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) |
+| Windows | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) (WSL2 बैकएंड) |
+| Linux | [Docker Engine](https://docs.docker.com/engine/install/) या [Docker Desktop for Linux](https://docs.docker.com/desktop/install/linux/) |
+
+सत्यापित करें कि यह काम कर रहा है:
+
+```bash
+docker --version
+docker compose version
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+| प्लेटफ़ॉर्म | इंस्टॉल |
+|----------|---------|
+| macOS | [Podman Desktop for Mac](https://podman-desktop.io/docs/installation/macos-install) |
+| Windows | [Podman Desktop for Windows](https://podman-desktop.io/docs/installation/windows-install) |
+| Linux | [Podman](https://podman.io/docs/installation#installing-on-linux) + [Podman Compose](https://github.com/containers/podman-compose#installation) |
+
+सत्यापित करें कि यह काम कर रहा है:
+
+```bash
+podman --version
+podman-compose version
+```
+
+:::note[केवल Linux]
+Linux पर Podman कंटेनरों को सीधे चलाता है (कोई VM नहीं)। सुनिश्चित करें कि Podman सॉकेट सक्रिय है ताकि `podman-compose` कनेक्ट कर सके:
+
+```bash
+systemctl --user enable --now podman.socket
+```
+:::
+
+</TabItem>
+</Tabs>
+
+### सिस्टम संसाधन
+
+| संसाधन | न्यूनतम | अनुशंसित |
+|----------|---------|-------------|
+| डिस्क | 5 GB | 10 GB+ |
+| RAM | कंटेनर रनटाइम को 8 GB आवंटित | 12 GB+ |
+| CPU | 2 कोर | 4+ कोर |
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+Docker Desktop &rarr; Settings &rarr; Resources में संसाधन सीमाएँ समायोजित करें।
+
+</TabItem>
+<TabItem label="Podman">
+
+**macOS/Windows** पर, Podman Desktop &rarr; Settings &rarr; Resources में संसाधन सीमाएँ समायोजित करें, या CLI के माध्यम से:
+
+```bash
+podman machine set --cpus 4 --memory 12288
+podman machine stop && podman machine start
+```
+
+**Linux** पर, कंटेनर सीधे होस्ट संसाधनों को साझा करते हैं — किसी संसाधन कॉन्फ़िगरेशन की आवश्यकता नहीं है।
+
+</TabItem>
+</Tabs>
+
+## 1. सेट अप करें
+
+एक फ़ोल्डर बनाएँ और compose फ़ाइल डाउनलोड करें:
+
+```bash
+mkdir devcontainer && cd devcontainer
+curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/docker-compose.yml
+```
+
+## 2. अपने प्रमाणीकरण क्रेडेंशियल जोड़ें (वैकल्पिक)
+
+Claude Code को पूर्व-कॉन्फ़िगर करने के लिए उसी फ़ोल्डर में एक `.env` फ़ाइल बनाएँ। निम्नलिखित विकल्पों में से एक चुनें:
+
+### विकल्प A: Claude Max (OAuth)
+
+```ini
+CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
+```
+
+### विकल्प B: LiteLLM या Anthropic-संगत प्रॉक्सी
+
+यदि आपके पास LiteLLM इंस्टेंस या अन्य Anthropic-संगत प्रॉक्सी है, तो ये दो वेरिएबल सेट करें:
+
+```ini
+LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
+LITELLM_API_KEY=your-api-key
+```
+
+केवल डोमेन सेट करें — कंटेनर स्वचालित रूप से प्रदाता-विशिष्ट URL प्रत्यय निकालता है (जैसे, Claude Code के लिए `/anthropic`)।
+
+### स्थानीय क्रेडेंशियल से स्वतः भरें
+
+यदि आपके होस्ट पर `git` और `gh` कॉन्फ़िगर हैं, तो आप अधिकांश `.env` मान स्वचालित रूप से भर सकते हैं। टेम्पलेट की प्रतिलिपि बनाकर शुरू करें:
+
+```bash
+cp .env.example .env
+```
+
+फिर अपने सेटअप से मेल खाने वाले कमांड चलाएँ:
+
+```bash
+# Git पहचान
+echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
+echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
+
+# समय क्षेत्र
+echo "TZ=$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')" >> .env
+
+# GitHub CLI टोकन (आवश्यक: gh auth login)
+echo "GH_TOKEN=$(gh auth token)" >> .env
+
+# SSH कुंजी (यदि आप git के लिए SSH का उपयोग करते हैं)
+echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
+```
+
+फिर अपना OAuth टोकन या LiteLLM प्रॉक्सी सेटिंग्स जोड़ने के लिए `.env` संपादित करें (ऊपर विकल्प देखें)।
+
+:::tip[AI सहायक]
+`.env.example` फ़ाइल में हर उस वेरिएबल पर `@auto-detect` मार्कर होते हैं जिन्हें स्थानीय टूल से भरा जा सकता है। Claude Code जैसे AI सहायक इन मार्करों को स्कैन कर सकते हैं और स्वचालित रूप से एक पूर्ण `.env` बनाने के लिए संबंधित कमांड चला सकते हैं।
+:::
+
+## 3. शुरू करें
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose pull && podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+पहली बार चलाने पर ghcr.io से पूर्व-निर्मित इमेज पुल होती है (आपके कनेक्शन के अनुसार ~1 मिनट)। बाद में शुरू करने पर कैश्ड इमेज का उपयोग होता है और इसमें कुछ ही सेकंड लगते हैं।
+
+## 4. कनेक्ट करें
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose exec dev zsh
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose exec dev zsh
+```
+
+</TabItem>
+</Tabs>
+
+## 5. सत्यापित करें
+
+```bash
+# AI टूल
+claude --version
+codex --version
+pi --version
+
+# भाषाएँ
+node --version
+python3 --version
+go version
+
+# क्लाउड CLIs
+aws --version
+az --version
+terraform --version
+```
+
+AI कनेक्शन का परीक्षण करें:
+
+```bash
+claude -p "Say hello"
+```
+
+## 6. आपका पहला प्रोजेक्ट
+
+```bash
+cd /workspace
+git clone https://github.com/your-org/your-project.git
+cd your-project
+claude
+```
+
+## 7. रिमोट डिस्प्ले (noVNC)
+
+कंटेनर में AI एजेंटों को ब्राउज़र नियंत्रित करते हुए देखने के लिए एक वर्चुअल डिस्प्ले शामिल है। कनेक्ट करने के लिए `http://localhost:6080/vnc.html` खोलें। विवरण के लिए [रिमोट डिस्प्ले (noVNC)](./vnc) देखें।
+
+## 8. ब्राउज़र ऑटोमेशन (Chrome DevTools MCP)
+
+Claude Code बिल्ट-इन Chrome DevTools MCP सर्वर का उपयोग करके वेब पेज नेविगेट कर सकता है, स्क्रीनशॉट ले सकता है, और DOM का निरीक्षण कर सकता है। किसी सेटअप की आवश्यकता नहीं — यह हेडलेस मोड में स्वचालित रूप से काम करता है। विवरण के लिए [Chrome DevTools MCP](./chrome) देखें।
+
+## 9. रोकना और पुनः शुरू करना
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+# रोकें (डेटा संरक्षित रहता है)
+docker compose down
+
+# फिर से शुरू करें
+docker compose up -d
+
+# सब कुछ नष्ट करें और नए सिरे से शुरू करें
+docker compose down -v
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+# रोकें (डेटा संरक्षित रहता है)
+podman-compose down
+
+# फिर से शुरू करें (pull नवीनतम इमेज सुनिश्चित करता है)
+podman-compose pull && podman-compose up -d
+
+# सब कुछ नष्ट करें और नए सिरे से शुरू करें
+podman-compose down -v
+podman-compose pull && podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+आपका `/workspace` और होम डायरेक्टरी में कोड पुनः शुरू करने के बाद भी बना रहता है। विवरण के लिए [कॉन्फ़िगरेशन — डेटा पर्सिस्टेंस](./configuration#data-persistence) देखें।
+
+---
+
+स्थानीय बिल्ड और Dockerfile कस्टमाइज़ेशन के लिए, [लोकल डेवलपमेंट](./local-development) देखें। VS Code एकीकरण के लिए, [VS Code](./vscode) देखें। रिमोट डिस्प्ले विकल्पों के लिए, [रिमोट डिस्प्ले (noVNC)](./vnc) देखें।

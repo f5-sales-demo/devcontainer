@@ -1,0 +1,208 @@
+---
+title: Screen-Recording-Test
+description: >-
+  Beweist, dass Xvfb, Chromium im sichtbaren Modus (über Playwright) und die
+  ffmpeg-Bildschirmaufnahme innerhalb des Devcontainers zusammen funktionieren.
+sidebar:
+  order: 1
+i18n:
+  sourceHash: 554592b3bf22
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Dieser Test überprüft den vollständigen VNC/Browser-Stack, indem eine Browser-Sitzung im sichtbaren Modus als MP4-Datei aufgezeichnet wird. Er beweist, dass:
+
+- **Xvfb** läuft und Verbindungen auf `:99` akzeptiert
+- **Chromium** im sichtbaren Modus auf dem virtuellen Display gestartet werden kann
+- **ffmpeg** das Display über x11grab aufzeichnen kann
+- Die resultierende **MP4**-Datei ein gültiges, abspielbares Video ist
+
+## Funktionsweise
+
+1. Fragt `xdpyinfo -display :99` ab, bis das X-Display bereit ist (gleiches Muster wie im Entrypoint)
+2. Startet die ffmpeg-Aufnahme des Displays mit 10 fps
+3. Startet Chromium im sichtbaren Modus über Playwrights `sync_api`
+4. Navigiert zu `https://example.com` (3 s Pause), dann zu `https://httpbin.org` (3 s Pause)
+5. Sendet SIGTERM an ffmpeg zur sauberen MP4-Finalisierung
+6. Gibt den Ausgabepfad und die Dateigröße aus
+
+## Skript
+
+Speichern Sie Folgendes als `vnc-browser-test.py` im Container oder kopieren Sie es aus dem Verzeichnis `docs/tests/` dieses Repositories:
+
+```python
+#!/usr/bin/env python3
+"""VNC/browser stack integration test.
+
+Proves that Xvfb, headed Chromium (via Playwright), and ffmpeg screen
+recording all work together inside the devcontainer by recording a
+browser navigating to two websites and producing an MP4 video.
+
+Usage: python3 vnc-browser-test.py [output_path]
+Default output: /tmp/recording.mp4
+"""
+
+import os
+import signal
+import subprocess
+import sys
+import time
+
+DISPLAY = os.environ.get("DISPLAY", ":99")
+DEFAULT_OUTPUT = "/tmp/recording.mp4"
+RESOLUTION = "1280x1024"
+FRAMERATE = "10"
+XVFB_TIMEOUT = 50  # iterations (~5 s at 0.1 s each)
+SITES = [
+    ("https://example.com", 3),
+    ("https://httpbin.org", 3),
+]
+
+
+def wait_for_xvfb():
+    """Poll xdpyinfo until the X display is ready (mirrors entrypoint.sh)."""
+    print(f"Waiting for Xvfb on {DISPLAY} ...")
+    for i in range(XVFB_TIMEOUT):
+        result = subprocess.run(
+            ["xdpyinfo", "-display", DISPLAY],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        if result.returncode == 0:
+            print(f"  Display ready after {i * 0.1:.1f}s")
+            return
+        time.sleep(0.1)
+    sys.exit(f"ERROR: Xvfb display {DISPLAY} not ready after {XVFB_TIMEOUT * 0.1:.1f}s")
+
+
+def start_recording(output_path):
+    """Start ffmpeg x11grab recording and return the process."""
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-f", "x11grab",
+        "-video_size", RESOLUTION,
+        "-framerate", FRAMERATE,
+        "-i", f"{DISPLAY}.0",
+        "-c:v", "libx264",
+        "-preset", "ultrafast",
+        "-pix_fmt", "yuv420p",
+        output_path,
+    ]
+    print(f"Starting ffmpeg recording -> {output_path}")
+    return subprocess.Popen(
+        cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    )
+
+
+def stop_recording(proc):
+    """Send SIGTERM and wait for ffmpeg to finalize the MP4."""
+    print("Stopping ffmpeg ...")
+    proc.send_signal(signal.SIGTERM)
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+
+
+def browse_sites():
+    """Launch headed Chromium via Playwright and visit each site."""
+    from playwright.sync_api import sync_playwright  # noqa: PLC0415
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(
+            headless=False,
+            args=[
+                "--no-sandbox",
+                "--disable-gpu",
+                f"--display={DISPLAY}",
+            ],
+        )
+        page = browser.new_page(viewport={"width": 1280, "height": 1024})
+
+        for url, pause in SITES:
+            print(f"  Navigating to {url} ...")
+            try:
+                page.goto(url, timeout=15000)
+            except Exception as exc:  # noqa: BLE001
+                print(f"  Warning: navigation error ({exc}), continuing")
+            time.sleep(pause)
+
+        browser.close()
+
+
+def main():
+    output_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_OUTPUT
+
+    wait_for_xvfb()
+
+    ffmpeg = start_recording(output_path)
+    # Give ffmpeg a moment to initialize before browser activity
+    time.sleep(1)
+
+    try:
+        browse_sites()
+    finally:
+        stop_recording(ffmpeg)
+
+    if os.path.isfile(output_path):
+        size = os.path.getsize(output_path)
+        print(f"\nSUCCESS: {output_path} ({size:,} bytes)")
+    else:
+        sys.exit(f"ERROR: output file not created: {output_path}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Test ausführen
+
+<Tabs>
+<TabItem label="In einem laufenden Container">
+
+```bash
+python3 vnc-browser-test.py /tmp/recording.mp4
+```
+
+</TabItem>
+<TabItem label="Einmalige Ausführung mit Podman">
+
+```bash
+podman run --rm \
+  -v $(pwd)/output:/output \
+  ghcr.io/f5xc-salesdemos/devcontainer:latest \
+  python3 vnc-browser-test.py /output/recording.mp4
+```
+
+</TabItem>
+</Tabs>
+
+## Erwartete Ausgabe
+
+```text
+Waiting for Xvfb on :99 ...
+  Display ready after 0.3s
+Starting ffmpeg recording -> /tmp/recording.mp4
+  Navigating to https://example.com ...
+  Navigating to https://httpbin.org ...
+Stopping ffmpeg ...
+
+SUCCESS: /tmp/recording.mp4 (1,234,567 bytes)
+```
+
+Die MP4-Datei sollte das Chromium-Fenster zeigen, das beide Websites auf dem Fluxbox-Desktop rendert. Spielen Sie sie mit `ffplay`, `vlc` ab oder laden Sie sie aus dem Container herunter, um sie zu überprüfen.
+
+## Was ein Fehlschlag bedeutet
+
+| Symptom | Wahrscheinliche Ursache |
+| ---- | ---- |
+| `Xvfb display :99 not ready` | Xvfb wurde nicht gestartet — prüfen Sie, ob der Entrypoint den VNC-Stack ausgeführt hat |
+| `ffmpeg: x11grab error` | Display-Abweichung oder ffmpeg fehlt die x11grab-Unterstützung |
+| `Playwright launch error` | Chromium ist nicht installiert oder `--no-sandbox` fehlt |
+| MP4 ist 0 Bytes | ffmpeg wurde vor dem Schreiben beendet — prüfen Sie die SIGTERM-Behandlung |

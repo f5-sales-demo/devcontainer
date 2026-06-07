@@ -1,0 +1,83 @@
+---
+title: VS Code
+description: استخدم حاوية التطوير مع سير عمل "إعادة الفتح في الحاوية" في VS Code.
+sidebar:
+  order: 6
+i18n:
+  sourceHash: defce3bee2ff
+  translator: machine
+---
+
+## المتطلبات الأساسية
+
+1. [VS Code](https://code.visualstudio.com/)
+2. [إضافة Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
+3. Docker أو Podman يعمل على جهازك (انظر [البدء](./getting-started#container-runtime)). تدعم إضافة VS Code Dev Containers أيضًا [Podman كواجهة خلفية](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman).
+
+## البدء السريع
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+code devcontainer
+```
+
+يكتشف VS Code ملف `.devcontainer/devcontainer.json` ويعرض إشعارًا: **"إعادة الفتح في الحاوية"**. انقر عليه، أو استخدم لوحة الأوامر:
+
+> **Dev Containers: Reopen in Container**
+
+يقوم VS Code ببناء (أو سحب) الصورة، ويشغّل الحاوية، ويثبّت الإضافات، ويفتح طرفية داخل الحاوية.
+
+## كيف يعمل
+
+يخبر ملف `.devcontainer/devcontainer.json` VS Code باستخدام Docker Compose:
+
+```json
+"dockerComposeFile": ["../docker-compose.yml", "../docker-compose.build.yml"],
+"service": "dev",
+"workspaceFolder": "/workspace"
+```
+
+يتضمن تكوين devcontainer ملف البناء بشكل صريح، حتى يتمكن VS Code من بناء الصورة محليًا عند استخدام "إعادة الفتح في الحاوية" أو "إعادة بناء الحاوية".
+
+## الإضافات
+
+يتم تثبيت الإضافات تلقائيًا داخل الحاوية:
+
+| الإضافة | الوصف |
+|-----------|-------------|
+| Python | دعم لغة Python |
+| ESLint | فحص JavaScript/TypeScript |
+| Prettier | تنسيق الكود |
+| Docker | دعم Dockerfile و compose |
+| Terraform | دعم لغة HCL |
+| Go | دعم لغة Go |
+| Rust Analyzer | دعم لغة Rust |
+| YAML | دعم لغة YAML |
+| Kubernetes | دعم ملفات Kubernetes |
+
+لإضافة إضافات، قم بتعديل مصفوفة `customizations.vscode.extensions` في `.devcontainer/devcontainer.json`.
+
+## إعادة توجيه المنافذ
+
+يقوم VS Code تلقائيًا بإعادة توجيه المنافذ المحددة في ملف compose. شاشة noVNC متاحة على `http://localhost:6080/vnc.html` — سيُعلمك VS Code عندما يكون المنفذ جاهزًا.
+
+يمكن إعادة توجيه منافذ إضافية عند الطلب من لوحة **المنافذ** في VS Code.
+
+## بديل سطر أوامر Devcontainer
+
+إذا كنت تفضل سطر الأوامر على واجهة VS Code:
+
+```bash
+npm install -g @devcontainers/cli
+
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . zsh
+```
+
+## إعادة البناء
+
+بعد تغيير `Dockerfile` أو ملفات compose:
+
+> **Dev Containers: Rebuild Container**
+
+هذا يعيد بناء الصورة ويعيد تشغيل الحاوية. تستمر وحدات التخزين المسماة (`workspace`، `home`) عبر عمليات إعادة البناء.

@@ -1,0 +1,20 @@
+---
+title: Pruebas de Integración
+description: >-
+  Pruebas automatizadas que verifican que las pilas de ejecución del
+  devcontainer funcionen de extremo a extremo.
+sidebar:
+  order: 7
+i18n:
+  sourceHash: 4a499717bb7d
+  translator: machine
+---
+
+Estas pruebas validan que los principales subsistemas del devcontainer funcionen juntos en tiempo de ejecución. No están incorporadas en la imagen Docker — ejecútelas dentro de un contenedor en funcionamiento para verificar sus capacidades.
+
+## Pruebas Disponibles
+
+| Prueba | Qué demuestra |
+| ---- | ---- |
+| [Screen Recording](/devcontainer/tests/screen-recording/) | La pantalla Xvfb, Chromium con interfaz gráfica (Playwright) y la grabación con ffmpeg producen un MP4 válido |
+| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | El enlace simbólico de Chrome, el parche headless y la navegación MCP producen una captura de pantalla válida |

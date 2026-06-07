@@ -1,0 +1,374 @@
+---
+title: 故障排除
+description: 常见问题及解决方法。
+sidebar:
+  order: 8
+i18n:
+  sourceHash: b20e2081d644
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## 容器无法启动
+
+### "Conflict. The container name is already in use"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker rm -f devcontainer
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman rm -f devcontainer
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+## AI 工具无法使用
+
+### "claude: command not found"
+
+镜像可能已过期。拉取最新版本并重启：
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose pull
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+### Claude 显示 "Not logged in"
+
+入口点脚本会在 `~/.claude.json` 中设置引导标志。如果该文件缺失：
+
+```bash
+echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
+```
+
+### Claude 显示 "Invalid API key"
+
+检查实际设置的值：
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+常见原因：
+
+- **LiteLLM 代理密钥缺失或无效** — 如果您使用的是代理模式，请确保 `.env` 中的 `LITELLM_API_KEY` 包含正确的代理凭据，然后重启容器以便入口点脚本派生 `ANTHROPIC_API_KEY`。
+- **OAuth 令牌或代理模式不匹配** — 请仅使用一种认证模式。如果设置了 `CLAUDE_CODE_OAUTH_TOKEN`，它将优先于 LiteLLM 代理模式。
+
+### API 请求返回 401 错误
+
+检查您的 API 密钥是否设置正确：
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+通过直接调用您的提供商来验证密钥是否有效。
+
+### Claude 提示 "model not found"
+
+模型由您的提供商和 API 密钥决定。请查阅您的提供商文档了解可用模型。
+
+## GitHub CLI
+
+### "gh: not authenticated"
+
+`gh` CLI 需要 `GH_TOKEN` 环境变量。将其添加到您的 `.env` 文件中：
+
+```ini
+GH_TOKEN=ghp_your-token-here
+```
+
+在 [github.com/settings/tokens](https://github.com/settings/tokens) 创建令牌。细粒度令牌（推荐）或具有 `repo` 范围的经典令牌均可使用。更新 `.env` 后重启容器。
+
+### HTTPS git clone 返回 401 失败
+
+当设置了 `GH_TOKEN` 时，入口点脚本会运行 `gh auth setup-git` 来配置 HTTPS 的 git 凭据助手。如果 HTTPS 操作失败：
+
+1. 验证令牌是否有效：`gh auth status`
+2. 检查凭据助手是否已配置：`git config --global credential.helper`
+3. 重启容器以重新运行入口点脚本
+
+### SSH 与 HTTPS
+
+两种认证方式可以在容器中共存：
+
+- **SSH**（`.env` 中的 `SSH_PRIVATE_KEY`）— 使用 `git@github.com:` URL。如果您的组织强制要求使用 SSH，则必须使用此方式。
+- **HTTPS**（`.env` 中的 `GH_TOKEN`）— 使用 `https://github.com/` URL。设置更简单，无需管理密钥。
+
+如果两者都已配置，git 会使用与远程 URL 匹配的协议。要切换现有克隆的协议：
+
+```bash
+# SSH 切换到 HTTPS
+git remote set-url origin https://github.com/owner/repo.git
+
+# HTTPS 切换到 SSH
+git remote set-url origin git@github.com:owner/repo.git
+```
+
+## 权限问题
+
+### /workspace 或 /home 出现 "Permission denied"
+
+```bash
+sudo chown -R $(id -u):$(id -g) /workspace ~
+```
+
+### npm install 出现 EACCES 错误
+
+入口点脚本会自动在 `~/.npm-global` 配置用户可写的 npm 全局前缀，因此运行时的 `npm install -g` 命令应无需 `sudo` 即可工作。如果仍然出现 EACCES 错误，请手动重新应用修复：
+
+```bash
+mkdir -p ~/.npm-global
+npm config set prefix ~/.npm-global
+export PATH="$HOME/.npm-global/bin:$PATH"
+```
+
+## 构建问题
+
+### 构建耗时过长
+
+首次构建需要下载基础镜像（约 1 GB）。后续构建会使用缓存。如果每次都很慢：
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker builder prune
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman builder prune
+```
+
+</TabItem>
+</Tabs>
+
+### "No space left on device"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker system prune -a --volumes
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman system prune -a --volumes
+```
+
+</TabItem>
+</Tabs>
+
+**警告：** 此操作会删除所有未使用的容器、镜像和卷 — 不仅限于本项目的。
+
+## 网络
+
+### 容器内无法访问互联网
+
+```bash
+ping -c 1 8.8.8.8
+nslookup google.com
+curl -I https://github.com
+```
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+如果 DNS 解析失败，请在宿主机的 `/etc/docker/daemon.json` 中添加：
+
+```json
+{
+  "dns": ["8.8.8.8", "8.8.4.4"]
+}
+```
+
+然后重启 Docker。
+
+</TabItem>
+<TabItem label="Podman">
+
+如果 DNS 解析失败，请在 Podman 虚拟机内配置 DNS：
+
+```bash
+podman machine ssh
+sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+exit
+```
+
+或者在宿主机的 `~/.config/containers/containers.conf` 中添加 DNS 设置：
+
+```ini
+[containers]
+dns_servers = ["8.8.8.8", "8.8.4.4"]
+```
+
+然后重启 Podman：`podman machine stop && podman machine start`。
+
+</TabItem>
+</Tabs>
+
+## 远程显示 (noVNC)
+
+### noVNC 显示黑屏
+
+Xvfb 可能未启动。在容器内检查：
+
+```bash
+ps aux | grep Xvfb
+```
+
+如果未运行，请检查 `ENABLE_VNC` 是否被设置为 `false`，然后重启容器。
+
+### "Cannot open display" 或 "No display" 错误
+
+`DISPLAY` 环境变量可能未设置。请验证：
+
+```bash
+echo "$DISPLAY"
+```
+
+应该为 `:99`。如果为空，请在 `.env` 或 `devcontainer.json` 中添加 `DISPLAY=:99` 并重启。
+
+### 端口 6080 连接被拒绝
+
+noVNC 可能未运行。在容器内检查：
+
+```bash
+ps aux | grep -E 'novnc|websockify'
+```
+
+如果未运行，请验证 `ENABLE_VNC` 为 `true`（默认值）并检查容器日志：
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose logs dev | grep -i vnc
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose logs dev | grep -i vnc
+```
+
+</TabItem>
+</Tabs>
+
+### 端口 6080 已被占用
+
+在 `docker-compose.yml` 中更改宿主机端口：
+
+```yaml
+ports:
+  - "127.0.0.1:16080:6080"
+```
+
+## Chrome DevTools MCP
+
+### Chrome 远程调试无响应
+
+共享的 Chrome 实例应在端口 9222 上运行。在容器内检查：
+
+```bash
+# Chrome 是否在运行？
+curl http://localhost:9222/json/version
+
+# 检查 Chrome 日志
+cat ~/.local/share/chrome-browser/chrome.log
+
+# 验证符号链接
+ls -la /opt/google/chrome/chrome
+
+# 手动重启 Chrome
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
+```
+
+如果符号链接缺失，请拉取最新镜像并重启容器。
+
+### 浏览器配置文件锁定错误
+
+使用共享浏览器架构时，不应出现配置文件锁定错误。如果遇到此问题，可能是残留的 Chrome 进程持有锁：
+
+```bash
+# 终止所有残留的 Chrome 进程
+pkill -f 'chrome.*remote-debugging-port' || true
+
+# 删除锁文件
+rm -f ~/.cache/chrome-devtools-mcp/chrome-profile/SingletonLock
+
+# 重启 Chrome
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
+```
+
+### chrome-devtools-mcp 工具重复
+
+chrome-devtools-mcp 服务器现已在 `~/.claude/settings.json` 中全局注册。如果您有一个也注册了它的项目级 `.mcp.json`，您将看到重复的工具。请从项目级 `.mcp.json` 文件中移除 `chrome-devtools-mcp` 条目：
+
+```bash
+# 检查项目级配置
+cat .mcp.json
+```
+
+从任何项目级 `.mcp.json` 中移除 `chrome-devtools-mcp` 键以使用全局注册。
+
+## 重置所有内容
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down -v
+docker rm -f devcontainer 2>/dev/null
+docker compose pull
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down -v
+podman rm -f devcontainer 2>/dev/null
+podman-compose pull
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+此操作会销毁卷中的所有数据。您需要重新克隆仓库并重新配置工具。

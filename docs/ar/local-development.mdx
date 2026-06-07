@@ -1,0 +1,221 @@
+---
+title: التطوير المحلي
+description: استنساخ المستودع والبناء محلياً وتخصيص صورة Docker.
+sidebar:
+  order: 5
+i18n:
+  sourceHash: 2173727ec1af
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+هذه الصفحة مخصصة للمطورين الذين يرغبون في استنساخ المستودع أو بناء الصورة محلياً أو تخصيص ملف Dockerfile. إذا كنت تريد فقط استخدام الحاوية المبنية مسبقاً، راجع [البدء](./getting-started).
+
+## استنساخ المستودع
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+cd devcontainer
+```
+
+## هيكل المشروع
+
+```text
+.
+├── Dockerfile                  # Multi-stage image build
+├── docker-compose.yml          # Base compose — pulls pre-built image
+├── docker-compose.build.yml    # Build override — use explicitly with -f
+├── .devcontainer/              # VS Code Dev Container config
+│   └── devcontainer.json
+├── entrypoint.sh               # Container startup script
+├── .env.example                # Example environment variables
+├── docs/                       # Documentation site (Starlight)
+├── claude-config/              # Claude Code configuration files
+├── codex-config/               # Codex configuration
+├── pi-config/                  # Pi configuration
+└── omp-config/                 # Oh-My-Pi (omp) configuration
+```
+
+## ملف البناء
+
+يضيف ملف `docker-compose.build.yml` دعم البناء المحلي. وهو **لا** يُدمج تلقائياً — يجب تمريره صراحةً باستخدام علامات `-f`. هذا يعني أن `docker compose up -d` (أو `podman-compose up -d`) يسحب دائماً الصورة المبنية مسبقاً من GHCR، سواء قمت باستنساخ المستودع أم لا.
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+يمكنك التحقق من أن `docker compose up` العادي يستخدم فقط الصورة المبنية مسبقاً (بدون سياق `build:`):
+
+```bash
+docker compose config
+```
+
+قارن مع تكوين البناء الصريح:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+يمكنك التحقق من أن `podman-compose up` العادي يستخدم فقط الصورة المبنية مسبقاً (بدون سياق `build:`):
+
+```bash
+podman-compose config
+```
+
+قارن مع تكوين البناء الصريح:
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
+</TabItem>
+</Tabs>
+
+## البناء محلياً
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+</Tabs>
+
+يدمج هذا ملف البناء مع ملف compose الأساسي، ويبني الصورة من ملف `Dockerfile` المحلي، ويشغّل الحاوية. تفرض علامة `--build` إعادة البناء حتى لو كانت هناك صورة مخزنة مؤقتاً.
+
+## بنية البناء ثنائية المراحل
+
+يستخدم ملف Dockerfile بناءً ثنائي المراحل محسّناً للتخزين المؤقت لطبقات Docker:
+
+### المرحلة 1: `deps` (الأسس المستقرة، ~4.5 غيغابايت)
+
+تُعاد بناء هذه الطبقات فقط عند تحديث معامل ARG للإصدار أو تغيير حزم APT. عند التغييرات المتعلقة بالأدوات فقط، يتخطى BuildKit هذه المرحلة بالكامل.
+
+| القسم | المحتويات |
+|---------|----------|
+| 1. مستودعات APT | NodeSource، deadsnakes، HashiCorp، GitHub، Docker، Microsoft، Google Cloud، Dart SDK |
+| 2. حزم APT | أدوات النظام، Node.js، Python، Java، Terraform، GitHub CLI، محرك Docker، Azure CLI، PowerShell، اللغات المحلية |
+| 2b. حزم APT الأمنية | تحليل الشبكات، ماسحات الويب، أدوات كلمات المرور، الهندسة العكسية، الطب الشرعي الرقمي (~80 حزمة) |
+| 3. تهيئة Python | الروابط الرمزية + pip عبر get-pip.py |
+| 4. Go | أرشيف رسمي (أحدث إصدار مستقر، يُحدد وقت البناء) |
+| 5. Rust | rustup (على مستوى النظام، أحدث إصدار مستقر) |
+| 6. Maven + Gradle | تنزيلات ثنائية إلى `/opt` |
+| 7. حزمة VNC | Xvfb، x11vnc، noVNC، fluxbox — عرض عن بُعد عبر المتصفح |
+| 8. خطوط Nerd | JetBrainsMono، Hack، FiraCode (أحدث الإصدارات) |
+
+### المرحلة 2: `final` (الأدوات المتغيرة + إعداد المستخدم، ~1.5 غيغابايت)
+
+تتغير هذه الطبقات بشكل أكثر تكراراً (تحديثات npm/pip، تغييرات التكوين) لكنها تُعاد بناؤها بسرعة لأن مرحلة `deps` الثقيلة مخزنة مؤقتاً.
+
+| القسم | المحتويات |
+|---------|----------|
+| 9. AWS CLI v2 | المثبّت الرسمي |
+| 10. أدوات ثنائية | kubectl، helm، tflint، terraform-docs، act، actionlint، yt-dlp، uv |
+| 10b. ثنائيات إضافية | VS Code CLI، oc، yq، terragrunt، ibmcloud، fzf، hadolint، codex |
+| 10c. ثنائيات Super-linter | shfmt، gitleaks، editorconfig-checker، trivy، clj-kondo، dotenv-linter، golangci-lint، goreleaser، kubeconform، protolint، scalafmt، ktlint |
+| 10d. أدوات Java JAR | checkstyle، google-java-format (سكربتات مغلّفة) |
+| 10e. فاحصات PHP | phpcs، phpstan، psalm (تنزيلات PHAR) |
+| 10f. وحدات PowerShell | PSScriptAnalyzer، arm-ttk |
+| 10g. ثنائيات أمنية | nuclei، subfinder، httpx، ffuf، gobuster، feroxbuster، dalfox، amass، trufflehog، grype، syft، bettercap (amd64) |
+| 10h. OWASP ZAP | ماسح تطبيقات ويب قائم على Java |
+| 10i. Ghidra | إطار عمل للهندسة العكسية |
+| 10j. Metasploit | إطار عمل للاستغلال (amd64 فقط) |
+| 11. أدوات npm العامة | claude-code، prettier، markdownlint-cli2، devcontainers-cli، playwright، pi-coding-agent، oh-my-pi |
+| 12. أدوات pip | pre-commit، ansible، black، pylint، yamllint، playwright |
+| 12c. فاحصات Ruby | rubocop + الإضافات |
+| 12e. وحدات فاحص Perl | إضافات Perl::Critic |
+| 12f. فاحص Lua | luacheck |
+| 12g. فاحص R | lintr |
+| 12h. جواهر Ruby الأمنية | wpscan، evil-winrm |
+| 12i. أدوات أمنية مستنسخة من Git | testssl.sh، exploitdb (searchsploit)، SecLists، docker-bench-security، recon-ng، spiderfoot |
+| 13. متصفحات Playwright | Chromium + تبعيات النظام عبر `playwright install --with-deps` |
+| 13b. Chrome DevTools MCP | رابط Chrome الرمزي + تخزين MCP مسبق + تصحيح الوضع بدون واجهة |
+| 14. Homebrew | Linuxbrew (تبعيات مساعد الذكاء الاصطناعي + المنسّقات) |
+| 15. إضافات ZSH | إضافات oh-my-zsh المخصصة |
+| 16. تهيئة Shell | npm-global، tfenv، compinit |
+| 17. تكوين Claude Code + Codex | ذاكرة الوعي بالأدوات، السياسة المُدارة، سكربت الاختبار الذاتي، تكوين Codex |
+| 18. نقطة الدخول | سكربت بدء تشغيل الحاوية (آخر COPY على الإطلاق) |
+
+## إضافة أدوات
+
+حرّر ملف `Dockerfile` وأضف أداتك إلى القسم المناسب. أعد البناء بعد الإضافة:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+</Tabs>
+
+أو في VS Code: **Dev Containers &rarr; Rebuild Container**.
+
+### حزم APT
+
+أضف إلى كتلة `apt-get install` في القسم 2:
+
+```dockerfile
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    your-package-here \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+### أدوات npm
+
+أضف إلى كتلة `npm install -g` في القسم 11:
+
+```dockerfile
+RUN npm install -g \
+    your-npm-tool
+```
+
+### أدوات pip
+
+أضف إلى كتلة `pip install` في القسم 12:
+
+```dockerfile
+RUN pip install --no-cache-dir --break-system-packages \
+    your-python-tool
+```
+
+### تنزيلات ثنائية
+
+أضف إلى القسم 10 أو أنشئ طبقة `RUN` جديدة مع اكتشاف البنية:
+
+```dockerfile
+RUN ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL "https://example.com/tool-linux-${ARCH}.tar.gz" \
+       | tar -xz -C /usr/local/bin tool
+```
+
+## ذاكرة التخزين المؤقت للبناء
+
+يستخدم التكامل المستمر **التخزين المؤقت القائم على السجل** — تُخزَّن طبقات البناء في GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) بدلاً من ذاكرة التخزين المؤقت لـ GitHub Actions. يتجنب هذا حد ذاكرة التخزين المؤقت لـ GHA البالغ 10 غيغابايت الذي كان يسبب عمليات إعادة بناء كاملة متكررة لهذه الصورة متعددة البنيات التي يبلغ حجمها ~6 غيغابايت.
+
+تعمل البنية ثنائية المراحل مع ذاكرة التخزين المؤقت للسجل بحيث:
+
+- **تحديثات إصدارات الأدوات** (npm، pip، أدوات ثنائية) — تُعاد بناء مرحلة `final` فقط (~5 دقائق)
+- **تغييرات ملفات التكوين** (`claude-config/`، `entrypoint.sh`) — تُعاد بناء الطبقات الأخيرة فقط (~1 دقيقة)
+- **تغييرات الأسس** (حزم APT، إصدارات Go/Rust/Java) — إعادة بناء كاملة لكلتا المرحلتين (~30 دقيقة)
