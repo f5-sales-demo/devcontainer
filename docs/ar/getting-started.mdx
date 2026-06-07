@@ -1,0 +1,282 @@
+---
+title: البدء
+description: قم بتنزيل ملف واحد، وابدأ الحاوية، واتصل — لا حاجة لـ Git أو الاستنساخ.
+sidebar:
+  order: 2
+i18n:
+  sourceHash: 05053fe9259c
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::tip[التثبيت السريع على macOS]
+إذا كنت تستخدم macOS مع معالج Apple Silicon، تخطَّ هذه الصفحة واستخدم [المثبّت بسطر واحد](/devcontainer/install/):
+
+```bash
+curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
+```
+
+يتولى التعامل مع حزم Homebrew، وإعدادات iTerm2، وتهيئة Podman، ويقوم بتنزيل كل ما تحتاجه.
+::::
+
+## المتطلبات الأساسية
+
+### بيئة تشغيل الحاويات
+
+تحتاج إلى بيئة تشغيل حاويات على جهازك. يمكنك استخدام Docker أو Podman.
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+| المنصة | التثبيت |
+|--------|---------|
+| macOS | [Docker Desktop لنظام Mac](https://docs.docker.com/desktop/install/mac-install/) |
+| Windows | [Docker Desktop لنظام Windows](https://docs.docker.com/desktop/install/windows-install/) (واجهة WSL2 الخلفية) |
+| Linux | [Docker Engine](https://docs.docker.com/engine/install/) أو [Docker Desktop لنظام Linux](https://docs.docker.com/desktop/install/linux/) |
+
+تحقق من أنه يعمل:
+
+```bash
+docker --version
+docker compose version
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+| المنصة | التثبيت |
+|--------|---------|
+| macOS | [Podman Desktop لنظام Mac](https://podman-desktop.io/docs/installation/macos-install) |
+| Windows | [Podman Desktop لنظام Windows](https://podman-desktop.io/docs/installation/windows-install) |
+| Linux | [Podman](https://podman.io/docs/installation#installing-on-linux) + [Podman Compose](https://github.com/containers/podman-compose#installation) |
+
+تحقق من أنه يعمل:
+
+```bash
+podman --version
+podman-compose version
+```
+
+:::note[Linux فقط]
+يقوم Podman على Linux بتشغيل الحاويات مباشرة (بدون آلة افتراضية). تأكد من أن مقبس Podman نشط حتى يتمكن `podman-compose` من الاتصال:
+
+```bash
+systemctl --user enable --now podman.socket
+```
+:::
+
+</TabItem>
+</Tabs>
+
+### موارد النظام
+
+| المورد | الحد الأدنى | الموصى به |
+|--------|-------------|-----------|
+| القرص | 5 جيجابايت | 10 جيجابايت أو أكثر |
+| الذاكرة | 8 جيجابايت مخصصة لبيئة تشغيل الحاويات | 12 جيجابايت أو أكثر |
+| المعالج | نواتان | 4 أنوية أو أكثر |
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+اضبط حدود الموارد في Docker Desktop &rarr; الإعدادات &rarr; الموارد.
+
+</TabItem>
+<TabItem label="Podman">
+
+على **macOS/Windows**، اضبط حدود الموارد في Podman Desktop &rarr; الإعدادات &rarr; الموارد، أو عبر سطر الأوامر:
+
+```bash
+podman machine set --cpus 4 --memory 12288
+podman machine stop && podman machine start
+```
+
+على **Linux**، تتشارك الحاويات موارد المضيف مباشرة — لا حاجة لتهيئة الموارد.
+
+</TabItem>
+</Tabs>
+
+## 1. الإعداد
+
+أنشئ مجلدًا وقم بتنزيل ملف compose:
+
+```bash
+mkdir devcontainer && cd devcontainer
+curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/docker-compose.yml
+```
+
+## 2. أضف بيانات المصادقة الخاصة بك (اختياري)
+
+أنشئ ملف `.env` في نفس المجلد لتهيئة Claude Code مسبقًا. اختر أحد الخيارات التالية:
+
+### الخيار أ: Claude Max (OAuth)
+
+```ini
+CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
+```
+
+### الخيار ب: LiteLLM أو وكيل متوافق مع Anthropic
+
+إذا كان لديك نسخة LiteLLM أو وكيل آخر متوافق مع Anthropic، قم بتعيين هذين المتغيرين:
+
+```ini
+LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
+LITELLM_API_KEY=your-api-key
+```
+
+قم بتعيين النطاق فقط — تقوم الحاوية باشتقاق لاحقات عناوين URL الخاصة بالمزود تلقائيًا (مثل `/anthropic` لـ Claude Code).
+
+### الملء التلقائي من بيانات الاعتماد المحلية
+
+إذا كان لديك `git` و `gh` مهيئان على جهازك المضيف، يمكنك ملء معظم قيم `.env` تلقائيًا. ابدأ بنسخ القالب:
+
+```bash
+cp .env.example .env
+```
+
+ثم قم بتشغيل الأوامر التي تتوافق مع إعداداتك:
+
+```bash
+# Git identity
+echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
+echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
+
+# Timezone
+echo "TZ=$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')" >> .env
+
+# GitHub CLI token (requires: gh auth login)
+echo "GH_TOKEN=$(gh auth token)" >> .env
+
+# SSH key (if you use SSH for git)
+echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
+```
+
+ثم قم بتحرير `.env` لإضافة رمز OAuth الخاص بك أو إعدادات وكيل LiteLLM (انظر الخيارات أعلاه).
+
+:::tip[مساعدو الذكاء الاصطناعي]
+يحتوي ملف `.env.example` على علامات `@auto-detect` على كل متغير يمكن ملؤه من الأدوات المحلية. يمكن لمساعدي الذكاء الاصطناعي مثل Claude Code البحث عن هذه العلامات وتشغيل الأوامر المرتبطة بها لبناء ملف `.env` كامل تلقائيًا.
+:::
+
+## 3. البدء
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose pull && podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+يقوم التشغيل الأول بسحب الصورة المبنية مسبقًا من ghcr.io (حوالي دقيقة واحدة حسب سرعة اتصالك). تستخدم عمليات التشغيل اللاحقة الصورة المخزنة مؤقتًا وتستغرق ثوانٍ فقط.
+
+## 4. الاتصال
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose exec dev zsh
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose exec dev zsh
+```
+
+</TabItem>
+</Tabs>
+
+## 5. التحقق
+
+```bash
+# AI tools
+claude --version
+codex --version
+pi --version
+
+# Languages
+node --version
+python3 --version
+go version
+
+# Cloud CLIs
+aws --version
+az --version
+terraform --version
+```
+
+اختبر اتصال الذكاء الاصطناعي:
+
+```bash
+claude -p "Say hello"
+```
+
+## 6. مشروعك الأول
+
+```bash
+cd /workspace
+git clone https://github.com/your-org/your-project.git
+cd your-project
+claude
+```
+
+## 7. العرض عن بُعد (noVNC)
+
+تتضمن الحاوية شاشة افتراضية لمشاهدة وكلاء الذكاء الاصطناعي وهم يتحكمون في المتصفح. افتح `http://localhost:6080/vnc.html` للاتصال. انظر [العرض عن بُعد (noVNC)](./vnc) للتفاصيل.
+
+## 8. أتمتة المتصفح (Chrome DevTools MCP)
+
+يمكن لـ Claude Code التنقل في صفحات الويب، والتقاط لقطات شاشة، وفحص DOM باستخدام خادم Chrome DevTools MCP المدمج. لا حاجة لأي إعداد — يعمل تلقائيًا في الوضع بدون واجهة رسومية. انظر [Chrome DevTools MCP](./chrome) للتفاصيل.
+
+## 9. الإيقاف وإعادة التشغيل
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+# Stop (preserves data)
+docker compose down
+
+# Start again
+docker compose up -d
+
+# Destroy everything and start fresh
+docker compose down -v
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+# Stop (preserves data)
+podman-compose down
+
+# Start again (pull ensures latest image)
+podman-compose pull && podman-compose up -d
+
+# Destroy everything and start fresh
+podman-compose down -v
+podman-compose pull && podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+يتم الاحتفاظ بالشيفرة البرمجية في `/workspace` والمجلد الرئيسي عبر عمليات إعادة التشغيل. انظر [التهيئة — استمرارية البيانات](./configuration#data-persistence) للتفاصيل.
+
+---
+
+للبناء المحلي وتخصيص Dockerfile، انظر [التطوير المحلي](./local-development). لتكامل VS Code، انظر [VS Code](./vscode). لخيارات العرض عن بُعد، انظر [العرض عن بُعد (noVNC)](./vnc).

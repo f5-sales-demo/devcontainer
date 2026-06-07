@@ -1,0 +1,82 @@
+---
+title: Installation rapide
+description: Une seule commande pour installer et configurer le devcontainer sur macOS.
+sidebar:
+  order: 0
+i18n:
+  sourceHash: 4095803fd538
+  translator: machine
+---
+
+## Installation en une ligne
+
+```bash
+curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
+```
+
+Cette unique commande gère l'intégralité de la configuration initiale :
+
+1. Installe les paquets Homebrew (podman, podman-compose, gh, iterm2, nerd fonts)
+2. Configure iTerm2 (police, sonnerie, historique de défilement, thème sombre, raccourci clavier Shift+Entrée)
+3. Initialise et optimise la machine Podman (16 Go de RAM, 4 CPU, 220 Go de disque, zram, swappiness)
+4. Télécharge `docker-compose.yml`, `devcontainer.sh` et le modèle `.env` dans le répertoire courant
+
+:::note[Homebrew requis]
+Si Homebrew n'est pas installé, le script s'arrête en affichant les instructions.
+Votre service informatique peut fournir Homebrew en tant que logiciel géré — vérifiez auprès d'eux au préalable.
+:::
+
+## Après l'installation
+
+Modifiez `.env` avec vos identifiants :
+
+```bash
+vi .env
+```
+
+Puis démarrez le conteneur :
+
+```bash
+./devcontainer.sh
+```
+
+Le script détecte votre fuseau horaire et récupère un jeton GitHub à jour via `gh auth token` à chaque invocation.
+
+## Ce qui est créé
+
+Après l'exécution de l'installateur, votre répertoire contiendra :
+
+| Fichier | Fonction |
+|---|---|
+| `devcontainer.sh` | Script de lancement (exécutez-le pour démarrer le conteneur) |
+| `docker-compose.yml` | Définition du service conteneur |
+| `.env` | Vos identifiants (à partir du modèle, à modifier avant le premier démarrage) |
+
+## Démarrages suivants
+
+```bash
+./devcontainer.sh
+```
+
+## Se connecter
+
+```bash
+podman exec -it devcontainer zsh
+```
+
+## Mise à jour
+
+Récupérez la dernière image et redémarrez :
+
+```bash
+podman compose pull
+./devcontainer.sh
+```
+
+## Construction locale
+
+Construisez l'image localement à partir des sources (arm64 uniquement) :
+
+```bash
+./devcontainer.sh build
+```

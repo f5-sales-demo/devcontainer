@@ -1,0 +1,83 @@
+---
+title: VS Code
+description: VS Code의 "Reopen in Container" 워크플로우를 사용하여 Dev Container를 활용합니다.
+sidebar:
+  order: 6
+i18n:
+  sourceHash: defce3bee2ff
+  translator: machine
+---
+
+## 사전 요구 사항
+
+1. [VS Code](https://code.visualstudio.com/)
+2. [Dev Containers 확장](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
+3. 로컬 머신에서 실행 중인 Docker 또는 Podman ([시작하기](./getting-started#container-runtime) 참조). VS Code Dev Containers는 [Podman을 백엔드로 사용](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman)하는 것도 지원합니다.
+
+## 빠른 시작
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+code devcontainer
+```
+
+VS Code가 `.devcontainer/devcontainer.json`을 감지하고 알림을 표시합니다: **"Reopen in Container"**. 이를 클릭하거나, 명령 팔레트를 사용하세요:
+
+> **Dev Containers: Reopen in Container**
+
+VS Code가 이미지를 빌드(또는 풀)하고, 컨테이너를 시작하고, 확장을 설치한 후 컨테이너 내부에서 터미널을 엽니다.
+
+## 작동 방식
+
+`.devcontainer/devcontainer.json` 파일은 VS Code에 Docker Compose를 사용하도록 지시합니다:
+
+```json
+"dockerComposeFile": ["../docker-compose.yml", "../docker-compose.build.yml"],
+"service": "dev",
+"workspaceFolder": "/workspace"
+```
+
+devcontainer 설정에 빌드 파일이 명시적으로 포함되어 있으므로, "Reopen in Container" 또는 "Rebuild Container"를 사용할 때 VS Code가 로컬에서 이미지를 빌드할 수 있습니다.
+
+## 확장
+
+확장은 컨테이너 내부에 자동으로 설치됩니다:
+
+| 확장 | 설명 |
+|-----------|-------------|
+| Python | Python 언어 지원 |
+| ESLint | JavaScript/TypeScript 린팅 |
+| Prettier | 코드 포맷팅 |
+| Docker | Dockerfile 및 Compose 지원 |
+| Terraform | HCL 언어 지원 |
+| Go | Go 언어 지원 |
+| Rust Analyzer | Rust 언어 지원 |
+| YAML | YAML 언어 지원 |
+| Kubernetes | Kubernetes 매니페스트 지원 |
+
+확장을 추가하려면 `.devcontainer/devcontainer.json`의 `customizations.vscode.extensions` 배열을 편집하세요.
+
+## 포트 포워딩
+
+VS Code는 Compose 파일에 정의된 포트를 자동으로 포워딩합니다. noVNC 디스플레이는 `http://localhost:6080/vnc.html`에서 사용할 수 있으며, 포트가 준비되면 VS Code가 알림을 표시합니다.
+
+추가 포트는 VS Code의 **Ports** 패널에서 필요 시 포워딩할 수 있습니다.
+
+## Devcontainer CLI 대안
+
+VS Code UI보다 명령줄을 선호하는 경우:
+
+```bash
+npm install -g @devcontainers/cli
+
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . zsh
+```
+
+## 재빌드
+
+`Dockerfile` 또는 Compose 파일을 변경한 후:
+
+> **Dev Containers: Rebuild Container**
+
+이 명령은 이미지를 재빌드하고 컨테이너를 재시작합니다. 이름이 지정된 볼륨(`workspace`, `home`)은 재빌드 후에도 유지됩니다.

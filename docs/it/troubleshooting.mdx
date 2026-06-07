@@ -1,0 +1,374 @@
+---
+title: Troubleshooting
+description: Problemi comuni e come risolverli.
+sidebar:
+  order: 8
+i18n:
+  sourceHash: b20e2081d644
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Il container non si avvia
+
+### "Conflict. The container name is already in use"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker rm -f devcontainer
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman rm -f devcontainer
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+## Gli strumenti AI non funzionano
+
+### "claude: command not found"
+
+L'immagine potrebbe essere obsoleta. Scaricate l'ultima versione e riavviate:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose pull
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+### Claude mostra "Not logged in"
+
+L'entrypoint popola `~/.claude.json` con i flag di onboarding. Se mancante:
+
+```bash
+echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
+```
+
+### Claude mostra "Invalid API key"
+
+Verificate quale valore è effettivamente impostato:
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+Cause comuni:
+
+- **Chiave proxy LiteLLM mancante o non valida** — se state utilizzando la modalità proxy, assicuratevi che `LITELLM_API_KEY` nel file `.env` contenga le credenziali proxy corrette, quindi riavviate il container affinché l'entrypoint possa derivare `ANTHROPIC_API_KEY`.
+- **Token OAuth o mismatch della modalità proxy** — utilizzate esattamente una modalità di autenticazione. Se `CLAUDE_CODE_OAUTH_TOKEN` è impostato, ha la precedenza sulla modalità proxy LiteLLM.
+
+### Le richieste API falliscono con 401
+
+Verificate che la vostra chiave API sia impostata correttamente:
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+Verificate che funzioni effettuando una chiamata diretta al vostro provider.
+
+### Claude dice "model not found"
+
+Il modello è determinato dal vostro provider e dalla chiave API. Consultate la documentazione del vostro provider per i modelli disponibili.
+
+## GitHub CLI
+
+### "gh: not authenticated"
+
+La CLI `gh` richiede una variabile d'ambiente `GH_TOKEN`. Aggiungetela al vostro file `.env`:
+
+```ini
+GH_TOKEN=ghp_your-token-here
+```
+
+Create un token su [github.com/settings/tokens](https://github.com/settings/tokens). Sia i token fine-grained (consigliati) che i token classici con scope `repo` funzionano. Riavviate il container dopo aver aggiornato `.env`.
+
+### Il clone git via HTTPS fallisce con 401
+
+Quando `GH_TOKEN` è impostato, l'entrypoint esegue `gh auth setup-git` per configurare il credential helper di git per HTTPS. Se le operazioni HTTPS falliscono:
+
+1. Verificate che il token sia valido: `gh auth status`
+2. Controllate che il credential helper sia configurato: `git config --global credential.helper`
+3. Riavviate il container per rieseguire l'entrypoint
+
+### SSH vs HTTPS
+
+Entrambi i metodi di autenticazione possono coesistere nel container:
+
+- **SSH** (`SSH_PRIVATE_KEY` in `.env`) — utilizza URL `git@github.com:`. Necessario se la vostra organizzazione richiede SSH.
+- **HTTPS** (`GH_TOKEN` in `.env`) — utilizza URL `https://github.com/`. Configurazione più semplice, nessuna gestione delle chiavi.
+
+Se entrambi sono configurati, git utilizza il protocollo corrispondente all'URL remoto. Per cambiare un clone esistente:
+
+```bash
+# Da SSH a HTTPS
+git remote set-url origin https://github.com/owner/repo.git
+
+# Da HTTPS a SSH
+git remote set-url origin git@github.com:owner/repo.git
+```
+
+## Problemi di permessi
+
+### "Permission denied" su /workspace o /home
+
+```bash
+sudo chown -R $(id -u):$(id -g) /workspace ~
+```
+
+### npm install fallisce con EACCES
+
+L'entrypoint configura automaticamente un prefisso globale npm scrivibile dall'utente in `~/.npm-global`, quindi i comandi `npm install -g` a runtime dovrebbero funzionare senza `sudo`. Se continuate a vedere errori EACCES, applicate la correzione manualmente:
+
+```bash
+mkdir -p ~/.npm-global
+npm config set prefix ~/.npm-global
+export PATH="$HOME/.npm-global/bin:$PATH"
+```
+
+## Problemi di build
+
+### La build richiede molto tempo
+
+La prima build scarica l'immagine base (~1 GB). Le build successive utilizzano la cache. Se è lenta ogni volta:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker builder prune
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman builder prune
+```
+
+</TabItem>
+</Tabs>
+
+### "No space left on device"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker system prune -a --volumes
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman system prune -a --volumes
+```
+
+</TabItem>
+</Tabs>
+
+**Attenzione:** Questo rimuove tutti i container, le immagini e i volumi non utilizzati — non solo quelli di questo progetto.
+
+## Rete
+
+### Impossibile raggiungere internet dall'interno del container
+
+```bash
+ping -c 1 8.8.8.8
+nslookup google.com
+curl -I https://github.com
+```
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+Se il DNS fallisce, aggiungete a `/etc/docker/daemon.json` sull'host:
+
+```json
+{
+  "dns": ["8.8.8.8", "8.8.4.4"]
+}
+```
+
+Quindi riavviate Docker.
+
+</TabItem>
+<TabItem label="Podman">
+
+Se il DNS fallisce, configurate il DNS all'interno della macchina Podman:
+
+```bash
+podman machine ssh
+sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+exit
+```
+
+Oppure aggiungete le impostazioni DNS a `~/.config/containers/containers.conf` sull'host:
+
+```ini
+[containers]
+dns_servers = ["8.8.8.8", "8.8.4.4"]
+```
+
+Quindi riavviate Podman: `podman machine stop && podman machine start`.
+
+</TabItem>
+</Tabs>
+
+## Display remoto (noVNC)
+
+### Schermo nero in noVNC
+
+Xvfb potrebbe non essersi avviato. Verificate all'interno del container:
+
+```bash
+ps aux | grep Xvfb
+```
+
+Se non è in esecuzione, controllate che `ENABLE_VNC` non sia impostato su `false` e riavviate il container.
+
+### Errore "Cannot open display" o "No display"
+
+La variabile d'ambiente `DISPLAY` potrebbe non essere impostata. Verificate:
+
+```bash
+echo "$DISPLAY"
+```
+
+Dovrebbe essere `:99`. Se è vuota, aggiungete `DISPLAY=:99` al vostro `.env` o `devcontainer.json` e riavviate.
+
+### Connessione rifiutata sulla porta 6080
+
+noVNC potrebbe non essere in esecuzione. Verificate all'interno del container:
+
+```bash
+ps aux | grep -E 'novnc|websockify'
+```
+
+Se non è in esecuzione, verificate che `ENABLE_VNC` sia `true` (il valore predefinito) e controllate i log del container:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose logs dev | grep -i vnc
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose logs dev | grep -i vnc
+```
+
+</TabItem>
+</Tabs>
+
+### Porta 6080 già in uso
+
+Modificate la porta dell'host in `docker-compose.yml`:
+
+```yaml
+ports:
+  - "127.0.0.1:16080:6080"
+```
+
+## Chrome DevTools MCP
+
+### Il debug remoto di Chrome non risponde
+
+L'istanza condivisa di Chrome dovrebbe essere in esecuzione sulla porta 9222. Verificate all'interno del container:
+
+```bash
+# Chrome è in esecuzione?
+curl http://localhost:9222/json/version
+
+# Controllate i log di Chrome
+cat ~/.local/share/chrome-browser/chrome.log
+
+# Verificate il symlink
+ls -la /opt/google/chrome/chrome
+
+# Riavviate Chrome manualmente
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
+```
+
+Se il symlink è mancante, scaricate l'ultima immagine e riavviate il container.
+
+### Errore di blocco del profilo del browser
+
+Con l'architettura a browser condiviso, gli errori di blocco del profilo non dovrebbero verificarsi. Se ne riscontrate uno, un processo Chrome residuo potrebbe mantenere il blocco:
+
+```bash
+# Terminate eventuali processi Chrome residui
+pkill -f 'chrome.*remote-debugging-port' || true
+
+# Rimuovete il file di blocco
+rm -f ~/.cache/chrome-devtools-mcp/chrome-profile/SingletonLock
+
+# Riavviate Chrome
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
+```
+
+### Strumenti chrome-devtools-mcp duplicati
+
+Il server chrome-devtools-mcp è ora registrato globalmente in `~/.claude/settings.json`. Se avete un `.mcp.json` per repository che lo registra anch'esso, vedrete strumenti duplicati. Rimuovete la voce `chrome-devtools-mcp` dai file `.mcp.json` per repository:
+
+```bash
+# Controllate la configurazione per repository
+cat .mcp.json
+```
+
+Rimuovete la chiave `chrome-devtools-mcp` da qualsiasi `.mcp.json` per repository per utilizzare la registrazione globale.
+
+## Ripristinare tutto
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down -v
+docker rm -f devcontainer 2>/dev/null
+docker compose pull
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down -v
+podman rm -f devcontainer 2>/dev/null
+podman-compose pull
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+Questo distrugge tutti i dati nei volumi. Dovrete clonare nuovamente i repository e riconfigurare gli strumenti.

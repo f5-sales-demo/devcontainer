@@ -1,0 +1,374 @@
+---
+title: Dépannage
+description: Problèmes courants et comment les résoudre.
+sidebar:
+  order: 8
+i18n:
+  sourceHash: b20e2081d644
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Le conteneur ne démarre pas
+
+### "Conflict. The container name is already in use"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker rm -f devcontainer
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman rm -f devcontainer
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+## Les outils IA ne fonctionnent pas
+
+### "claude: command not found"
+
+L'image est peut-être obsolète. Récupérez la dernière version et redémarrez :
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose pull
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+### Claude affiche "Not logged in"
+
+Le point d'entrée initialise `~/.claude.json` avec les indicateurs d'intégration. S'il est manquant :
+
+```bash
+echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
+```
+
+### Claude affiche "Invalid API key"
+
+Vérifiez quelle valeur est réellement définie :
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+Causes courantes :
+
+- **Clé du proxy LiteLLM manquante ou invalide** — si vous utilisez le mode proxy, assurez-vous que `LITELLM_API_KEY` dans `.env` contient les identifiants proxy corrects, puis redémarrez le conteneur pour que le point d'entrée puisse dériver `ANTHROPIC_API_KEY`.
+- **Incompatibilité entre le jeton OAuth et le mode proxy** — utilisez exactement un seul mode d'authentification. Si `CLAUDE_CODE_OAUTH_TOKEN` est défini, il a la priorité sur le mode proxy LiteLLM.
+
+### Les requêtes API échouent avec 401
+
+Vérifiez que votre clé API est correctement définie :
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+Vérifiez qu'elle fonctionne en effectuant un appel direct à votre fournisseur.
+
+### Claude indique "model not found"
+
+Le modèle est déterminé par votre fournisseur et votre clé API. Consultez la documentation de votre fournisseur pour les modèles disponibles.
+
+## GitHub CLI
+
+### "gh: not authenticated"
+
+Le CLI `gh` nécessite une variable d'environnement `GH_TOKEN`. Ajoutez-la à votre fichier `.env` :
+
+```ini
+GH_TOKEN=ghp_your-token-here
+```
+
+Créez un jeton sur [github.com/settings/tokens](https://github.com/settings/tokens). Les jetons à granularité fine (recommandés) ou les jetons classiques avec le scope `repo` fonctionnent tous les deux. Redémarrez le conteneur après avoir mis à jour `.env`.
+
+### Le clonage git en HTTPS échoue avec 401
+
+Lorsque `GH_TOKEN` est défini, le point d'entrée exécute `gh auth setup-git` pour configurer l'assistant d'identification git pour HTTPS. Si les opérations HTTPS échouent :
+
+1. Vérifiez que le jeton est valide : `gh auth status`
+2. Vérifiez que l'assistant d'identification est configuré : `git config --global credential.helper`
+3. Redémarrez le conteneur pour relancer le point d'entrée
+
+### SSH vs HTTPS
+
+Les deux méthodes d'authentification peuvent coexister dans le conteneur :
+
+- **SSH** (`SSH_PRIVATE_KEY` dans `.env`) — utilise les URL `git@github.com:`. Requis si votre organisation impose SSH.
+- **HTTPS** (`GH_TOKEN` dans `.env`) — utilise les URL `https://github.com/`. Configuration plus simple, pas de gestion de clés.
+
+Si les deux sont configurés, git utilise le protocole correspondant à l'URL distante. Pour changer un clone existant :
+
+```bash
+# SSH vers HTTPS
+git remote set-url origin https://github.com/owner/repo.git
+
+# HTTPS vers SSH
+git remote set-url origin git@github.com:owner/repo.git
+```
+
+## Problèmes de permissions
+
+### "Permission denied" sur /workspace ou /home
+
+```bash
+sudo chown -R $(id -u):$(id -g) /workspace ~
+```
+
+### npm install échoue avec EACCES
+
+Le point d'entrée configure automatiquement un préfixe global npm accessible en écriture par l'utilisateur dans `~/.npm-global`, de sorte que les commandes `npm install -g` exécutées à l'exécution devraient fonctionner sans `sudo`. Si vous rencontrez toujours des erreurs EACCES, appliquez le correctif manuellement :
+
+```bash
+mkdir -p ~/.npm-global
+npm config set prefix ~/.npm-global
+export PATH="$HOME/.npm-global/bin:$PATH"
+```
+
+## Problèmes de build
+
+### Le build prend très longtemps
+
+Le premier build télécharge l'image de base (~1 Go). Les builds suivants utilisent le cache. Si c'est lent à chaque fois :
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker builder prune
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman builder prune
+```
+
+</TabItem>
+</Tabs>
+
+### "No space left on device"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker system prune -a --volumes
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman system prune -a --volumes
+```
+
+</TabItem>
+</Tabs>
+
+**Attention :** Cela supprime tous les conteneurs, images et volumes inutilisés — pas seulement ceux de ce projet.
+
+## Réseau
+
+### Impossible d'accéder à Internet depuis l'intérieur du conteneur
+
+```bash
+ping -c 1 8.8.8.8
+nslookup google.com
+curl -I https://github.com
+```
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+Si le DNS échoue, ajoutez dans `/etc/docker/daemon.json` sur l'hôte :
+
+```json
+{
+  "dns": ["8.8.8.8", "8.8.4.4"]
+}
+```
+
+Puis redémarrez Docker.
+
+</TabItem>
+<TabItem label="Podman">
+
+Si le DNS échoue, configurez le DNS à l'intérieur de la machine Podman :
+
+```bash
+podman machine ssh
+sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+exit
+```
+
+Ou ajoutez les paramètres DNS dans `~/.config/containers/containers.conf` sur l'hôte :
+
+```ini
+[containers]
+dns_servers = ["8.8.8.8", "8.8.4.4"]
+```
+
+Puis redémarrez Podman : `podman machine stop && podman machine start`.
+
+</TabItem>
+</Tabs>
+
+## Affichage distant (noVNC)
+
+### Écran noir dans noVNC
+
+Xvfb n'a peut-être pas démarré. Vérifiez à l'intérieur du conteneur :
+
+```bash
+ps aux | grep Xvfb
+```
+
+S'il n'est pas en cours d'exécution, vérifiez que `ENABLE_VNC` n'est pas défini à `false` et redémarrez le conteneur.
+
+### Erreur "Cannot open display" ou "No display"
+
+La variable d'environnement `DISPLAY` n'est peut-être pas définie. Vérifiez :
+
+```bash
+echo "$DISPLAY"
+```
+
+Elle devrait être `:99`. Si elle est vide, ajoutez `DISPLAY=:99` à votre `.env` ou `devcontainer.json` et redémarrez.
+
+### Connexion refusée sur le port 6080
+
+noVNC n'est peut-être pas en cours d'exécution. Vérifiez à l'intérieur du conteneur :
+
+```bash
+ps aux | grep -E 'novnc|websockify'
+```
+
+S'il n'est pas en cours d'exécution, vérifiez que `ENABLE_VNC` est à `true` (la valeur par défaut) et consultez les journaux du conteneur :
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose logs dev | grep -i vnc
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose logs dev | grep -i vnc
+```
+
+</TabItem>
+</Tabs>
+
+### Le port 6080 est déjà utilisé
+
+Changez le port hôte dans `docker-compose.yml` :
+
+```yaml
+ports:
+  - "127.0.0.1:16080:6080"
+```
+
+## Chrome DevTools MCP
+
+### Le débogage distant de Chrome ne répond pas
+
+L'instance Chrome partagée devrait être en cours d'exécution sur le port 9222. Vérifiez à l'intérieur du conteneur :
+
+```bash
+# Chrome est-il en cours d'exécution ?
+curl http://localhost:9222/json/version
+
+# Vérifier les journaux de Chrome
+cat ~/.local/share/chrome-browser/chrome.log
+
+# Vérifier le lien symbolique
+ls -la /opt/google/chrome/chrome
+
+# Redémarrer Chrome manuellement
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
+```
+
+Si le lien symbolique est manquant, récupérez la dernière image et redémarrez le conteneur.
+
+### Erreur de verrouillage du profil navigateur
+
+Avec l'architecture de navigateur partagé, les erreurs de verrouillage de profil ne devraient pas se produire. Si vous en rencontrez une, un processus Chrome obsolète peut détenir le verrou :
+
+```bash
+# Tuer les processus Chrome obsolètes
+pkill -f 'chrome.*remote-debugging-port' || true
+
+# Supprimer le fichier de verrouillage
+rm -f ~/.cache/chrome-devtools-mcp/chrome-profile/SingletonLock
+
+# Redémarrer Chrome
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
+```
+
+### Outils chrome-devtools-mcp en double
+
+Le serveur chrome-devtools-mcp est maintenant enregistré globalement dans `~/.claude/settings.json`. Si vous avez un `.mcp.json` par dépôt qui l'enregistre également, vous verrez des outils en double. Supprimez l'entrée `chrome-devtools-mcp` des fichiers `.mcp.json` par dépôt :
+
+```bash
+# Vérifier la configuration par dépôt
+cat .mcp.json
+```
+
+Supprimez la clé `chrome-devtools-mcp` de tout `.mcp.json` par dépôt pour utiliser l'enregistrement global.
+
+## Tout réinitialiser
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down -v
+docker rm -f devcontainer 2>/dev/null
+docker compose pull
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down -v
+podman rm -f devcontainer 2>/dev/null
+podman-compose pull
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+Cela détruit toutes les données dans les volumes. Vous devrez re-cloner les dépôts et reconfigurer les outils.

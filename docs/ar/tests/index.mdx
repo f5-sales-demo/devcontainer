@@ -1,0 +1,18 @@
+---
+title: اختبارات التكامل
+description: Automated tests that verify the devcontainer's runtime stacks work end-to-end.
+sidebar:
+  order: 7
+i18n:
+  sourceHash: 4a499717bb7d
+  translator: machine
+---
+
+تتحقق هذه الاختبارات من أن الأنظمة الفرعية الرئيسية لحاوية التطوير تعمل معاً في وقت التشغيل. وهي ليست مدمجة في صورة Docker — قم بتشغيلها داخل حاوية قيد التشغيل للتحقق من قدراتها.
+
+## الاختبارات المتاحة
+
+| الاختبار | ما يثبته |
+| ---- | ---- |
+| [تسجيل الشاشة](/devcontainer/tests/screen-recording/) | شاشة Xvfb، ومتصفح Chromium بواجهة رسومية (Playwright)، وتسجيل ffmpeg تنتج ملف MP4 صالح |
+| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | رابط Chrome المختصر، وتصحيح الوضع بدون واجهة رسومية، والتنقل عبر MCP تنتج لقطة شاشة صالحة |

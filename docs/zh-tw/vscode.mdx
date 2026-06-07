@@ -1,0 +1,83 @@
+---
+title: VS Code
+description: 使用 VS Code 的「在容器中重新開啟」工作流程搭配 Dev Container。
+sidebar:
+  order: 6
+i18n:
+  sourceHash: defce3bee2ff
+  translator: machine
+---
+
+## 先決條件
+
+1. [VS Code](https://code.visualstudio.com/)
+2. [Dev Containers 擴充套件](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
+3. 在您的機器上執行 Docker 或 Podman（請參閱[開始使用](./getting-started#container-runtime)）。VS Code Dev Containers 也支援 [Podman 作為後端](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman)。
+
+## 快速開始
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+code devcontainer
+```
+
+VS Code 偵測到 `.devcontainer/devcontainer.json` 並顯示通知：**「在容器中重新開啟」**。點擊它，或使用命令面板：
+
+> **Dev Containers: Reopen in Container**
+
+VS Code 會建置（或拉取）映像、啟動容器、安裝擴充套件，並在容器內開啟終端機。
+
+## 運作方式
+
+`.devcontainer/devcontainer.json` 檔案告訴 VS Code 使用 Docker Compose：
+
+```json
+"dockerComposeFile": ["../docker-compose.yml", "../docker-compose.build.yml"],
+"service": "dev",
+"workspaceFolder": "/workspace"
+```
+
+devcontainer 設定明確包含了建置檔案，因此當您使用「在容器中重新開啟」或「重新建置容器」時，VS Code 可以在本機建置映像。
+
+## 擴充套件
+
+擴充套件會自動安裝在容器內：
+
+| 擴充套件 | 描述 |
+|-----------|-------------|
+| Python | Python 語言支援 |
+| ESLint | JavaScript/TypeScript 程式碼檢查 |
+| Prettier | 程式碼格式化 |
+| Docker | Dockerfile 和 compose 支援 |
+| Terraform | HCL 語言支援 |
+| Go | Go 語言支援 |
+| Rust Analyzer | Rust 語言支援 |
+| YAML | YAML 語言支援 |
+| Kubernetes | Kubernetes manifest 支援 |
+
+若要新增擴充套件，請編輯 `.devcontainer/devcontainer.json` 中的 `customizations.vscode.extensions` 陣列。
+
+## 連接埠轉發
+
+VS Code 會自動轉發 compose 檔案中定義的連接埠。noVNC 顯示畫面可在 `http://localhost:6080/vnc.html` 存取 — VS Code 會在連接埠準備就緒時通知您。
+
+您可以從 VS Code 的 **Ports** 面板按需轉發額外的連接埠。
+
+## Devcontainer CLI 替代方案
+
+如果您偏好使用命令列而非 VS Code UI：
+
+```bash
+npm install -g @devcontainers/cli
+
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . zsh
+```
+
+## 重新建置
+
+在變更 `Dockerfile` 或 compose 檔案後：
+
+> **Dev Containers: Rebuild Container**
+
+這會重新建置映像並重新啟動容器。具名卷宗（`workspace`、`home`）在重新建置後會持續保留。

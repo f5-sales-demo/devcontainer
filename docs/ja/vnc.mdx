@@ -1,0 +1,72 @@
+---
+title: リモートディスプレイ (noVNC)
+description: 仮想ディスプレイを通じて、ブラウザ上でヘッド付きブラウザの表示を確認し操作できます。
+sidebar:
+  order: 3
+i18n:
+  sourceHash: f872c1a2dace
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+コンテナは仮想ディスプレイスタック（Xvfb + x11vnc + noVNC + fluxbox）を実行しており、AIエージェントがブラウザを操作する様子を確認したり、必要に応じて介入したりできます。例えば、ログインやMFAプロンプトの処理などに利用できます。
+
+## 接続方法
+
+1. ブラウザで `http://localhost:6080/vnc.html` を開き、**Connect** をクリックします
+2. 軽量な fluxbox デスクトップが表示されます — これがコンテナの仮想ディスプレイです
+
+`@playwright/mcp` をヘッド付きモードで使用するAIエージェントは、このディスプレイにChromiumをレンダリングします。noVNCウィンドウ内で直接クリックや入力を行い、いつでも介入できます — 一時停止/再開の操作は不要です。
+
+## 手動ブラウザ起動
+
+コンテナ内でブラウザを手動で開くには：
+
+```bash
+chromium --no-sandbox &
+```
+
+Playwrightテストをヘッド付きモードで実行するには：
+
+```bash
+npx playwright test --headed
+```
+
+## 環境変数
+
+| 変数 | デフォルト値 | 説明 |
+|----------|---------|-------------|
+| `ENABLE_VNC` | `true` | `false` に設定するとVNCスタックを無効化します |
+| `VNC_RESOLUTION` | `1280x1024x24` | 仮想ディスプレイの解像度（幅x高さx色深度） |
+| `DISPLAY` | `:99` | X11ディスプレイ番号 |
+| `NOVNC_HOST_PORT` | `6080` | noVNCのホスト側ポート（他のコンテナとの競合を避けるために変更できます） |
+
+これらは `.env` ファイルまたは `.devcontainer/devcontainer.json` の `containerEnv` で設定します。
+
+## VNCスタックの無効化
+
+ヘッドレス専用で運用する場合は、`.env` で `ENABLE_VNC=false` を設定し、コンテナを再起動します：
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+## トラブルシューティング
+
+黒い画面、接続拒否エラー、ポート競合の解決方法については、[トラブルシューティング — リモートディスプレイ](./troubleshooting#remote-display-novnc)を参照してください。

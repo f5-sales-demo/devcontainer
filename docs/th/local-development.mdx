@@ -1,0 +1,221 @@
+---
+title: Local Development
+description: 'โคลนที่เก็บโค้ด, บิลด์ในเครื่อง, และปรับแต่ง Docker image'
+sidebar:
+  order: 5
+i18n:
+  sourceHash: 2173727ec1af
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+หน้านี้สำหรับนักพัฒนาที่ต้องการโคลนที่เก็บโค้ด, บิลด์ image ในเครื่อง, หรือปรับแต่ง Dockerfile หากคุณต้องการใช้คอนเทนเนอร์ที่บิลด์สำเร็จรูปเท่านั้น ดูที่ [เริ่มต้นใช้งาน](./getting-started)
+
+## โคลนที่เก็บโค้ด
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+cd devcontainer
+```
+
+## โครงสร้างโปรเจกต์
+
+```text
+.
+├── Dockerfile                  # Multi-stage image build
+├── docker-compose.yml          # Base compose — pulls pre-built image
+├── docker-compose.build.yml    # Build override — use explicitly with -f
+├── .devcontainer/              # VS Code Dev Container config
+│   └── devcontainer.json
+├── entrypoint.sh               # Container startup script
+├── .env.example                # Example environment variables
+├── docs/                       # Documentation site (Starlight)
+├── claude-config/              # Claude Code configuration files
+├── codex-config/               # Codex configuration
+├── pi-config/                  # Pi configuration
+└── omp-config/                 # Oh-My-Pi (omp) configuration
+```
+
+## ไฟล์สำหรับบิลด์
+
+ไฟล์ `docker-compose.build.yml` เพิ่มการรองรับการบิลด์ในเครื่อง ไฟล์นี้**ไม่ได้**ถูกรวมโดยอัตโนมัติ — คุณต้องระบุไฟล์อย่างชัดเจนด้วยแฟล็ก `-f` ซึ่งหมายความว่า `docker compose up -d` (หรือ `podman-compose up -d`) จะดึง image ที่บิลด์สำเร็จรูปจาก GHCR เสมอ ไม่ว่าคุณจะโคลนที่เก็บโค้ดหรือไม่ก็ตาม
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+คุณสามารถตรวจสอบได้ว่า `docker compose up` แบบธรรมดาใช้เฉพาะ image ที่บิลด์สำเร็จรูป (ไม่มี `build:` context):
+
+```bash
+docker compose config
+```
+
+เปรียบเทียบกับการกำหนดค่าบิลด์แบบชัดเจน:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+คุณสามารถตรวจสอบได้ว่า `podman-compose up` แบบธรรมดาใช้เฉพาะ image ที่บิลด์สำเร็จรูป (ไม่มี `build:` context):
+
+```bash
+podman-compose config
+```
+
+เปรียบเทียบกับการกำหนดค่าบิลด์แบบชัดเจน:
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
+</TabItem>
+</Tabs>
+
+## การบิลด์ในเครื่อง
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+</Tabs>
+
+คำสั่งนี้จะรวมไฟล์บิลด์เข้ากับไฟล์ compose พื้นฐาน, บิลด์ image จาก `Dockerfile` ในเครื่อง, และเริ่มต้นคอนเทนเนอร์ แฟล็ก `--build` จะบังคับให้บิลด์ใหม่แม้ว่าจะมี image ที่แคชไว้อยู่แล้ว
+
+## สถาปัตยกรรมการบิลด์แบบสองขั้นตอน
+
+Dockerfile ใช้การบิลด์แบบสองขั้นตอนที่ปรับให้เหมาะสมสำหรับการแคชเลเยอร์ของ Docker:
+
+### ขั้นตอนที่ 1: `deps` (พื้นฐานที่เสถียร, ~4.5 GB)
+
+เลเยอร์เหล่านี้จะบิลด์ใหม่เฉพาะเมื่อ ARG ของเวอร์ชันถูกเปลี่ยนหรือแพ็กเกจ APT มีการเปลี่ยนแปลง เมื่อมีการเปลี่ยนแปลงเฉพาะเครื่องมือ BuildKit จะข้ามขั้นตอนนี้ทั้งหมด
+
+| ส่วน | เนื้อหา |
+|---------|----------|
+| 1. APT repos | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft, Google Cloud, Dart SDK |
+| 2. แพ็กเกจ APT | เครื่องมือระบบ, Node.js, Python, Java, Terraform, GitHub CLI, Docker engine, Azure CLI, PowerShell, locales |
+| 2b. แพ็กเกจ APT ด้านความปลอดภัย | การวิเคราะห์เครือข่าย, เครื่องสแกนเว็บ, เครื่องมือรหัสผ่าน, วิศวกรรมย้อนกลับ, นิติวิทยาศาสตร์ดิจิทัล (~80 แพ็กเกจ) |
+| 3. Python bootstrap | Symlinks + pip ผ่าน get-pip.py |
+| 4. Go | Official tarball (เวอร์ชันเสถียรล่าสุด, ตรวจสอบขณะบิลด์) |
+| 5. Rust | rustup (ทั้งระบบ, เวอร์ชันเสถียรล่าสุด) |
+| 6. Maven + Gradle | ดาวน์โหลดไบนารีไปยัง `/opt` |
+| 7. VNC stack | Xvfb, x11vnc, noVNC, fluxbox — แสดงผลระยะไกลผ่านเบราว์เซอร์ |
+| 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (รีลีสล่าสุด) |
+
+### ขั้นตอนที่ 2: `final` (เครื่องมือที่เปลี่ยนบ่อย + การตั้งค่าผู้ใช้, ~1.5 GB)
+
+เลเยอร์เหล่านี้เปลี่ยนแปลงบ่อยกว่า (อัปเดต npm/pip, เปลี่ยนแปลงการกำหนดค่า) แต่บิลด์ใหม่ได้รวดเร็วเนื่องจากขั้นตอน `deps` ที่หนักถูกแคชไว้แล้ว
+
+| ส่วน | เนื้อหา |
+|---------|----------|
+| 9. AWS CLI v2 | ตัวติดตั้งอย่างเป็นทางการ |
+| 10. เครื่องมือไบนารี | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv |
+| 10b. ไบนารีเพิ่มเติม | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint, codex |
+| 10c. ไบนารี Super-linter | shfmt, gitleaks, editorconfig-checker, trivy, clj-kondo, dotenv-linter, golangci-lint, goreleaser, kubeconform, protolint, scalafmt, ktlint |
+| 10d. เครื่องมือ Java JAR | checkstyle, google-java-format (wrapper scripts) |
+| 10e. PHP linters | phpcs, phpstan, psalm (ดาวน์โหลด PHAR) |
+| 10f. โมดูล PowerShell | PSScriptAnalyzer, arm-ttk |
+| 10g. ไบนารีด้านความปลอดภัย | nuclei, subfinder, httpx, ffuf, gobuster, feroxbuster, dalfox, amass, trufflehog, grype, syft, bettercap (amd64) |
+| 10h. OWASP ZAP | เครื่องสแกนแอปพลิเคชันเว็บที่ใช้ Java |
+| 10i. Ghidra | เฟรมเวิร์กวิศวกรรมย้อนกลับ |
+| 10j. Metasploit | เฟรมเวิร์กการใช้ช่องโหว่ (amd64 เท่านั้น) |
+| 11. เครื่องมือ npm global | claude-code, prettier, markdownlint-cli2, devcontainers-cli, playwright, pi-coding-agent, oh-my-pi |
+| 12. เครื่องมือ pip | pre-commit, ansible, black, pylint, yamllint, playwright |
+| 12c. Ruby linters | rubocop + ส่วนขยาย |
+| 12e. โมดูล Perl linter | ส่วนขยาย Perl::Critic |
+| 12f. Lua linter | luacheck |
+| 12g. R linter | lintr |
+| 12h. Ruby gems ด้านความปลอดภัย | wpscan, evil-winrm |
+| 12i. เครื่องมือความปลอดภัยที่โคลนจาก Git | testssl.sh, exploitdb (searchsploit), SecLists, docker-bench-security, recon-ng, spiderfoot |
+| 13. เบราว์เซอร์ Playwright | Chromium + system deps ผ่าน `playwright install --with-deps` |
+| 13b. Chrome DevTools MCP | Chrome symlink + MCP pre-cache + headless patch |
+| 14. Homebrew | Linuxbrew (ตัวช่วย AI dependencies + formatters) |
+| 15. ปลั๊กอิน ZSH | ปลั๊กอิน oh-my-zsh แบบกำหนดเอง |
+| 16. Shell bootstrap | npm-global, tfenv, compinit |
+| 17. การกำหนดค่า Claude Code + Codex | หน่วยความจำการรับรู้เครื่องมือ, นโยบายที่จัดการ, สคริปต์ทดสอบตัวเอง, การกำหนดค่า Codex |
+| 18. Entrypoint | สคริปต์เริ่มต้นคอนเทนเนอร์ (COPY ลำดับสุดท้ายที่สุด) |
+
+## การเพิ่มเครื่องมือ
+
+แก้ไข `Dockerfile` และเพิ่มเครื่องมือของคุณในส่วนที่เหมาะสม บิลด์ใหม่หลังจากเพิ่ม:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+</Tabs>
+
+หรือใน VS Code: **Dev Containers &rarr; Rebuild Container**
+
+### แพ็กเกจ APT
+
+เพิ่มในบล็อก `apt-get install` ของส่วนที่ 2:
+
+```dockerfile
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    your-package-here \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+### เครื่องมือ npm
+
+เพิ่มในบล็อก `npm install -g` ของส่วนที่ 11:
+
+```dockerfile
+RUN npm install -g \
+    your-npm-tool
+```
+
+### เครื่องมือ pip
+
+เพิ่มในบล็อก `pip install` ของส่วนที่ 12:
+
+```dockerfile
+RUN pip install --no-cache-dir --break-system-packages \
+    your-python-tool
+```
+
+### ดาวน์โหลดไบนารี
+
+เพิ่มในส่วนที่ 10 หรือสร้างเลเยอร์ `RUN` ใหม่พร้อมการตรวจจับสถาปัตยกรรม:
+
+```dockerfile
+RUN ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL "https://example.com/tool-linux-${ARCH}.tar.gz" \
+       | tar -xz -C /usr/local/bin tool
+```
+
+## แคชการบิลด์
+
+CI ใช้**การแคชแบบ registry** — เลเยอร์การบิลด์ถูกจัดเก็บใน GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) แทนที่จะใช้แคชของ GitHub Actions ซึ่งช่วยหลีกเลี่ยงขีดจำกัดแคช GHA 10 GB ที่ทำให้เกิดการบิลด์ใหม่ทั้งหมดบ่อยครั้งสำหรับ image แบบหลายสถาปัตยกรรมที่มีขนาด ~6 GB นี้
+
+สถาปัตยกรรมแบบสองขั้นตอนทำงานร่วมกับแคช registry โดย:
+
+- **การอัปเดตเวอร์ชันเครื่องมือ** (npm, pip, เครื่องมือไบนารี) — บิลด์ใหม่เฉพาะขั้นตอน `final` (~5 นาที)
+- **การเปลี่ยนแปลงไฟล์กำหนดค่า** (`claude-config/`, `entrypoint.sh`) — บิลด์ใหม่เฉพาะเลเยอร์สุดท้ายไม่กี่เลเยอร์ (~1 นาที)
+- **การเปลี่ยนแปลงพื้นฐาน** (แพ็กเกจ APT, เวอร์ชัน Go/Rust/Java) — บิลด์ใหม่ทั้งหมดทั้งสองขั้นตอน (~30 นาที)

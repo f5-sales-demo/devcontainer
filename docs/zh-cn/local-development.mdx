@@ -1,0 +1,221 @@
+---
+title: 本地开发
+description: 克隆仓库、本地构建并自定义 Docker 镜像。
+sidebar:
+  order: 5
+i18n:
+  sourceHash: 2173727ec1af
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+本页面面向希望克隆仓库、本地构建镜像或自定义 Dockerfile 的开发者。如果您只想使用预构建的容器，请参阅[快速入门](./getting-started)。
+
+## 克隆仓库
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+cd devcontainer
+```
+
+## 项目结构
+
+```text
+.
+├── Dockerfile                  # Multi-stage image build
+├── docker-compose.yml          # Base compose — pulls pre-built image
+├── docker-compose.build.yml    # Build override — use explicitly with -f
+├── .devcontainer/              # VS Code Dev Container config
+│   └── devcontainer.json
+├── entrypoint.sh               # Container startup script
+├── .env.example                # Example environment variables
+├── docs/                       # Documentation site (Starlight)
+├── claude-config/              # Claude Code configuration files
+├── codex-config/               # Codex configuration
+├── pi-config/                  # Pi configuration
+└── omp-config/                 # Oh-My-Pi (omp) configuration
+```
+
+## 构建文件
+
+`docker-compose.build.yml` 文件添加了本地构建支持。它**不会**被自动合并——您必须使用 `-f` 标志显式传递。这意味着无论您是否克隆了仓库，`docker compose up -d`（或 `podman-compose up -d`）始终会从 GHCR 拉取预构建的镜像。
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+您可以验证普通的 `docker compose up` 仅使用预构建的镜像（没有 `build:` 上下文）：
+
+```bash
+docker compose config
+```
+
+与显式构建配置进行对比：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+您可以验证普通的 `podman-compose up` 仅使用预构建的镜像（没有 `build:` 上下文）：
+
+```bash
+podman-compose config
+```
+
+与显式构建配置进行对比：
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
+</TabItem>
+</Tabs>
+
+## 本地构建
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+</Tabs>
+
+此命令将构建文件与基础 compose 文件合并，从本地 `Dockerfile` 构建镜像并启动容器。`--build` 标志会强制重新构建，即使存在缓存的镜像。
+
+## 两阶段构建架构
+
+Dockerfile 使用针对 Docker 层缓存优化的两阶段构建：
+
+### 阶段 1：`deps`（稳定基础，约 4.5 GB）
+
+这些层仅在版本 ARG 更新或 APT 包变更时才会重新构建。在仅涉及工具变更的常规情况下，BuildKit 会完全跳过此阶段。
+
+| 部分 | 内容 |
+|---------|----------|
+| 1. APT 源 | NodeSource、deadsnakes、HashiCorp、GitHub、Docker、Microsoft、Google Cloud、Dart SDK |
+| 2. APT 包 | 系统工具、Node.js、Python、Java、Terraform、GitHub CLI、Docker 引擎、Azure CLI、PowerShell、语言环境 |
+| 2b. 安全相关 APT 包 | 网络分析、Web 扫描器、密码工具、逆向工程、取证（约 80 个包） |
+| 3. Python 引导 | 符号链接 + 通过 get-pip.py 安装 pip |
+| 4. Go | 官方 tarball（最新稳定版，构建时解析） |
+| 5. Rust | rustup（系统级，最新稳定版） |
+| 6. Maven + Gradle | 二进制下载到 `/opt` |
+| 7. VNC 栈 | Xvfb、x11vnc、noVNC、fluxbox——通过浏览器进行远程显示 |
+| 8. Nerd 字体 | JetBrainsMono、Hack、FiraCode（最新版本） |
+
+### 阶段 2：`final`（易变工具 + 用户配置，约 1.5 GB）
+
+这些层变更更频繁（npm/pip 更新、配置变更），但由于重量级的 `deps` 阶段已被缓存，重新构建速度很快。
+
+| 部分 | 内容 |
+|---------|----------|
+| 9. AWS CLI v2 | 官方安装器 |
+| 10. 二进制工具 | kubectl、helm、tflint、terraform-docs、act、actionlint、yt-dlp、uv |
+| 10b. 额外二进制文件 | VS Code CLI、oc、yq、terragrunt、ibmcloud、fzf、hadolint、codex |
+| 10c. Super-linter 二进制文件 | shfmt、gitleaks、editorconfig-checker、trivy、clj-kondo、dotenv-linter、golangci-lint、goreleaser、kubeconform、protolint、scalafmt、ktlint |
+| 10d. Java JAR 工具 | checkstyle、google-java-format（包装脚本） |
+| 10e. PHP 代码检查工具 | phpcs、phpstan、psalm（PHAR 下载） |
+| 10f. PowerShell 模块 | PSScriptAnalyzer、arm-ttk |
+| 10g. 安全二进制文件 | nuclei、subfinder、httpx、ffuf、gobuster、feroxbuster、dalfox、amass、trufflehog、grype、syft、bettercap（amd64） |
+| 10h. OWASP ZAP | 基于 Java 的 Web 应用扫描器 |
+| 10i. Ghidra | 逆向工程框架 |
+| 10j. Metasploit | 渗透测试框架（仅 amd64） |
+| 11. npm 全局工具 | claude-code、prettier、markdownlint-cli2、devcontainers-cli、playwright、pi-coding-agent、oh-my-pi |
+| 12. pip 工具 | pre-commit、ansible、black、pylint、yamllint、playwright |
+| 12c. Ruby 代码检查工具 | rubocop + 扩展 |
+| 12e. Perl 代码检查模块 | Perl::Critic 扩展 |
+| 12f. Lua 代码检查工具 | luacheck |
+| 12g. R 代码检查工具 | lintr |
+| 12h. 安全相关 Ruby gem | wpscan、evil-winrm |
+| 12i. Git 克隆的安全工具 | testssl.sh、exploitdb（searchsploit）、SecLists、docker-bench-security、recon-ng、spiderfoot |
+| 13. Playwright 浏览器 | Chromium + 通过 `playwright install --with-deps` 安装系统依赖 |
+| 13b. Chrome DevTools MCP | Chrome 符号链接 + MCP 预缓存 + 无头模式补丁 |
+| 14. Homebrew | Linuxbrew（AI 助手依赖 + 格式化工具） |
+| 15. ZSH 插件 | oh-my-zsh 自定义插件 |
+| 16. Shell 引导 | npm-global、tfenv、compinit |
+| 17. Claude Code + Codex 配置 | 工具感知记忆、托管策略、自测脚本、Codex 配置 |
+| 18. 入口点 | 容器启动脚本（绝对最后一个 COPY） |
+
+## 添加工具
+
+编辑 `Dockerfile` 并将您的工具添加到相应的部分。添加后重新构建：
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+</Tabs>
+
+或者在 VS Code 中：**Dev Containers &rarr; Rebuild Container**。
+
+### APT 包
+
+添加到第 2 部分的 `apt-get install` 块中：
+
+```dockerfile
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    your-package-here \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+### npm 工具
+
+添加到第 11 部分的 `npm install -g` 块中：
+
+```dockerfile
+RUN npm install -g \
+    your-npm-tool
+```
+
+### pip 工具
+
+添加到第 12 部分的 `pip install` 块中：
+
+```dockerfile
+RUN pip install --no-cache-dir --break-system-packages \
+    your-python-tool
+```
+
+### 二进制下载
+
+添加到第 10 部分或创建一个带有架构检测的新 `RUN` 层：
+
+```dockerfile
+RUN ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL "https://example.com/tool-linux-${ARCH}.tar.gz" \
+       | tar -xz -C /usr/local/bin tool
+```
+
+## 构建缓存
+
+CI 使用**基于注册表的缓存**——构建层存储在 GHCR（`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`）中，而不是 GitHub Actions 缓存中。这避免了 10 GB 的 GHA 缓存限制，该限制曾导致这个约 6 GB 的多架构镜像频繁进行完整重建。
+
+两阶段架构与注册表缓存协同工作，使得：
+
+- **工具版本更新**（npm、pip、二进制工具）——仅重建 `final` 阶段（约 5 分钟）
+- **配置文件变更**（`claude-config/`、`entrypoint.sh`）——仅重建最后几个层（约 1 分钟）
+- **基础变更**（APT 包、Go/Rust/Java 版本）——两个阶段完整重建（约 30 分钟）

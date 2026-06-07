@@ -1,0 +1,221 @@
+---
+title: Développement local
+description: 'Cloner le dépôt, compiler localement et personnaliser l''image Docker.'
+sidebar:
+  order: 5
+i18n:
+  sourceHash: 2173727ec1af
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Cette page est destinée aux développeurs qui souhaitent cloner le dépôt, compiler l'image localement ou personnaliser le Dockerfile. Si vous souhaitez simplement utiliser le conteneur pré-compilé, consultez [Premiers pas](./getting-started).
+
+## Cloner le dépôt
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+cd devcontainer
+```
+
+## Structure du projet
+
+```text
+.
+├── Dockerfile                  # Multi-stage image build
+├── docker-compose.yml          # Base compose — pulls pre-built image
+├── docker-compose.build.yml    # Build override — use explicitly with -f
+├── .devcontainer/              # VS Code Dev Container config
+│   └── devcontainer.json
+├── entrypoint.sh               # Container startup script
+├── .env.example                # Example environment variables
+├── docs/                       # Documentation site (Starlight)
+├── claude-config/              # Claude Code configuration files
+├── codex-config/               # Codex configuration
+├── pi-config/                  # Pi configuration
+└── omp-config/                 # Oh-My-Pi (omp) configuration
+```
+
+## Fichier de compilation
+
+Le fichier `docker-compose.build.yml` ajoute le support de compilation locale. Il n'est **pas** fusionné automatiquement — vous devez le passer explicitement avec les flags `-f`. Cela signifie que `docker compose up -d` (ou `podman-compose up -d`) tire toujours l'image pré-compilée depuis GHCR, que vous ayez cloné le dépôt ou non.
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+Vous pouvez vérifier qu'un simple `docker compose up` utilise uniquement l'image pré-compilée (pas de contexte `build:`) :
+
+```bash
+docker compose config
+```
+
+Comparez avec la configuration de compilation explicite :
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+Vous pouvez vérifier qu'un simple `podman-compose up` utilise uniquement l'image pré-compilée (pas de contexte `build:`) :
+
+```bash
+podman-compose config
+```
+
+Comparez avec la configuration de compilation explicite :
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml config
+```
+
+</TabItem>
+</Tabs>
+
+## Compiler localement
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+</Tabs>
+
+Cela fusionne le fichier de compilation avec le fichier compose de base, compile l'image à partir du `Dockerfile` local et démarre le conteneur. Le flag `--build` force une recompilation même si une image en cache existe.
+
+## Architecture de compilation en deux étapes
+
+Le Dockerfile utilise une compilation en deux étapes optimisée pour la mise en cache des couches Docker :
+
+### Étape 1 : `deps` (fondations stables, ~4,5 Go)
+
+Ces couches ne sont recompilées que lorsqu'un ARG de version est mis à jour ou que les paquets APT changent. Lors de modifications portant uniquement sur les outils, BuildKit ignore entièrement cette étape.
+
+| Section | Contenu |
+|---------|----------|
+| 1. Dépôts APT | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft, Google Cloud, Dart SDK |
+| 2. Paquets APT | Outils système, Node.js, Python, Java, Terraform, GitHub CLI, moteur Docker, Azure CLI, PowerShell, locales |
+| 2b. Paquets APT de sécurité | Analyse réseau, scanners web, outils de mots de passe, rétro-ingénierie, forensique (~80 paquets) |
+| 3. Bootstrap Python | Liens symboliques + pip via get-pip.py |
+| 4. Go | Archive officielle (dernière version stable, résolue au moment de la compilation) |
+| 5. Rust | rustup (à l'échelle du système, dernière version stable) |
+| 6. Maven + Gradle | Téléchargements binaires vers `/opt` |
+| 7. Pile VNC | Xvfb, x11vnc, noVNC, fluxbox — affichage distant via navigateur |
+| 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (dernières versions) |
+
+### Étape 2 : `final` (outils volatils + configuration utilisateur, ~1,5 Go)
+
+Ces couches changent plus fréquemment (mises à jour npm/pip, modifications de configuration) mais se recompilent rapidement car l'étape lourde `deps` est en cache.
+
+| Section | Contenu |
+|---------|----------|
+| 9. AWS CLI v2 | Installateur officiel |
+| 10. Outils binaires | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv |
+| 10b. Binaires supplémentaires | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint, codex |
+| 10c. Binaires Super-linter | shfmt, gitleaks, editorconfig-checker, trivy, clj-kondo, dotenv-linter, golangci-lint, goreleaser, kubeconform, protolint, scalafmt, ktlint |
+| 10d. Outils Java JAR | checkstyle, google-java-format (scripts wrapper) |
+| 10e. Linters PHP | phpcs, phpstan, psalm (téléchargements PHAR) |
+| 10f. Modules PowerShell | PSScriptAnalyzer, arm-ttk |
+| 10g. Binaires de sécurité | nuclei, subfinder, httpx, ffuf, gobuster, feroxbuster, dalfox, amass, trufflehog, grype, syft, bettercap (amd64) |
+| 10h. OWASP ZAP | Scanner d'applications web basé sur Java |
+| 10i. Ghidra | Framework de rétro-ingénierie |
+| 10j. Metasploit | Framework d'exploitation (amd64 uniquement) |
+| 11. Outils npm globaux | claude-code, prettier, markdownlint-cli2, devcontainers-cli, playwright, pi-coding-agent, oh-my-pi |
+| 12. Outils pip | pre-commit, ansible, black, pylint, yamllint, playwright |
+| 12c. Linters Ruby | rubocop + extensions |
+| 12e. Modules linter Perl | Extensions Perl::Critic |
+| 12f. Linter Lua | luacheck |
+| 12g. Linter R | lintr |
+| 12h. Gems Ruby de sécurité | wpscan, evil-winrm |
+| 12i. Outils de sécurité clonés via Git | testssl.sh, exploitdb (searchsploit), SecLists, docker-bench-security, recon-ng, spiderfoot |
+| 13. Navigateurs Playwright | Chromium + dépendances système via `playwright install --with-deps` |
+| 13b. Chrome DevTools MCP | Lien symbolique Chrome + pré-cache MCP + correctif headless |
+| 14. Homebrew | Linuxbrew (dépendances assistant IA + formateurs) |
+| 15. Plugins ZSH | Plugins personnalisés oh-my-zsh |
+| 16. Bootstrap shell | npm-global, tfenv, compinit |
+| 17. Config Claude Code + Codex | Mémoire de connaissance des outils, politique gérée, script d'auto-test, config Codex |
+| 18. Entrypoint | Script de démarrage du conteneur (tout dernier COPY) |
+
+## Ajouter des outils
+
+Modifiez le `Dockerfile` et ajoutez votre outil dans la section appropriée. Recompilez après l'ajout :
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+</TabItem>
+</Tabs>
+
+Ou dans VS Code : **Dev Containers &rarr; Reconstruire le conteneur**.
+
+### Paquets APT
+
+Ajoutez au bloc `apt-get install` de la section 2 :
+
+```dockerfile
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    your-package-here \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+### Outils npm
+
+Ajoutez au bloc `npm install -g` de la section 11 :
+
+```dockerfile
+RUN npm install -g \
+    your-npm-tool
+```
+
+### Outils pip
+
+Ajoutez au bloc `pip install` de la section 12 :
+
+```dockerfile
+RUN pip install --no-cache-dir --break-system-packages \
+    your-python-tool
+```
+
+### Téléchargements binaires
+
+Ajoutez à la section 10 ou créez une nouvelle couche `RUN` avec détection d'architecture :
+
+```dockerfile
+RUN ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL "https://example.com/tool-linux-${ARCH}.tar.gz" \
+       | tar -xz -C /usr/local/bin tool
+```
+
+## Cache de compilation
+
+La CI utilise un **cache basé sur le registre** — les couches de compilation sont stockées dans GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) au lieu du cache GitHub Actions. Cela évite la limite de 10 Go du cache GHA qui provoquait des recompilations complètes fréquentes pour cette image multi-architecture d'environ 6 Go.
+
+L'architecture en deux étapes fonctionne avec le cache de registre de sorte que :
+
+- **Mises à jour de versions d'outils** (npm, pip, outils binaires) — recompilation uniquement de l'étape `final` (~5 min)
+- **Modifications de fichiers de configuration** (`claude-config/`, `entrypoint.sh`) — recompilation uniquement des dernières couches (~1 min)
+- **Modifications des fondations** (paquets APT, versions Go/Rust/Java) — recompilation complète des deux étapes (~30 min)

@@ -1,0 +1,172 @@
+---
+title: Segurança
+description: Como o modelo de isolamento protege sua máquina host e o ambiente corporativo.
+sidebar:
+  order: 7
+i18n:
+  sourceHash: f7bae54e89ef
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Contexto
+
+Em fevereiro de 2025, a LayerX Security Research divulgou uma vulnerabilidade crítica de execução remota de código sem interação do usuário (zero-click) no framework de Extensões de Desktop (DXT) do Claude da Anthropic. As extensões são executadas sem sandbox, com privilégios totais do sistema, atuando como pontes de execução entre o modelo de linguagem e o sistema operacional local.
+
+Muitas equipes de segurança corporativa agora exigem que ferramentas de codificação com IA sejam executadas apenas dentro de máquinas virtuais dedicadas, containers ou ambientes descartáveis — não diretamente em endpoints corporativos.
+
+**Este devcontainer atende a esse requisito.**
+
+## Modelo de Isolamento
+
+```
++------------------------------------------------+
+|  Máquina Host (endpoint corporativo)           |
+|                                                |
+|  - Nenhum binário de ferramenta IA instalado   |
+|  - Nenhuma extensão ou plugin de IA            |
+|  - Apenas Docker é necessário                  |
+|                                                |
+|  +------------------------------------------+  |
+|  |  Container Docker (isolado)              |  |
+|  |                                          |  |
+|  |  Ferramentas de IA executam aqui:        |  |
+|  |  - Claude Code CLI                       |  |
+|  |  - Codex                                 |  |
+|  |                                          |  |
+|  |  Sem acesso a:                           |  |
+|  |  x Sistema de arquivos do host           |  |
+|  |  x Keychain / armazenamento de credenciais|  |
+|  |  x Área de transferência do host         |  |
+|  |  x Interfaces de rede do host            |  |
+|  |  x Outras aplicações do host             |  |
+|  +------------------------------------------+  |
++------------------------------------------------+
+```
+
+## Controles de Segurança
+
+### Sem Montagem de Volumes do Host
+
+Todos os dados residem em volumes nomeados do Docker — não em diretórios do host montados via bind. Um comprometimento dentro do container **não pode** acessar arquivos na sua máquina host. Consulte [Configuração — Persistência de Dados](./configuration#data-persistence) para detalhes sobre volumes.
+
+### Sem Armazenamentos de Credenciais Compartilhados
+
+O container não tem acesso ao macOS Keychain, Windows Credential Manager, perfis de navegador ou ao agente SSH do host. Chaves SSH são injetadas na inicialização via variável de ambiente codificada em base64 e existem apenas dentro do container.
+
+### Sem Sincronização de Área de Transferência
+
+Containers Docker não compartilham o estado da área de transferência com o host. Dados não podem vazar através de copiar/colar.
+
+### Isolamento de Rede
+
+O container se comunica com o mundo externo em um dos dois modos de autenticação suportados:
+
+- **Modo proxy LiteLLM** — HTTPS de saída para seu proxy LiteLLM através do NAT do Docker.
+- **Modo OAuth** — HTTPS de saída diretamente para a Anthropic através do NAT do Docker.
+
+O container não tem acesso a túneis VPN, interfaces de rede corporativas ou outros serviços no host.
+
+### Efêmero por Design
+
+Todo o ambiente pode ser destruído e recriado em segundos. Trate o container como descartável.
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down -v
+docker compose pull && docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down -v
+podman-compose pull && podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+### Ferramentas Apenas CLI
+
+Este ambiente executa ferramentas de IA como **interfaces de linha de comando apenas**. Sem aplicações desktop, sem extensões de navegador, sem frameworks DXT. A vulnerabilidade que motivou este modelo de isolamento não se aplica ao uso via CLI dentro de um container.
+
+### Hardening do Container
+
+O `docker-compose.yml` aplica diversas medidas de defesa em profundidade:
+
+- **Remoção de capabilities** — Todas as capabilities do Linux são removidas (`cap_drop: ALL`), e apenas o conjunto mínimo é readicionado: `CHOWN`, `DAC_OVERRIDE`, `FOWNER` (para correções de permissão de volumes no entrypoint), `SETUID`/`SETGID` (para sudo), `NET_RAW` (para ping/tcpdump) e `NET_ADMIN` (para ferramentas de captura de pacotes como Wireshark e bettercap).
+- **Limites de recursos** — CPU (4 núcleos), memória (8 GB) e contagem de PIDs (4096) são limitados via `mem_limit`, `cpus` e `pids_limit` para prevenir ataques de exaustão de recursos.
+- **tmpfs para `/tmp`** — O diretório `/tmp` é montado como tmpfs de 256 MB, mantendo arquivos temporários em memória e impedindo que persistam na camada gravável do container.
+- **Validação TLS habilitada por padrão** — `NODE_TLS_REJECT_UNAUTHORIZED` não é definido, então o Node.js valida certificados TLS por padrão. Usuários que precisam aceitar certificados autoassinados (por exemplo, para um proxy interno) podem optar por adicionar `NODE_TLS_REJECT_UNAUTHORIZED=0` ao seu arquivo `.env`.
+- **Umask de chave SSH** — Chaves privadas SSH são gravadas com `umask 077`, de modo que o arquivo nunca é legível por todos — mesmo brevemente — entre a criação e a chamada `chmod`.
+
+### Ferramentas de Segurança e Teste de Penetração
+
+O container inclui aproximadamente 80 ferramentas de segurança e teste de penetração pré-instaladas para cenários de teste autorizados. As ferramentas são organizadas por categoria:
+
+| Categoria | Ferramentas (exemplos) |
+|----------|-----------------|
+| Análise de rede | tshark, wireshark, masscan, hping3, bettercap (amd64), netdiscover |
+| Scanners web | nikto, sqlmap, dirb, whatweb, sslscan, OWASP ZAP, dalfox, feroxbuster |
+| Senha e autenticação | hydra, john, hashcat, medusa, ncrack |
+| Engenharia reversa | radare2, Ghidra, gdb, binwalk, strace, ltrace |
+| Reconhecimento | subfinder, amass, httpx, nuclei, gau, waybackurls, recon-ng, spiderfoot |
+| Fuzzing e enumeração | ffuf, gobuster, SecLists |
+| Cadeia de suprimentos e segredos | trufflehog, grype, syft, gitleaks, trivy |
+| Frameworks de exploração | Metasploit (amd64), searchsploit (ExploitDB) |
+
+Algumas ferramentas (bettercap, Metasploit) estão disponíveis apenas em amd64 devido a restrições de empacotamento upstream. Ferramentas de captura de pacotes (tshark, bettercap) requerem a capability `NET_ADMIN`, que está incluída no `docker-compose.yml` padrão.
+
+Para a lista completa, execute `claude-self-test` dentro do container (a seção 7 verifica todas as ferramentas de segurança).
+
+## Lista de Verificação de Conformidade
+
+| Requisito | Status |
+|---|---|
+| Ferramentas de IA não instaladas no endpoint host | Sim |
+| Executa em VM ou container isolado | Sim |
+| Sem acesso a compartilhamentos de arquivo do host | Sim |
+| Sem sincronização de área de transferência | Sim |
+| Sem armazenamentos de credenciais compartilhados | Sim |
+| Sem split tunneling VPN em redes de produção | Sim |
+| Ambiente é descartável | Sim |
+| Sem extensões ou plugins desktop | Sim |
+| Capabilities do Linux removidas (privilégio mínimo) | Sim |
+| Limites de recursos aplicados (CPU/memória/PIDs) | Sim |
+| Validação de certificado TLS habilitada por padrão | Sim |
+| Serviços internos vinculados apenas ao localhost | Sim |
+
+## Melhores Práticas
+
+1. **Não instale ferramentas de codificação com IA na sua máquina host.** Use este container em vez disso.
+2. **Não adicione bind mounts** ao `docker-compose.yml`. A configuração com volumes nomeados é intencional.
+3. **Rotacione chaves SSH** usadas dentro do container periodicamente.
+4. **Revise o `.env` antes de compartilhar.** Ele contém chaves de API e pode conter chaves privadas SSH.
+5. **Atualize periodicamente** para obter correções de segurança:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+</TabItem>
+<TabItem label="Podman">
+
+   ```bash
+   podman-compose pull && podman-compose up -d
+   ```
+
+</TabItem>
+</Tabs>
+## Referências
+
+- [LayerX: Claude Desktop Extensions RCE](https://layerxsecurity.com/blog/claude-desktop-extensions-rce/)
+- [Dev Containers Specification](https://containers.dev/)
+- [Docker Security Best Practices](https://docs.docker.com/engine/security/)

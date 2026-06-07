@@ -1,0 +1,374 @@
+---
+title: 문제 해결
+description: 일반적인 문제와 해결 방법.
+sidebar:
+  order: 8
+i18n:
+  sourceHash: b20e2081d644
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## 컨테이너가 시작되지 않음
+
+### "Conflict. The container name is already in use"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker rm -f devcontainer
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman rm -f devcontainer
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+## AI 도구가 작동하지 않음
+
+### "claude: command not found"
+
+이미지가 오래되었을 수 있습니다. 최신 이미지를 풀하고 재시작하세요:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose pull
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+### Claude에서 "Not logged in" 표시
+
+엔트리포인트가 온보딩 플래그와 함께 `~/.claude.json`을 시드합니다. 파일이 없는 경우:
+
+```bash
+echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
+```
+
+### Claude에서 "Invalid API key" 표시
+
+실제로 설정된 값을 확인하세요:
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+일반적인 원인:
+
+- **LiteLLM 프록시 키가 없거나 유효하지 않음** — 프록시 모드를 사용하는 경우 `.env`의 `LITELLM_API_KEY`에 올바른 프록시 자격 증명이 포함되어 있는지 확인한 다음, 엔트리포인트가 `ANTHROPIC_API_KEY`를 파생할 수 있도록 컨테이너를 재시작하세요.
+- **OAuth 토큰 또는 프록시 모드 불일치** — 정확히 하나의 인증 모드만 사용하세요. `CLAUDE_CODE_OAUTH_TOKEN`이 설정되어 있으면 LiteLLM 프록시 모드보다 우선합니다.
+
+### API 요청이 401로 실패
+
+API 키가 올바르게 설정되어 있는지 확인하세요:
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+프로바이더에 직접 호출하여 작동하는지 확인하세요.
+
+### Claude에서 "model not found" 표시
+
+모델은 프로바이더와 API 키에 의해 결정됩니다. 사용 가능한 모델은 프로바이더의 문서를 확인하세요.
+
+## GitHub CLI
+
+### "gh: not authenticated"
+
+`gh` CLI는 `GH_TOKEN` 환경 변수가 필요합니다. `.env` 파일에 추가하세요:
+
+```ini
+GH_TOKEN=ghp_your-token-here
+```
+
+[github.com/settings/tokens](https://github.com/settings/tokens)에서 토큰을 생성하세요. 세분화된 토큰(권장) 또는 `repo` 범위의 클래식 토큰 모두 사용 가능합니다. `.env`를 업데이트한 후 컨테이너를 재시작하세요.
+
+### HTTPS git clone이 401로 실패
+
+`GH_TOKEN`이 설정되면 엔트리포인트가 `gh auth setup-git`을 실행하여 HTTPS용 git 자격 증명 도우미를 구성합니다. HTTPS 작업이 실패하는 경우:
+
+1. 토큰이 유효한지 확인: `gh auth status`
+2. 자격 증명 도우미가 구성되어 있는지 확인: `git config --global credential.helper`
+3. 엔트리포인트를 다시 실행하려면 컨테이너를 재시작
+
+### SSH vs HTTPS
+
+컨테이너에서 두 인증 방법 모두 공존할 수 있습니다:
+
+- **SSH** (`.env`의 `SSH_PRIVATE_KEY`) — `git@github.com:` URL을 사용합니다. 조직에서 SSH를 강제하는 경우 필요합니다.
+- **HTTPS** (`.env`의 `GH_TOKEN`) — `https://github.com/` URL을 사용합니다. 설정이 더 간단하고 키 관리가 필요 없습니다.
+
+둘 다 구성된 경우 git은 리모트 URL과 일치하는 프로토콜을 사용합니다. 기존 클론을 전환하려면:
+
+```bash
+# SSH에서 HTTPS로
+git remote set-url origin https://github.com/owner/repo.git
+
+# HTTPS에서 SSH로
+git remote set-url origin git@github.com:owner/repo.git
+```
+
+## 권한 문제
+
+### /workspace 또는 /home에서 "Permission denied"
+
+```bash
+sudo chown -R $(id -u):$(id -g) /workspace ~
+```
+
+### npm install이 EACCES로 실패
+
+엔트리포인트는 `~/.npm-global`에 사용자 쓰기 가능한 npm 전역 접두사를 자동으로 구성하므로, 런타임 `npm install -g` 명령은 `sudo` 없이 작동해야 합니다. 여전히 EACCES 오류가 발생하면 수동으로 수정을 다시 적용하세요:
+
+```bash
+mkdir -p ~/.npm-global
+npm config set prefix ~/.npm-global
+export PATH="$HOME/.npm-global/bin:$PATH"
+```
+
+## 빌드 문제
+
+### 빌드가 매우 오래 걸림
+
+첫 번째 빌드는 베이스 이미지(~1 GB)를 다운로드합니다. 이후 빌드는 캐시를 사용합니다. 매번 느린 경우:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker builder prune
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman builder prune
+```
+
+</TabItem>
+</Tabs>
+
+### "No space left on device"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker system prune -a --volumes
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman system prune -a --volumes
+```
+
+</TabItem>
+</Tabs>
+
+**경고:** 이 명령은 이 프로젝트뿐만 아니라 사용하지 않는 모든 컨테이너, 이미지 및 볼륨을 제거합니다.
+
+## 네트워킹
+
+### 컨테이너 내부에서 인터넷에 접속할 수 없음
+
+```bash
+ping -c 1 8.8.8.8
+nslookup google.com
+curl -I https://github.com
+```
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+DNS가 실패하면 호스트의 `/etc/docker/daemon.json`에 추가하세요:
+
+```json
+{
+  "dns": ["8.8.8.8", "8.8.4.4"]
+}
+```
+
+그런 다음 Docker를 재시작하세요.
+
+</TabItem>
+<TabItem label="Podman">
+
+DNS가 실패하면 Podman 머신 내부에서 DNS를 구성하세요:
+
+```bash
+podman machine ssh
+sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+exit
+```
+
+또는 호스트의 `~/.config/containers/containers.conf`에 DNS 설정을 추가하세요:
+
+```ini
+[containers]
+dns_servers = ["8.8.8.8", "8.8.4.4"]
+```
+
+그런 다음 Podman을 재시작하세요: `podman machine stop && podman machine start`.
+
+</TabItem>
+</Tabs>
+
+## 원격 디스플레이 (noVNC)
+
+### noVNC에서 검은 화면
+
+Xvfb가 시작되지 않았을 수 있습니다. 컨테이너 내부에서 확인하세요:
+
+```bash
+ps aux | grep Xvfb
+```
+
+실행 중이 아니라면 `ENABLE_VNC`가 `false`로 설정되어 있지 않은지 확인하고 컨테이너를 재시작하세요.
+
+### "Cannot open display" 또는 "No display" 오류
+
+`DISPLAY` 환경 변수가 설정되지 않았을 수 있습니다. 확인하세요:
+
+```bash
+echo "$DISPLAY"
+```
+
+`:99`여야 합니다. 비어 있으면 `.env` 또는 `devcontainer.json`에 `DISPLAY=:99`를 추가하고 재시작하세요.
+
+### 포트 6080 연결 거부
+
+noVNC가 실행 중이 아닐 수 있습니다. 컨테이너 내부에서 확인하세요:
+
+```bash
+ps aux | grep -E 'novnc|websockify'
+```
+
+실행 중이 아니라면 `ENABLE_VNC`가 `true`(기본값)인지 확인하고 컨테이너 로그를 확인하세요:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose logs dev | grep -i vnc
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose logs dev | grep -i vnc
+```
+
+</TabItem>
+</Tabs>
+
+### 포트 6080이 이미 사용 중
+
+`docker-compose.yml`에서 호스트 포트를 변경하세요:
+
+```yaml
+ports:
+  - "127.0.0.1:16080:6080"
+```
+
+## Chrome DevTools MCP
+
+### Chrome 원격 디버깅이 응답하지 않음
+
+공유 Chrome 인스턴스는 포트 9222에서 실행되어야 합니다. 컨테이너 내부에서 확인하세요:
+
+```bash
+# Chrome이 실행 중인가?
+curl http://localhost:9222/json/version
+
+# Chrome 로그 확인
+cat ~/.local/share/chrome-browser/chrome.log
+
+# 심볼릭 링크 확인
+ls -la /opt/google/chrome/chrome
+
+# Chrome 수동 재시작
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
+```
+
+심볼릭 링크가 없으면 최신 이미지를 풀하고 컨테이너를 재시작하세요.
+
+### 브라우저 프로필 잠금 오류
+
+공유 브라우저 아키텍처에서는 프로필 잠금 오류가 발생하지 않아야 합니다. 오류가 발생하면 오래된 Chrome 프로세스가 잠금을 유지하고 있을 수 있습니다:
+
+```bash
+# 오래된 Chrome 프로세스 종료
+pkill -f 'chrome.*remote-debugging-port' || true
+
+# 잠금 파일 제거
+rm -f ~/.cache/chrome-devtools-mcp/chrome-profile/SingletonLock
+
+# Chrome 재시작
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
+```
+
+### chrome-devtools-mcp 도구 중복
+
+chrome-devtools-mcp 서버는 이제 `~/.claude/settings.json`에 전역으로 등록됩니다. 리포지토리별 `.mcp.json`에도 등록되어 있으면 도구가 중복됩니다. 리포지토리별 `.mcp.json` 파일에서 `chrome-devtools-mcp` 항목을 제거하세요:
+
+```bash
+# 리포지토리별 설정 확인
+cat .mcp.json
+```
+
+전역 등록을 사용하려면 리포지토리별 `.mcp.json`에서 `chrome-devtools-mcp` 키를 제거하세요.
+
+## 모든 것 초기화
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down -v
+docker rm -f devcontainer 2>/dev/null
+docker compose pull
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down -v
+podman rm -f devcontainer 2>/dev/null
+podman-compose pull
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+이 작업은 볼륨의 모든 데이터를 삭제합니다. 리포지토리를 다시 클론하고 도구를 재구성해야 합니다.

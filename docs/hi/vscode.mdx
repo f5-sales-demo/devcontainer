@@ -1,0 +1,83 @@
+---
+title: VS Code
+description: VS Code के "Reopen in Container" वर्कफ़्लो के साथ Dev Container का उपयोग करें।
+sidebar:
+  order: 6
+i18n:
+  sourceHash: defce3bee2ff
+  translator: machine
+---
+
+## पूर्वापेक्षाएँ
+
+1. [VS Code](https://code.visualstudio.com/)
+2. [Dev Containers एक्सटेंशन](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
+3. आपकी मशीन पर Docker या Podman चल रहा होना चाहिए (देखें [शुरू करना](./getting-started#container-runtime))। VS Code Dev Containers [Podman को बैकएंड के रूप में](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman) भी सपोर्ट करता है।
+
+## त्वरित शुरुआत
+
+```bash
+git clone https://github.com/f5xc-salesdemos/devcontainer.git
+code devcontainer
+```
+
+VS Code `.devcontainer/devcontainer.json` का पता लगाता है और एक नोटिफिकेशन दिखाता है: **"Reopen in Container"**। इस पर क्लिक करें, या कमांड पैलेट का उपयोग करें:
+
+> **Dev Containers: Reopen in Container**
+
+VS Code इमेज बिल्ड (या पुल) करता है, कंटेनर शुरू करता है, एक्सटेंशन इंस्टॉल करता है, और कंटेनर के अंदर एक टर्मिनल खोलता है।
+
+## यह कैसे काम करता है
+
+`.devcontainer/devcontainer.json` फ़ाइल VS Code को Docker Compose का उपयोग करने के लिए कहती है:
+
+```json
+"dockerComposeFile": ["../docker-compose.yml", "../docker-compose.build.yml"],
+"service": "dev",
+"workspaceFolder": "/workspace"
+```
+
+devcontainer कॉन्फ़िग स्पष्ट रूप से बिल्ड फ़ाइल को शामिल करता है, ताकि जब आप "Reopen in Container" या "Rebuild Container" का उपयोग करें तो VS Code इमेज को स्थानीय रूप से बिल्ड कर सके।
+
+## एक्सटेंशन
+
+एक्सटेंशन कंटेनर के अंदर स्वचालित रूप से इंस्टॉल होते हैं:
+
+| एक्सटेंशन | विवरण |
+|-----------|-------------|
+| Python | Python भाषा सपोर्ट |
+| ESLint | JavaScript/TypeScript लिंटिंग |
+| Prettier | कोड फ़ॉर्मेटिंग |
+| Docker | Dockerfile और compose सपोर्ट |
+| Terraform | HCL भाषा सपोर्ट |
+| Go | Go भाषा सपोर्ट |
+| Rust Analyzer | Rust भाषा सपोर्ट |
+| YAML | YAML भाषा सपोर्ट |
+| Kubernetes | Kubernetes मैनिफ़ेस्ट सपोर्ट |
+
+एक्सटेंशन जोड़ने के लिए, `.devcontainer/devcontainer.json` में `customizations.vscode.extensions` ऐरे को संपादित करें।
+
+## पोर्ट फ़ॉरवर्डिंग
+
+VS Code स्वचालित रूप से compose फ़ाइल में परिभाषित पोर्ट्स को फ़ॉरवर्ड करता है। noVNC डिस्प्ले `http://localhost:6080/vnc.html` पर उपलब्ध है — जब पोर्ट तैयार होगा तो VS Code आपको सूचित करेगा।
+
+अतिरिक्त पोर्ट्स VS Code में **Ports** पैनल से ऑन-डिमांड फ़ॉरवर्ड किए जा सकते हैं।
+
+## Devcontainer CLI विकल्प
+
+यदि आप VS Code UI की बजाय कमांड लाइन पसंद करते हैं:
+
+```bash
+npm install -g @devcontainers/cli
+
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . zsh
+```
+
+## पुनर्निर्माण
+
+`Dockerfile` या compose फ़ाइलों में बदलाव करने के बाद:
+
+> **Dev Containers: Rebuild Container**
+
+यह इमेज को पुनर्निर्मित करता है और कंटेनर को पुनः शुरू करता है। नामित वॉल्यूम (`workspace`, `home`) पुनर्निर्माण के बाद भी बने रहते हैं।

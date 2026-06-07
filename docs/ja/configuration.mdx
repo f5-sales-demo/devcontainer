@@ -1,0 +1,228 @@
+---
+title: 設定
+description: 環境変数、ビルドレイヤー、データ永続化、およびカスタマイズ。
+sidebar:
+  order: 2
+i18n:
+  sourceHash: 0eca3d50d0f5
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+すべての設定はプロジェクトルートの `.env` ファイルに記述します。このファイルは gitignore に含まれており、コミットされることはありません。
+
+## 環境変数
+
+### AIプロバイダー
+
+コンテナは2つの**排他的な**認証モードをサポートしています（優先順位順）：
+
+- **LiteLLMプロキシ** — `LITELLM_BASE_URL` と `LITELLM_API_KEY` を設定して、LiteLLMプロキシ経由でルーティングします（以下参照）。
+- **OAuthモード** — `CLAUDE_CODE_OAUTH_TOKEN` のみを設定します（以下参照）。
+
+モードを組み合わせないでください — いずれか1つだけを使用してください。
+
+### Claude Max（OAuth）
+
+| 変数 | 説明 | 例 |
+|----------|-------------|---------|
+| `CLAUDE_CODE_OAUTH_TOKEN` | Claude MaxサブスクリプションのOAuthトークン | `sk-ant-oat01-...` |
+
+設定すると、Claude CodeはOAuthを使用してAnthropicに直接認証します — APIキーやプロキシは不要です。トークンはClaude Codeの設定または[Anthropicコンソール](https://console.anthropic.com/)から取得できます。
+
+### LiteLLMプロキシ
+
+LiteLLM（またはその他の）プロキシがネイティブのAnthropic Messages API（`web_search`、ストリーミング、ツール使用を含む）に対応している場合、`LITELLM_BASE_URL` にプロキシドメインを設定します。コンテナはプロバイダー固有のURLを自動的に導出します：
+
+- Anthropicエンドポイント → `${LITELLM_BASE_URL}/anthropic`（Claude Codeが使用）
+- OpenAI互換エンドポイント → `${LITELLM_BASE_URL}/openai/v1`
+
+| 変数 | 説明 | 例 |
+|----------|-------------|---------|
+| `LITELLM_BASE_URL` | LiteLLMプロキシのドメイン（パスサフィックスなし） | `https://litellm.example.com` |
+| `LITELLM_API_KEY` | プロキシ認証用のAPIキー | `your-api-key` またはデフォルトで `litellm-proxy` |
+
+ユーザーはドメインを設定するだけで十分です — プロバイダーのパスサフィックスは自動的に追加されます。
+実行時、エントリポイントは `LITELLM_API_KEY` から `ANTHROPIC_API_KEY` を導出するため、Claude Codeはユーザー向けの別の変数を必要とせずにプロキシ認証情報を使用できます。
+
+このモードではモデル名は**リマップされません**。Claude Codeは標準のモデル識別子（例：`claude-sonnet-4-6`）を送信し、LiteLLMが設定されたバックエンドにルーティングします。
+
+### TLS証明書の検証
+
+デフォルトでは、Node.jsはすべてのHTTPS接続に対してTLS証明書を検証します。上流のAPIプロバイダーが自己署名証明書を使用している場合（内部のOpen WebUIやLiteLLMプロキシでよくあります）、`.env` ファイルに以下を追加して検証を無効にできます：
+
+```ini
+NODE_TLS_REJECT_UNAUTHORIZED=0
+```
+
+これは本番環境での使用は**推奨されません**。コンテナとAPIエンドポイント間のネットワークパスを信頼できる場合にのみ設定してください。
+
+### AIコーディングエージェント
+
+コンテナにはClaude Codeに加えて、いくつかのAIコーディングエージェントが含まれています：
+
+| エージェント | コマンド | プロバイダー |
+|-------|---------|----------|
+| [Codex](https://github.com/openai/codex) | `codex` | OpenAI互換 |
+| [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | マルチプロバイダー（実行時に設定） |
+| [Oh-My-Pi](https://github.com/can1357/oh-my-pi) | `omp` | マルチプロバイダー（実行時に設定） |
+
+PiとOh-My-Piはグローバルnpmパッケージとしてインストールされます。Codexは実行時に自動更新するスタンドアロンバイナリです。
+
+### リモートディスプレイ（noVNC）
+
+コンテナは、GUIブラウザの監視と操作のための仮想ディスプレイスタックを実行します。接続手順と環境変数（`ENABLE_VNC`、`VNC_RESOLUTION`、`DISPLAY`、`NOVNC_HOST_PORT`）については[リモートディスプレイ（noVNC）](./vnc)を参照してください。
+
+### Chrome DevTools MCP
+
+コンテナには、ヘッドレスブラウザ自動化のための事前設定済みの[Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp)サーバーが含まれています。Claude Codeは追加のセットアップなしに、Webページのナビゲーション、スクリーンショットの取得、DOMの検査が可能です。詳細は[Chrome DevTools MCP](./chrome)を参照してください。
+
+### Git
+
+| 変数 | 説明 | 設定方法 |
+|----------|-------------|------------|
+| `GIT_AUTHOR_NAME` | gitコミット用の名前 | `git config user.name` |
+| `GIT_AUTHOR_EMAIL` | gitコミット用のメールアドレス | `git config user.email` |
+
+ホストでgitが設定されている場合、両方の値を自動取得できます：
+
+```bash
+echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
+echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
+```
+
+### SSH
+
+| 変数 | 説明 | 設定方法 |
+|----------|-------------|------------|
+| `SSH_PRIVATE_KEY` | Base64エンコードされた秘密鍵 | `base64 < ~/.ssh/id_ed25519` |
+
+### GitHub CLI
+
+| 変数 | 説明 | 設定方法 |
+|----------|-------------|------------|
+| `GH_TOKEN` | `gh` CLIおよびHTTPS git用のGitHubパーソナルアクセストークン | `gh auth token`（ローカルに `gh` がインストールされている場合） |
+
+`.env` に `GH_TOKEN` を設定すると、`gh` CLIは自動的に認証されます — `gh auth login` の実行は不要です。エントリポイントは `gh auth setup-git` も実行し、gitクレデンシャルヘルパーを設定するため、SSHキーなしでHTTPSの `git clone` や `git push` が動作します。
+
+ホストマシンに `gh` がインストールされ認証済みの場合、トークンを直接抽出できます：
+
+```bash
+echo "GH_TOKEN=$(gh auth token)" >> .env
+```
+
+それ以外の場合は、[パーソナルアクセストークンを作成](https://github.com/settings/tokens)して手動で追加してください。きめ細かいトークン（推奨）とクラシックトークンの両方が使用できます。きめ細かいトークンでは、特定のリポジトリへのアクセスをスコープ指定できます。クラシックトークンには、プライベートリポジトリへのアクセスに `repo` スコープが必要です。
+
+コンテナ内で認証を確認するには：
+
+```bash
+gh auth status
+```
+
+## ツールのインストール方法
+
+すべての言語ランタイム、CLI、ツールは、イメージビルド時に `Dockerfile` で直接インストールされます。ビルド済みイメージは `main` へのプッシュごとに `ghcr.io/f5xc-salesdemos/devcontainer:latest` に公開されるため、ほとんどのユーザーはローカルでビルドする必要はありません。
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+`docker compose up -d` を実行すると、ビルド済みイメージが自動的にプルされます。Dockerfileをカスタマイズした後にローカルでビルドするには、ビルドファイルを明示的に指定します：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+詳細は[ローカル開発](./local-development)を参照してください。
+
+</TabItem>
+<TabItem label="Podman">
+
+`podman-compose up -d` を実行すると、ビルド済みイメージが自動的にプルされます。Dockerfileをカスタマイズした後にローカルでビルドするには、ビルドファイルを明示的に指定します：
+
+```bash
+podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+詳細は[ローカル開発](./local-development)を参照してください。
+
+</TabItem>
+</Tabs>
+
+Dockerfileは、Dockerレイヤーキャッシュに最適化された2段階ビルドを使用しています。レイヤーの完全な内訳とビルドキャッシュの詳細については、[ローカル開発 — 2段階ビルドアーキテクチャ](./local-development#two-stage-build-architecture)を参照してください。
+
+## Claude Codeのツール認識
+
+コンテナには、Claude Codeがツール名を混同しないようにするための組み込み設定が含まれています。ツール認識は多層防御のために**2つ**のメモリ階層にインストールされています：
+
+- **マネージドポリシー**（`/etc/claude-code/CLAUDE.md`） — Dockerビルド時にインストールされます。これはClaude Codeのメモリ階層で最も優先度が高い層であり、作業ディレクトリに大きなプロジェクト `CLAUDE.md` が存在する場合でも常に読み込まれます。
+- **ユーザーメモリ**（`~/.claude/CLAUDE.md`） — 初回起動時にエントリポイントによってシードされます。バックアップレイヤーと、ユーザーがカスタマイズ可能な可視コピーを提供します。
+
+### メモリ階層の優先順位
+
+Claude Codeは複数のメモリ階層から指示を読み込みます（優先度の高い順）：
+
+1. **マネージドポリシー**（`/etc/claude-code/`） — 常に読み込まれ、除外できない
+2. **プロジェクトメモリ**（`./CLAUDE.md`） — プロジェクトディレクトリごとに読み込まれる
+3. **ユーザーメモリ**（`~/.claude/CLAUDE.md`） — すべてのセッションでグローバルに読み込まれる
+4. **ローカルメモリ**（`./CLAUDE.local.md`） — プロジェクトごとの個人的なオーバーライド
+
+マネージドポリシー階層がない場合、ユーザーメモリのツール認識は大きなプロジェクトレベルの `CLAUDE.md` と競合して優先度が下がり、ClaudeがPascalCaseのツール名の認識を失う可能性があります。マネージド階層により、ツール認識が常に最高優先度で読み込まれることが保証されます。
+
+### セルフテスト
+
+組み込みのセルフテストを実行して設定を確認します：
+
+```bash
+claude-self-test
+```
+
+これにより、すべての設定ファイルが所定の位置にあり、期待されるツール参照が含まれていることが確認されます。
+
+## ツールの追加
+
+イメージにツールを追加するには、`Dockerfile` を編集してローカルでリビルドします。APTパッケージ、npmツール、pipツール、バイナリダウンロードの追加手順については、[ローカル開発 — ツールの追加](./local-development#adding-tools)を参照してください。
+
+## VS Code拡張機能
+
+拡張機能は `.devcontainer/devcontainer.json` の `customizations.vscode.extensions` で設定されており、VS Codeで開く際に自動的にインストールされます。
+
+## データ永続化
+
+すべてのデータは名前付きボリュームに保存されます — ホストディレクトリはマウントされません：
+
+| ボリューム | マウントポイント | 内容 |
+|--------|-------------|----------|
+| `workspace` | `/workspace` | クローンしたリポジトリとプロジェクトファイル |
+| `home` | `/home/vscode` | シェル履歴、ツール設定、キャッシュ、SSHキー |
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+どちらもコンテナの再起動やリビルド後も保持されます。再起動前に `docker compose pull` を実行して最新のビルド済みイメージを取得してください。
+
+| アクション | データ |
+|--------|------|
+| `docker compose down` | 保持される |
+| `docker compose down -v` | **削除される** |
+
+</TabItem>
+<TabItem label="Podman">
+
+どちらもコンテナの再起動やリビルド後も保持されます。再起動前に `podman-compose pull` を実行して最新のビルド済みイメージを取得してください。
+
+| アクション | データ |
+|--------|------|
+| `podman-compose down` | 保持される |
+| `podman-compose down -v` | **削除される** |
+
+</TabItem>
+</Tabs>
+
+## ポートマッピング
+
+| ホスト | コンテナ | サービス |
+|------|-----------|---------|
+| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNCリモートディスプレイ（localhostのみ、`NOVNC_HOST_PORT` でオーバーライド可能） |
+
+ポートは `127.0.0.1` にバインドされるため、ネットワークからではなく、自分のマシンからのみアクセスできます。

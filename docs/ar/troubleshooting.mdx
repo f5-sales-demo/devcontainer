@@ -1,0 +1,374 @@
+---
+title: استكشاف الأخطاء وإصلاحها
+description: المشكلات الشائعة وكيفية حلها.
+sidebar:
+  order: 8
+i18n:
+  sourceHash: b20e2081d644
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## الحاوية لا تبدأ
+
+### "Conflict. The container name is already in use"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker rm -f devcontainer
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman rm -f devcontainer
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+## أدوات الذكاء الاصطناعي لا تعمل
+
+### "claude: command not found"
+
+قد تكون الصورة قديمة. قم بسحب أحدث إصدار وأعد التشغيل:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose pull
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+### Claude يظهر "Not logged in"
+
+تقوم نقطة الدخول بتهيئة `~/.claude.json` بعلامات الإعداد الأولي. إذا كان مفقودًا:
+
+```bash
+echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
+```
+
+### Claude يظهر "Invalid API key"
+
+تحقق من القيمة المُعيّنة فعليًا:
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+الأسباب الشائعة:
+
+- **مفتاح وكيل LiteLLM مفقود أو غير صالح** — إذا كنت تستخدم وضع الوكيل، تأكد من أن `LITELLM_API_KEY` في `.env` يحتوي على بيانات اعتماد الوكيل الصحيحة، ثم أعد تشغيل الحاوية حتى تتمكن نقطة الدخول من اشتقاق `ANTHROPIC_API_KEY`.
+- **عدم تطابق رمز OAuth أو وضع الوكيل** — استخدم وضع مصادقة واحد فقط. إذا تم تعيين `CLAUDE_CODE_OAUTH_TOKEN`، فإنه يأخذ الأولوية على وضع وكيل LiteLLM.
+
+### طلبات API تفشل مع خطأ 401
+
+تحقق من أن مفتاح API مُعيّن بشكل صحيح:
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+تحقق من أنه يعمل عن طريق إجراء استدعاء مباشر لمزود الخدمة الخاص بك.
+
+### Claude يقول "model not found"
+
+يتم تحديد النموذج بواسطة مزود الخدمة ومفتاح API الخاص بك. راجع وثائق مزود الخدمة الخاص بك للاطلاع على النماذج المتاحة.
+
+## واجهة سطر أوامر GitHub
+
+### "gh: not authenticated"
+
+تتطلب واجهة سطر أوامر `gh` متغير بيئة `GH_TOKEN`. أضفه إلى ملف `.env` الخاص بك:
+
+```ini
+GH_TOKEN=ghp_your-token-here
+```
+
+أنشئ رمزًا في [github.com/settings/tokens](https://github.com/settings/tokens). تعمل كل من الرموز الدقيقة (مُوصى بها) والرموز الكلاسيكية ذات نطاق `repo`. أعد تشغيل الحاوية بعد تحديث `.env`.
+
+### فشل استنساخ HTTPS مع خطأ 401
+
+عند تعيين `GH_TOKEN`، تقوم نقطة الدخول بتشغيل `gh auth setup-git` لتكوين مساعد بيانات الاعتماد لـ git عبر HTTPS. إذا فشلت عمليات HTTPS:
+
+1. تحقق من صلاحية الرمز: `gh auth status`
+2. تحقق من تكوين مساعد بيانات الاعتماد: `git config --global credential.helper`
+3. أعد تشغيل الحاوية لإعادة تشغيل نقطة الدخول
+
+### SSH مقابل HTTPS
+
+يمكن لكلا طريقتي المصادقة التعايش في الحاوية:
+
+- **SSH** (`SSH_PRIVATE_KEY` في `.env`) — يستخدم عناوين URL بصيغة `git@github.com:`. مطلوب إذا كانت مؤسستك تفرض استخدام SSH.
+- **HTTPS** (`GH_TOKEN` في `.env`) — يستخدم عناوين URL بصيغة `https://github.com/`. إعداد أبسط، بدون إدارة مفاتيح.
+
+إذا تم تكوين كليهما، يستخدم git البروتوكول الذي يطابق عنوان URL البعيد. للتبديل في استنساخ موجود:
+
+```bash
+# SSH to HTTPS
+git remote set-url origin https://github.com/owner/repo.git
+
+# HTTPS to SSH
+git remote set-url origin git@github.com:owner/repo.git
+```
+
+## مشكلات الأذونات
+
+### "Permission denied" على /workspace أو /home
+
+```bash
+sudo chown -R $(id -u):$(id -g) /workspace ~
+```
+
+### فشل npm install مع خطأ EACCES
+
+تقوم نقطة الدخول تلقائيًا بتكوين بادئة npm عامة قابلة للكتابة من قبل المستخدم في `~/.npm-global`، لذا يجب أن تعمل أوامر `npm install -g` أثناء التشغيل بدون `sudo`. إذا كنت لا تزال ترى أخطاء EACCES، أعد تطبيق الإصلاح يدويًا:
+
+```bash
+mkdir -p ~/.npm-global
+npm config set prefix ~/.npm-global
+export PATH="$HOME/.npm-global/bin:$PATH"
+```
+
+## مشكلات البناء
+
+### البناء يستغرق وقتًا طويلاً جدًا
+
+يقوم البناء الأول بتنزيل الصورة الأساسية (~1 جيجابايت). تستخدم عمليات البناء اللاحقة ذاكرة التخزين المؤقت. إذا كان بطيئًا في كل مرة:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker builder prune
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman builder prune
+```
+
+</TabItem>
+</Tabs>
+
+### "No space left on device"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker system prune -a --volumes
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman system prune -a --volumes
+```
+
+</TabItem>
+</Tabs>
+
+**تحذير:** يؤدي هذا إلى إزالة جميع الحاويات والصور ووحدات التخزين غير المستخدمة — وليس فقط تلك الخاصة بهذا المشروع.
+
+## الشبكات
+
+### لا يمكن الوصول إلى الإنترنت من داخل الحاوية
+
+```bash
+ping -c 1 8.8.8.8
+nslookup google.com
+curl -I https://github.com
+```
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+إذا فشل DNS، أضف إلى `/etc/docker/daemon.json` على الجهاز المضيف:
+
+```json
+{
+  "dns": ["8.8.8.8", "8.8.4.4"]
+}
+```
+
+ثم أعد تشغيل Docker.
+
+</TabItem>
+<TabItem label="Podman">
+
+إذا فشل DNS، قم بتكوين DNS داخل جهاز Podman الافتراضي:
+
+```bash
+podman machine ssh
+sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+exit
+```
+
+أو أضف إعدادات DNS إلى `~/.config/containers/containers.conf` على الجهاز المضيف:
+
+```ini
+[containers]
+dns_servers = ["8.8.8.8", "8.8.4.4"]
+```
+
+ثم أعد تشغيل Podman: `podman machine stop && podman machine start`.
+
+</TabItem>
+</Tabs>
+
+## العرض عن بُعد (noVNC)
+
+### شاشة سوداء في noVNC
+
+قد لا يكون Xvfb قد بدأ. تحقق داخل الحاوية:
+
+```bash
+ps aux | grep Xvfb
+```
+
+إذا لم يكن قيد التشغيل، تحقق من أن `ENABLE_VNC` غير مُعيّن إلى `false` وأعد تشغيل الحاوية.
+
+### خطأ "Cannot open display" أو "No display"
+
+قد لا يكون متغير البيئة `DISPLAY` مُعيّنًا. تحقق:
+
+```bash
+echo "$DISPLAY"
+```
+
+يجب أن يكون `:99`. إذا كان فارغًا، أضف `DISPLAY=:99` إلى ملف `.env` أو `devcontainer.json` وأعد التشغيل.
+
+### رفض الاتصال على المنفذ 6080
+
+قد لا يكون noVNC قيد التشغيل. تحقق داخل الحاوية:
+
+```bash
+ps aux | grep -E 'novnc|websockify'
+```
+
+إذا لم يكن قيد التشغيل، تحقق من أن `ENABLE_VNC` مُعيّن إلى `true` (الافتراضي) وتحقق من سجلات الحاوية:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose logs dev | grep -i vnc
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose logs dev | grep -i vnc
+```
+
+</TabItem>
+</Tabs>
+
+### المنفذ 6080 قيد الاستخدام بالفعل
+
+غيّر منفذ المضيف في `docker-compose.yml`:
+
+```yaml
+ports:
+  - "127.0.0.1:16080:6080"
+```
+
+## Chrome DevTools MCP
+
+### تصحيح أخطاء Chrome عن بُعد لا يستجيب
+
+يجب أن يكون مثيل Chrome المشترك قيد التشغيل على المنفذ 9222. تحقق داخل الحاوية:
+
+```bash
+# Is Chrome running?
+curl http://localhost:9222/json/version
+
+# Check Chrome logs
+cat ~/.local/share/chrome-browser/chrome.log
+
+# Verify the symlink
+ls -la /opt/google/chrome/chrome
+
+# Restart Chrome manually
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
+```
+
+إذا كان الرابط الرمزي مفقودًا، قم بسحب أحدث صورة وأعد تشغيل الحاوية.
+
+### خطأ قفل ملف تعريف المتصفح
+
+مع بنية المتصفح المشترك، لا يجب أن تحدث أخطاء قفل ملف التعريف. إذا رأيت واحدًا، فقد تكون عملية Chrome قديمة تحتفظ بالقفل:
+
+```bash
+# Kill any stale Chrome processes
+pkill -f 'chrome.*remote-debugging-port' || true
+
+# Remove the lock file
+rm -f ~/.cache/chrome-devtools-mcp/chrome-profile/SingletonLock
+
+# Restart Chrome
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
+```
+
+### أدوات chrome-devtools-mcp مكررة
+
+خادم chrome-devtools-mcp مسجل الآن عالميًا في `~/.claude/settings.json`. إذا كان لديك ملف `.mcp.json` خاص بالمستودع يسجله أيضًا، فسترى أدوات مكررة. أزل إدخال `chrome-devtools-mcp` من ملفات `.mcp.json` الخاصة بالمستودعات:
+
+```bash
+# Check for per-repo config
+cat .mcp.json
+```
+
+أزل مفتاح `chrome-devtools-mcp` من أي ملف `.mcp.json` خاص بالمستودع لاستخدام التسجيل العالمي.
+
+## إعادة تعيين كل شيء
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down -v
+docker rm -f devcontainer 2>/dev/null
+docker compose pull
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down -v
+podman rm -f devcontainer 2>/dev/null
+podman-compose pull
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+يؤدي هذا إلى تدمير جميع البيانات في وحدات التخزين. ستحتاج إلى إعادة استنساخ المستودعات وإعادة تكوين الأدوات.

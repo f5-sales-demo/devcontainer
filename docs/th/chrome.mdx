@@ -1,0 +1,71 @@
+---
+title: Chrome DevTools MCP
+description: >-
+  การทำงานอัตโนมัติของเบราว์เซอร์ การจับภาพหน้าจอ และการตรวจสอบ DOM ผ่าน
+  headless Chrome instance ที่ใช้ร่วมกัน
+sidebar:
+  order: 4
+i18n:
+  sourceHash: a7b2a02aac42
+  translator: machine
+---
+
+คอนเทนเนอร์ประกอบด้วยเซิร์ฟเวอร์ [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) ที่กำหนดค่าไว้ล่วงหน้า ซึ่งให้ Claude Code มีความสามารถในการทำงานอัตโนมัติของ headless browser นำทางเว็บเพจ จับภาพหน้าจอ ตรวจสอบ DOM และโต้ตอบกับองค์ประกอบของหน้าเว็บ — โดยไม่ต้องตั้งค่าเพิ่มเติม
+
+## วิธีการทำงาน
+
+Entrypoint จะเปิด headless Chrome แบบถาวรพร้อม remote debugging บนพอร์ต 9222 เซิร์ฟเวอร์ chrome-devtools-mcp MCP ได้รับการลงทะเบียนในการตั้งค่า Claude Code และเชื่อมต่อกับเบราว์เซอร์ที่ใช้ร่วมกันผ่าน `--browserUrl` ทุกเซสชันใช้ browser instance เดียวและ cookie jar เดียวกัน — การเข้าสู่ระบบ คุกกี้ และการยืนยันตัวตนจะคงอยู่ข้ามโปรเจกต์
+
+## เครื่องมือที่พร้อมใช้งาน
+
+| เครื่องมือ | คำอธิบาย |
+|------|-------------|
+| `navigate_page` | นำทางไปยัง URL และรอให้หน้าเว็บโหลดเสร็จ |
+| `take_screenshot` | จับภาพหน้าจอเป็น PNG ของหน้าเว็บปัจจุบัน |
+| `take_snapshot` | รับ accessibility tree snapshot ของหน้าเว็บ |
+| `click` | คลิกองค์ประกอบบนหน้าเว็บ |
+| `type` | พิมพ์ข้อความลงในช่องกรอกข้อมูล |
+| `hover` | เลื่อนเมาส์ไปวางเหนือองค์ประกอบ |
+| `scroll` | เลื่อนหน้าเว็บหรือองค์ประกอบที่ระบุ |
+| `evaluate` | เรียกใช้ JavaScript ในบริบทของหน้าเว็บ |
+| `get_console_logs` | ดึงข้อความ console log |
+| `get_page_info` | รับข้อมูลเมตาของหน้าเว็บ (ชื่อเรื่อง, URL ฯลฯ) |
+
+## สถาปัตยกรรม
+
+Browser stack ใช้สี่องค์ประกอบที่ทำงานร่วมกัน:
+
+1. **Playwright Chromium** — ไบนารี Chromium ที่รองรับ ARM64 ติดตั้งเมื่อ build ผ่าน `npx playwright install --with-deps chromium`
+2. **Chrome symlink** — เชื่อมต่อพาธที่ Puppeteer คาดหวัง (`/opt/google/chrome/chrome`) ไปยังไบนารีของ Playwright
+3. **Shared Chrome process** — เปิดโดย `chrome-browser.sh` ด้วย `--remote-debugging-port=9222` รีสตาร์ทอัตโนมัติเมื่อเกิดข้อผิดพลาด
+4. **Global MCP registration** — `settings.json` ลงทะเบียน chrome-devtools-mcp ด้วย `--browserUrl=http://localhost:9222`
+
+Google Chrome ไม่มีแพ็คเกจ `.deb` สำหรับ ARM64 และแพ็คเกจ apt `chromium-browser` ของ Ubuntu 24.04 จะเปลี่ยนเส้นทางไปยัง snap (ซึ่งไม่ทำงานในคอนเทนเนอร์) Chromium ที่มาพร้อมกับ Playwright เป็นตัวเลือกเดียวที่เชื่อถือได้สำหรับคอนเทนเนอร์ ARM64
+
+## การตรวจสอบ
+
+ยืนยันว่าการตั้งค่าทำงานได้ภายในคอนเทนเนอร์:
+
+```bash
+# Chrome binary responds
+/opt/google/chrome/chrome --version
+
+# Symlink is correct
+ls -la /opt/google/chrome/chrome
+
+# Remote debugging is active
+curl http://localhost:9222/json/version
+
+# Self-test includes Chrome checks
+claude-self-test
+```
+
+## โหมด Headed (VNC)
+
+เมื่อ `ENABLE_VNC=true` entrypoint จะเริ่ม VNC stack ก่อนเปิด Chrome สคริปต์ `chrome-browser.sh` จะตรวจจับว่ามีการตั้งค่า `DISPLAY` และเรียกใช้ Chrome ในโหมด headed บน virtual display เพื่อให้คุณสามารถเห็นเบราว์เซอร์ใน VNC viewer
+
+เปิด `http://localhost:6080/vnc.html` เพื่อดู virtual display ดูรายละเอียดที่ [Remote Display (noVNC)](./vnc)
+
+## การแก้ไขปัญหา
+
+ดู [การแก้ไขปัญหา — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) สำหรับวิธีแก้ปัญหาที่พบบ่อย รวมถึงปัญหา remote debugging ล้มเหลว ข้อผิดพลาด profile lock และเครื่องมือ MCP ซ้ำซ้อน

@@ -1,0 +1,172 @@
+---
+title: 安全性
+description: 隔离模型如何保护您的主机和企业环境。
+sidebar:
+  order: 7
+i18n:
+  sourceHash: f7bae54e89ef
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## 背景
+
+2025 年 2 月，LayerX 安全研究团队披露了 Anthropic Claude Desktop Extensions（DXT）框架中一个严重的零点击远程代码执行漏洞。扩展在无沙箱环境下以完整系统权限运行，充当语言模型与本地操作系统之间的执行桥梁。
+
+许多企业安全团队现在要求 AI 编程工具只能在专用虚拟机、容器或一次性环境中运行——而不是直接在企业终端上运行。
+
+**此 devcontainer 满足了该要求。**
+
+## 隔离模型
+
+```
++------------------------------------------------+
+|  Host Machine (corporate endpoint)             |
+|                                                |
+|  - No AI tool binaries installed               |
+|  - No AI tool extensions or plugins            |
+|  - Only Docker is required                     |
+|                                                |
+|  +------------------------------------------+  |
+|  |  Docker Container (isolated)             |  |
+|  |                                          |  |
+|  |  AI tools run here:                      |  |
+|  |  - Claude Code CLI                       |  |
+|  |  - Codex                                 |  |
+|  |                                          |  |
+|  |  No access to:                           |  |
+|  |  x Host filesystem                       |  |
+|  |  x Host keychain / credential store      |  |
+|  |  x Host clipboard                        |  |
+|  |  x Host network interfaces               |  |
+|  |  x Other host applications               |  |
+|  +------------------------------------------+  |
++------------------------------------------------+
+```
+
+## 安全控制
+
+### 无主机卷挂载
+
+所有数据存储在 Docker 命名卷中——而非绑定挂载的主机目录。容器内的安全事件**无法**访问主机上的文件。有关卷的详细信息，请参阅[配置 — 数据持久化](./configuration#data-persistence)。
+
+### 无共享凭据存储
+
+容器无法访问 macOS 钥匙串、Windows 凭据管理器、浏览器配置文件或主机 SSH 代理。SSH 密钥在启动时通过 base64 编码的环境变量注入，仅存在于容器内部。
+
+### 无剪贴板同步
+
+Docker 容器不与主机共享剪贴板状态。数据无法通过复制/粘贴泄漏。
+
+### 网络隔离
+
+容器通过以下两种受支持的认证模式之一与外部通信：
+
+- **LiteLLM 代理模式** — 通过 Docker 的 NAT 向您的 LiteLLM 代理发出出站 HTTPS 请求。
+- **OAuth 模式** — 通过 Docker 的 NAT 直接向 Anthropic 发出出站 HTTPS 请求。
+
+容器无法访问 VPN 隧道、企业网络接口或主机上的其他服务。
+
+### 临时性设计
+
+整个环境可在数秒内销毁并重新创建。请将容器视为一次性的。
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down -v
+docker compose pull && docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down -v
+podman-compose pull && podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+### 纯命令行工具
+
+此环境以**纯命令行界面**方式运行 AI 工具。没有桌面应用程序，没有浏览器扩展，没有 DXT 框架。促使建立此隔离模型的漏洞不适用于容器内的 CLI 使用场景。
+
+### 容器加固
+
+`docker-compose.yml` 应用了多项纵深防御措施：
+
+- **能力丢弃** — 所有 Linux 能力均被丢弃（`cap_drop: ALL`），然后仅重新添加最小集合：`CHOWN`、`DAC_OVERRIDE`、`FOWNER`（用于入口点中的卷权限修复）、`SETUID`/`SETGID`（用于 sudo）、`NET_RAW`（用于 ping/tcpdump）和 `NET_ADMIN`（用于 Wireshark 和 bettercap 等数据包捕获工具）。
+- **资源限制** — 通过 `mem_limit`、`cpus` 和 `pids_limit` 限制 CPU（4 核）、内存（8 GB）和 PID 数量（4096），以防止资源耗尽攻击。
+- **tmpfs 用于 `/tmp`** — `/tmp` 目录挂载为 256 MB 的 tmpfs，将临时文件保存在内存中，防止其持久化到容器的可写层。
+- **默认启用 TLS 验证** — 未设置 `NODE_TLS_REJECT_UNAUTHORIZED`，因此 Node.js 默认验证 TLS 证书。需要接受自签名证书的用户（例如用于内部代理）可以通过在 `.env` 文件中添加 `NODE_TLS_REJECT_UNAUTHORIZED=0` 来选择性启用。
+- **SSH 密钥 umask** — SSH 私钥在 `umask 077` 下写入，因此文件在创建和 `chmod` 调用之间永远不会是全局可读的——即使是短暂的也不会。
+
+### 安全和渗透测试工具
+
+容器包含约 80 个预安装的安全和渗透测试工具，用于授权测试场景。工具按类别组织：
+
+| 类别 | 工具（示例） |
+|----------|-----------------|
+| 网络分析 | tshark, wireshark, masscan, hping3, bettercap (amd64), netdiscover |
+| Web 扫描器 | nikto, sqlmap, dirb, whatweb, sslscan, OWASP ZAP, dalfox, feroxbuster |
+| 密码和认证 | hydra, john, hashcat, medusa, ncrack |
+| 逆向工程 | radare2, Ghidra, gdb, binwalk, strace, ltrace |
+| 侦察 | subfinder, amass, httpx, nuclei, gau, waybackurls, recon-ng, spiderfoot |
+| 模糊测试和枚举 | ffuf, gobuster, SecLists |
+| 供应链和密钥 | trufflehog, grype, syft, gitleaks, trivy |
+| 漏洞利用框架 | Metasploit (amd64), searchsploit (ExploitDB) |
+
+部分工具（bettercap、Metasploit）由于上游打包限制，仅在 amd64 架构上可用。数据包捕获工具（tshark、bettercap）需要 `NET_ADMIN` 能力，该能力已包含在默认的 `docker-compose.yml` 中。
+
+如需查看完整列表，请在容器内运行 `claude-self-test`（第 7 部分检查所有安全工具）。
+
+## 合规检查清单
+
+| 要求 | 状态 |
+|---|---|
+| AI 工具未安装在主机终端上 | 是 |
+| 在隔离的 VM 或容器中运行 | 是 |
+| 无法访问主机文件共享 | 是 |
+| 无剪贴板同步 | 是 |
+| 无共享凭据存储 | 是 |
+| 无 VPN 分隧道到生产网络 | 是 |
+| 环境是一次性的 | 是 |
+| 无桌面扩展或插件 | 是 |
+| Linux 能力已丢弃（最小权限） | 是 |
+| 已强制执行资源限制（CPU/内存/PID） | 是 |
+| 默认启用 TLS 证书验证 | 是 |
+| 内部服务仅绑定到 localhost | 是 |
+
+## 最佳实践
+
+1. **不要在主机上安装 AI 编程工具。** 请改用此容器。
+2. **不要向 `docker-compose.yml` 添加绑定挂载。** 命名卷配置是有意为之的。
+3. **定期轮换**容器内使用的 SSH 密钥。
+4. **共享前请检查 `.env`。** 它包含 API 密钥，可能还包含 SSH 私钥。
+5. **定期更新**以获取安全补丁：
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+</TabItem>
+<TabItem label="Podman">
+
+   ```bash
+   podman-compose pull && podman-compose up -d
+   ```
+
+</TabItem>
+</Tabs>
+## 参考资料
+
+- [LayerX: Claude Desktop Extensions RCE](https://layerxsecurity.com/blog/claude-desktop-extensions-rce/)
+- [Dev Containers 规范](https://containers.dev/)
+- [Docker 安全最佳实践](https://docs.docker.com/engine/security/)

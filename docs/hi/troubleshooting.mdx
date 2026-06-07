@@ -1,0 +1,374 @@
+---
+title: समस्या निवारण
+description: सामान्य समस्याएँ और उन्हें कैसे ठीक करें।
+sidebar:
+  order: 8
+i18n:
+  sourceHash: b20e2081d644
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## कंटेनर शुरू नहीं हो रहा
+
+### "Conflict. The container name is already in use"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker rm -f devcontainer
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman rm -f devcontainer
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+## AI टूल्स काम नहीं कर रहे
+
+### "claude: command not found"
+
+इमेज पुरानी हो सकती है। नवीनतम इमेज पुल करें और पुनः आरंभ करें:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose pull
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+### Claude "Not logged in" दिखा रहा है
+
+एंट्रीपॉइंट `~/.claude.json` में ऑनबोर्डिंग फ़्लैग सेट करता है। यदि यह गायब है:
+
+```bash
+echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
+```
+
+### Claude "Invalid API key" दिखा रहा है
+
+जाँचें कि वास्तव में कौन सा मान सेट है:
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+सामान्य कारण:
+
+- **LiteLLM प्रॉक्सी कुंजी गायब या अमान्य** — यदि आप प्रॉक्सी मोड का उपयोग कर रहे हैं, तो सुनिश्चित करें कि `.env` में `LITELLM_API_KEY` में सही प्रॉक्सी क्रेडेंशियल है, फिर कंटेनर को पुनः आरंभ करें ताकि एंट्रीपॉइंट `ANTHROPIC_API_KEY` प्राप्त कर सके।
+- **OAuth टोकन या प्रॉक्सी मोड बेमेल** — केवल एक प्रमाणीकरण मोड का उपयोग करें। यदि `CLAUDE_CODE_OAUTH_TOKEN` सेट है, तो यह LiteLLM प्रॉक्सी मोड पर प्राथमिकता लेता है।
+
+### API अनुरोध 401 के साथ विफल हो रहे हैं
+
+जाँचें कि आपकी API कुंजी सही ढंग से सेट है:
+
+```bash
+echo "$ANTHROPIC_API_KEY"
+```
+
+अपने प्रदाता को सीधे कॉल करके सत्यापित करें कि यह काम करती है।
+
+### Claude "model not found" कह रहा है
+
+मॉडल आपके प्रदाता और API कुंजी द्वारा निर्धारित होता है। उपलब्ध मॉडलों के लिए अपने प्रदाता का दस्तावेज़ देखें।
+
+## GitHub CLI
+
+### "gh: not authenticated"
+
+`gh` CLI को `GH_TOKEN` एनवायरनमेंट वेरिएबल की आवश्यकता है। इसे अपनी `.env` फ़ाइल में जोड़ें:
+
+```ini
+GH_TOKEN=ghp_your-token-here
+```
+
+[github.com/settings/tokens](https://github.com/settings/tokens) पर टोकन बनाएँ। फ़ाइन-ग्रेन्ड टोकन (अनुशंसित) या `repo` स्कोप वाले क्लासिक टोकन दोनों काम करते हैं। `.env` अपडेट करने के बाद कंटेनर को पुनः आरंभ करें।
+
+### HTTPS git clone 401 के साथ विफल हो रहा है
+
+जब `GH_TOKEN` सेट होता है, तो एंट्रीपॉइंट HTTPS के लिए git क्रेडेंशियल हेल्पर कॉन्फ़िगर करने के लिए `gh auth setup-git` चलाता है। यदि HTTPS ऑपरेशन विफल होते हैं:
+
+1. सत्यापित करें कि टोकन वैध है: `gh auth status`
+2. जाँचें कि क्रेडेंशियल हेल्पर कॉन्फ़िगर है: `git config --global credential.helper`
+3. एंट्रीपॉइंट को पुनः चलाने के लिए कंटेनर को पुनः आरंभ करें
+
+### SSH बनाम HTTPS
+
+दोनों प्रमाणीकरण विधियाँ कंटेनर में सह-अस्तित्व में रह सकती हैं:
+
+- **SSH** (`.env` में `SSH_PRIVATE_KEY`) — `git@github.com:` URL का उपयोग करता है। यदि आपका संगठन SSH लागू करता है तो आवश्यक है।
+- **HTTPS** (`.env` में `GH_TOKEN`) — `https://github.com/` URL का उपयोग करता है। सरल सेटअप, कुंजी प्रबंधन की आवश्यकता नहीं।
+
+यदि दोनों कॉन्फ़िगर हैं, तो git जो भी प्रोटोकॉल रिमोट URL से मेल खाता है उसका उपयोग करता है। मौजूदा क्लोन को बदलने के लिए:
+
+```bash
+# SSH से HTTPS
+git remote set-url origin https://github.com/owner/repo.git
+
+# HTTPS से SSH
+git remote set-url origin git@github.com:owner/repo.git
+```
+
+## अनुमति समस्याएँ
+
+### /workspace या /home पर "Permission denied"
+
+```bash
+sudo chown -R $(id -u):$(id -g) /workspace ~
+```
+
+### npm install EACCES के साथ विफल हो रहा है
+
+एंट्रीपॉइंट स्वचालित रूप से `~/.npm-global` पर एक उपयोगकर्ता-लिखने योग्य npm ग्लोबल प्रीफ़िक्स कॉन्फ़िगर करता है, इसलिए रनटाइम `npm install -g` कमांड को `sudo` के बिना काम करना चाहिए। यदि आपको अभी भी EACCES त्रुटियाँ दिखाई दे रही हैं, तो मैन्युअल रूप से फ़िक्स पुनः लागू करें:
+
+```bash
+mkdir -p ~/.npm-global
+npm config set prefix ~/.npm-global
+export PATH="$HOME/.npm-global/bin:$PATH"
+```
+
+## बिल्ड समस्याएँ
+
+### बिल्ड में बहुत अधिक समय लग रहा है
+
+पहला बिल्ड बेस इमेज (~1 GB) डाउनलोड करता है। बाद के बिल्ड कैश का उपयोग करते हैं। यदि हर बार धीमा है:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker builder prune
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman builder prune
+```
+
+</TabItem>
+</Tabs>
+
+### "No space left on device"
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker system prune -a --volumes
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman system prune -a --volumes
+```
+
+</TabItem>
+</Tabs>
+
+**चेतावनी:** यह सभी अप्रयुक्त कंटेनर, इमेज और वॉल्यूम हटा देता है — केवल इस प्रोजेक्ट के नहीं।
+
+## नेटवर्किंग
+
+### कंटेनर के अंदर से इंटरनेट तक नहीं पहुँच सकते
+
+```bash
+ping -c 1 8.8.8.8
+nslookup google.com
+curl -I https://github.com
+```
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+यदि DNS विफल होता है, तो होस्ट पर `/etc/docker/daemon.json` में जोड़ें:
+
+```json
+{
+  "dns": ["8.8.8.8", "8.8.4.4"]
+}
+```
+
+फिर Docker को पुनः आरंभ करें।
+
+</TabItem>
+<TabItem label="Podman">
+
+यदि DNS विफल होता है, तो Podman मशीन के अंदर DNS कॉन्फ़िगर करें:
+
+```bash
+podman machine ssh
+sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+exit
+```
+
+या होस्ट पर `~/.config/containers/containers.conf` में DNS सेटिंग्स जोड़ें:
+
+```ini
+[containers]
+dns_servers = ["8.8.8.8", "8.8.4.4"]
+```
+
+फिर Podman को पुनः आरंभ करें: `podman machine stop && podman machine start`।
+
+</TabItem>
+</Tabs>
+
+## रिमोट डिस्प्ले (noVNC)
+
+### noVNC में काली स्क्रीन
+
+Xvfb शुरू नहीं हुआ होगा। कंटेनर के अंदर जाँचें:
+
+```bash
+ps aux | grep Xvfb
+```
+
+यदि नहीं चल रहा है, तो जाँचें कि `ENABLE_VNC` `false` पर सेट नहीं है और कंटेनर को पुनः आरंभ करें।
+
+### "Cannot open display" या "No display" त्रुटि
+
+`DISPLAY` एनवायरनमेंट वेरिएबल सेट नहीं हो सकता। सत्यापित करें:
+
+```bash
+echo "$DISPLAY"
+```
+
+यह `:99` होना चाहिए। यदि खाली है, तो अपने `.env` या `devcontainer.json` में `DISPLAY=:99` जोड़ें और पुनः आरंभ करें।
+
+### पोर्ट 6080 कनेक्शन अस्वीकृत
+
+noVNC नहीं चल रहा हो सकता। कंटेनर के अंदर जाँचें:
+
+```bash
+ps aux | grep -E 'novnc|websockify'
+```
+
+यदि नहीं चल रहा है, तो सत्यापित करें कि `ENABLE_VNC` `true` (डिफ़ॉल्ट) है और कंटेनर लॉग जाँचें:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose logs dev | grep -i vnc
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose logs dev | grep -i vnc
+```
+
+</TabItem>
+</Tabs>
+
+### पोर्ट 6080 पहले से उपयोग में है
+
+`docker-compose.yml` में होस्ट पोर्ट बदलें:
+
+```yaml
+ports:
+  - "127.0.0.1:16080:6080"
+```
+
+## Chrome DevTools MCP
+
+### Chrome रिमोट डिबगिंग प्रतिक्रिया नहीं दे रहा
+
+साझा Chrome इंस्टेंस पोर्ट 9222 पर चल रहा होना चाहिए। कंटेनर के अंदर जाँचें:
+
+```bash
+# क्या Chrome चल रहा है?
+curl http://localhost:9222/json/version
+
+# Chrome लॉग जाँचें
+cat ~/.local/share/chrome-browser/chrome.log
+
+# सिमलिंक सत्यापित करें
+ls -la /opt/google/chrome/chrome
+
+# Chrome को मैन्युअल रूप से पुनः आरंभ करें
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
+```
+
+यदि सिमलिंक गायब है, तो नवीनतम इमेज पुल करें और कंटेनर को पुनः आरंभ करें।
+
+### ब्राउज़र प्रोफ़ाइल लॉक त्रुटि
+
+साझा ब्राउज़र आर्किटेक्चर के साथ, प्रोफ़ाइल लॉक त्रुटियाँ नहीं होनी चाहिए। यदि आपको दिखाई दे, तो एक पुरानी Chrome प्रक्रिया लॉक पकड़े हुए हो सकती है:
+
+```bash
+# किसी भी पुरानी Chrome प्रक्रिया को समाप्त करें
+pkill -f 'chrome.*remote-debugging-port' || true
+
+# लॉक फ़ाइल हटाएँ
+rm -f ~/.cache/chrome-devtools-mcp/chrome-profile/SingletonLock
+
+# Chrome पुनः आरंभ करें
+. /usr/local/lib/chrome-browser.sh
+start_chrome_browser
+```
+
+### डुप्लिकेट chrome-devtools-mcp टूल्स
+
+chrome-devtools-mcp सर्वर अब `~/.claude/settings.json` में वैश्विक रूप से पंजीकृत है। यदि आपके पास एक प्रति-रेपो `.mcp.json` भी है जो इसे पंजीकृत करता है, तो आपको डुप्लिकेट टूल्स दिखाई देंगे। प्रति-रेपो `.mcp.json` फ़ाइलों से `chrome-devtools-mcp` प्रविष्टि हटाएँ:
+
+```bash
+# प्रति-रेपो कॉन्फ़िग जाँचें
+cat .mcp.json
+```
+
+वैश्विक पंजीकरण का उपयोग करने के लिए किसी भी प्रति-रेपो `.mcp.json` से `chrome-devtools-mcp` कुंजी हटाएँ।
+
+## सब कुछ रीसेट करें
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down -v
+docker rm -f devcontainer 2>/dev/null
+docker compose pull
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down -v
+podman rm -f devcontainer 2>/dev/null
+podman-compose pull
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+यह वॉल्यूम में सभी डेटा नष्ट कर देता है। आपको रेपो को पुनः क्लोन करना और टूल्स को पुनः कॉन्फ़िगर करना होगा।

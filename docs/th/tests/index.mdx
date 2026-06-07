@@ -1,0 +1,20 @@
+---
+title: Integration Tests
+description: >-
+  การทดสอบอัตโนมัติที่ตรวจสอบว่า runtime stack ของ devcontainer
+  ทำงานได้อย่างครบถ้วนตั้งแต่ต้นจนจบ
+sidebar:
+  order: 7
+i18n:
+  sourceHash: 4a499717bb7d
+  translator: machine
+---
+
+การทดสอบเหล่านี้ตรวจสอบว่าระบบย่อยหลักของ devcontainer ทำงานร่วมกันได้ในขณะรันไทม์ การทดสอบเหล่านี้ไม่ได้ถูกฝังไว้ใน Docker image — ให้รันภายในคอนเทนเนอร์ที่กำลังทำงานอยู่เพื่อตรวจสอบความสามารถของมัน
+
+## การทดสอบที่มี
+
+| การทดสอบ | สิ่งที่พิสูจน์ |
+| ---- | ---- |
+| [Screen Recording](/devcontainer/tests/screen-recording/) | Xvfb display, headed Chromium (Playwright) และการบันทึก ffmpeg สร้างไฟล์ MP4 ที่ถูกต้อง |
+| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Chrome symlink, headless patch และการนำทาง MCP สร้างภาพหน้าจอที่ถูกต้อง |

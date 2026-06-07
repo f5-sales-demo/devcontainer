@@ -1,0 +1,172 @@
+---
+title: الأمان
+description: كيف يحمي نموذج العزل جهازك المضيف وبيئة المؤسسة.
+sidebar:
+  order: 7
+i18n:
+  sourceHash: f7bae54e89ef
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## الخلفية
+
+في فبراير 2025، كشفت LayerX Security Research عن ثغرة حرجة لتنفيذ التعليمات البرمجية عن بُعد بدون نقر في إطار عمل Claude Desktop Extensions (DXT) من Anthropic. تعمل الإضافات بدون بيئة معزولة (sandbox) مع صلاحيات نظام كاملة، وتعمل كجسور تنفيذ بين النموذج اللغوي ونظام التشغيل المحلي.
+
+تشترط العديد من فرق الأمان في المؤسسات الآن أن تعمل أدوات البرمجة بالذكاء الاصطناعي فقط داخل أجهزة افتراضية مخصصة أو حاويات أو بيئات قابلة للإتلاف — وليس مباشرة على نقاط النهاية المؤسسية.
+
+**تُلبي حاوية التطوير هذه ذلك المتطلب.**
+
+## نموذج العزل
+
+```
++------------------------------------------------+
+|  Host Machine (corporate endpoint)             |
+|                                                |
+|  - No AI tool binaries installed               |
+|  - No AI tool extensions or plugins            |
+|  - Only Docker is required                     |
+|                                                |
+|  +------------------------------------------+  |
+|  |  Docker Container (isolated)             |  |
+|  |                                          |  |
+|  |  AI tools run here:                      |  |
+|  |  - Claude Code CLI                       |  |
+|  |  - Codex                                 |  |
+|  |                                          |  |
+|  |  No access to:                           |  |
+|  |  x Host filesystem                       |  |
+|  |  x Host keychain / credential store      |  |
+|  |  x Host clipboard                        |  |
+|  |  x Host network interfaces               |  |
+|  |  x Other host applications               |  |
+|  +------------------------------------------+  |
++------------------------------------------------+
+```
+
+## ضوابط الأمان
+
+### عدم تركيب وحدات التخزين من المضيف
+
+تتواجد جميع البيانات في وحدات تخزين Docker المسماة — وليس في مجلدات مضيف مُركّبة بربط مباشر. أي اختراق داخل الحاوية **لا يمكنه** الوصول إلى الملفات على جهازك المضيف. راجع [الإعدادات — استمرارية البيانات](./configuration#data-persistence) لتفاصيل وحدات التخزين.
+
+### عدم مشاركة مخازن بيانات الاعتماد
+
+لا تملك الحاوية أي وصول إلى macOS Keychain أو Windows Credential Manager أو ملفات تعريف المتصفح أو وكيل SSH على المضيف. يتم حقن مفاتيح SSH عند بدء التشغيل عبر متغير بيئة مُشفّر بـ base64 وتتواجد فقط داخل الحاوية.
+
+### عدم مزامنة الحافظة
+
+لا تشارك حاويات Docker حالة الحافظة مع المضيف. لا يمكن تسريب البيانات عبر النسخ/اللصق.
+
+### عزل الشبكة
+
+تتواصل الحاوية مع العالم الخارجي في أحد وضعي المصادقة المدعومين:
+
+- **وضع وكيل LiteLLM** — اتصال HTTPS صادر إلى وكيل LiteLLM الخاص بك عبر NAT في Docker.
+- **وضع OAuth** — اتصال HTTPS صادر مباشرة إلى Anthropic عبر NAT في Docker.
+
+لا تملك الحاوية أي وصول إلى أنفاق VPN أو واجهات شبكة المؤسسة أو الخدمات الأخرى على المضيف.
+
+### مصممة لتكون مؤقتة
+
+يمكن تدمير البيئة بأكملها وإعادة إنشائها في ثوانٍ. تعامل مع الحاوية على أنها قابلة للإتلاف.
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down -v
+docker compose pull && docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down -v
+podman-compose pull && podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+### أدوات سطر الأوامر فقط
+
+تشغّل هذه البيئة أدوات الذكاء الاصطناعي كـ**واجهات سطر أوامر فقط**. لا توجد تطبيقات سطح مكتب، ولا إضافات متصفح، ولا أُطر عمل DXT. الثغرة التي دفعت إلى نموذج العزل هذا لا تنطبق على استخدام سطر الأوامر داخل حاوية.
+
+### تقوية الحاوية
+
+يطبّق ملف `docker-compose.yml` عدة تدابير للدفاع المتعمق:
+
+- **إسقاط الصلاحيات** — يتم إسقاط جميع صلاحيات Linux (`cap_drop: ALL`)، ثم تُعاد إضافة الحد الأدنى فقط: `CHOWN`، `DAC_OVERRIDE`، `FOWNER` (لإصلاح أذونات وحدات التخزين في نقطة الدخول)، `SETUID`/`SETGID` (لـ sudo)، `NET_RAW` (لـ ping/tcpdump)، و `NET_ADMIN` (لأدوات التقاط الحزم مثل Wireshark و bettercap).
+- **حدود الموارد** — يتم تحديد سقف لوحدة المعالجة المركزية (4 أنوية)، والذاكرة (8 غيغابايت)، وعدد العمليات (4096) عبر `mem_limit`، و `cpus`، و `pids_limit` لمنع هجمات استنزاف الموارد.
+- **tmpfs لـ `/tmp`** — يتم تركيب مجلد `/tmp` كـ tmpfs بحجم 256 ميغابايت، مما يحتفظ بالملفات المؤقتة في الذاكرة ويمنعها من الاستمرار في طبقة الكتابة للحاوية.
+- **تفعيل التحقق من TLS افتراضياً** — لم يتم تعيين `NODE_TLS_REJECT_UNAUTHORIZED`، لذا يتحقق Node.js من شهادات TLS افتراضياً. يمكن للمستخدمين الذين يحتاجون إلى قبول شهادات موقعة ذاتياً (مثلاً لوكيل داخلي) الاشتراك بإضافة `NODE_TLS_REJECT_UNAUTHORIZED=0` إلى ملف `.env` الخاص بهم.
+- **umask لمفتاح SSH** — تُكتب مفاتيح SSH الخاصة تحت `umask 077`، لذا لا يكون الملف قابلاً للقراءة من الجميع أبداً — حتى لفترة وجيزة — بين الإنشاء واستدعاء `chmod`.
+
+### أدوات اختبار الأمان والاختراق
+
+تتضمن الحاوية حوالي 80 أداة اختبار أمان واختراق مثبتة مسبقاً لسيناريوهات الاختبار المصرح بها. الأدوات مُنظمة حسب الفئة:
+
+| الفئة | الأدوات (أمثلة) |
+|----------|-----------------|
+| تحليل الشبكات | tshark، wireshark، masscan، hping3، bettercap (amd64)، netdiscover |
+| ماسحات الويب | nikto، sqlmap، dirb، whatweb، sslscan، OWASP ZAP، dalfox، feroxbuster |
+| كلمات المرور والمصادقة | hydra، john، hashcat، medusa، ncrack |
+| الهندسة العكسية | radare2، Ghidra، gdb، binwalk، strace، ltrace |
+| الاستطلاع | subfinder، amass، httpx، nuclei، gau، waybackurls، recon-ng، spiderfoot |
+| التضبيب والتعداد | ffuf، gobuster، SecLists |
+| سلسلة التوريد والأسرار | trufflehog، grype، syft، gitleaks، trivy |
+| أُطر الاستغلال | Metasploit (amd64)، searchsploit (ExploitDB) |
+
+بعض الأدوات (bettercap، Metasploit) متاحة فقط على amd64 بسبب قيود التغليف من المصدر الأصلي. تتطلب أدوات التقاط الحزم (tshark، bettercap) صلاحية `NET_ADMIN`، وهي مضمنة في ملف `docker-compose.yml` الافتراضي.
+
+للاطلاع على القائمة الكاملة، شغّل `claude-self-test` داخل الحاوية (القسم 7 يتحقق من جميع أدوات الأمان).
+
+## قائمة التحقق من الامتثال
+
+| المتطلب | الحالة |
+|---|---|
+| أدوات الذكاء الاصطناعي غير مثبتة على نقطة النهاية المضيفة | نعم |
+| تعمل في جهاز افتراضي أو حاوية معزولة | نعم |
+| لا وصول إلى مشاركات ملفات المضيف | نعم |
+| لا مزامنة للحافظة | نعم |
+| لا مشاركة لمخازن بيانات الاعتماد | نعم |
+| لا تقسيم نفق VPN إلى شبكات الإنتاج | نعم |
+| البيئة قابلة للإتلاف | نعم |
+| لا إضافات أو ملحقات سطح مكتب | نعم |
+| إسقاط صلاحيات Linux (الحد الأدنى من الامتيازات) | نعم |
+| فرض حدود الموارد (المعالج/الذاكرة/العمليات) | نعم |
+| تفعيل التحقق من شهادات TLS افتراضياً | نعم |
+| الخدمات الداخلية مُربطة بـ localhost فقط | نعم |
+
+## أفضل الممارسات
+
+1. **لا تُثبّت أدوات البرمجة بالذكاء الاصطناعي على جهازك المضيف.** استخدم هذه الحاوية بدلاً من ذلك.
+2. **لا تُضف عمليات ربط مباشر (bind mounts)** إلى `docker-compose.yml`. إعداد وحدات التخزين المسماة مقصود.
+3. **قم بتدوير مفاتيح SSH** المستخدمة داخل الحاوية بشكل دوري.
+4. **راجع `.env` قبل المشاركة.** يحتوي على مفاتيح API وقد يحتوي على مفاتيح SSH خاصة.
+5. **حدّث بشكل دوري** للحصول على تصحيحات الأمان:
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+</TabItem>
+<TabItem label="Podman">
+
+   ```bash
+   podman-compose pull && podman-compose up -d
+   ```
+
+</TabItem>
+</Tabs>
+## المراجع
+
+- [LayerX: Claude Desktop Extensions RCE](https://layerxsecurity.com/blog/claude-desktop-extensions-rce/)
+- [Dev Containers Specification](https://containers.dev/)
+- [Docker Security Best Practices](https://docs.docker.com/engine/security/)

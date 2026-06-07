@@ -1,0 +1,72 @@
+---
+title: 遠端顯示 (noVNC)
+description: 透過虛擬顯示器在瀏覽器中觀看和操作有頭模式的瀏覽器。
+sidebar:
+  order: 3
+i18n:
+  sourceHash: f872c1a2dace
+  translator: machine
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+容器會執行虛擬顯示堆疊（Xvfb + x11vnc + noVNC + fluxbox），讓您可以觀看 AI 代理控制瀏覽器，並在需要時進行介入——例如處理登入或 MFA 驗證提示。
+
+## 連線方式
+
+1. 在瀏覽器中開啟 `http://localhost:6080/vnc.html` 並點擊 **Connect**
+2. 您會看到一個輕量級的 fluxbox 桌面——這就是容器的虛擬顯示器
+
+使用 `@playwright/mcp` 有頭模式的 AI 代理會將 Chromium 渲染到此顯示器中。您可以隨時在 noVNC 視窗中直接點擊和輸入來進行介入——無需暫停/恢復操作。
+
+## 手動啟動瀏覽器
+
+若要在容器內手動開啟瀏覽器：
+
+```bash
+chromium --no-sandbox &
+```
+
+若要以有頭模式執行 Playwright 測試：
+
+```bash
+npx playwright test --headed
+```
+
+## 環境變數
+
+| 變數 | 預設值 | 說明 |
+|----------|---------|-------------|
+| `ENABLE_VNC` | `true` | 設為 `false` 可停用 VNC 堆疊 |
+| `VNC_RESOLUTION` | `1280x1024x24` | 虛擬顯示器解析度（寬x高x色彩深度） |
+| `DISPLAY` | `:99` | X11 顯示器編號 |
+| `NOVNC_HOST_PORT` | `6080` | noVNC 的主機端連接埠（可修改以避免與其他容器衝突） |
+
+請在 `.env` 檔案或 `.devcontainer/devcontainer.json` 的 `containerEnv` 中設定這些變數。
+
+## 停用 VNC 堆疊
+
+若僅需無頭模式操作，請在 `.env` 中設定 `ENABLE_VNC=false` 並重新啟動容器：
+
+<Tabs syncKey="runtime">
+<TabItem label="Docker">
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```bash
+podman-compose down
+podman-compose up -d
+```
+
+</TabItem>
+</Tabs>
+
+## 疑難排解
+
+請參閱[疑難排解 — 遠端顯示](./troubleshooting#remote-display-novnc)以取得黑畫面、連線被拒絕錯誤和連接埠衝突的解決方案。

@@ -1,0 +1,82 @@
+---
+title: التثبيت السريع
+description: أمر واحد لتثبيت وتكوين حاوية التطوير على macOS.
+sidebar:
+  order: 0
+i18n:
+  sourceHash: 4095803fd538
+  translator: machine
+---
+
+## التثبيت بأمر واحد
+
+```bash
+curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
+```
+
+يتولى هذا الأمر الواحد عملية الإعداد الكاملة عند التشغيل الأول:
+
+1. تثبيت حزم Homebrew (podman, podman-compose, gh, iterm2, nerd fonts)
+2. تكوين iTerm2 (الخط، التنبيه الصوتي، سجل التمرير، السمة الداكنة، اختصار Shift+Enter)
+3. تهيئة وضبط آلة Podman (ذاكرة 16 جيجابايت، 4 وحدات معالجة، قرص 220 جيجابايت، zram، swappiness)
+4. تنزيل `docker-compose.yml` و `devcontainer.sh` وقالب `.env` إلى المجلد الحالي
+
+:::note[مطلوب Homebrew]
+إذا لم يكن Homebrew مثبتاً، سينتهي السكربت مع عرض تعليمات التثبيت.
+قد يوفر قسم تكنولوجيا المعلومات في مؤسستك Homebrew كبرنامج مُدار — تحقق معهم أولاً.
+:::
+
+## بعد التثبيت
+
+قم بتعديل `.env` وأضف بيانات اعتمادك:
+
+```bash
+vi .env
+```
+
+ثم ابدأ تشغيل الحاوية:
+
+```bash
+./devcontainer.sh
+```
+
+يكتشف السكربت منطقتك الزمنية تلقائياً ويسحب رمز GitHub حديثاً من `gh auth token` عند كل تشغيل.
+
+## الملفات التي يتم إنشاؤها
+
+بعد تشغيل المُثبّت، سيحتوي مجلدك على:
+
+| الملف | الغرض |
+|---|---|
+| `devcontainer.sh` | سكربت التشغيل (قم بتشغيله لبدء الحاوية) |
+| `docker-compose.yml` | تعريف خدمة الحاوية |
+| `.env` | بيانات اعتمادك (من القالب، قم بتعديله قبل التشغيل الأول) |
+
+## عمليات التشغيل اللاحقة
+
+```bash
+./devcontainer.sh
+```
+
+## الاتصال
+
+```bash
+podman exec -it devcontainer zsh
+```
+
+## التحديث
+
+قم بسحب أحدث صورة وأعد التشغيل:
+
+```bash
+podman compose pull
+./devcontainer.sh
+```
+
+## البناء المحلي
+
+قم ببناء الصورة محلياً من المصدر (معمارية arm64 فقط):
+
+```bash
+./devcontainer.sh build
+```
