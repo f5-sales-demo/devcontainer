@@ -1,7 +1,7 @@
 ---
 title: Configurazione
 description: >-
-  Variabili d'ambiente, livelli di build, persistenza dei dati e
+  Variabili d'ambiente, layer di build, persistenza dei dati e
   personalizzazione.
 sidebar:
   order: 2
@@ -12,7 +12,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Tutta la configurazione risiede nel file `.env` nella root del progetto. Questo file è incluso nel gitignore — non viene mai committato.
+Tutta la configurazione risiede nel file `.env` nella radice del progetto. Questo file è incluso nel gitignore — non viene mai committato.
 
 ## Variabili d'Ambiente
 
@@ -35,30 +35,30 @@ Quando impostato, Claude Code si autentica direttamente con Anthropic tramite OA
 
 ### Proxy LiteLLM
 
-Se il proprio proxy LiteLLM (o altro) supporta già nativamente l'API Anthropic Messages — inclusi `web_search`, streaming e utilizzo degli strumenti — impostare `LITELLM_BASE_URL` sul dominio del proxy. Il container deriva automaticamente gli URL specifici del provider:
+Se il vostro proxy LiteLLM (o altro) supporta già nativamente l'API Anthropic Messages — inclusi `web_search`, streaming e utilizzo degli strumenti — impostare `LITELLM_BASE_URL` sul dominio del proxy. Il container deriva automaticamente gli URL specifici del provider:
 
 - Endpoint Anthropic → `${LITELLM_BASE_URL}/anthropic` (utilizzato da Claude Code)
 - Endpoint compatibile OpenAI → `${LITELLM_BASE_URL}/openai/v1`
 
 | Variabile | Descrizione | Esempio |
 |-----------|-------------|---------|
-| `LITELLM_BASE_URL` | Dominio del proxy LiteLLM (senza suffisso di percorso) | `https://litellm.example.com` |
-| `LITELLM_API_KEY` | Chiave API per l'autenticazione al proxy | `your-api-key` o predefinito `litellm-proxy` |
+| `LITELLM_BASE_URL` | Dominio del vostro proxy LiteLLM (senza suffisso di percorso) | `https://litellm.example.com` |
+| `LITELLM_API_KEY` | Chiave API per l'autenticazione al proxy | `your-api-key` o predefinita a `litellm-proxy` |
 
 Gli utenti devono impostare solo il dominio — i suffissi di percorso del provider vengono aggiunti automaticamente.
-A runtime, l'entrypoint deriva `ANTHROPIC_API_KEY` da `LITELLM_API_KEY` in modo che Claude Code possa utilizzare le credenziali del proxy senza richiedere una variabile separata rivolta all'utente.
+A runtime, l'entrypoint deriva `ANTHROPIC_API_KEY` da `LITELLM_API_KEY` in modo che Claude Code possa utilizzare le credenziali del proxy senza richiedere una variabile separata lato utente.
 
 I nomi dei modelli **non** vengono rimappati in questa modalità. Claude Code invia i suoi identificatori di modello standard (es. `claude-sonnet-4-6`) e LiteLLM li instrada verso il backend configurato.
 
 ### Validazione dei Certificati TLS
 
-Per impostazione predefinita, Node.js valida i certificati TLS per tutte le connessioni HTTPS. Se il provider API upstream utilizza un certificato auto-firmato (comune con proxy interni Open WebUI o LiteLLM), è possibile disabilitare la validazione aggiungendo questo al file `.env`:
+Per impostazione predefinita, Node.js valida i certificati TLS per tutte le connessioni HTTPS. Se il vostro provider API upstream utilizza un certificato auto-firmato (comune con proxy interni Open WebUI o LiteLLM), è possibile disabilitare la validazione aggiungendo questo al file `.env`:
 
 ```ini
 NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
-Questo **non è raccomandato** per l'uso in produzione. Impostare questo valore solo quando si ha fiducia nel percorso di rete tra il container e l'endpoint API.
+Questo **non è raccomandato** per l'uso in produzione. Impostare questo valore solo quando ci si fida del percorso di rete tra il container e il vostro endpoint API.
 
 ### Agenti di Coding AI
 
@@ -78,7 +78,7 @@ Il container esegue uno stack di display virtuale per visualizzare e interagire 
 
 ### Chrome DevTools MCP
 
-Il container include un server [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) pre-configurato per l'automazione del browser headless. Claude Code può navigare pagine web, catturare screenshot e ispezionare il DOM senza alcuna configurazione aggiuntiva. Consultare [Chrome DevTools MCP](./chrome) per i dettagli.
+Il container include un server [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) preconfigurato per l'automazione del browser headless. Claude Code può navigare pagine web, acquisire screenshot e ispezionare il DOM senza alcuna configurazione aggiuntiva. Consultare [Chrome DevTools MCP](./chrome) per i dettagli.
 
 ### Git
 
@@ -87,7 +87,7 @@ Il container include un server [Chrome DevTools MCP](https://github.com/anthropi
 | `GIT_AUTHOR_NAME` | Nome per i commit git | `git config user.name` |
 | `GIT_AUTHOR_EMAIL` | Email per i commit git | `git config user.email` |
 
-Se git è configurato sull'host, popolare automaticamente entrambi i valori:
+Se git è configurato sul vostro host, è possibile popolare automaticamente entrambi i valori:
 
 ```bash
 echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
@@ -106,9 +106,9 @@ echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
 |-----------|-------------|----------------|
 | `GH_TOKEN` | Token di accesso personale GitHub per la CLI `gh` e git HTTPS | `gh auth token` (se `gh` è installato localmente) |
 
-Quando `GH_TOKEN` è impostato nel `.env`, la CLI `gh` si autentica automaticamente — non è necessario eseguire `gh auth login`. L'entrypoint esegue anche `gh auth setup-git`, che configura l'helper per le credenziali git in modo che `git clone` e `git push` via HTTPS funzionino senza chiavi SSH.
+Quando `GH_TOKEN` è impostato nel `.env`, la CLI `gh` si autentica automaticamente — non è necessario eseguire `gh auth login`. L'entrypoint esegue anche `gh auth setup-git`, che configura l'helper delle credenziali git in modo che `git clone` e `git push` via HTTPS funzionino senza chiavi SSH.
 
-Se `gh` è installato e autenticato sulla macchina host, estrarre il token direttamente:
+Se `gh` è installato e autenticato sulla vostra macchina host, è possibile estrarre il token direttamente:
 
 ```bash
 echo "GH_TOKEN=$(gh auth token)" >> .env
@@ -124,7 +124,7 @@ gh auth status
 
 ## Come Vengono Installati gli Strumenti
 
-Ogni runtime di linguaggio, CLI e strumento è installato direttamente nel `Dockerfile` al momento della build dell'immagine. L'immagine pre-compilata viene pubblicata su `ghcr.io/f5xc-salesdemos/devcontainer:latest` ad ogni push su `main`, quindi la maggior parte degli utenti non ha mai bisogno di compilare localmente.
+Ogni runtime di linguaggio, CLI e strumento viene installato direttamente nel `Dockerfile` al momento della build dell'immagine. L'immagine pre-compilata viene pubblicata su `ghcr.io/f5xc-salesdemos/devcontainer:latest` ad ogni push su `main`, quindi la maggior parte degli utenti non ha mai bisogno di compilare localmente.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -151,14 +151,14 @@ Consultare [Sviluppo Locale](./local-development) per i dettagli.
 </TabItem>
 </Tabs>
 
-Il Dockerfile utilizza una build a due stadi ottimizzata per il caching dei layer Docker. Consultare [Sviluppo Locale — Architettura di Build a Due Stadi](./local-development#two-stage-build-architecture) per la descrizione completa dei layer e i dettagli sulla cache di build.
+Il Dockerfile utilizza una build a due stadi ottimizzata per il caching dei layer Docker. Consultare [Sviluppo Locale — Architettura di Build a Due Stadi](./local-development#two-stage-build-architecture) per il dettaglio completo dei layer e le informazioni sulla cache di build.
 
 ## Consapevolezza degli Strumenti di Claude Code
 
 Il container include una configurazione integrata che impedisce a Claude Code di confondere i nomi degli strumenti. La consapevolezza degli strumenti è installata su **due** livelli di memoria per una difesa in profondità:
 
 - **Policy gestita** (`/etc/claude-code/CLAUDE.md`) — installata al momento della build Docker. Questo è il livello con la priorità più alta nella gerarchia di memoria di Claude Code e viene sempre caricato, anche quando esiste un `CLAUDE.md` di progetto di grandi dimensioni nella directory di lavoro.
-- **Memoria utente** (`~/.claude/CLAUDE.md`) — inizializzata dall'entrypoint al primo avvio. Fornisce un livello di backup e una copia visibile e personalizzabile per gli utenti.
+- **Memoria utente** (`~/.claude/CLAUDE.md`) — popolata dall'entrypoint al primo avvio. Fornisce un livello di backup e una copia visibile e personalizzabile per gli utenti.
 
 ### Priorità dei Livelli di Memoria
 
@@ -169,7 +169,7 @@ Claude Code carica le istruzioni da più livelli di memoria (dalla priorità pi�
 3. **Memoria utente** (`~/.claude/CLAUDE.md`) — Caricata globalmente per tutte le sessioni
 4. **Memoria locale** (`./CLAUDE.local.md`) — Override personali per progetto
 
-Senza il livello di Policy gestita, la consapevolezza degli strumenti nella Memoria utente può essere deprioritizzata quando compete con un `CLAUDE.md` di progetto di grandi dimensioni, causando la perdita da parte di Claude della consapevolezza dei nomi degli strumenti in PascalCase. Il livello di Policy gestita garantisce che la consapevolezza degli strumenti sia sempre caricata con la massima priorità.
+Senza il livello della Policy gestita, la consapevolezza degli strumenti nella Memoria utente può essere deprioritizzata quando compete con un `CLAUDE.md` a livello di progetto di grandi dimensioni, causando la perdita da parte di Claude della consapevolezza dei nomi degli strumenti in PascalCase. Il livello della Policy gestita garantisce che la consapevolezza degli strumenti sia sempre caricata con la priorità più alta.
 
 ### Auto-Test
 
@@ -179,24 +179,24 @@ Eseguire l'auto-test integrato per verificare la configurazione:
 claude-self-test
 ```
 
-Questo verifica che tutti i file di configurazione siano al loro posto e contengano i riferimenti agli strumenti previsti.
+Questo controlla che tutti i file di configurazione siano presenti e contengano i riferimenti agli strumenti previsti.
 
 ## Aggiungere Strumenti
 
-Per aggiungere strumenti all'immagine, modificare il `Dockerfile` e ricompilare localmente. Consultare [Sviluppo Locale — Aggiungere Strumenti](./local-development#adding-tools) per le istruzioni su come aggiungere pacchetti APT, strumenti npm, strumenti pip e download di binari.
+Per aggiungere strumenti all'immagine, modificare il `Dockerfile` e ricompilare localmente. Consultare [Sviluppo Locale — Aggiungere Strumenti](./local-development#adding-tools) per le istruzioni sull'aggiunta di pacchetti APT, strumenti npm, strumenti pip e download di binari.
 
 ## Estensioni VS Code
 
-Le estensioni sono configurate in `.devcontainer/devcontainer.json` sotto `customizations.vscode.extensions` e vengono installate automaticamente quando si apre in VS Code.
+Le estensioni sono configurate in `.devcontainer/devcontainer.json` sotto `customizations.vscode.extensions` e vengono installate automaticamente all'apertura in VS Code.
 
 ## Persistenza dei Dati
 
-Tutti i dati risiedono in volumi nominati — nessuna directory dell'host viene montata:
+Tutti i dati risiedono in volumi nominati — nessuna directory host viene montata:
 
-| Volume | Punto di Montaggio | Contenuti |
-|--------|---------------------|-----------|
-| `workspace` | `/workspace` | I repository clonati e i file di progetto |
-| `home` | `/home/vscode` | Cronologia della shell, configurazioni degli strumenti, cache, chiavi SSH |
+| Volume | Punto di Mount | Contenuti |
+|--------|----------------|-----------|
+| `workspace` | `/workspace` | I vostri repository clonati e file di progetto |
+| `home` | `/home/vscode` | Cronologia shell, configurazioni degli strumenti, cache, chiavi SSH |
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -227,4 +227,4 @@ Entrambi persistono tra riavvii e ricompilazioni del container. Eseguire `podman
 |------|-----------|----------|
 | `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | Display remoto noVNC (solo localhost, sovrascrivere con `NOVNC_HOST_PORT`) |
 
-Le porte sono associate a `127.0.0.1` in modo che siano accessibili solo dalla propria macchina, non dalla rete.
+Le porte sono associate a `127.0.0.1` in modo che siano accessibili solo dalla vostra macchina, non dalla rete.

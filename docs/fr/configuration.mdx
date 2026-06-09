@@ -12,7 +12,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Toute la configuration se trouve dans le fichier `.env` à la racine du projet. Ce fichier est dans le gitignore — il n'est jamais commité.
+Toute la configuration se trouve dans le fichier `.env` à la racine du projet. Ce fichier est ignoré par git — il n'est jamais commité.
 
 ## Variables d'environnement
 
@@ -23,7 +23,7 @@ Le conteneur prend en charge deux modes d'authentification **mutuellement exclus
 - **Proxy LiteLLM** — définissez `LITELLM_BASE_URL` et `LITELLM_API_KEY` pour router via un proxy LiteLLM (voir ci-dessous).
 - **Mode OAuth** — définissez uniquement `CLAUDE_CODE_OAUTH_TOKEN` (voir ci-dessous).
 
-Ne combinez pas les modes — utilisez-en exactement un.
+Ne combinez pas les modes — utilisez exactement un seul.
 
 ### Claude Max (OAuth)
 
@@ -31,11 +31,11 @@ Ne combinez pas les modes — utilisez-en exactement un.
 |----------|-------------|---------|
 | `CLAUDE_CODE_OAUTH_TOKEN` | Jeton OAuth provenant d'un abonnement Claude Max | `sk-ant-oat01-...` |
 
-Lorsque défini, Claude Code s'authentifie directement auprès d'Anthropic via OAuth — aucune clé API ni proxy nécessaire. Obtenez votre jeton depuis les paramètres de Claude Code ou la [console Anthropic](https://console.anthropic.com/).
+Lorsqu'il est défini, Claude Code s'authentifie directement auprès d'Anthropic via OAuth — aucune clé API ni proxy nécessaire. Obtenez votre jeton depuis les paramètres de Claude Code ou la [console Anthropic](https://console.anthropic.com/).
 
 ### Proxy LiteLLM
 
-Si votre proxy LiteLLM (ou autre) parle déjà nativement l'API Anthropic Messages — incluant `web_search`, le streaming et l'utilisation d'outils — définissez `LITELLM_BASE_URL` avec le domaine du proxy. Le conteneur dérive automatiquement les URLs spécifiques au fournisseur :
+Si votre proxy LiteLLM (ou autre) prend déjà en charge nativement l'API Anthropic Messages — y compris `web_search`, le streaming et l'utilisation d'outils — définissez `LITELLM_BASE_URL` avec le domaine du proxy. Le conteneur dérive automatiquement les URLs spécifiques au fournisseur :
 
 - Point de terminaison Anthropic → `${LITELLM_BASE_URL}/anthropic` (utilisé par Claude Code)
 - Point de terminaison compatible OpenAI → `${LITELLM_BASE_URL}/openai/v1`
@@ -45,10 +45,10 @@ Si votre proxy LiteLLM (ou autre) parle déjà nativement l'API Anthropic Messag
 | `LITELLM_BASE_URL` | Domaine de votre proxy LiteLLM (sans suffixe de chemin) | `https://litellm.example.com` |
 | `LITELLM_API_KEY` | Clé API pour l'authentification au proxy | `your-api-key` ou par défaut `litellm-proxy` |
 
-Les utilisateurs n'ont qu'à définir le domaine — les suffixes de chemin du fournisseur sont ajoutés automatiquement.
-Au moment de l'exécution, le point d'entrée dérive `ANTHROPIC_API_KEY` à partir de `LITELLM_API_KEY` afin que Claude Code puisse consommer les identifiants du proxy sans nécessiter une variable distincte côté utilisateur.
+Les utilisateurs n'ont besoin de définir que le domaine — les suffixes de chemin du fournisseur sont ajoutés automatiquement.
+Au démarrage, le point d'entrée dérive `ANTHROPIC_API_KEY` à partir de `LITELLM_API_KEY` afin que Claude Code puisse utiliser les identifiants du proxy sans nécessiter une variable séparée exposée à l'utilisateur.
 
-Les noms de modèles ne sont **pas** remappés dans ce mode. Claude Code envoie ses identifiants de modèle standard (par ex. `claude-sonnet-4-6`) et LiteLLM les route vers votre backend configuré.
+Les noms de modèles ne sont **pas** remappés dans ce mode. Claude Code envoie ses identifiants de modèles standard (par ex. `claude-sonnet-4-6`) et LiteLLM les route vers votre backend configuré.
 
 ### Validation des certificats TLS
 
@@ -67,18 +67,18 @@ Le conteneur inclut plusieurs agents de codage IA en plus de Claude Code :
 | Agent | Commande | Fournisseur |
 |-------|----------|-------------|
 | [Codex](https://github.com/openai/codex) | `codex` | Compatible OpenAI |
-| [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | Multi-fournisseur (à configurer au moment de l'exécution) |
-| [Oh-My-Pi](https://github.com/can1357/oh-my-pi) | `omp` | Multi-fournisseur (à configurer au moment de l'exécution) |
+| [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | Multi-fournisseur (configurer au démarrage) |
+| [Oh-My-Pi](https://github.com/can1357/oh-my-pi) | `omp` | Multi-fournisseur (configurer au démarrage) |
 
-Pi et Oh-My-Pi sont installés en tant que packages npm globaux. Codex est un binaire autonome qui se met à jour automatiquement au moment de l'exécution.
+Pi et Oh-My-Pi sont installés en tant que packages npm globaux. Codex est un binaire autonome qui se met à jour automatiquement au démarrage.
 
 ### Affichage distant (noVNC)
 
-Le conteneur exécute une pile d'affichage virtuel pour observer et interagir avec les navigateurs en mode graphique. Consultez [Affichage distant (noVNC)](./vnc) pour les instructions de connexion et les variables d'environnement (`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`).
+Le conteneur exécute une pile d'affichage virtuel pour observer et interagir avec les navigateurs en mode graphique. Voir [Affichage distant (noVNC)](./vnc) pour les instructions de connexion et les variables d'environnement (`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`).
 
 ### Chrome DevTools MCP
 
-Le conteneur inclut un serveur [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) préconfiguré pour l'automatisation de navigateur headless. Claude Code peut naviguer sur des pages web, prendre des captures d'écran et inspecter le DOM sans aucune configuration supplémentaire. Consultez [Chrome DevTools MCP](./chrome) pour plus de détails.
+Le conteneur inclut un serveur [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) pré-configuré pour l'automatisation de navigateur headless. Claude Code peut naviguer sur des pages web, prendre des captures d'écran et inspecter le DOM sans aucune configuration supplémentaire. Voir [Chrome DevTools MCP](./chrome) pour les détails.
 
 ### Git
 
@@ -106,7 +106,7 @@ echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
 |----------|-------------|-----------------|
 | `GH_TOKEN` | Jeton d'accès personnel GitHub pour le CLI `gh` et git HTTPS | `gh auth token` (si `gh` est installé localement) |
 
-Lorsque `GH_TOKEN` est défini dans `.env`, le CLI `gh` s'authentifie automatiquement — pas besoin d'exécuter `gh auth login`. Le point d'entrée exécute également `gh auth setup-git`, qui configure l'assistant d'identifiants git pour que `git clone` et `git push` en HTTPS fonctionnent sans clés SSH.
+Lorsque `GH_TOKEN` est défini dans `.env`, le CLI `gh` s'authentifie automatiquement — pas besoin d'exécuter `gh auth login`. Le point d'entrée exécute également `gh auth setup-git`, qui configure le gestionnaire d'identifiants git pour que `git clone` et `git push` en HTTPS fonctionnent sans clés SSH.
 
 Si `gh` est installé et authentifié sur votre machine hôte, extrayez le jeton directement :
 
@@ -114,7 +114,7 @@ Si `gh` est installé et authentifié sur votre machine hôte, extrayez le jeton
 echo "GH_TOKEN=$(gh auth token)" >> .env
 ```
 
-Sinon, [créez un jeton d'accès personnel](https://github.com/settings/tokens) et ajoutez-le manuellement. Les jetons à granularité fine (recommandés) et les jetons classiques fonctionnent tous les deux. Les jetons à granularité fine vous permettent de limiter l'accès à des dépôts spécifiques. Les jetons classiques nécessitent le scope `repo` pour l'accès aux dépôts privés.
+Sinon, [créez un jeton d'accès personnel](https://github.com/settings/tokens) et ajoutez-le manuellement. Les jetons à portée fine (recommandés) et les jetons classiques fonctionnent tous les deux. Les jetons à portée fine vous permettent de limiter l'accès à des dépôts spécifiques. Les jetons classiques nécessitent la portée `repo` pour l'accès aux dépôts privés.
 
 Pour vérifier l'authentification à l'intérieur du conteneur :
 
@@ -124,52 +124,52 @@ gh auth status
 
 ## Comment les outils sont installés
 
-Chaque environnement d'exécution, CLI et outil est installé directement dans le `Dockerfile` au moment du build de l'image. L'image pré-construite est publiée sur `ghcr.io/f5xc-salesdemos/devcontainer:latest` à chaque push sur `main`, donc la plupart des utilisateurs n'ont jamais besoin de construire localement.
+Chaque environnement d'exécution, CLI et outil est installé directement dans le `Dockerfile` lors de la construction de l'image. L'image pré-construite est publiée sur `ghcr.io/f5xc-salesdemos/devcontainer:latest` à chaque push sur `main`, de sorte que la plupart des utilisateurs n'ont jamais besoin de construire localement.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-L'exécution de `docker compose up -d` récupère automatiquement l'image pré-construite. Pour construire localement après avoir personnalisé le Dockerfile, passez le fichier de build explicitement :
+L'exécution de `docker compose up -d` tire automatiquement l'image pré-construite. Pour construire localement après avoir personnalisé le Dockerfile, passez le fichier de build explicitement :
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
-Consultez [Développement local](./local-development) pour plus de détails.
+Voir [Développement local](./local-development) pour les détails.
 
 </TabItem>
 <TabItem label="Podman">
 
-L'exécution de `podman-compose up -d` récupère automatiquement l'image pré-construite. Pour construire localement après avoir personnalisé le Dockerfile, passez le fichier de build explicitement :
+L'exécution de `podman-compose up -d` tire automatiquement l'image pré-construite. Pour construire localement après avoir personnalisé le Dockerfile, passez le fichier de build explicitement :
 
 ```bash
 podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
-Consultez [Développement local](./local-development) pour plus de détails.
+Voir [Développement local](./local-development) pour les détails.
 
 </TabItem>
 </Tabs>
 
-Le Dockerfile utilise un build en deux étapes optimisé pour le cache de couches Docker. Consultez [Développement local — Architecture de build en deux étapes](./local-development#two-stage-build-architecture) pour le détail complet des couches et les informations sur le cache de build.
+Le Dockerfile utilise un build en deux étapes optimisé pour la mise en cache des couches Docker. Voir [Développement local — Architecture de build en deux étapes](./local-development#two-stage-build-architecture) pour le détail complet des couches et les informations sur le cache de build.
 
 ## Conscience des outils de Claude Code
 
 Le conteneur inclut une configuration intégrée qui empêche Claude Code de confondre les noms d'outils. La conscience des outils est installée à **deux** niveaux de mémoire pour une défense en profondeur :
 
-- **Politique gérée** (`/etc/claude-code/CLAUDE.md`) — installée au moment du build Docker. C'est le niveau de priorité le plus élevé dans la hiérarchie de mémoire de Claude Code et il est toujours chargé, même lorsqu'un volumineux `CLAUDE.md` de projet existe dans le répertoire de travail.
+- **Politique gérée** (`/etc/claude-code/CLAUDE.md`) — installée lors de la construction Docker. C'est le niveau de priorité le plus élevé dans la hiérarchie de mémoire de Claude Code et il est toujours chargé, même lorsqu'un grand `CLAUDE.md` de projet existe dans le répertoire de travail.
 - **Mémoire utilisateur** (`~/.claude/CLAUDE.md`) — initialisée par le point d'entrée au premier démarrage. Fournit une couche de secours et une copie visible et personnalisable pour les utilisateurs.
 
 ### Priorité des niveaux de mémoire
 
-Claude Code charge les instructions depuis plusieurs niveaux de mémoire (de la priorité la plus haute à la plus basse) :
+Claude Code charge les instructions à partir de plusieurs niveaux de mémoire (de la priorité la plus haute à la plus basse) :
 
 1. **Politique gérée** (`/etc/claude-code/`) — Toujours chargée, ne peut pas être exclue
 2. **Mémoire de projet** (`./CLAUDE.md`) — Chargée par répertoire de projet
 3. **Mémoire utilisateur** (`~/.claude/CLAUDE.md`) — Chargée globalement pour toutes les sessions
-4. **Mémoire locale** (`./CLAUDE.local.md`) — Surcharges personnelles par projet
+4. **Mémoire locale** (`./CLAUDE.local.md`) — Remplacements personnels par projet
 
-Sans le niveau de politique gérée, la conscience des outils dans la mémoire utilisateur peut être dépriorisée en concurrence avec un volumineux `CLAUDE.md` au niveau projet, causant la perte de conscience par Claude de ses noms d'outils en PascalCase. Le niveau géré garantit que la conscience des outils est toujours chargée à la priorité la plus élevée.
+Sans le niveau de politique gérée, la conscience des outils dans la mémoire utilisateur peut être déprioritisée lorsqu'elle entre en compétition avec un grand `CLAUDE.md` au niveau du projet, entraînant la perte par Claude de la conscience de ses noms d'outils en PascalCase. Le niveau géré garantit que la conscience des outils est toujours chargée avec la priorité la plus élevée.
 
 ### Auto-test
 
@@ -179,11 +179,11 @@ Exécutez l'auto-test intégré pour vérifier la configuration :
 claude-self-test
 ```
 
-Cela vérifie que tous les fichiers de configuration sont en place et contiennent les références d'outils attendues.
+Ceci vérifie que tous les fichiers de configuration sont en place et contiennent les références d'outils attendues.
 
 ## Ajouter des outils
 
-Pour ajouter des outils à l'image, modifiez le `Dockerfile` et reconstruisez localement. Consultez [Développement local — Ajouter des outils](./local-development#adding-tools) pour les instructions sur l'ajout de packages APT, d'outils npm, d'outils pip et de téléchargements de binaires.
+Pour ajouter des outils à l'image, modifiez le `Dockerfile` et reconstruisez localement. Voir [Développement local — Ajouter des outils](./local-development#adding-tools) pour les instructions sur l'ajout de packages APT, d'outils npm, d'outils pip et de téléchargements de binaires.
 
 ## Extensions VS Code
 
@@ -194,7 +194,7 @@ Les extensions sont configurées dans `.devcontainer/devcontainer.json` sous `cu
 Toutes les données résident dans des volumes nommés — aucun répertoire hôte n'est monté :
 
 | Volume | Point de montage | Contenu |
-|--------|------------------|---------|
+|--------|-----------------|---------|
 | `workspace` | `/workspace` | Vos dépôts clonés et fichiers de projet |
 | `home` | `/home/vscode` | Historique du shell, configurations d'outils, caches, clés SSH |
 
@@ -225,6 +225,6 @@ Les deux persistent à travers les redémarrages et reconstructions du conteneur
 
 | Hôte | Conteneur | Service |
 |------|-----------|---------|
-| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | Affichage distant noVNC (localhost uniquement, surcharger avec `NOVNC_HOST_PORT`) |
+| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | Affichage distant noVNC (localhost uniquement, remplacer avec `NOVNC_HOST_PORT`) |
 
 Les ports sont liés à `127.0.0.1` afin qu'ils ne soient accessibles que depuis votre machine, pas depuis le réseau.

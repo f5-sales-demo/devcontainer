@@ -1,5 +1,5 @@
 ---
-title: Display Remoto (noVNC)
+title: Display remoto (noVNC)
 description: >-
   Osserva e interagisci con i browser in modalità headed attraverso un display
   virtuale nel tuo browser.
@@ -12,16 +12,16 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Il container esegue uno stack di display virtuale (Xvfb + x11vnc + noVNC + fluxbox) che ti permette di osservare gli agenti AI mentre controllano un browser e di intervenire quando necessario — ad esempio, per gestire le schermate di login o i prompt MFA.
+Il container esegue uno stack di display virtuale (Xvfb + x11vnc + noVNC + fluxbox) che permette di osservare gli agenti AI controllare un browser e intervenire quando necessario — ad esempio, per gestire prompt di login o MFA.
 
 ## Connessione
 
 1. Apri `http://localhost:6080/vnc.html` nel tuo browser e fai clic su **Connect**
 2. Vedrai un desktop fluxbox leggero — questo è il display virtuale del container
 
-Gli agenti AI che utilizzano `@playwright/mcp` in modalità headed renderizzano Chromium su questo display. Puoi fare clic e digitare direttamente nella finestra noVNC per intervenire in qualsiasi momento — non è necessario mettere in pausa/riprendere.
+Gli agenti AI che utilizzano `@playwright/mcp` in modalità headed renderizzano Chromium su questo display. Puoi cliccare e digitare direttamente nella finestra noVNC per intervenire in qualsiasi momento — non è necessario mettere in pausa o riprendere.
 
-## Avvio Manuale del Browser
+## Avvio manuale del browser
 
 Per aprire un browser manualmente all'interno del container:
 
@@ -29,26 +29,26 @@ Per aprire un browser manualmente all'interno del container:
 chromium --no-sandbox &
 ```
 
-Per eseguire i test di Playwright in modalità headed:
+Per eseguire i test Playwright in modalità headed:
 
 ```bash
 npx playwright test --headed
 ```
 
-## Variabili d'Ambiente
+## Variabili d'ambiente
 
 | Variabile | Predefinito | Descrizione |
 |----------|---------|-------------|
-| `ENABLE_VNC` | `true` | Impostare su `false` per disabilitare lo stack VNC |
+| `ENABLE_VNC` | `true` | Imposta su `false` per disabilitare lo stack VNC |
 | `VNC_RESOLUTION` | `1280x1024x24` | Risoluzione del display virtuale (LxAxProfondità) |
-| `DISPLAY` | `:99` | Numero del display X11 |
-| `NOVNC_HOST_PORT` | `6080` | Porta lato host per noVNC (modificare per evitare conflitti con altri container) |
+| `DISPLAY` | `:99` | Numero display X11 |
+| `NOVNC_HOST_PORT` | `6080` | Porta lato host per noVNC (modifica per evitare conflitti con altri container) |
 
 Imposta queste variabili nel tuo file `.env` o in `.devcontainer/devcontainer.json` sotto `containerEnv`.
 
-## Disabilitare lo Stack VNC
+## Disabilitazione dello stack VNC
 
-Per operazioni esclusivamente headless, imposta `ENABLE_VNC=false` nel file `.env` e riavvia il container:
+Per il funzionamento solo in modalità headless, imposta `ENABLE_VNC=false` in `.env` e riavvia il container:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -69,6 +69,6 @@ podman-compose up -d
 </TabItem>
 </Tabs>
 
-## Risoluzione dei Problemi
+## Risoluzione dei problemi
 
-Consulta [Risoluzione dei Problemi — Display Remoto](./troubleshooting#remote-display-novnc) per soluzioni a schermate nere, errori di connessione rifiutata e conflitti di porta.
+Consulta [Risoluzione dei problemi — Display remoto](./troubleshooting#remote-display-novnc) per soluzioni a schermate nere, errori di connessione rifiutata e conflitti di porte.

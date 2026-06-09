@@ -10,82 +10,82 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-모든 설정은 프로젝트 루트의 `.env` 파일에 저장됩니다. 이 파일은 gitignore 처리되어 있으므로 커밋되지 않습니다.
+모든 설정은 프로젝트 루트의 `.env` 파일에 위치합니다. 이 파일은 gitignore에 포함되어 있어 커밋되지 않습니다.
 
 ## 환경 변수
 
-### AI 제공자
+### AI 프로바이더
 
-컨테이너는 두 가지 **상호 배타적인** 인증 모드를 지원합니다(우선순위 순서):
+컨테이너는 **상호 배타적인** 두 가지 인증 모드를 지원합니다 (우선순위 순서):
 
-- **LiteLLM 프록시** — `LITELLM_BASE_URL`과 `LITELLM_API_KEY`를 설정하여 LiteLLM 프록시를 통해 라우팅합니다(아래 참조).
-- **OAuth 모드** — `CLAUDE_CODE_OAUTH_TOKEN`만 설정합니다(아래 참조).
+- **LiteLLM 프록시** — `LITELLM_BASE_URL`과 `LITELLM_API_KEY`를 설정하여 LiteLLM 프록시를 통해 라우팅합니다 (아래 참조).
+- **OAuth 모드** — `CLAUDE_CODE_OAUTH_TOKEN`만 설정합니다 (아래 참조).
 
-모드를 조합하지 마십시오 — 정확히 하나만 사용하십시오.
+모드를 혼합하지 마세요 — 정확히 하나만 사용하세요.
 
 ### Claude Max (OAuth)
 
 | 변수 | 설명 | 예시 |
-|----------|-------------|---------|
+|------|------|------|
 | `CLAUDE_CODE_OAUTH_TOKEN` | Claude Max 구독의 OAuth 토큰 | `sk-ant-oat01-...` |
 
-설정 시, Claude Code는 OAuth를 사용하여 Anthropic에 직접 인증합니다 — API 키나 프록시가 필요 없습니다. Claude Code 설정 또는 [Anthropic 콘솔](https://console.anthropic.com/)에서 토큰을 받으십시오.
+설정 시 Claude Code는 OAuth를 사용하여 Anthropic에 직접 인증합니다 — API 키나 프록시가 필요 없습니다. Claude Code 설정 또는 [Anthropic 콘솔](https://console.anthropic.com/)에서 토큰을 얻을 수 있습니다.
 
 ### LiteLLM 프록시
 
-LiteLLM(또는 기타) 프록시가 이미 네이티브 Anthropic Messages API를 지원하는 경우 — `web_search`, 스트리밍, 도구 사용 포함 — `LITELLM_BASE_URL`을 프록시 도메인으로 설정하십시오. 컨테이너가 자동으로 제공자별 URL을 파생합니다:
+LiteLLM (또는 기타) 프록시가 이미 네이티브 Anthropic Messages API를 지원하는 경우 — `web_search`, 스트리밍, 도구 사용 포함 — `LITELLM_BASE_URL`을 프록시 도메인으로 설정하세요. 컨테이너가 프로바이더별 URL을 자동으로 도출합니다:
 
 - Anthropic 엔드포인트 → `${LITELLM_BASE_URL}/anthropic` (Claude Code에서 사용)
 - OpenAI 호환 엔드포인트 → `${LITELLM_BASE_URL}/openai/v1`
 
 | 변수 | 설명 | 예시 |
-|----------|-------------|---------|
-| `LITELLM_BASE_URL` | LiteLLM 프록시의 도메인(경로 접미사 없음) | `https://litellm.example.com` |
-| `LITELLM_API_KEY` | 프록시 인증용 API 키 | `your-api-key` 또는 기본값 `litellm-proxy` |
+|------|------|------|
+| `LITELLM_BASE_URL` | LiteLLM 프록시의 도메인 (경로 접미사 없이) | `https://litellm.example.com` |
+| `LITELLM_API_KEY` | 프록시 인증을 위한 API 키 | `your-api-key` 또는 기본값 `litellm-proxy` |
 
-사용자는 도메인만 설정하면 됩니다 — 제공자 경로 접미사는 자동으로 추가됩니다.
-런타임에 엔트리포인트가 `LITELLM_API_KEY`에서 `ANTHROPIC_API_KEY`를 파생하므로, Claude Code는 별도의 사용자용 변수 없이 프록시 자격 증명을 사용할 수 있습니다.
+사용자는 도메인만 설정하면 됩니다 — 프로바이더 경로 접미사는 자동으로 추가됩니다.
+런타임 시 엔트리포인트가 `LITELLM_API_KEY`에서 `ANTHROPIC_API_KEY`를 도출하므로 Claude Code가 별도의 사용자 대면 변수 없이 프록시 자격 증명을 사용할 수 있습니다.
 
-이 모드에서 모델 이름은 **재매핑되지 않습니다**. Claude Code는 표준 모델 식별자(예: `claude-sonnet-4-6`)를 전송하고 LiteLLM이 설정된 백엔드로 라우팅합니다.
+이 모드에서는 모델 이름이 **재매핑되지 않습니다**. Claude Code는 표준 모델 식별자(예: `claude-sonnet-4-6`)를 전송하고 LiteLLM이 설정된 백엔드로 라우팅합니다.
 
 ### TLS 인증서 검증
 
-기본적으로 Node.js는 모든 HTTPS 연결에 대해 TLS 인증서를 검증합니다. 업스트림 API 제공자가 자체 서명 인증서를 사용하는 경우(내부 Open WebUI 또는 LiteLLM 프록시에서 흔함), `.env` 파일에 다음을 추가하여 검증을 비활성화할 수 있습니다:
+기본적으로 Node.js는 모든 HTTPS 연결에 대해 TLS 인증서를 검증합니다. 업스트림 API 프로바이더가 자체 서명 인증서를 사용하는 경우 (내부 Open WebUI 또는 LiteLLM 프록시에서 흔함), `.env` 파일에 다음을 추가하여 검증을 비활성화할 수 있습니다:
 
 ```ini
 NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
-이는 프로덕션 환경에서는 **권장되지 않습니다**. 컨테이너와 API 엔드포인트 사이의 네트워크 경로를 신뢰하는 경우에만 설정하십시오.
+이는 프로덕션 환경에서 **권장되지 않습니다**. 컨테이너와 API 엔드포인트 사이의 네트워크 경로를 신뢰할 수 있는 경우에만 설정하세요.
 
 ### AI 코딩 에이전트
 
 컨테이너에는 Claude Code 외에 여러 AI 코딩 에이전트가 포함되어 있습니다:
 
-| 에이전트 | 명령어 | 제공자 |
-|-------|---------|----------|
+| 에이전트 | 명령어 | 프로바이더 |
+|----------|--------|-----------|
 | [Codex](https://github.com/openai/codex) | `codex` | OpenAI 호환 |
-| [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | 멀티 제공자(런타임에 설정) |
-| [Oh-My-Pi](https://github.com/can1357/oh-my-pi) | `omp` | 멀티 제공자(런타임에 설정) |
+| [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | 멀티 프로바이더 (런타임에 설정) |
+| [Oh-My-Pi](https://github.com/can1357/oh-my-pi) | `omp` | 멀티 프로바이더 (런타임에 설정) |
 
-Pi와 Oh-My-Pi는 전역 npm 패키지로 설치됩니다. Codex는 런타임에 자동 업데이트되는 독립 실행 바이너리입니다.
+Pi와 Oh-My-Pi는 전역 npm 패키지로 설치됩니다. Codex는 런타임에 자동 업데이트되는 독립 실행형 바이너리입니다.
 
 ### 원격 디스플레이 (noVNC)
 
-컨테이너는 GUI 브라우저를 관찰하고 상호작용하기 위한 가상 디스플레이 스택을 실행합니다. 연결 방법 및 환경 변수(`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`)에 대해서는 [원격 디스플레이 (noVNC)](./vnc)를 참조하십시오.
+컨테이너는 GUI 브라우저를 관찰하고 상호작용하기 위한 가상 디스플레이 스택을 실행합니다. 연결 방법 및 환경 변수(`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`)에 대해서는 [원격 디스플레이 (noVNC)](./vnc)를 참조하세요.
 
 ### Chrome DevTools MCP
 
-컨테이너에는 헤드리스 브라우저 자동화를 위해 사전 설정된 [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) 서버가 포함되어 있습니다. Claude Code는 추가 설정 없이 웹 페이지를 탐색하고, 스크린샷을 찍고, DOM을 검사할 수 있습니다. 자세한 내용은 [Chrome DevTools MCP](./chrome)를 참조하십시오.
+컨테이너에는 헤드리스 브라우저 자동화를 위해 사전 구성된 [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) 서버가 포함되어 있습니다. Claude Code는 추가 설정 없이 웹 페이지를 탐색하고, 스크린샷을 찍고, DOM을 검사할 수 있습니다. 자세한 내용은 [Chrome DevTools MCP](./chrome)를 참조하세요.
 
 ### Git
 
 | 변수 | 설명 | 설정 방법 |
-|----------|-------------|------------|
+|------|------|----------|
 | `GIT_AUTHOR_NAME` | git 커밋에 사용할 이름 | `git config user.name` |
 | `GIT_AUTHOR_EMAIL` | git 커밋에 사용할 이메일 | `git config user.email` |
 
-호스트에 git이 설정되어 있다면, 두 값을 자동으로 채울 수 있습니다:
+호스트에 git이 설정되어 있는 경우, 두 값을 자동으로 채울 수 있습니다:
 
 ```bash
 echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
@@ -95,16 +95,16 @@ echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
 ### SSH
 
 | 변수 | 설명 | 설정 방법 |
-|----------|-------------|------------|
+|------|------|----------|
 | `SSH_PRIVATE_KEY` | Base64로 인코딩된 개인 키 | `base64 < ~/.ssh/id_ed25519` |
 
 ### GitHub CLI
 
 | 변수 | 설명 | 설정 방법 |
-|----------|-------------|------------|
-| `GH_TOKEN` | `gh` CLI 및 HTTPS git용 GitHub 개인 접근 토큰 | `gh auth token` (로컬에 `gh`가 설치된 경우) |
+|------|------|----------|
+| `GH_TOKEN` | `gh` CLI 및 HTTPS git용 GitHub 개인 액세스 토큰 | `gh auth token` (로컬에 `gh`가 설치된 경우) |
 
-`.env`에 `GH_TOKEN`이 설정되면, `gh` CLI가 자동으로 인증됩니다 — `gh auth login`을 실행할 필요가 없습니다. 엔트리포인트는 `gh auth setup-git`도 실행하여 git 자격 증명 헬퍼를 설정하므로, SSH 키 없이도 HTTPS `git clone` 및 `git push`가 작동합니다.
+`.env`에 `GH_TOKEN`이 설정되면 `gh` CLI가 자동으로 인증됩니다 — `gh auth login`을 실행할 필요가 없습니다. 엔트리포인트는 또한 `gh auth setup-git`을 실행하여 git 자격 증명 헬퍼를 구성하므로, SSH 키 없이도 HTTPS `git clone` 및 `git push`가 작동합니다.
 
 호스트 머신에 `gh`가 설치되어 있고 인증된 경우, 토큰을 직접 추출할 수 있습니다:
 
@@ -112,7 +112,7 @@ echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
 echo "GH_TOKEN=$(gh auth token)" >> .env
 ```
 
-그렇지 않은 경우, [개인 접근 토큰을 생성](https://github.com/settings/tokens)하여 수동으로 추가하십시오. 세분화된 토큰(권장)과 클래식 토큰 모두 사용 가능합니다. 세분화된 토큰은 특정 저장소에 대한 접근 범위를 지정할 수 있습니다. 클래식 토큰은 프라이빗 저장소 접근을 위해 `repo` 스코프가 필요합니다.
+그렇지 않으면 [개인 액세스 토큰을 생성](https://github.com/settings/tokens)하여 수동으로 추가하세요. 세분화된 토큰(권장)과 클래식 토큰 모두 사용할 수 있습니다. 세분화된 토큰은 특정 리포지토리로 액세스 범위를 제한할 수 있습니다. 클래식 토큰은 비공개 리포지토리 액세스를 위해 `repo` 범위가 필요합니다.
 
 컨테이너 내부에서 인증을 확인하려면:
 
@@ -120,99 +120,99 @@ echo "GH_TOKEN=$(gh auth token)" >> .env
 gh auth status
 ```
 
-## 도구 설치 방식
+## 도구 설치 방법
 
-모든 언어 런타임, CLI 및 도구는 이미지 빌드 시 `Dockerfile`에서 직접 설치됩니다. 사전 빌드된 이미지는 `main` 브랜치에 푸시될 때마다 `ghcr.io/f5xc-salesdemos/devcontainer:latest`에 게시되므로, 대부분의 사용자는 로컬에서 빌드할 필요가 없습니다.
+모든 언어 런타임, CLI, 도구는 이미지 빌드 시 `Dockerfile`에서 직접 설치됩니다. 사전 빌드된 이미지는 `main` 브랜치에 푸시할 때마다 `ghcr.io/f5xc-salesdemos/devcontainer:latest`로 게시되므로, 대부분의 사용자는 로컬에서 빌드할 필요가 없습니다.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-`docker compose up -d`를 실행하면 사전 빌드된 이미지가 자동으로 풀링됩니다. Dockerfile을 커스터마이징한 후 로컬에서 빌드하려면, 빌드 파일을 명시적으로 전달하십시오:
+`docker compose up -d`를 실행하면 사전 빌드된 이미지가 자동으로 풀됩니다. Dockerfile을 커스터마이징한 후 로컬에서 빌드하려면 빌드 파일을 명시적으로 전달하세요:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
-자세한 내용은 [로컬 개발](./local-development)을 참조하십시오.
+자세한 내용은 [로컬 개발](./local-development)을 참조하세요.
 
 </TabItem>
 <TabItem label="Podman">
 
-`podman-compose up -d`를 실행하면 사전 빌드된 이미지가 자동으로 풀링됩니다. Dockerfile을 커스터마이징한 후 로컬에서 빌드하려면, 빌드 파일을 명시적으로 전달하십시오:
+`podman-compose up -d`를 실행하면 사전 빌드된 이미지가 자동으로 풀됩니다. Dockerfile을 커스터마이징한 후 로컬에서 빌드하려면 빌드 파일을 명시적으로 전달하세요:
 
 ```bash
 podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
-자세한 내용은 [로컬 개발](./local-development)을 참조하십시오.
+자세한 내용은 [로컬 개발](./local-development)을 참조하세요.
 
 </TabItem>
 </Tabs>
 
-Dockerfile은 Docker 레이어 캐싱에 최적화된 2단계 빌드를 사용합니다. 전체 레이어 분석 및 빌드 캐시 세부사항은 [로컬 개발 — 2단계 빌드 아키텍처](./local-development#two-stage-build-architecture)를 참조하십시오.
+Dockerfile은 Docker 레이어 캐싱에 최적화된 2단계 빌드를 사용합니다. 전체 레이어 구조 및 빌드 캐시 세부 정보는 [로컬 개발 — 2단계 빌드 아키텍처](./local-development#two-stage-build-architecture)를 참조하세요.
 
 ## Claude Code 도구 인식
 
 컨테이너에는 Claude Code가 도구 이름을 혼동하지 않도록 하는 내장 설정이 포함되어 있습니다. 도구 인식은 심층 방어를 위해 **두 가지** 메모리 계층에 설치됩니다:
 
-- **관리 정책** (`/etc/claude-code/CLAUDE.md`) — Docker 빌드 시 설치됩니다. 이는 Claude Code의 메모리 계층 구조에서 최우선 순위 계층이며, 작업 디렉토리에 대규모 프로젝트 `CLAUDE.md`가 존재하더라도 항상 로드됩니다.
-- **사용자 메모리** (`~/.claude/CLAUDE.md`) — 첫 번째 시작 시 엔트리포인트에 의해 시드됩니다. 백업 레이어를 제공하며 사용자가 확인하고 커스터마이징할 수 있는 복사본입니다.
+- **관리 정책** (`/etc/claude-code/CLAUDE.md`) — Docker 빌드 시 설치됩니다. 이는 Claude Code의 메모리 계층 구조에서 가장 높은 우선순위 계층이며, 작업 디렉토리에 대규모 프로젝트 `CLAUDE.md`가 있더라도 항상 로드됩니다.
+- **사용자 메모리** (`~/.claude/CLAUDE.md`) — 첫 시작 시 엔트리포인트에 의해 시드됩니다. 백업 레이어와 사용자가 볼 수 있고 커스터마이징할 수 있는 사본을 제공합니다.
 
 ### 메모리 계층 우선순위
 
-Claude Code는 여러 메모리 계층에서 지시사항을 로드합니다(최고에서 최저 우선순위):
+Claude Code는 여러 메모리 계층에서 지침을 로드합니다 (높은 우선순위에서 낮은 우선순위 순):
 
 1. **관리 정책** (`/etc/claude-code/`) — 항상 로드되며, 제외할 수 없음
 2. **프로젝트 메모리** (`./CLAUDE.md`) — 프로젝트 디렉토리별로 로드됨
-3. **사용자 메모리** (`~/.claude/CLAUDE.md`) — 모든 세션에서 전역적으로 로드됨
+3. **사용자 메모리** (`~/.claude/CLAUDE.md`) — 모든 세션에서 전역으로 로드됨
 4. **로컬 메모리** (`./CLAUDE.local.md`) — 개인 프로젝트별 오버라이드
 
-관리 정책 계층이 없으면, 사용자 메모리의 도구 인식이 대규모 프로젝트 수준 `CLAUDE.md`와 경쟁할 때 우선순위가 낮아져 Claude가 PascalCase 도구 이름에 대한 인식을 잃을 수 있습니다. 관리 계층은 도구 인식이 항상 최우선 순위로 로드되도록 보장합니다.
+관리 정책 계층이 없으면 사용자 메모리의 도구 인식이 대규모 프로젝트 수준 `CLAUDE.md`와 경쟁할 때 우선순위가 낮아져 Claude가 PascalCase 도구 이름에 대한 인식을 잃을 수 있습니다. 관리 계층은 도구 인식이 항상 가장 높은 우선순위로 로드되도록 보장합니다.
 
-### 자체 테스트
+### 자가 테스트
 
-내장된 자체 테스트를 실행하여 설정을 확인하십시오:
+내장 자가 테스트를 실행하여 설정을 확인하세요:
 
 ```bash
 claude-self-test
 ```
 
-이 명령은 모든 설정 파일이 올바른 위치에 있고 예상되는 도구 참조를 포함하는지 확인합니다.
+이 명령은 모든 설정 파일이 올바른 위치에 있고 예상된 도구 참조를 포함하는지 확인합니다.
 
 ## 도구 추가
 
-이미지에 도구를 추가하려면 `Dockerfile`을 편집하고 로컬에서 다시 빌드하십시오. APT 패키지, npm 도구, pip 도구 및 바이너리 다운로드 추가 방법에 대한 지침은 [로컬 개발 — 도구 추가](./local-development#adding-tools)를 참조하십시오.
+이미지에 도구를 추가하려면 `Dockerfile`을 편집하고 로컬에서 다시 빌드하세요. APT 패키지, npm 도구, pip 도구, 바이너리 다운로드 추가에 대한 지침은 [로컬 개발 — 도구 추가](./local-development#adding-tools)를 참조하세요.
 
 ## VS Code 확장 프로그램
 
-확장 프로그램은 `.devcontainer/devcontainer.json`의 `customizations.vscode.extensions` 아래에 설정되며, VS Code에서 열 때 자동으로 설치됩니다.
+확장 프로그램은 `.devcontainer/devcontainer.json`의 `customizations.vscode.extensions` 아래에 구성되어 있으며 VS Code에서 열 때 자동으로 설치됩니다.
 
 ## 데이터 영속성
 
 모든 데이터는 명명된 볼륨에 저장됩니다 — 호스트 디렉토리는 마운트되지 않습니다:
 
 | 볼륨 | 마운트 지점 | 내용 |
-|--------|-------------|----------|
-| `workspace` | `/workspace` | 클론한 저장소 및 프로젝트 파일 |
+|------|------------|------|
+| `workspace` | `/workspace` | 클론된 리포지토리 및 프로젝트 파일 |
 | `home` | `/home/vscode` | 셸 히스토리, 도구 설정, 캐시, SSH 키 |
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-컨테이너 재시작 및 재빌드 시에도 모두 유지됩니다. 재시작 전에 `docker compose pull`을 실행하여 최신 사전 빌드 이미지를 가져오십시오.
+둘 다 컨테이너 재시작 및 재빌드 시에도 유지됩니다. 재시작 전에 `docker compose pull`을 실행하여 최신 사전 빌드 이미지를 가져오세요.
 
 | 동작 | 데이터 |
-|--------|------|
+|------|--------|
 | `docker compose down` | 보존됨 |
 | `docker compose down -v` | **삭제됨** |
 
 </TabItem>
 <TabItem label="Podman">
 
-컨테이너 재시작 및 재빌드 시에도 모두 유지됩니다. 재시작 전에 `podman-compose pull`을 실행하여 최신 사전 빌드 이미지를 가져오십시오.
+둘 다 컨테이너 재시작 및 재빌드 시에도 유지됩니다. 재시작 전에 `podman-compose pull`을 실행하여 최신 사전 빌드 이미지를 가져오세요.
 
 | 동작 | 데이터 |
-|--------|------|
+|------|--------|
 | `podman-compose down` | 보존됨 |
 | `podman-compose down -v` | **삭제됨** |
 
@@ -222,7 +222,7 @@ claude-self-test
 ## 포트 매핑
 
 | 호스트 | 컨테이너 | 서비스 |
-|------|-----------|---------|
-| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNC 원격 디스플레이 (localhost 전용, `NOVNC_HOST_PORT`로 오버라이드) |
+|--------|----------|--------|
+| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNC 원격 디스플레이 (localhost만, `NOVNC_HOST_PORT`로 오버라이드) |
 
-포트는 `127.0.0.1`에 바인딩되므로 네트워크가 아닌 사용자의 머신에서만 접근 가능합니다.
+포트는 `127.0.0.1`에 바인딩되어 네트워크가 아닌 본인의 머신에서만 접근 가능합니다.

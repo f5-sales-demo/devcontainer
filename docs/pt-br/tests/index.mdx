@@ -1,8 +1,8 @@
 ---
 title: Testes de Integração
 description: >-
-  Testes automatizados que verificam o funcionamento ponta a ponta das stacks de
-  runtime do devcontainer.
+  Testes automatizados que verificam se as stacks de runtime do devcontainer
+  funcionam de ponta a ponta.
 sidebar:
   order: 7
 i18n:
@@ -10,11 +10,11 @@ i18n:
   translator: machine
 ---
 
-Esses testes validam que os principais subsistemas do devcontainer funcionam em conjunto em tempo de execução. Eles não são incorporados na imagem Docker — execute-os dentro de um contêiner em execução para verificar suas capacidades.
+Esses testes validam que os principais subsistemas do devcontainer funcionam em conjunto durante a execução. Eles não estão embutidos na imagem Docker — execute-os dentro de um container em execução para verificar suas capacidades.
 
 ## Testes Disponíveis
 
-| Teste | O que comprova |
+| Teste | O que ele comprova |
 | ---- | ---- |
 | [Gravação de Tela](/devcontainer/tests/screen-recording/) | O display Xvfb, o Chromium com interface gráfica (Playwright) e a gravação com ffmpeg produzem um MP4 válido |
 | [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | O symlink do Chrome, o patch headless e a navegação MCP produzem uma captura de tela válida |

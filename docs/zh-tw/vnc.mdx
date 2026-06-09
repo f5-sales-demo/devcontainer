@@ -1,6 +1,6 @@
 ---
 title: 遠端顯示 (noVNC)
-description: 透過虛擬顯示器在瀏覽器中觀看並與有介面的瀏覽器互動。
+description: 透過虛擬顯示器在瀏覽器中觀看並與有介面瀏覽器互動。
 sidebar:
   order: 3
 i18n:
@@ -10,7 +10,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-容器運行一個虛擬顯示堆疊（Xvfb + x11vnc + noVNC + fluxbox），讓您可以觀看 AI 代理控制瀏覽器，並在需要時進行介入——例如處理登入或 MFA 提示。
+容器會執行虛擬顯示堆疊（Xvfb + x11vnc + noVNC + fluxbox），讓您可以觀看 AI 代理控制瀏覽器，並在需要時進行介入——例如，處理登入或多因素驗證提示。
 
 ## 連線
 
@@ -37,12 +37,12 @@ npx playwright test --headed
 
 | 變數 | 預設值 | 說明 |
 |----------|---------|-------------|
-| `ENABLE_VNC` | `true` | 設為 `false` 以停用 VNC 堆疊 |
+| `ENABLE_VNC` | `true` | 設為 `false` 可停用 VNC 堆疊 |
 | `VNC_RESOLUTION` | `1280x1024x24` | 虛擬顯示器解析度（寬x高x色深） |
 | `DISPLAY` | `:99` | X11 顯示器編號 |
-| `NOVNC_HOST_PORT` | `6080` | noVNC 的主機端連接埠（覆寫以避免與其他容器衝突） |
+| `NOVNC_HOST_PORT` | `6080` | noVNC 的主機端連接埠（可覆寫以避免與其他容器衝突） |
 
-在您的 `.env` 檔案或 `.devcontainer/devcontainer.json` 的 `containerEnv` 中設定這些變數。
+在您的 `.env` 檔案中或在 `.devcontainer/devcontainer.json` 的 `containerEnv` 下設定這些變數。
 
 ## 停用 VNC 堆疊
 
@@ -69,4 +69,4 @@ podman-compose up -d
 
 ## 疑難排解
 
-請參閱[疑難排解——遠端顯示](./troubleshooting#remote-display-novnc)以取得黑畫面、連線被拒錯誤和連接埠衝突的解決方案。
+請參閱[疑難排解 — 遠端顯示](./troubleshooting#remote-display-novnc)以取得黑畫面、連線被拒絕錯誤和連接埠衝突的解決方案。

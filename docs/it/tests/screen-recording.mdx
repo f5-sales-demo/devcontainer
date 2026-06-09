@@ -1,5 +1,5 @@
 ---
-title: Test di Registrazione Schermo
+title: Test di registrazione dello schermo
 description: >-
   Dimostra che Xvfb, Chromium in modalità headed (tramite Playwright) e la
   registrazione dello schermo con ffmpeg funzionano tutti insieme all'interno
@@ -13,25 +13,25 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Questo test verifica l'intero stack VNC/browser registrando una sessione browser in modalità headed in un file MP4. Dimostra che:
+Questo test verifica l'intero stack VNC/browser registrando una sessione del browser in modalità headed in un file MP4. Dimostra che:
 
 - **Xvfb** è in esecuzione e accetta connessioni su `:99`
-- **Chromium** può avviarsi in modalità headed sul display virtuale
+- **Chromium** può essere avviato in modalità headed sul display virtuale
 - **ffmpeg** può catturare il display tramite x11grab
-- Il **MP4** risultante è un video valido e riproducibile
+- Il file **MP4** risultante è un video valido e riproducibile
 
-## Come Funziona
+## Come funziona
 
 1. Interroga `xdpyinfo -display :99` fino a quando il display X è pronto (stesso pattern dell'entrypoint)
 2. Avvia la registrazione ffmpeg del display a 10 fps
 3. Lancia Chromium in modalità headed tramite la `sync_api` di Playwright
-4. Naviga verso `https://example.com` (pausa di 3 s), poi `https://httpbin.org` (pausa di 3 s)
-5. Invia SIGTERM a ffmpeg per la finalizzazione pulita dell'MP4
+4. Naviga su `https://example.com` (pausa di 3 s), poi su `https://httpbin.org` (pausa di 3 s)
+5. Invia SIGTERM a ffmpeg per la finalizzazione pulita del file MP4
 6. Riporta il percorso di output e la dimensione del file
 
 ## Script
 
-Salvare il seguente file come `vnc-browser-test.py` all'interno del container, oppure copiarlo dalla directory `docs/tests/` di questo repository:
+Salvate il seguente script come `vnc-browser-test.py` all'interno del container, oppure copiatelo dalla directory `docs/tests/` di questo repository:
 
 ```python
 #!/usr/bin/env python3
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     main()
 ```
 
-## Esecuzione del Test
+## Esecuzione del test
 
 <Tabs>
 <TabItem label="All'interno di un container in esecuzione">
@@ -184,7 +184,7 @@ podman run --rm \
 </TabItem>
 </Tabs>
 
-## Output Previsto
+## Output previsto
 
 ```text
 Waiting for Xvfb on :99 ...
@@ -197,13 +197,13 @@ Stopping ffmpeg ...
 SUCCESS: /tmp/recording.mp4 (1,234,567 bytes)
 ```
 
-L'MP4 dovrebbe mostrare la finestra di Chromium che renderizza entrambi i siti web sul desktop fluxbox. Riproducetelo con `ffplay`, `vlc`, oppure scaricatelo dal container per verificare.
+Il file MP4 dovrebbe mostrare la finestra di Chromium che renderizza entrambi i siti web sul desktop fluxbox. Riproducetelo con `ffplay`, `vlc`, oppure scaricatelo dal container per verificare.
 
-## Cosa Significa un Fallimento
+## Significato di un errore
 
 | Sintomo | Causa probabile |
 | ---- | ---- |
 | `Xvfb display :99 not ready` | Xvfb non avviato — verificare che l'entrypoint abbia eseguito lo stack VNC |
-| `ffmpeg: x11grab error` | Display non corrispondente o ffmpeg privo del supporto x11grab |
-| `Playwright launch error` | Chromium non installato o mancante `--no-sandbox` |
-| MP4 di 0 byte | ffmpeg è stato terminato prima della scrittura — verificare la gestione del SIGTERM |
+| `ffmpeg: x11grab error` | Mismatch del display o ffmpeg privo del supporto x11grab |
+| `Playwright launch error` | Chromium non installato o mancanza di `--no-sandbox` |
+| MP4 di 0 byte | ffmpeg è stato terminato prima della scrittura — verificare la gestione di SIGTERM |

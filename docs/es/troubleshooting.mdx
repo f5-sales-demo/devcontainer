@@ -10,7 +10,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-## El contenedor no se inicia
+## El contenedor no inicia
 
 ### "Conflict. The container name is already in use"
 
@@ -68,7 +68,7 @@ echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
 
 ### Claude muestra "Invalid API key"
 
-Verifique qué valor está realmente configurado:
+Verifique qué valor está configurado actualmente:
 
 ```bash
 echo "$ANTHROPIC_API_KEY"
@@ -77,11 +77,11 @@ echo "$ANTHROPIC_API_KEY"
 Causas comunes:
 
 - **Clave del proxy LiteLLM faltante o inválida** — si está usando el modo proxy, asegúrese de que `LITELLM_API_KEY` en `.env` contenga la credencial correcta del proxy, luego reinicie el contenedor para que el entrypoint pueda derivar `ANTHROPIC_API_KEY`.
-- **Token OAuth o discrepancia en el modo proxy** — use exactamente un modo de autenticación. Si `CLAUDE_CODE_OAUTH_TOKEN` está configurado, tiene prioridad sobre el modo proxy de LiteLLM.
+- **Token OAuth o desajuste del modo proxy** — use exactamente un modo de autenticación. Si `CLAUDE_CODE_OAUTH_TOKEN` está configurado, tiene prioridad sobre el modo proxy de LiteLLM.
 
 ### Las solicitudes a la API fallan con 401
 
-Verifique que su clave API esté configurada correctamente:
+Verifique que su clave de API esté configurada correctamente:
 
 ```bash
 echo "$ANTHROPIC_API_KEY"
@@ -91,26 +91,26 @@ Compruebe que funciona realizando una llamada directa a su proveedor.
 
 ### Claude dice "model not found"
 
-El modelo está determinado por su proveedor y clave API. Consulte la documentación de su proveedor para ver los modelos disponibles.
+El modelo está determinado por su proveedor y clave de API. Consulte la documentación de su proveedor para conocer los modelos disponibles.
 
 ## GitHub CLI
 
 ### "gh: not authenticated"
 
-La CLI `gh` requiere una variable de entorno `GH_TOKEN`. Agréguela a su archivo `.env`:
+El CLI `gh` requiere una variable de entorno `GH_TOKEN`. Agréguela a su archivo `.env`:
 
 ```ini
 GH_TOKEN=ghp_your-token-here
 ```
 
-Cree un token en [github.com/settings/tokens](https://github.com/settings/tokens). Tanto los tokens de granularidad fina (recomendados) como los tokens clásicos con alcance `repo` funcionan. Reinicie el contenedor después de actualizar `.env`.
+Cree un token en [github.com/settings/tokens](https://github.com/settings/tokens). Los tokens de grano fino (recomendados) o los tokens clásicos con el alcance `repo` funcionan. Reinicie el contenedor después de actualizar `.env`.
 
 ### La clonación git por HTTPS falla con 401
 
-Cuando `GH_TOKEN` está configurado, el entrypoint ejecuta `gh auth setup-git` para configurar el helper de credenciales de git para HTTPS. Si las operaciones HTTPS fallan:
+Cuando `GH_TOKEN` está configurado, el entrypoint ejecuta `gh auth setup-git` para configurar el asistente de credenciales de git para HTTPS. Si las operaciones HTTPS fallan:
 
 1. Verifique que el token sea válido: `gh auth status`
-2. Compruebe que el helper de credenciales esté configurado: `git config --global credential.helper`
+2. Compruebe que el asistente de credenciales esté configurado: `git config --global credential.helper`
 3. Reinicie el contenedor para volver a ejecutar el entrypoint
 
 ### SSH vs HTTPS
@@ -118,7 +118,7 @@ Cuando `GH_TOKEN` está configurado, el entrypoint ejecuta `gh auth setup-git` p
 Ambos métodos de autenticación pueden coexistir en el contenedor:
 
 - **SSH** (`SSH_PRIVATE_KEY` en `.env`) — usa URLs `git@github.com:`. Requerido si su organización exige SSH.
-- **HTTPS** (`GH_TOKEN` en `.env`) — usa URLs `https://github.com/`. Configuración más simple, sin gestión de claves.
+- **HTTPS** (`GH_TOKEN` en `.env`) — usa URLs `https://github.com/`. Configuración más sencilla, sin gestión de claves.
 
 Si ambos están configurados, git usa el protocolo que coincida con la URL del remoto. Para cambiar un clon existente:
 
@@ -140,7 +140,7 @@ sudo chown -R $(id -u):$(id -g) /workspace ~
 
 ### npm install falla con EACCES
 
-El entrypoint configura automáticamente un prefijo global de npm con permisos de escritura del usuario en `~/.npm-global`, por lo que los comandos `npm install -g` en tiempo de ejecución deberían funcionar sin `sudo`. Si aún ve errores EACCES, aplique la corrección manualmente:
+El entrypoint configura automáticamente un prefijo global de npm con permisos de escritura para el usuario en `~/.npm-global`, por lo que los comandos `npm install -g` en tiempo de ejecución deberían funcionar sin `sudo`. Si aún ve errores EACCES, aplique la corrección manualmente:
 
 ```bash
 mkdir -p ~/.npm-global
@@ -152,7 +152,7 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 
 ### La compilación tarda mucho tiempo
 
-La primera compilación descarga la imagen base (~1 GB). Las compilaciones posteriores usan caché. Si es lenta cada vez:
+La primera compilación descarga la imagen base (~1 GB). Las compilaciones posteriores usan caché. Si es lento cada vez:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -190,7 +190,7 @@ podman system prune -a --volumes
 </TabItem>
 </Tabs>
 
-**Advertencia:** Esto elimina todos los contenedores, imágenes y volúmenes no utilizados — no solo los de este proyecto.
+**Advertencia:** Esto elimina todos los contenedores, imágenes y volúmenes no utilizados, no solo los de este proyecto.
 
 ## Red
 
@@ -242,7 +242,7 @@ Luego reinicie Podman: `podman machine stop && podman machine start`.
 
 ### Pantalla negra en noVNC
 
-Es posible que Xvfb no se haya iniciado. Verifique dentro del contenedor:
+Es posible que Xvfb no haya iniciado. Verifique dentro del contenedor:
 
 ```bash
 ps aux | grep Xvfb
@@ -268,7 +268,7 @@ Es posible que noVNC no esté ejecutándose. Verifique dentro del contenedor:
 ps aux | grep -E 'novnc|websockify'
 ```
 
-Si no está ejecutándose, verifique que `ENABLE_VNC` sea `true` (el valor predeterminado) y compruebe los logs del contenedor:
+Si no está ejecutándose, verifique que `ENABLE_VNC` sea `true` (el valor predeterminado) y revise los registros del contenedor:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -306,7 +306,7 @@ La instancia compartida de Chrome debería estar ejecutándose en el puerto 9222
 # ¿Está Chrome ejecutándose?
 curl http://localhost:9222/json/version
 
-# Verificar los logs de Chrome
+# Verificar los registros de Chrome
 cat ~/.local/share/chrome-browser/chrome.log
 
 # Verificar el enlace simbólico
@@ -321,10 +321,10 @@ Si el enlace simbólico falta, descargue la última imagen y reinicie el contene
 
 ### Error de bloqueo del perfil del navegador
 
-Con la arquitectura de navegador compartido, los errores de bloqueo de perfil no deberían ocurrir. Si ve uno, un proceso de Chrome obsoleto puede estar manteniendo el bloqueo:
+Con la arquitectura de navegador compartido, los errores de bloqueo de perfil no deberían ocurrir. Si aparece uno, un proceso obsoleto de Chrome puede estar manteniendo el bloqueo:
 
 ```bash
-# Terminar cualquier proceso de Chrome obsoleto
+# Terminar cualquier proceso obsoleto de Chrome
 pkill -f 'chrome.*remote-debugging-port' || true
 
 # Eliminar el archivo de bloqueo

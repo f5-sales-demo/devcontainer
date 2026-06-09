@@ -1,6 +1,6 @@
 ---
-title: 開始使用
-description: 下載一個檔案、啟動容器並連線 — 不需要 Git 或複製儲存庫。
+title: 快速開始
+description: 下載一個檔案、啟動容器並連線——不需要 Git 或複製儲存庫。
 sidebar:
   order: 2
 i18n:
@@ -11,7 +11,7 @@ i18n:
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 :::tip[macOS 快速安裝]
-如果您使用的是搭載 Apple Silicon 的 macOS，可以跳過此頁面並使用[一行安裝指令](/devcontainer/install/)：
+如果您使用搭載 Apple Silicon 的 macOS，請跳過此頁面並使用[一行安裝指令](/devcontainer/install/)：
 
 ```bash
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
@@ -20,11 +20,11 @@ curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | b
 它會處理 Homebrew 套件、iTerm2 設定、Podman 設定，並下載您所需的一切。
 ::::
 
-## 先決條件
+## 前置需求
 
 ### 容器執行環境
 
-您的機器上需要一個容器執行環境。Docker 或 Podman 皆可使用。
+您需要在機器上安裝容器執行環境。Docker 或 Podman 皆可使用。
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -59,7 +59,7 @@ podman-compose version
 ```
 
 :::note[僅限 Linux]
-Podman 在 Linux 上直接執行容器（無需虛擬機）。請確保 Podman socket 已啟用，以便 `podman-compose` 可以連線：
+Podman 在 Linux 上直接執行容器（無虛擬機）。請確保 Podman socket 已啟動，以便 `podman-compose` 可以連線：
 
 ```bash
 systemctl --user enable --now podman.socket
@@ -85,14 +85,14 @@ systemctl --user enable --now podman.socket
 </TabItem>
 <TabItem label="Podman">
 
-在 **macOS/Windows** 上，於 Podman Desktop &rarr; Settings &rarr; Resources 中調整資源限制，或透過 CLI：
+在 **macOS/Windows** 上，透過 Podman Desktop &rarr; Settings &rarr; Resources 調整資源限制，或透過 CLI：
 
 ```bash
 podman machine set --cpus 4 --memory 12288
 podman machine stop && podman machine start
 ```
 
-在 **Linux** 上，容器直接共享主機資源 — 不需要進行資源設定。
+在 **Linux** 上，容器直接共享主機資源——不需要額外的資源設定。
 
 </TabItem>
 </Tabs>
@@ -118,44 +118,44 @@ CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
 
 ### 選項 B：LiteLLM 或 Anthropic 相容代理
 
-如果您有 LiteLLM 實例或其他 Anthropic 相容的代理，請設定以下兩個變數：
+如果您有 LiteLLM 實例或其他 Anthropic 相容代理，請設定以下兩個變數：
 
 ```ini
 LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
 LITELLM_API_KEY=your-api-key
 ```
 
-只需設定網域 — 容器會自動推導供應商專用的 URL 後綴（例如 Claude Code 使用 `/anthropic`）。
+只需設定網域——容器會自動衍生特定供應商的 URL 後綴（例如 Claude Code 使用 `/anthropic`）。
 
 ### 從本機憑證自動填入
 
-如果您的主機上已設定 `git` 和 `gh`，您可以自動填入大部分的 `.env` 值。首先複製範本：
+如果您的主機上已設定 `git` 和 `gh`，您可以自動填入大部分 `.env` 的值。首先複製範本：
 
 ```bash
 cp .env.example .env
 ```
 
-然後執行符合您設定的命令：
+然後執行與您設定相符的命令：
 
 ```bash
-# Git 身分
+# Git identity
 echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
 echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
 
-# 時區
+# Timezone
 echo "TZ=$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')" >> .env
 
-# GitHub CLI 權杖（需要先執行：gh auth login）
+# GitHub CLI token (requires: gh auth login)
 echo "GH_TOKEN=$(gh auth token)" >> .env
 
-# SSH 金鑰（如果您使用 SSH 進行 git 操作）
+# SSH key (if you use SSH for git)
 echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 ```
 
-然後編輯 `.env` 以新增您的 OAuth 權杖或 LiteLLM 代理設定（請參閱上方選項）。
+接著編輯 `.env` 以新增您的 OAuth 權杖或 LiteLLM 代理設定（請參閱上方選項）。
 
 :::tip[AI 助手]
-`.env.example` 檔案中每個可從本機工具填入的變數都包含 `@auto-detect` 標記。像 Claude Code 這樣的 AI 助手可以掃描這些標記並執行相關命令，自動建立完整的 `.env` 檔案。
+`.env.example` 檔案在每個可從本機工具填入的變數上都包含 `@auto-detect` 標記。像 Claude Code 這樣的 AI 助手可以掃描這些標記並執行相關命令，自動建立完整的 `.env`。
 :::
 
 ## 3. 啟動
@@ -177,7 +177,7 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-首次執行會從 ghcr.io 拉取預建映像檔（根據您的網路速度約需 1 分鐘）。後續啟動會使用快取的映像檔，只需幾秒鐘。
+首次執行會從 ghcr.io 拉取預建映像檔（依網路連線速度約需 1 分鐘）。後續啟動使用快取的映像檔，只需數秒。
 
 ## 4. 連線
 
@@ -201,17 +201,17 @@ podman-compose exec dev zsh
 ## 5. 驗證
 
 ```bash
-# AI 工具
+# AI tools
 claude --version
 codex --version
 pi --version
 
-# 程式語言
+# Languages
 node --version
 python3 --version
 go version
 
-# 雲端 CLI
+# Cloud CLIs
 aws --version
 az --version
 terraform --version
@@ -234,11 +234,11 @@ claude
 
 ## 7. 遠端顯示（noVNC）
 
-容器包含一個虛擬顯示器，用於觀看 AI 代理控制瀏覽器。開啟 `http://localhost:6080/vnc.html` 進行連線。詳情請參閱[遠端顯示（noVNC）](./vnc)。
+容器內建虛擬顯示，可用於觀看 AI 代理控制瀏覽器。開啟 `http://localhost:6080/vnc.html` 即可連線。詳情請參閱[遠端顯示（noVNC）](./vnc)。
 
 ## 8. 瀏覽器自動化（Chrome DevTools MCP）
 
-Claude Code 可以使用內建的 Chrome DevTools MCP 伺服器來瀏覽網頁、擷取螢幕截圖和檢查 DOM。無需設定 — 它在無頭模式下自動運作。詳情請參閱 [Chrome DevTools MCP](./chrome)。
+Claude Code 可以使用內建的 Chrome DevTools MCP 伺服器瀏覽網頁、擷取螢幕截圖並檢查 DOM。無需額外設定——它會在無頭模式下自動運作。詳情請參閱 [Chrome DevTools MCP](./chrome)。
 
 ## 9. 停止與重新啟動
 
@@ -252,7 +252,7 @@ docker compose down
 # 再次啟動
 docker compose up -d
 
-# 銷毀所有內容並重新開始
+# 銷毀所有資料並重新開始
 docker compose down -v
 docker compose up -d
 ```
@@ -264,10 +264,10 @@ docker compose up -d
 # 停止（保留資料）
 podman-compose down
 
-# 再次啟動（pull 確保使用最新映像檔）
+# 再次啟動（pull 確保取得最新映像檔）
 podman-compose pull && podman-compose up -d
 
-# 銷毀所有內容並重新開始
+# 銷毀所有資料並重新開始
 podman-compose down -v
 podman-compose pull && podman-compose up -d
 ```
@@ -275,8 +275,8 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-您在 `/workspace` 和家目錄中的程式碼會在重新啟動後持續保留。詳情請參閱[設定 — 資料持久性](./configuration#data-persistence)。
+您在 `/workspace` 和家目錄中的程式碼在重新啟動後仍會保留。詳情請參閱[設定 — 資料持久化](./configuration#data-persistence)。
 
 ---
 
-關於本機建置和 Dockerfile 自訂，請參閱[本機開發](./local-development)。關於 VS Code 整合，請參閱 [VS Code](./vscode)。關於遠端顯示選項，請參閱[遠端顯示（noVNC）](./vnc)。
+如需本機建置和 Dockerfile 自訂，請參閱[本機開發](./local-development)。如需 VS Code 整合，請參閱 [VS Code](./vscode)。如需遠端顯示選項，請參閱[遠端顯示（noVNC）](./vnc)。

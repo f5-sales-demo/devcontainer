@@ -1,8 +1,8 @@
 ---
 title: Chrome DevTools MCP
 description: >-
-  Automatización del navegador, capturas de pantalla e inspección del DOM a
-  través de una instancia compartida de Chrome sin interfaz gráfica.
+  Automatización del navegador, capturas de pantalla e inspección del DOM
+  mediante una instancia compartida de Chrome sin interfaz gráfica.
 sidebar:
   order: 4
 i18n:
@@ -10,7 +10,7 @@ i18n:
   translator: machine
 ---
 
-El contenedor incluye un servidor [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) preconfigurado que proporciona a Claude Code capacidades de automatización de navegador sin interfaz gráfica. Navegue por páginas web, tome capturas de pantalla, inspeccione el DOM e interactúe con elementos de la página — sin necesidad de configuración adicional.
+El contenedor incluye un servidor [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) preconfigurado que otorga a Claude Code capacidades de automatización del navegador sin interfaz gráfica. Navegue por páginas web, tome capturas de pantalla, inspeccione el DOM e interactúe con elementos de la página — sin necesidad de configuración adicional.
 
 ## Cómo funciona
 
@@ -35,7 +35,7 @@ El punto de entrada lanza un Chrome persistente sin interfaz gráfica con depura
 
 La pila del navegador utiliza cuatro componentes que trabajan juntos:
 
-1. **Playwright Chromium** — Binario de Chromium compatible con ARM64 instalado en tiempo de compilación mediante `npx playwright install --with-deps chromium`
+1. **Playwright Chromium** — Binario de Chromium compatible con ARM64 instalado durante la compilación mediante `npx playwright install --with-deps chromium`
 2. **Enlace simbólico de Chrome** — conecta la ruta esperada por Puppeteer (`/opt/google/chrome/chrome`) con el binario de Playwright
 3. **Proceso compartido de Chrome** — lanzado por `chrome-browser.sh` con `--remote-debugging-port=9222`, se reinicia automáticamente en caso de fallo
 4. **Registro global de MCP** — `settings.json` registra chrome-devtools-mcp con `--browserUrl=http://localhost:9222`
@@ -62,7 +62,7 @@ claude-self-test
 
 ## Modo con interfaz gráfica (VNC)
 
-Cuando `ENABLE_VNC=true`, el punto de entrada inicia la pila VNC antes de lanzar Chrome. El script `chrome-browser.sh` detecta que `DISPLAY` está configurado y ejecuta Chrome en modo con interfaz gráfica en la pantalla virtual, de modo que puede ver el navegador en el visor VNC.
+Cuando `ENABLE_VNC=true`, el punto de entrada inicia la pila VNC antes de lanzar Chrome. El script `chrome-browser.sh` detecta que `DISPLAY` está configurado y ejecuta Chrome en modo con interfaz gráfica en la pantalla virtual, para que pueda ver el navegador en el visor VNC.
 
 Abra `http://localhost:6080/vnc.html` para ver la pantalla virtual. Consulte [Pantalla remota (noVNC)](./vnc) para más detalles.
 

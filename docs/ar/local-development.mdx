@@ -11,7 +11,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-هذه الصفحة مخصصة للمطورين الذين يرغبون في استنساخ المستودع أو بناء الصورة محلياً أو تخصيص ملف Dockerfile. إذا كنت ترغب فقط في استخدام الحاوية المبنية مسبقاً، راجع [البدء](./getting-started).
+هذه الصفحة مخصصة للمطورين الذين يرغبون في استنساخ المستودع أو بناء الصورة محلياً أو تخصيص ملف Dockerfile. إذا كنت ترغب فقط في استخدام الحاوية المُنشأة مسبقاً، راجع [البدء](./getting-started).
 
 ## استنساخ المستودع
 
@@ -40,12 +40,12 @@ cd devcontainer
 
 ## ملف البناء
 
-يضيف ملف `docker-compose.build.yml` دعم البناء المحلي. وهو **لا** يُدمج تلقائياً — يجب تمريره صراحة باستخدام علامات `-f`. هذا يعني أن `docker compose up -d` (أو `podman-compose up -d`) يسحب دائماً الصورة المبنية مسبقاً من GHCR، سواء قمت باستنساخ المستودع أم لا.
+يضيف ملف `docker-compose.build.yml` دعم البناء المحلي. وهو **لا** يُدمج تلقائياً — يجب تمريره صراحةً باستخدام علامات `-f`. هذا يعني أن `docker compose up -d` (أو `podman-compose up -d`) يسحب دائماً الصورة المُنشأة مسبقاً من GHCR، سواء قمت باستنساخ المستودع أم لا.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-يمكنك التحقق من أن `docker compose up` العادي يستخدم فقط الصورة المبنية مسبقاً (بدون سياق `build:`):
+يمكنك التحقق من أن أمر `docker compose up` العادي يستخدم فقط الصورة المُنشأة مسبقاً (بدون سياق `build:`):
 
 ```bash
 docker compose config
@@ -60,7 +60,7 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml config
 </TabItem>
 <TabItem label="Podman">
 
-يمكنك التحقق من أن `podman-compose up` العادي يستخدم فقط الصورة المبنية مسبقاً (بدون سياق `build:`):
+يمكنك التحقق من أن أمر `podman-compose up` العادي يستخدم فقط الصورة المُنشأة مسبقاً (بدون سياق `build:`):
 
 ```bash
 podman-compose config
@@ -94,15 +94,15 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-يقوم هذا بدمج ملف البناء مع ملف compose الأساسي، ويبني الصورة من ملف `Dockerfile` المحلي، ويبدأ تشغيل الحاوية. تفرض علامة `--build` إعادة البناء حتى لو كانت هناك صورة مخزنة مؤقتاً.
+يقوم هذا بدمج ملف البناء مع ملف compose الأساسي، ويبني الصورة من ملف `Dockerfile` المحلي، ويشغّل الحاوية. تفرض علامة `--build` إعادة البناء حتى لو كانت هناك صورة مخزنة مؤقتاً.
 
 ## بنية البناء ذات المرحلتين
 
-يستخدم ملف Dockerfile بناء من مرحلتين محسّن للتخزين المؤقت لطبقات Docker:
+يستخدم ملف Dockerfile بناءً من مرحلتين مُحسّناً للتخزين المؤقت لطبقات Docker:
 
 ### المرحلة 1: `deps` (الأسس المستقرة، ~4.5 جيجابايت)
 
-تُعاد بناء هذه الطبقات فقط عند تحديث وسيط ARG للإصدار أو تغيير حزم APT. عند التغييرات المتعلقة بالأدوات فقط، يتخطى BuildKit هذه المرحلة بالكامل.
+تُعاد بناء هذه الطبقات فقط عند تحديث إصدار ARG أو تغيير حزم APT. عند التغييرات المتعلقة بالأدوات فقط، يتخطى BuildKit هذه المرحلة بالكامل.
 
 | القسم | المحتويات |
 |---------|----------|
@@ -110,7 +110,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 | 2. حزم APT | أدوات النظام، Node.js، Python، Java، Terraform، GitHub CLI، محرك Docker، Azure CLI، PowerShell، الإعدادات المحلية |
 | 2ب. حزم APT الأمنية | تحليل الشبكات، ماسحات الويب، أدوات كلمات المرور، الهندسة العكسية، الطب الشرعي الرقمي (~80 حزمة) |
 | 3. تهيئة Python | الروابط الرمزية + pip عبر get-pip.py |
-| 4. Go | الملف المضغوط الرسمي (أحدث إصدار مستقر، يُحدد وقت البناء) |
+| 4. Go | أرشيف رسمي (أحدث إصدار مستقر، يُحدد وقت البناء) |
 | 5. Rust | rustup (على مستوى النظام، أحدث إصدار مستقر) |
 | 6. Maven + Gradle | تنزيلات ثنائية إلى `/opt` |
 | 7. حزمة VNC | Xvfb، x11vnc، noVNC، fluxbox — عرض عن بُعد عبر المتصفح |
@@ -122,31 +122,31 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 
 | القسم | المحتويات |
 |---------|----------|
-| 9. AWS CLI v2 | المثبّت الرسمي |
-| 10. الأدوات الثنائية | kubectl، helm، tflint، terraform-docs، act، actionlint، yt-dlp، uv |
+| 9. AWS CLI v2 | المُثبّت الرسمي |
+| 10. أدوات ثنائية | kubectl، helm، tflint، terraform-docs، act، actionlint، yt-dlp، uv |
 | 10ب. ثنائيات إضافية | VS Code CLI، oc، yq، terragrunt، ibmcloud، fzf، hadolint، codex |
 | 10ج. ثنائيات Super-linter | shfmt، gitleaks، editorconfig-checker، trivy، clj-kondo، dotenv-linter، golangci-lint، goreleaser، kubeconform، protolint، scalafmt، ktlint |
-| 10د. أدوات Java JAR | checkstyle، google-java-format (سكربتات مغلفة) |
-| 10هـ. فاحصات PHP | phpcs، phpstan، psalm (تنزيلات PHAR) |
+| 10د. أدوات Java JAR | checkstyle، google-java-format (سكربتات تغليف) |
+| 10هـ. أدوات فحص PHP | phpcs، phpstan، psalm (تنزيلات PHAR) |
 | 10و. وحدات PowerShell | PSScriptAnalyzer، arm-ttk |
-| 10ز. الثنائيات الأمنية | nuclei، subfinder، httpx، ffuf، gobuster، feroxbuster، dalfox، amass، trufflehog، grype، syft، bettercap (amd64) |
-| 10ح. OWASP ZAP | ماسح تطبيقات الويب القائم على Java |
+| 10ز. ثنائيات أمنية | nuclei، subfinder، httpx، ffuf، gobuster، feroxbuster، dalfox، amass، trufflehog، grype، syft، bettercap (amd64) |
+| 10ح. OWASP ZAP | ماسح تطبيقات ويب قائم على Java |
 | 10ط. Ghidra | إطار عمل الهندسة العكسية |
 | 10ي. Metasploit | إطار عمل الاستغلال (amd64 فقط) |
 | 11. أدوات npm العامة | claude-code، prettier، markdownlint-cli2، devcontainers-cli، playwright، pi-coding-agent، oh-my-pi |
 | 12. أدوات pip | pre-commit، ansible، black، pylint، yamllint، playwright |
-| 12ج. فاحصات Ruby | rubocop + الإضافات |
-| 12هـ. وحدات فاحص Perl | إضافات Perl::Critic |
-| 12و. فاحص Lua | luacheck |
-| 12ز. فاحص R | lintr |
+| 12ج. أدوات فحص Ruby | rubocop + إضافات |
+| 12هـ. وحدات فحص Perl | إضافات Perl::Critic |
+| 12و. أداة فحص Lua | luacheck |
+| 12ز. أداة فحص R | lintr |
 | 12ح. جواهر Ruby الأمنية | wpscan، evil-winrm |
 | 12ط. أدوات أمنية مستنسخة من Git | testssl.sh، exploitdb (searchsploit)، SecLists، docker-bench-security، recon-ng، spiderfoot |
 | 13. متصفحات Playwright | Chromium + تبعيات النظام عبر `playwright install --with-deps` |
 | 13ب. Chrome DevTools MCP | رابط رمزي لـ Chrome + تخزين مسبق لـ MCP + تصحيح الوضع بدون واجهة |
-| 14. Homebrew | Linuxbrew (تبعيات المساعد الذكي + المنسقات) |
+| 14. Homebrew | Linuxbrew (تبعيات مساعد الذكاء الاصطناعي + أدوات التنسيق) |
 | 15. إضافات ZSH | إضافات oh-my-zsh المخصصة |
-| 16. تهيئة الصدفة | npm-global، tfenv، compinit |
-| 17. تكوين Claude Code + Codex | ذاكرة الوعي بالأدوات، السياسة المُدارة، سكربت الاختبار الذاتي، تكوين Codex |
+| 16. تهيئة Shell | npm-global، tfenv، compinit |
+| 17. تكوين Claude Code + Codex | ذاكرة التعرف على الأدوات، السياسة المُدارة، سكربت الاختبار الذاتي، تكوين Codex |
 | 18. نقطة الدخول | سكربت بدء تشغيل الحاوية (آخر COPY على الإطلاق) |
 
 ## إضافة الأدوات
@@ -170,7 +170,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-أو في VS Code: **Dev Containers &rarr; Rebuild Container**.
+أو في VS Code: **Dev Containers &rarr; إعادة بناء الحاوية**.
 
 ### حزم APT
 
@@ -201,7 +201,7 @@ RUN pip install --no-cache-dir --break-system-packages \
     your-python-tool
 ```
 
-### التنزيلات الثنائية
+### تنزيلات ثنائية
 
 أضف إلى القسم 10 أو أنشئ طبقة `RUN` جديدة مع اكتشاف البنية:
 
@@ -213,10 +213,10 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## ذاكرة التخزين المؤقت للبناء
 
-يستخدم CI **التخزين المؤقت القائم على السجل** — تُخزن طبقات البناء في GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) بدلاً من ذاكرة التخزين المؤقت لـ GitHub Actions. يتجنب هذا حد ذاكرة التخزين المؤقت لـ GHA البالغ 10 جيجابايت الذي كان يتسبب في إعادة بناء كاملة متكررة لهذه الصورة متعددة البنيات بحجم ~6 جيجابايت.
+يستخدم CI **التخزين المؤقت القائم على السجل** — تُخزّن طبقات البناء في GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) بدلاً من ذاكرة التخزين المؤقت لـ GitHub Actions. هذا يتجنب حد ذاكرة التخزين المؤقت لـ GHA البالغ 10 جيجابايت والذي كان يتسبب في إعادة بناء كاملة متكررة لهذه الصورة متعددة البنيات بحجم ~6 جيجابايت.
 
 تعمل بنية المرحلتين مع ذاكرة التخزين المؤقت للسجل بحيث:
 
-- **تحديثات إصدارات الأدوات** (npm، pip، الأدوات الثنائية) — إعادة بناء مرحلة `final` فقط (~5 دقائق)
-- **تغييرات ملفات التكوين** (`claude-config/`، `entrypoint.sh`) — إعادة بناء الطبقات الأخيرة فقط (~1 دقيقة)
+- **تحديثات إصدارات الأدوات** (npm، pip، أدوات ثنائية) — إعادة بناء مرحلة `final` فقط (~5 دقائق)
+- **تغييرات ملفات التكوين** (`claude-config/`، `entrypoint.sh`) — إعادة بناء الطبقات الأخيرة فقط (~دقيقة واحدة)
 - **تغييرات الأسس** (حزم APT، إصدارات Go/Rust/Java) — إعادة بناء كاملة لكلتا المرحلتين (~30 دقيقة)

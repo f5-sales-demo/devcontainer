@@ -1,6 +1,6 @@
 ---
 title: การพัฒนาในเครื่อง
-description: 'โคลน repository, บิลด์ในเครื่อง, และปรับแต่ง Docker image'
+description: โคลนรีโพซิทอรี บิลด์ในเครื่อง และปรับแต่ง Docker image
 sidebar:
   order: 5
 i18n:
@@ -10,9 +10,9 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-หน้านี้สำหรับนักพัฒนาที่ต้องการโคลน repository, บิลด์ image ในเครื่อง, หรือปรับแต่ง Dockerfile หากคุณต้องการเพียงแค่ใช้ container ที่บิลด์ไว้แล้ว ดูที่ [เริ่มต้นใช้งาน](./getting-started)
+หน้านี้สำหรับนักพัฒนาที่ต้องการโคลนรีโพซิทอรี บิลด์ image ในเครื่อง หรือปรับแต่ง Dockerfile หากคุณต้องการใช้คอนเทนเนอร์ที่บิลด์ไว้แล้วเท่านั้น ดูที่ [เริ่มต้นใช้งาน](./getting-started)
 
-## โคลน Repository
+## โคลนรีโพซิทอรี
 
 ```bash
 git clone https://github.com/f5xc-salesdemos/devcontainer.git
@@ -39,18 +39,18 @@ cd devcontainer
 
 ## ไฟล์บิลด์
 
-ไฟล์ `docker-compose.build.yml` เพิ่มการรองรับการบิลด์ในเครื่อง ไฟล์นี้**ไม่ได้**ถูกรวมโดยอัตโนมัติ — คุณต้องระบุอย่างชัดเจนด้วยแฟล็ก `-f` ซึ่งหมายความว่า `docker compose up -d` (หรือ `podman-compose up -d`) จะดึง image ที่บิลด์ไว้แล้วจาก GHCR เสมอ ไม่ว่าคุณจะโคลน repo หรือไม่ก็ตาม
+ไฟล์ `docker-compose.build.yml` เพิ่มการรองรับการบิลด์ในเครื่อง ไฟล์นี้**ไม่**ถูกรวมอัตโนมัติ — คุณต้องระบุอย่างชัดเจนด้วยแฟล็ก `-f` ซึ่งหมายความว่า `docker compose up -d` (หรือ `podman-compose up -d`) จะดึง image ที่บิลด์ไว้แล้วจาก GHCR เสมอ ไม่ว่าคุณจะโคลนรีโพหรือไม่ก็ตาม
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-คุณสามารถตรวจสอบได้ว่าคำสั่ง `docker compose up` แบบปกติใช้เฉพาะ image ที่บิลด์ไว้แล้ว (ไม่มี `build:` context):
+คุณสามารถตรวจสอบว่าคำสั่ง `docker compose up` ธรรมดาใช้เฉพาะ image ที่บิลด์ไว้แล้วเท่านั้น (ไม่มี `build:` context):
 
 ```bash
 docker compose config
 ```
 
-เปรียบเทียบกับการกำหนดค่าบิลด์แบบระบุอย่างชัดเจน:
+เปรียบเทียบกับการกำหนดค่าบิลด์แบบระบุชัดเจน:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml config
@@ -59,13 +59,13 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml config
 </TabItem>
 <TabItem label="Podman">
 
-คุณสามารถตรวจสอบได้ว่าคำสั่ง `podman-compose up` แบบปกติใช้เฉพาะ image ที่บิลด์ไว้แล้ว (ไม่มี `build:` context):
+คุณสามารถตรวจสอบว่าคำสั่ง `podman-compose up` ธรรมดาใช้เฉพาะ image ที่บิลด์ไว้แล้วเท่านั้น (ไม่มี `build:` context):
 
 ```bash
 podman-compose config
 ```
 
-เปรียบเทียบกับการกำหนดค่าบิลด์แบบระบุอย่างชัดเจน:
+เปรียบเทียบกับการกำหนดค่าบิลด์แบบระบุชัดเจน:
 
 ```bash
 podman-compose -f docker-compose.yml -f docker-compose.build.yml config
@@ -93,64 +93,64 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-คำสั่งนี้จะรวมไฟล์บิลด์กับไฟล์ compose หลัก, บิลด์ image จาก `Dockerfile` ในเครื่อง, และเริ่มต้น container แฟล็ก `--build` บังคับให้ทำการบิลด์ใหม่แม้จะมี image ที่แคชไว้แล้ว
+คำสั่งนี้จะรวมไฟล์บิลด์เข้ากับไฟล์ compose หลัก บิลด์ image จาก `Dockerfile` ในเครื่อง และเริ่มต้นคอนเทนเนอร์ แฟล็ก `--build` บังคับให้บิลด์ใหม่แม้ว่าจะมี image ที่แคชไว้อยู่แล้ว
 
 ## สถาปัตยกรรมบิลด์แบบสองขั้นตอน
 
-Dockerfile ใช้การบิลด์แบบสองขั้นตอนที่ปรับให้เหมาะสมสำหรับ Docker layer caching:
+Dockerfile ใช้การบิลด์แบบสองขั้นตอนที่ปรับให้เหมาะสมกับ Docker layer caching:
 
-### ขั้นตอนที่ 1: `deps` (ฐานที่มั่นคง, ~4.5 GB)
+### ขั้นตอนที่ 1: `deps` (รากฐานที่เสถียร, ~4.5 GB)
 
-เลเยอร์เหล่านี้จะถูกบิลด์ใหม่เฉพาะเมื่อมีการเปลี่ยน ARG ของเวอร์ชันหรือแพ็คเกจ APT เปลี่ยนแปลง ในกรณีที่เปลี่ยนเฉพาะเครื่องมือ BuildKit จะข้ามขั้นตอนนี้ทั้งหมด
+เลเยอร์เหล่านี้จะบิลด์ใหม่เฉพาะเมื่อมีการเปลี่ยนเวอร์ชัน ARG หรือแพ็กเกจ APT เปลี่ยนแปลงเท่านั้น เมื่อมีการเปลี่ยนแปลงเครื่องมือทั่วไป BuildKit จะข้ามขั้นตอนนี้ทั้งหมด
 
 | ส่วน | เนื้อหา |
 |---------|----------|
 | 1. APT repos | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft, Google Cloud, Dart SDK |
-| 2. แพ็คเกจ APT | เครื่องมือระบบ, Node.js, Python, Java, Terraform, GitHub CLI, Docker engine, Azure CLI, PowerShell, locales |
-| 2b. แพ็คเกจ APT ด้านความปลอดภัย | เครื่องมือวิเคราะห์เครือข่าย, สแกนเนอร์เว็บ, เครื่องมือรหัสผ่าน, วิศวกรรมย้อนกลับ, นิติวิทยาศาสตร์ดิจิทัล (~80 แพ็คเกจ) |
+| 2. APT packages | เครื่องมือระบบ, Node.js, Python, Java, Terraform, GitHub CLI, Docker engine, Azure CLI, PowerShell, locales |
+| 2b. Security APT packages | การวิเคราะห์เครือข่าย, เว็บสแกนเนอร์, เครื่องมือรหัสผ่าน, วิศวกรรมย้อนกลับ, นิติวิทยาศาสตร์ดิจิทัล (~80 แพ็กเกจ) |
 | 3. Python bootstrap | Symlinks + pip ผ่าน get-pip.py |
-| 4. Go | Tarball อย่างเป็นทางการ (เวอร์ชันเสถียรล่าสุด, แก้ไขตอนบิลด์) |
+| 4. Go | Official tarball (เวอร์ชันเสถียรล่าสุด, ระบุตอนบิลด์) |
 | 5. Rust | rustup (ทั้งระบบ, เวอร์ชันเสถียรล่าสุด) |
-| 6. Maven + Gradle | ดาวน์โหลดไบนารีไปยัง `/opt` |
+| 6. Maven + Gradle | ดาวน์โหลดไบนารีไปที่ `/opt` |
 | 7. VNC stack | Xvfb, x11vnc, noVNC, fluxbox — แสดงผลระยะไกลผ่านเบราว์เซอร์ |
 | 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (รุ่นล่าสุด) |
 
 ### ขั้นตอนที่ 2: `final` (เครื่องมือที่เปลี่ยนบ่อย + การตั้งค่าผู้ใช้, ~1.5 GB)
 
-เลเยอร์เหล่านี้เปลี่ยนแปลงบ่อยกว่า (อัปเดต npm/pip, เปลี่ยนการกำหนดค่า) แต่บิลด์ใหม่ได้เร็วเพราะขั้นตอน `deps` ที่หนักนั้นถูกแคชไว้แล้ว
+เลเยอร์เหล่านี้เปลี่ยนแปลงบ่อยกว่า (อัปเดต npm/pip, เปลี่ยนแปลงการกำหนดค่า) แต่บิลด์ใหม่ได้รวดเร็วเพราะขั้นตอน `deps` ที่หนักถูกแคชไว้แล้ว
 
 | ส่วน | เนื้อหา |
 |---------|----------|
 | 9. AWS CLI v2 | ตัวติดตั้งอย่างเป็นทางการ |
-| 10. เครื่องมือไบนารี | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv |
-| 10b. ไบนารีเพิ่มเติม | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint, codex |
-| 10c. ไบนารี Super-linter | shfmt, gitleaks, editorconfig-checker, trivy, clj-kondo, dotenv-linter, golangci-lint, goreleaser, kubeconform, protolint, scalafmt, ktlint |
-| 10d. เครื่องมือ Java JAR | checkstyle, google-java-format (wrapper scripts) |
-| 10e. PHP linters | phpcs, phpstan, psalm (ดาวน์โหลด PHAR) |
-| 10f. โมดูล PowerShell | PSScriptAnalyzer, arm-ttk |
-| 10g. ไบนารีด้านความปลอดภัย | nuclei, subfinder, httpx, ffuf, gobuster, feroxbuster, dalfox, amass, trufflehog, grype, syft, bettercap (amd64) |
-| 10h. OWASP ZAP | สแกนเนอร์แอปพลิเคชันเว็บที่ใช้ Java |
+| 10. Binary tools | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv |
+| 10b. Additional binaries | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint, codex |
+| 10c. Super-linter binaries | shfmt, gitleaks, editorconfig-checker, trivy, clj-kondo, dotenv-linter, golangci-lint, goreleaser, kubeconform, protolint, scalafmt, ktlint |
+| 10d. Java JAR tools | checkstyle, google-java-format (wrapper scripts) |
+| 10e. PHP linters | phpcs, phpstan, psalm (PHAR downloads) |
+| 10f. PowerShell modules | PSScriptAnalyzer, arm-ttk |
+| 10g. Security binaries | nuclei, subfinder, httpx, ffuf, gobuster, feroxbuster, dalfox, amass, trufflehog, grype, syft, bettercap (amd64) |
+| 10h. OWASP ZAP | เว็บแอปพลิเคชันสแกนเนอร์ที่ใช้ Java |
 | 10i. Ghidra | เฟรมเวิร์กวิศวกรรมย้อนกลับ |
-| 10j. Metasploit | เฟรมเวิร์กสำหรับการทดสอบเจาะระบบ (amd64 เท่านั้น) |
-| 11. เครื่องมือ npm global | claude-code, prettier, markdownlint-cli2, devcontainers-cli, playwright, pi-coding-agent, oh-my-pi |
-| 12. เครื่องมือ pip | pre-commit, ansible, black, pylint, yamllint, playwright |
+| 10j. Metasploit | เฟรมเวิร์กการโจมตี (amd64 เท่านั้น) |
+| 11. npm global tools | claude-code, prettier, markdownlint-cli2, devcontainers-cli, playwright, pi-coding-agent, oh-my-pi |
+| 12. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
 | 12c. Ruby linters | rubocop + ส่วนขยาย |
-| 12e. โมดูล Perl linter | ส่วนขยาย Perl::Critic |
+| 12e. Perl linter modules | ส่วนขยาย Perl::Critic |
 | 12f. Lua linter | luacheck |
 | 12g. R linter | lintr |
-| 12h. Ruby gems ด้านความปลอดภัย | wpscan, evil-winrm |
-| 12i. เครื่องมือความปลอดภัยที่ Git-cloned | testssl.sh, exploitdb (searchsploit), SecLists, docker-bench-security, recon-ng, spiderfoot |
-| 13. เบราว์เซอร์ Playwright | Chromium + system deps ผ่าน `playwright install --with-deps` |
+| 12h. Security Ruby gems | wpscan, evil-winrm |
+| 12i. Git-cloned security tools | testssl.sh, exploitdb (searchsploit), SecLists, docker-bench-security, recon-ng, spiderfoot |
+| 13. Playwright browsers | Chromium + system deps ผ่าน `playwright install --with-deps` |
 | 13b. Chrome DevTools MCP | Chrome symlink + MCP pre-cache + headless patch |
-| 14. Homebrew | Linuxbrew (dependencies ของ AI assistant + formatters) |
-| 15. ปลั๊กอิน ZSH | ปลั๊กอินแบบกำหนดเองของ oh-my-zsh |
+| 14. Homebrew | Linuxbrew (AI assistant deps + formatters) |
+| 15. ZSH plugins | oh-my-zsh custom plugins |
 | 16. Shell bootstrap | npm-global, tfenv, compinit |
-| 17. การกำหนดค่า Claude Code + Codex | Tool awareness memory, managed policy, self-test script, Codex config |
-| 18. Entrypoint | สคริปต์เริ่มต้น container (COPY อันสุดท้ายเด็ดขาด) |
+| 17. Claude Code + Codex config | Tool awareness memory, managed policy, self-test script, Codex config |
+| 18. Entrypoint | สคริปต์เริ่มต้นคอนเทนเนอร์ (COPY ลำดับสุดท้าย) |
 
 ## การเพิ่มเครื่องมือ
 
-แก้ไข `Dockerfile` และเพิ่มเครื่องมือของคุณในส่วนที่เหมาะสม บิลด์ใหม่หลังจากเพิ่ม:
+แก้ไข `Dockerfile` และเพิ่มเครื่องมือของคุณในส่วนที่เหมาะสม บิลด์ใหม่หลังจากเพิ่มเสร็จ:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -171,7 +171,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 
 หรือใน VS Code: **Dev Containers &rarr; Rebuild Container**
 
-### แพ็คเกจ APT
+### แพ็กเกจ APT
 
 เพิ่มในบล็อก `apt-get install` ส่วนที่ 2:
 
@@ -210,12 +210,12 @@ RUN ARCH=$(dpkg --print-architecture) \
        | tar -xz -C /usr/local/bin tool
 ```
 
-## แคชของการบิลด์
+## แคชการบิลด์
 
-CI ใช้ **registry-based caching** — เลเยอร์ของการบิลด์ถูกจัดเก็บใน GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) แทนที่จะใช้แคชของ GitHub Actions ซึ่งหลีกเลี่ยงขีดจำกัดแคช GHA ขนาด 10 GB ที่ทำให้เกิดการบิลด์ใหม่ทั้งหมดบ่อยครั้งสำหรับ image แบบหลายสถาปัตยกรรมขนาด ~6 GB นี้
+CI ใช้ **registry-based caching** — เลเยอร์การบิลด์ถูกเก็บใน GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) แทนที่จะเป็นแคชของ GitHub Actions ซึ่งช่วยหลีกเลี่ยงขีดจำกัดแคช GHA 10 GB ที่ทำให้เกิดการบิลด์ใหม่ทั้งหมดบ่อยครั้งสำหรับ image แบบ multi-architecture ขนาด ~6 GB นี้
 
-สถาปัตยกรรมแบบสองขั้นตอนทำงานร่วมกับ registry cache โดย:
+สถาปัตยกรรมแบบสองขั้นตอนทำงานร่วมกับ registry cache ดังนี้:
 
-- **การอัปเดตเวอร์ชันเครื่องมือ** (npm, pip, เครื่องมือไบนารี) — บิลด์ใหม่เฉพาะขั้นตอน `final` (~5 นาที)
-- **การเปลี่ยนไฟล์การกำหนดค่า** (`claude-config/`, `entrypoint.sh`) — บิลด์ใหม่เฉพาะเลเยอร์สุดท้ายไม่กี่เลเยอร์ (~1 นาที)
-- **การเปลี่ยนแปลงฐาน** (แพ็คเกจ APT, เวอร์ชัน Go/Rust/Java) — บิลด์ใหม่ทั้งหมดทั้งสองขั้นตอน (~30 นาที)
+- **การอัปเดตเวอร์ชันเครื่องมือ** (npm, pip, binary tools) — บิลด์ใหม่เฉพาะขั้นตอน `final` (~5 นาที)
+- **การเปลี่ยนแปลงไฟล์กำหนดค่า** (`claude-config/`, `entrypoint.sh`) — บิลด์ใหม่เฉพาะเลเยอร์สุดท้ายไม่กี่เลเยอร์ (~1 นาที)
+- **การเปลี่ยนแปลงรากฐาน** (แพ็กเกจ APT, เวอร์ชัน Go/Rust/Java) — บิลด์ใหม่ทั้งหมดทั้งสองขั้นตอน (~30 นาที)

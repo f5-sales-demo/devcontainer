@@ -1,6 +1,6 @@
 ---
 title: البدء
-description: قم بتنزيل ملف واحد، وابدأ الحاوية، واتصل — لا حاجة لـ Git أو الاستنساخ.
+description: حمّل ملفاً واحداً، شغّل الحاوية، واتصل — لا حاجة لـ Git أو الاستنساخ.
 sidebar:
   order: 2
 i18n:
@@ -10,14 +10,14 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-:::tip[التثبيت السريع على macOS]
-إذا كنت تستخدم macOS مع معالج Apple Silicon، تجاوز هذه الصفحة واستخدم [المثبّت بسطر واحد](/devcontainer/install/):
+:::tip[تثبيت سريع على macOS]
+إذا كنت تستخدم macOS مع معالج Apple Silicon، تخطَّ هذه الصفحة واستخدم [المثبّت بأمر واحد](/devcontainer/install/):
 
 ```bash
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-يتولى إعداد حزم Homebrew وتكوين iTerm2 وإعداد Podman وتنزيل كل ما تحتاجه.
+يتولى التعامل مع حزم Homebrew وإعدادات iTerm2 وتهيئة Podman ويحمّل كل ما تحتاجه.
 ::::
 
 ## المتطلبات الأساسية
@@ -74,41 +74,41 @@ systemctl --user enable --now podman.socket
 | المورد | الحد الأدنى | الموصى به |
 |--------|-------------|-----------|
 | القرص | 5 جيجابايت | 10 جيجابايت أو أكثر |
-| الذاكرة العشوائية | 8 جيجابايت مخصصة لبيئة تشغيل الحاويات | 12 جيجابايت أو أكثر |
+| الذاكرة | 8 جيجابايت مخصصة لبيئة تشغيل الحاويات | 12 جيجابايت أو أكثر |
 | المعالج | نواتان | 4 أنوية أو أكثر |
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-اضبط حدود الموارد في Docker Desktop &rarr; الإعدادات &rarr; الموارد.
+اضبط حدود الموارد في Docker Desktop &rarr; Settings &rarr; Resources.
 
 </TabItem>
 <TabItem label="Podman">
 
-على **macOS/Windows**، اضبط حدود الموارد في Podman Desktop &rarr; الإعدادات &rarr; الموارد، أو عبر سطر الأوامر:
+على **macOS/Windows**، اضبط حدود الموارد في Podman Desktop &rarr; Settings &rarr; Resources، أو عبر سطر الأوامر:
 
 ```bash
 podman machine set --cpus 4 --memory 12288
 podman machine stop && podman machine start
 ```
 
-على **Linux**، تشارك الحاويات موارد المضيف مباشرة — لا حاجة لتكوين الموارد.
+على **Linux**، تشارك الحاويات موارد المضيف مباشرة — لا حاجة لتهيئة الموارد.
 
 </TabItem>
 </Tabs>
 
 ## 1. الإعداد
 
-أنشئ مجلدًا وقم بتنزيل ملف compose:
+أنشئ مجلداً وحمّل ملف compose:
 
 ```bash
 mkdir devcontainer && cd devcontainer
 curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/docker-compose.yml
 ```
 
-## 2. أضف بيانات المصادقة (اختياري)
+## 2. إضافة بيانات المصادقة (اختياري)
 
-أنشئ ملف `.env` في نفس المجلد لتكوين Claude Code مسبقًا. اختر أحد الخيارات التالية:
+أنشئ ملف `.env` في نفس المجلد لتهيئة Claude Code مسبقاً. اختر أحد الخيارات التالية:
 
 ### الخيار أ: Claude Max (OAuth)
 
@@ -118,24 +118,24 @@ CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
 
 ### الخيار ب: LiteLLM أو وكيل متوافق مع Anthropic
 
-إذا كان لديك نسخة LiteLLM أو وكيل آخر متوافق مع Anthropic، قم بتعيين هذين المتغيرين:
+إذا كان لديك مثيل LiteLLM أو وكيل آخر متوافق مع Anthropic، عيّن هذين المتغيرين:
 
 ```ini
 LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
 LITELLM_API_KEY=your-api-key
 ```
 
-قم بتعيين النطاق فقط — تشتق الحاوية لاحقات URL الخاصة بالمزود تلقائيًا (مثل `/anthropic` لـ Claude Code).
+عيّن النطاق فقط — تستنتج الحاوية لواحق URL الخاصة بالمزود تلقائياً (مثل `/anthropic` لـ Claude Code).
 
 ### الملء التلقائي من بيانات الاعتماد المحلية
 
-إذا كان لديك `git` و`gh` مكوّنان على جهازك المضيف، يمكنك ملء معظم قيم `.env` تلقائيًا. ابدأ بنسخ القالب:
+إذا كان `git` و `gh` مُهيأين على جهازك المضيف، يمكنك ملء معظم قيم `.env` تلقائياً. ابدأ بنسخ القالب:
 
 ```bash
 cp .env.example .env
 ```
 
-ثم نفّذ الأوامر التي تتوافق مع إعدادك:
+ثم شغّل الأوامر التي تتوافق مع إعداداتك:
 
 ```bash
 # Git identity
@@ -155,10 +155,10 @@ echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 ثم حرّر `.env` لإضافة رمز OAuth أو إعدادات وكيل LiteLLM (انظر الخيارات أعلاه).
 
 :::tip[مساعدو الذكاء الاصطناعي]
-يحتوي ملف `.env.example` على علامات `@auto-detect` على كل متغير يمكن ملؤه من الأدوات المحلية. يمكن لمساعدي الذكاء الاصطناعي مثل Claude Code مسح هذه العلامات وتنفيذ الأوامر المرتبطة لبناء ملف `.env` كامل تلقائيًا.
+يحتوي ملف `.env.example` على علامات `@auto-detect` في كل متغير يمكن ملؤه من الأدوات المحلية. يمكن لمساعدي الذكاء الاصطناعي مثل Claude Code البحث عن هذه العلامات وتشغيل الأوامر المرتبطة بها لبناء ملف `.env` كامل تلقائياً.
 :::
 
-## 3. البدء
+## 3. التشغيل
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -177,7 +177,7 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-يقوم التشغيل الأول بسحب الصورة المبنية مسبقًا من ghcr.io (حوالي دقيقة واحدة حسب سرعة اتصالك). تستخدم عمليات التشغيل اللاحقة الصورة المخزنة مؤقتًا وتستغرق ثوانٍ فقط.
+يسحب التشغيل الأول الصورة المبنية مسبقاً من ghcr.io (حوالي دقيقة واحدة حسب سرعة اتصالك). تستخدم عمليات التشغيل اللاحقة الصورة المخزنة مؤقتاً وتستغرق ثوانٍ.
 
 ## 4. الاتصال
 
@@ -238,7 +238,7 @@ claude
 
 ## 8. أتمتة المتصفح (Chrome DevTools MCP)
 
-يمكن لـ Claude Code التنقل في صفحات الويب والتقاط لقطات شاشة وفحص DOM باستخدام خادم Chrome DevTools MCP المدمج. لا حاجة لأي إعداد — يعمل تلقائيًا في الوضع بدون واجهة رسومية. انظر [Chrome DevTools MCP](./chrome) للتفاصيل.
+يمكن لـ Claude Code التنقل في صفحات الويب والتقاط لقطات شاشة وفحص DOM باستخدام خادم Chrome DevTools MCP المدمج. لا حاجة لأي إعداد — يعمل تلقائياً في الوضع بدون واجهة. انظر [Chrome DevTools MCP](./chrome) للتفاصيل.
 
 ## 9. الإيقاف وإعادة التشغيل
 
@@ -249,7 +249,7 @@ claude
 # إيقاف (يحافظ على البيانات)
 docker compose down
 
-# البدء مجددًا
+# التشغيل مرة أخرى
 docker compose up -d
 
 # حذف كل شيء والبدء من جديد
@@ -264,7 +264,7 @@ docker compose up -d
 # إيقاف (يحافظ على البيانات)
 podman-compose down
 
-# البدء مجددًا (السحب يضمن أحدث صورة)
+# التشغيل مرة أخرى (السحب يضمن أحدث صورة)
 podman-compose pull && podman-compose up -d
 
 # حذف كل شيء والبدء من جديد
@@ -275,8 +275,8 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-يتم الاحتفاظ بالكود الخاص بك في `/workspace` والمجلد الرئيسي عبر عمليات إعادة التشغيل. انظر [التكوين — استمرارية البيانات](./configuration#data-persistence) للتفاصيل.
+تبقى الشيفرة البرمجية في `/workspace` والمجلد الرئيسي محفوظة عبر عمليات إعادة التشغيل. انظر [التهيئة — استمرارية البيانات](./configuration#data-persistence) للتفاصيل.
 
 ---
 
-للبناء المحلي وتخصيص Dockerfile، انظر [التطوير المحلي](./local-development). لتكامل VS Code، انظر [VS Code](./vscode). لخيارات العرض عن بُعد، انظر [العرض عن بُعد (noVNC)](./vnc).
+للبناء المحلي وتخصيص Dockerfile، انظر [التطوير المحلي](./local-development). لدمج VS Code، انظر [VS Code](./vscode). لخيارات العرض عن بُعد، انظر [العرض عن بُعد (noVNC)](./vnc).

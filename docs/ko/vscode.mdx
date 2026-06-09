@@ -1,6 +1,6 @@
 ---
 title: VS Code
-description: VS Code의 "컨테이너에서 다시 열기" 워크플로를 사용하여 Dev Container를 활용합니다.
+description: VS Code의 "컨테이너에서 다시 열기" 워크플로우로 Dev Container를 사용합니다.
 sidebar:
   order: 6
 i18n:
@@ -12,7 +12,7 @@ i18n:
 
 1. [VS Code](https://code.visualstudio.com/)
 2. [Dev Containers 확장](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
-3. 머신에서 실행 중인 Docker 또는 Podman ([시작하기](./getting-started#container-runtime) 참조). VS Code Dev Containers는 [Podman을 백엔드로](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman) 사용하는 것도 지원합니다.
+3. 머신에서 실행 중인 Docker 또는 Podman ([시작하기](./getting-started#container-runtime) 참조). VS Code Dev Containers는 [백엔드로서의 Podman](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman)도 지원합니다.
 
 ## 빠른 시작
 
@@ -21,7 +21,7 @@ git clone https://github.com/f5xc-salesdemos/devcontainer.git
 code devcontainer
 ```
 
-VS Code가 `.devcontainer/devcontainer.json`을 감지하고 **"컨테이너에서 다시 열기"** 알림을 표시합니다. 이를 클릭하거나 명령 팔레트를 사용하세요:
+VS Code가 `.devcontainer/devcontainer.json`을 감지하고 알림을 표시합니다: **"컨테이너에서 다시 열기"**. 이를 클릭하거나 명령 팔레트를 사용하세요:
 
 > **Dev Containers: Reopen in Container**
 
@@ -37,7 +37,7 @@ VS Code가 이미지를 빌드(또는 풀)하고, 컨테이너를 시작하며, 
 "workspaceFolder": "/workspace"
 ```
 
-devcontainer 설정은 빌드 파일을 명시적으로 포함하므로, "컨테이너에서 다시 열기" 또는 "컨테이너 다시 빌드"를 사용할 때 VS Code가 이미지를 로컬에서 빌드할 수 있습니다.
+devcontainer 설정은 빌드 파일을 명시적으로 포함하므로, "컨테이너에서 다시 열기" 또는 "컨테이너 다시 빌드"를 사용할 때 VS Code가 로컬에서 이미지를 빌드할 수 있습니다.
 
 ## 확장
 
@@ -59,7 +59,7 @@ devcontainer 설정은 빌드 파일을 명시적으로 포함하므로, "컨테
 
 ## 포트 포워딩
 
-VS Code는 compose 파일에 정의된 포트를 자동으로 포워딩합니다. noVNC 디스플레이는 `http://localhost:6080/vnc.html`에서 사용할 수 있으며, VS Code가 포트가 준비되면 알림을 보냅니다.
+VS Code는 compose 파일에 정의된 포트를 자동으로 포워딩합니다. noVNC 디스플레이는 `http://localhost:6080/vnc.html`에서 사용할 수 있으며 — VS Code가 포트가 준비되면 알림을 보냅니다.
 
 추가 포트는 VS Code의 **포트** 패널에서 필요 시 포워딩할 수 있습니다.
 
@@ -80,4 +80,4 @@ devcontainer exec --workspace-folder . zsh
 
 > **Dev Containers: Rebuild Container**
 
-이 명령은 이미지를 다시 빌드하고 컨테이너를 재시작합니다. 명명된 볼륨(`workspace`, `home`)은 다시 빌드해도 유지됩니다.
+이 명령은 이미지를 다시 빌드하고 컨테이너를 재시작합니다. 이름이 지정된 볼륨(`workspace`, `home`)은 다시 빌드해도 유지됩니다.

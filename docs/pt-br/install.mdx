@@ -1,6 +1,6 @@
 ---
 title: Instalação Rápida
-description: Um único comando para instalar e configurar o devcontainer no macOS.
+description: Um comando para instalar e configurar o devcontainer no macOS.
 sidebar:
   order: 0
 i18n:
@@ -17,9 +17,9 @@ curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | b
 Este único comando realiza toda a configuração inicial:
 
 1. Instala pacotes do Homebrew (podman, podman-compose, gh, iterm2, nerd fonts)
-2. Configura o iTerm2 (fonte, sino, histórico de rolagem, tema escuro, atalho Shift+Enter)
+2. Configura o iTerm2 (fonte, alerta sonoro, histórico de rolagem, tema escuro, atalho Shift+Enter)
 3. Inicializa e ajusta a máquina Podman (16 GB de RAM, 4 CPUs, 220 GB de disco, zram, swappiness)
-4. Baixa `docker-compose.yml`, `devcontainer.sh` e o template `.env` no diretório atual
+4. Baixa `docker-compose.yml`, `devcontainer.sh` e o template `.env` para o diretório atual
 
 :::note[Homebrew necessário]
 Se o Homebrew não estiver instalado, o script será encerrado com instruções.
@@ -42,17 +42,17 @@ Em seguida, inicie o contêiner:
 
 O script detecta seu fuso horário e obtém um token atualizado do GitHub a partir de `gh auth token` a cada execução.
 
-## O Que É Criado
+## O Que é Criado
 
 Após executar o instalador, seu diretório conterá:
 
 | Arquivo | Finalidade |
 |---|---|
-| `devcontainer.sh` | Script de inicialização (execute para iniciar o contêiner) |
+| `devcontainer.sh` | Script de inicialização (execute-o para iniciar o contêiner) |
 | `docker-compose.yml` | Definição do serviço do contêiner |
-| `.env` | Suas credenciais (a partir do template, edite antes da primeira execução) |
+| `.env` | Suas credenciais (a partir do template, edite antes da primeira inicialização) |
 
-## Execuções Subsequentes
+## Inicializações Subsequentes
 
 ```bash
 ./devcontainer.sh

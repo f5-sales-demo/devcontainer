@@ -12,7 +12,7 @@ i18n:
 
 1. [VS Code](https://code.visualstudio.com/)
 2. [Extensão Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
-3. Docker ou Podman em execução na sua máquina (consulte [Primeiros Passos](./getting-started#container-runtime)). O VS Code Dev Containers também suporta [Podman como backend](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman).
+3. Docker ou Podman em execução na sua máquina (veja [Primeiros Passos](./getting-started#container-runtime)). O VS Code Dev Containers também suporta [Podman como backend](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman).
 
 ## Início Rápido
 
@@ -21,7 +21,7 @@ git clone https://github.com/f5xc-salesdemos/devcontainer.git
 code devcontainer
 ```
 
-O VS Code detecta o `.devcontainer/devcontainer.json` e exibe uma notificação: **"Reopen in Container"**. Clique nela ou use a paleta de comandos:
+O VS Code detecta o `.devcontainer/devcontainer.json` e exibe uma notificação: **"Reopen in Container"**. Clique nela, ou use a paleta de comandos:
 
 > **Dev Containers: Reopen in Container**
 
@@ -46,7 +46,7 @@ As extensões são instaladas automaticamente dentro do container:
 | Extensão | Descrição |
 |-----------|-------------|
 | Python | Suporte à linguagem Python |
-| ESLint | Linting de JavaScript/TypeScript |
+| ESLint | Linting para JavaScript/TypeScript |
 | Prettier | Formatação de código |
 | Docker | Suporte a Dockerfile e compose |
 | Terraform | Suporte à linguagem HCL |
@@ -55,7 +55,7 @@ As extensões são instaladas automaticamente dentro do container:
 | YAML | Suporte à linguagem YAML |
 | Kubernetes | Suporte a manifestos Kubernetes |
 
-Para adicionar extensões, edite o array `customizations.vscode.extensions` no arquivo `.devcontainer/devcontainer.json`.
+Para adicionar extensões, edite o array `customizations.vscode.extensions` em `.devcontainer/devcontainer.json`.
 
 ## Encaminhamento de Portas
 
@@ -80,4 +80,4 @@ Após alterar o `Dockerfile` ou os arquivos compose:
 
 > **Dev Containers: Rebuild Container**
 
-Isso recompila a imagem e reinicia o container. Os volumes nomeados (`workspace`, `home`) persistem entre reconstruções.
+Isso recompila a imagem e reinicia o container. Volumes nomeados (`workspace`, `home`) persistem entre reconstruções.

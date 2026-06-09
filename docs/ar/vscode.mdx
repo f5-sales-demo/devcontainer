@@ -25,7 +25,7 @@ code devcontainer
 
 > **Dev Containers: Reopen in Container**
 
-يقوم VS Code ببناء (أو سحب) الصورة، ويبدأ تشغيل الحاوية، ويثبّت الإضافات، ويفتح طرفية داخل الحاوية.
+يقوم VS Code ببناء (أو سحب) الصورة، ويشغّل الحاوية، ويثبّت الإضافات، ويفتح طرفية داخل الحاوية.
 
 ## كيف يعمل
 
@@ -37,7 +37,7 @@ code devcontainer
 "workspaceFolder": "/workspace"
 ```
 
-يتضمن إعداد حاوية التطوير ملف البناء بشكل صريح، بحيث يمكن لـ VS Code بناء الصورة محليًا عند استخدام "إعادة الفتح في الحاوية" أو "إعادة بناء الحاوية".
+يتضمن تكوين devcontainer بشكل صريح ملف البناء، حتى يتمكن VS Code من بناء الصورة محليًا عند استخدام "إعادة الفتح في الحاوية" أو "إعادة بناء الحاوية".
 
 ## الإضافات
 
@@ -55,13 +55,13 @@ code devcontainer
 | YAML | دعم لغة YAML |
 | Kubernetes | دعم ملفات Kubernetes |
 
-لإضافة إضافات، عدّل مصفوفة `customizations.vscode.extensions` في ملف `.devcontainer/devcontainer.json`.
+لإضافة إضافات، عدّل مصفوفة `customizations.vscode.extensions` في `.devcontainer/devcontainer.json`.
 
 ## إعادة توجيه المنافذ
 
 يقوم VS Code تلقائيًا بإعادة توجيه المنافذ المحددة في ملف compose. شاشة noVNC متاحة على `http://localhost:6080/vnc.html` — سيُعلمك VS Code عندما يكون المنفذ جاهزًا.
 
-يمكن إعادة توجيه منافذ إضافية عند الطلب من لوحة **المنافذ** في VS Code.
+يمكن إعادة توجيه منافذ إضافية حسب الطلب من لوحة **المنافذ** في VS Code.
 
 ## بديل سطر أوامر Devcontainer
 
@@ -76,8 +76,8 @@ devcontainer exec --workspace-folder . zsh
 
 ## إعادة البناء
 
-بعد تغيير ملف `Dockerfile` أو ملفات compose:
+بعد تغيير `Dockerfile` أو ملفات compose:
 
 > **Dev Containers: Rebuild Container**
 
-يعيد هذا بناء الصورة ويعيد تشغيل الحاوية. تستمر وحدات التخزين المسماة (`workspace`، `home`) عبر عمليات إعادة البناء.
+يؤدي هذا إلى إعادة بناء الصورة وإعادة تشغيل الحاوية. تستمر وحدات التخزين المسماة (`workspace`، `home`) عبر عمليات إعادة البناء.

@@ -1,6 +1,6 @@
 ---
 title: 屏幕录制测试
-description: 验证 Xvfb、有头模式 Chromium（通过 Playwright）和 ffmpeg 屏幕录制在 devcontainer 内能够协同工作。
+description: 验证 Xvfb、有界面 Chromium（通过 Playwright）和 ffmpeg 屏幕录制在开发容器内能够协同工作。
 sidebar:
   order: 1
 i18n:
@@ -10,25 +10,25 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-此测试通过将有头模式浏览器会话录制为 MP4 文件来验证完整的 VNC/浏览器堆栈。它证明了：
+此测试通过将有界面的浏览器会话录制为 MP4 文件来验证完整的 VNC/浏览器技术栈。它证明了：
 
-- **Xvfb** 正在运行并在 `:99` 上接受连接
-- **Chromium** 可以在虚拟显示器上以有头模式启动
+- **Xvfb** 正在运行并接受 `:99` 上的连接
+- **Chromium** 可以在虚拟显示器上以有界面模式启动
 - **ffmpeg** 可以通过 x11grab 捕获显示内容
-- 生成的 **MP4** 是有效且可播放的视频
+- 生成的 **MP4** 是有效的、可播放的视频
 
 ## 工作原理
 
-1. 轮询 `xdpyinfo -display :99` 直到 X 显示器就绪（与入口点脚本相同的模式）
+1. 轮询 `xdpyinfo -display :99` 直到 X 显示器就绪（与入口脚本相同的模式）
 2. 以 10 fps 启动 ffmpeg 录制显示内容
-3. 通过 Playwright 的 `sync_api` 启动有头模式 Chromium
+3. 通过 Playwright 的 `sync_api` 启动有界面的 Chromium
 4. 导航到 `https://example.com`（暂停 3 秒），然后导航到 `https://httpbin.org`（暂停 3 秒）
 5. 向 ffmpeg 发送 SIGTERM 信号以完成 MP4 文件的正常写入
 6. 报告输出路径和文件大小
 
 ## 脚本
 
-将以下内容保存为容器内的 `vnc-browser-test.py`，或从此仓库的 `docs/tests/` 目录中复制：
+将以下内容保存为容器内的 `vnc-browser-test.py`，或从本仓库的 `docs/tests/` 目录复制：
 
 ```python
 #!/usr/bin/env python3
@@ -198,9 +198,9 @@ MP4 文件应显示 Chromium 窗口在 fluxbox 桌面上渲染两个网站的画
 
 ## 失败的含义
 
-| 症状 | 可能原因 |
+| 症状 | 可能的原因 |
 | ---- | ---- |
-| `Xvfb display :99 not ready` | Xvfb 未启动——检查入口点脚本是否运行了 VNC 堆栈 |
+| `Xvfb display :99 not ready` | Xvfb 未启动——检查入口脚本是否运行了 VNC 技术栈 |
 | `ffmpeg: x11grab error` | 显示器不匹配或 ffmpeg 缺少 x11grab 支持 |
 | `Playwright launch error` | Chromium 未安装或缺少 `--no-sandbox` 参数 |
 | MP4 文件为 0 字节 | ffmpeg 在写入前被终止——检查 SIGTERM 处理逻辑 |

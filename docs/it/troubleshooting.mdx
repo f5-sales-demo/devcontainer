@@ -60,7 +60,7 @@ podman-compose up -d
 
 ### Claude mostra "Not logged in"
 
-L'entrypoint inizializza `~/.claude.json` con i flag di onboarding. Se mancante:
+L'entrypoint popola `~/.claude.json` con i flag di onboarding. Se mancante:
 
 ```bash
 echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
@@ -117,8 +117,8 @@ Quando `GH_TOKEN` è impostato, l'entrypoint esegue `gh auth setup-git` per conf
 
 Entrambi i metodi di autenticazione possono coesistere nel container:
 
-- **SSH** (`SSH_PRIVATE_KEY` in `.env`) — utilizza URL `git@github.com:`. Necessario se la vostra organizzazione impone SSH.
-- **HTTPS** (`GH_TOKEN` in `.env`) — utilizza URL `https://github.com/`. Configurazione più semplice, nessuna gestione delle chiavi.
+- **SSH** (`SSH_PRIVATE_KEY` nel `.env`) — utilizza URL `git@github.com:`. Necessario se la vostra organizzazione impone SSH.
+- **HTTPS** (`GH_TOKEN` nel `.env`) — utilizza URL `https://github.com/`. Configurazione più semplice, nessuna gestione delle chiavi.
 
 Se entrambi sono configurati, git utilizza il protocollo corrispondente all'URL remoto. Per cambiare un clone esistente:
 
@@ -140,7 +140,7 @@ sudo chown -R $(id -u):$(id -g) /workspace ~
 
 ### npm install fallisce con EACCES
 
-L'entrypoint configura automaticamente un prefisso globale npm scrivibile dall'utente in `~/.npm-global`, quindi i comandi `npm install -g` a runtime dovrebbero funzionare senza `sudo`. Se riscontrate ancora errori EACCES, applicate la correzione manualmente:
+L'entrypoint configura automaticamente un prefisso globale npm scrivibile dall'utente in `~/.npm-global`, quindi i comandi `npm install -g` a runtime dovrebbero funzionare senza `sudo`. Se continuate a vedere errori EACCES, applicate la correzione manualmente:
 
 ```bash
 mkdir -p ~/.npm-global
@@ -190,11 +190,11 @@ podman system prune -a --volumes
 </TabItem>
 </Tabs>
 
-**Attenzione:** Questo comando rimuove tutti i container, le immagini e i volumi inutilizzati — non solo quelli di questo progetto.
+**Attenzione:** Questo rimuove tutti i container, le immagini e i volumi inutilizzati — non solo quelli di questo progetto.
 
 ## Rete
 
-### Impossibile raggiungere Internet dall'interno del container
+### Impossibile raggiungere internet dall'interno del container
 
 ```bash
 ping -c 1 8.8.8.8
@@ -309,7 +309,7 @@ curl http://localhost:9222/json/version
 # Controllate i log di Chrome
 cat ~/.local/share/chrome-browser/chrome.log
 
-# Verificate il collegamento simbolico
+# Verificate il symlink
 ls -la /opt/google/chrome/chrome
 
 # Riavviate Chrome manualmente
@@ -317,11 +317,11 @@ ls -la /opt/google/chrome/chrome
 start_chrome_browser
 ```
 
-Se il collegamento simbolico è mancante, scaricate l'ultima immagine e riavviate il container.
+Se il symlink è mancante, scaricate l'ultima immagine e riavviate il container.
 
 ### Errore di blocco del profilo del browser
 
-Con l'architettura del browser condiviso, gli errori di blocco del profilo non dovrebbero verificarsi. Se ne riscontrate uno, un processo Chrome residuo potrebbe trattenere il blocco:
+Con l'architettura a browser condiviso, gli errori di blocco del profilo non dovrebbero verificarsi. Se ne vedete uno, un processo Chrome residuo potrebbe trattenere il blocco:
 
 ```bash
 # Terminare eventuali processi Chrome residui
