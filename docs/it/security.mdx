@@ -14,7 +14,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## Contesto
 
-A febbraio 2025, LayerX Security Research ha divulgato una vulnerabilità critica di esecuzione di codice remoto zero-click nel framework delle estensioni Claude Desktop Extensions (DXT) di Anthropic. Le estensioni vengono eseguite senza sandbox con privilegi di sistema completi, agendo come ponti di esecuzione tra il modello linguistico e il sistema operativo locale.
+Nel febbraio 2025, LayerX Security Research ha divulgato una vulnerabilità critica di esecuzione remota di codice zero-click nel framework Claude Desktop Extensions (DXT) di Anthropic. Le estensioni vengono eseguite senza sandbox con privilegi di sistema completi, fungendo da ponti di esecuzione tra il modello linguistico e il sistema operativo locale.
 
 Molti team di sicurezza aziendali ora richiedono che gli strumenti di coding basati su IA vengano eseguiti solo all'interno di macchine virtuali dedicate, container o ambienti usa e getta — non direttamente sugli endpoint aziendali.
 
@@ -49,13 +49,13 @@ Molti team di sicurezza aziendali ora richiedono che gli strumenti di coding bas
 
 ## Controlli di Sicurezza
 
-### Nessun Montaggio di Volumi dell'Host
+### Nessun Montaggio di Volumi Host
 
-Tutti i dati risiedono in volumi Docker nominati — non in directory dell'host montate tramite bind. Una compromissione all'interno del container **non può** accedere ai file sulla macchina host. Consultare [Configurazione — Persistenza dei Dati](./configuration#data-persistence) per i dettagli sui volumi.
+Tutti i dati risiedono in volumi Docker con nome — non in directory host montate tramite bind. Una compromissione all'interno del container **non può** accedere ai file sulla macchina host. Consultare [Configurazione — Persistenza dei Dati](./configuration#data-persistence) per i dettagli sui volumi.
 
-### Nessun Archivio di Credenziali Condiviso
+### Nessun Archivio Credenziali Condiviso
 
-Il container non ha accesso al Portachiavi macOS, a Gestione Credenziali di Windows, ai profili del browser o all'agente SSH dell'host. Le chiavi SSH vengono iniettate all'avvio tramite una variabile d'ambiente codificata in base64 ed esistono solo all'interno del container.
+Il container non ha accesso al Portachiavi macOS, a Windows Credential Manager, ai profili del browser o all'agente SSH dell'host. Le chiavi SSH vengono iniettate all'avvio tramite una variabile d'ambiente codificata in base64 e esistono solo all'interno del container.
 
 ### Nessuna Sincronizzazione degli Appunti
 
@@ -72,7 +72,7 @@ Il container non ha accesso a tunnel VPN, interfacce di rete aziendali o altri s
 
 ### Effimero per Design
 
-L'intero ambiente può essere distrutto e ricreato in pochi secondi. Trattare il container come usa e getta.
+L'intero ambiente può essere distrutto e ricreato in pochi secondi. Trattate il container come usa e getta.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -95,21 +95,21 @@ podman-compose pull && podman-compose up -d
 
 ### Strumenti Solo da Riga di Comando
 
-Questo ambiente esegue strumenti IA come **interfacce a riga di comando esclusivamente**. Nessuna applicazione desktop, nessuna estensione del browser, nessun framework DXT. La vulnerabilità che ha motivato questo modello di isolamento non si applica all'utilizzo CLI all'interno di un container.
+Questo ambiente esegue strumenti IA come **interfacce a riga di comando esclusivamente**. Nessuna applicazione desktop, nessuna estensione del browser, nessun framework DXT. La vulnerabilità che ha motivato questo modello di isolamento non si applica all'uso da CLI all'interno di un container.
 
 ### Hardening del Container
 
-Il file `docker-compose.yml` applica diverse misure di difesa in profondità:
+Il `docker-compose.yml` applica diverse misure di difesa in profondità:
 
-- **Rimozione delle capability** — Tutte le capability Linux vengono rimosse (`cap_drop: ALL`), poi viene ri-aggiunto solo il set minimo: `CHOWN`, `DAC_OVERRIDE`, `FOWNER` (per la correzione dei permessi dei volumi nell'entrypoint), `SETUID`/`SETGID` (per sudo), `NET_RAW` (per ping/tcpdump) e `NET_ADMIN` (per strumenti di cattura pacchetti come Wireshark e bettercap).
+- **Rimozione delle capability** — Tutte le capability Linux vengono rimosse (`cap_drop: ALL`), quindi viene ri-aggiunto solo il set minimo: `CHOWN`, `DAC_OVERRIDE`, `FOWNER` (per la correzione dei permessi dei volumi nell'entrypoint), `SETUID`/`SETGID` (per sudo), `NET_RAW` (per ping/tcpdump) e `NET_ADMIN` (per strumenti di cattura pacchetti come Wireshark e bettercap).
 - **Limiti delle risorse** — CPU (4 core), memoria (8 GB) e conteggio PID (4096) sono limitati tramite `mem_limit`, `cpus` e `pids_limit` per prevenire attacchi di esaurimento delle risorse.
 - **tmpfs per `/tmp`** — La directory `/tmp` è montata come tmpfs da 256 MB, mantenendo i file temporanei in memoria e impedendo che persistano nel livello scrivibile del container.
-- **Validazione TLS attiva per impostazione predefinita** — `NODE_TLS_REJECT_UNAUTHORIZED` non è impostato, quindi Node.js valida i certificati TLS per impostazione predefinita. Gli utenti che necessitano di accettare certificati autofirmati (ad es. per un proxy interno) possono attivare questa opzione aggiungendo `NODE_TLS_REJECT_UNAUTHORIZED=0` al loro file `.env`.
-- **Umask per chiavi SSH** — Le chiavi private SSH vengono scritte con `umask 077`, in modo che il file non sia mai leggibile da tutti — nemmeno brevemente — tra la creazione e la chiamata `chmod`.
+- **Validazione TLS attiva per impostazione predefinita** — `NODE_TLS_REJECT_UNAUTHORIZED` non è impostato, quindi Node.js valida i certificati TLS per impostazione predefinita. Gli utenti che necessitano di accettare certificati autofirmati (ad es. per un proxy interno) possono attivarlo aggiungendo `NODE_TLS_REJECT_UNAUTHORIZED=0` al proprio file `.env`.
+- **Umask per le chiavi SSH** — Le chiavi private SSH vengono scritte con `umask 077`, in modo che il file non sia mai leggibile da tutti — nemmeno brevemente — tra la creazione e la chiamata `chmod`.
 
-### Strumenti di Sicurezza e Test di Penetrazione
+### Strumenti di Sicurezza e Penetration Testing
 
-Il container include circa 80 strumenti di sicurezza e test di penetrazione preinstallati per scenari di testing autorizzati. Gli strumenti sono organizzati per categoria:
+Il container include circa 80 strumenti di sicurezza e penetration testing pre-installati per scenari di test autorizzati. Gli strumenti sono organizzati per categoria:
 
 | Categoria | Strumenti (esempi) |
 |----------|-----------------|
@@ -122,11 +122,11 @@ Il container include circa 80 strumenti di sicurezza e test di penetrazione prei
 | Supply chain e segreti | trufflehog, grype, syft, gitleaks, trivy |
 | Framework di exploitation | Metasploit (amd64), searchsploit (ExploitDB) |
 
-Alcuni strumenti (bettercap, Metasploit) sono disponibili solo su amd64 a causa di vincoli del packaging upstream. Gli strumenti di cattura pacchetti (tshark, bettercap) richiedono la capability `NET_ADMIN`, che è inclusa nel `docker-compose.yml` predefinito.
+Alcuni strumenti (bettercap, Metasploit) sono disponibili solo su amd64 a causa di vincoli di pacchettizzazione upstream. Gli strumenti di cattura pacchetti (tshark, bettercap) richiedono la capability `NET_ADMIN`, che è inclusa nel `docker-compose.yml` predefinito.
 
 Per l'elenco completo, eseguire `claude-self-test` all'interno del container (la sezione 7 verifica tutti gli strumenti di sicurezza).
 
-## Lista di Controllo di Conformità
+## Checklist di Conformità
 
 | Requisito | Stato |
 |---|---|
@@ -134,16 +134,16 @@ Per l'elenco completo, eseguire `claude-self-test` all'interno del container (la
 | Esecuzione in VM o container isolato | Sì |
 | Nessun accesso a condivisioni file dell'host | Sì |
 | Nessuna sincronizzazione degli appunti | Sì |
-| Nessun archivio di credenziali condiviso | Sì |
+| Nessun archivio credenziali condiviso | Sì |
 | Nessun split tunneling VPN verso reti di produzione | Sì |
 | Ambiente usa e getta | Sì |
-| Nessuna estensione desktop o plugin | Sì |
+| Nessuna estensione o plugin desktop | Sì |
 | Capability Linux rimosse (privilegio minimo) | Sì |
 | Limiti delle risorse applicati (CPU/memoria/PID) | Sì |
-| Validazione certificati TLS abilitata per impostazione predefinita | Sì |
-| Servizi interni in ascolto solo su localhost | Sì |
+| Validazione dei certificati TLS attiva per impostazione predefinita | Sì |
+| Servizi interni associati solo a localhost | Sì |
 
-## Buone Pratiche
+## Best Practice
 
 1. **Non installare strumenti di coding IA sulla macchina host.** Utilizzare invece questo container.
 2. **Non aggiungere bind mount** al `docker-compose.yml`. La configurazione con volumi nominati è intenzionale.

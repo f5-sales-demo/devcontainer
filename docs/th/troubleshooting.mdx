@@ -10,7 +10,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-## คอนเทนเนอร์ไม่สามารถเริ่มต้นได้
+## คอนเทนเนอร์ไม่เริ่มทำงาน
 
 ### "Conflict. The container name is already in use"
 
@@ -60,7 +60,7 @@ podman-compose up -d
 
 ### Claude แสดง "Not logged in"
 
-Entrypoint จะตั้งค่า `~/.claude.json` พร้อมแฟล็กการเริ่มต้นใช้งาน หากไฟล์หายไป:
+entrypoint จะสร้างไฟล์ `~/.claude.json` พร้อมค่า flag สำหรับ onboarding หากไม่มี:
 
 ```bash
 echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
@@ -68,7 +68,7 @@ echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
 
 ### Claude แสดง "Invalid API key"
 
-ตรวจสอบค่าที่ตั้งอยู่จริง:
+ตรวจสอบว่าค่าที่ตั้งไว้จริง ๆ คืออะไร:
 
 ```bash
 echo "$ANTHROPIC_API_KEY"
@@ -76,10 +76,10 @@ echo "$ANTHROPIC_API_KEY"
 
 สาเหตุที่พบบ่อย:
 
-- **คีย์ LiteLLM proxy หายไปหรือไม่ถูกต้อง** — หากคุณใช้โหมด proxy ตรวจสอบว่า `LITELLM_API_KEY` ในไฟล์ `.env` มีข้อมูลรับรอง proxy ที่ถูกต้อง จากนั้นรีสตาร์ทคอนเทนเนอร์เพื่อให้ entrypoint สามารถสร้าง `ANTHROPIC_API_KEY` ได้
-- **โทเค็น OAuth หรือโหมด proxy ไม่ตรงกัน** — ใช้โหมดการยืนยันตัวตนเพียงโหมดเดียว หาก `CLAUDE_CODE_OAUTH_TOKEN` ถูกตั้งค่าไว้ จะมีลำดับความสำคัญเหนือโหมด LiteLLM proxy
+- **LiteLLM proxy key หายไปหรือไม่ถูกต้อง** — หากคุณใช้โหมด proxy ตรวจสอบให้แน่ใจว่า `LITELLM_API_KEY` ใน `.env` มีข้อมูลรับรองของ proxy ที่ถูกต้อง จากนั้นรีสตาร์ทคอนเทนเนอร์เพื่อให้ entrypoint สามารถสร้าง `ANTHROPIC_API_KEY` ได้
+- **OAuth token หรือโหมด proxy ไม่ตรงกัน** — ใช้โหมดการยืนยันตัวตนเพียงโหมดเดียว หาก `CLAUDE_CODE_OAUTH_TOKEN` ถูกตั้งค่าไว้ จะมีความสำคัญเหนือกว่าโหมด LiteLLM proxy
 
-### คำขอ API ล้มเหลวพร้อมข้อผิดพลาด 401
+### คำขอ API ล้มเหลวด้วยข้อผิดพลาด 401
 
 ตรวจสอบว่า API key ของคุณถูกตั้งค่าอย่างถูกต้อง:
 
@@ -87,11 +87,11 @@ echo "$ANTHROPIC_API_KEY"
 echo "$ANTHROPIC_API_KEY"
 ```
 
-ตรวจสอบให้แน่ใจว่าใช้งานได้โดยเรียกใช้งานโดยตรงไปยังผู้ให้บริการของคุณ
+ตรวจสอบว่าใช้งานได้โดยเรียก API ไปยังผู้ให้บริการของคุณโดยตรง
 
 ### Claude แจ้งว่า "model not found"
 
-โมเดลถูกกำหนดโดยผู้ให้บริการและ API key ของคุณ ตรวจสอบเอกสารของผู้ให้บริการสำหรับโมเดลที่ใช้งานได้
+โมเดลจะถูกกำหนดโดยผู้ให้บริการและ API key ของคุณ ตรวจสอบเอกสารของผู้ให้บริการสำหรับโมเดลที่ใช้งานได้
 
 ## GitHub CLI
 
@@ -103,24 +103,24 @@ echo "$ANTHROPIC_API_KEY"
 GH_TOKEN=ghp_your-token-here
 ```
 
-สร้างโทเค็นได้ที่ [github.com/settings/tokens](https://github.com/settings/tokens) โทเค็นแบบ Fine-grained (แนะนำ) หรือโทเค็นแบบ Classic ที่มีสิทธิ์ `repo` สามารถใช้งานได้ทั้งคู่ รีสตาร์ทคอนเทนเนอร์หลังจากอัปเดต `.env`
+สร้างโทเค็นได้ที่ [github.com/settings/tokens](https://github.com/settings/tokens) ทั้ง Fine-grained tokens (แนะนำ) หรือ classic tokens ที่มีสิทธิ์ `repo` สามารถใช้งานได้ทั้งคู่ รีสตาร์ทคอนเทนเนอร์หลังจากอัปเดต `.env`
 
-### HTTPS git clone ล้มเหลวพร้อมข้อผิดพลาด 401
+### HTTPS git clone ล้มเหลวด้วยข้อผิดพลาด 401
 
-เมื่อ `GH_TOKEN` ถูกตั้งค่า entrypoint จะรันคำสั่ง `gh auth setup-git` เพื่อกำหนดค่า git credential helper สำหรับ HTTPS หากการดำเนินการ HTTPS ล้มเหลว:
+เมื่อมีการตั้งค่า `GH_TOKEN` entrypoint จะรันคำสั่ง `gh auth setup-git` เพื่อกำหนดค่า git credential helper สำหรับ HTTPS หากการดำเนินการ HTTPS ล้มเหลว:
 
 1. ตรวจสอบว่าโทเค็นยังใช้งานได้: `gh auth status`
 2. ตรวจสอบว่า credential helper ถูกกำหนดค่าแล้ว: `git config --global credential.helper`
 3. รีสตาร์ทคอนเทนเนอร์เพื่อรัน entrypoint ใหม่
 
-### SSH เทียบกับ HTTPS
+### SSH กับ HTTPS
 
-วิธีการยืนยันตัวตนทั้งสองแบบสามารถใช้ร่วมกันในคอนเทนเนอร์ได้:
+ทั้งสองวิธีการยืนยันตัวตนสามารถใช้ร่วมกันในคอนเทนเนอร์ได้:
 
-- **SSH** (`SSH_PRIVATE_KEY` ในไฟล์ `.env`) — ใช้ URL แบบ `git@github.com:` จำเป็นหากองค์กรของคุณบังคับใช้ SSH
-- **HTTPS** (`GH_TOKEN` ในไฟล์ `.env`) — ใช้ URL แบบ `https://github.com/` ตั้งค่าง่ายกว่า ไม่ต้องจัดการคีย์
+- **SSH** (`SSH_PRIVATE_KEY` ใน `.env`) — ใช้ URL แบบ `git@github.com:` จำเป็นหากองค์กรของคุณบังคับใช้ SSH
+- **HTTPS** (`GH_TOKEN` ใน `.env`) — ใช้ URL แบบ `https://github.com/` ตั้งค่าง่ายกว่า ไม่ต้องจัดการ key
 
-หากกำหนดค่าทั้งสองแบบ git จะใช้โปรโตคอลที่ตรงกับ remote URL เพื่อสลับ clone ที่มีอยู่:
+หากกำหนดค่าทั้งสองแบบ git จะใช้โปรโตคอลที่ตรงกับ remote URL เพื่อเปลี่ยน clone ที่มีอยู่:
 
 ```bash
 # SSH เป็น HTTPS
@@ -130,7 +130,7 @@ git remote set-url origin https://github.com/owner/repo.git
 git remote set-url origin git@github.com:owner/repo.git
 ```
 
-## ปัญหาสิทธิ์การเข้าถึง
+## ปัญหาเรื่องสิทธิ์
 
 ### "Permission denied" บน /workspace หรือ /home
 
@@ -138,9 +138,9 @@ git remote set-url origin git@github.com:owner/repo.git
 sudo chown -R $(id -u):$(id -g) /workspace ~
 ```
 
-### npm install ล้มเหลวพร้อมข้อผิดพลาด EACCES
+### npm install ล้มเหลวด้วย EACCES
 
-Entrypoint จะกำหนดค่า npm global prefix ที่ผู้ใช้สามารถเขียนได้โดยอัตโนมัติที่ `~/.npm-global` ดังนั้นคำสั่ง `npm install -g` ขณะรันไทม์ควรทำงานได้โดยไม่ต้องใช้ `sudo` หากคุณยังเห็นข้อผิดพลาด EACCES ให้แก้ไขด้วยตนเอง:
+entrypoint จะกำหนดค่า npm global prefix ที่ผู้ใช้สามารถเขียนได้ที่ `~/.npm-global` โดยอัตโนมัติ ดังนั้นคำสั่ง `npm install -g` ในขณะรันไทม์ควรทำงานได้โดยไม่ต้องใช้ `sudo` หากคุณยังพบข้อผิดพลาด EACCES ให้ใช้การแก้ไขด้วยตนเอง:
 
 ```bash
 mkdir -p ~/.npm-global
@@ -150,9 +150,9 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 
 ## ปัญหาการ Build
 
-### Build ใช้เวลานานมาก
+### การ Build ใช้เวลานานมาก
 
-การ build ครั้งแรกจะดาวน์โหลด base image (~1 GB) การ build ครั้งต่อไปจะใช้แคช หากช้าทุกครั้ง:
+การ build ครั้งแรกจะดาวน์โหลด base image (~1 GB) การ build ครั้งต่อ ๆ ไปจะใช้แคช หากช้าทุกครั้ง:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -190,7 +190,7 @@ podman system prune -a --volumes
 </TabItem>
 </Tabs>
 
-**คำเตือน:** คำสั่งนี้จะลบคอนเทนเนอร์ อิมเมจ และวอลุ่มที่ไม่ได้ใช้ทั้งหมด — ไม่ใช่แค่ของโปรเจกต์นี้เท่านั้น
+**คำเตือน:** คำสั่งนี้จะลบคอนเทนเนอร์ อิมเมจ และ volume ที่ไม่ได้ใช้ทั้งหมด — ไม่ใช่เฉพาะของโปรเจกต์นี้เท่านั้น
 
 ## เครือข่าย
 
@@ -205,7 +205,7 @@ curl -I https://github.com
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-หาก DNS ล้มเหลว ให้เพิ่มลงใน `/etc/docker/daemon.json` บนเครื่องโฮสต์:
+หาก DNS ล้มเหลว ให้เพิ่มใน `/etc/docker/daemon.json` บนเครื่อง host:
 
 ```json
 {
@@ -226,7 +226,7 @@ sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
 exit
 ```
 
-หรือเพิ่มการตั้งค่า DNS ลงใน `~/.config/containers/containers.conf` บนเครื่องโฮสต์:
+หรือเพิ่มการตั้งค่า DNS ใน `~/.config/containers/containers.conf` บนเครื่อง host:
 
 ```ini
 [containers]
@@ -242,13 +242,13 @@ dns_servers = ["8.8.8.8", "8.8.4.4"]
 
 ### หน้าจอดำใน noVNC
 
-Xvfb อาจไม่ได้เริ่มทำงาน ตรวจสอบภายในคอนเทนเนอร์:
+Xvfb อาจยังไม่เริ่มทำงาน ตรวจสอบภายในคอนเทนเนอร์:
 
 ```bash
 ps aux | grep Xvfb
 ```
 
-หากไม่ทำงาน ตรวจสอบว่า `ENABLE_VNC` ไม่ได้ถูกตั้งค่าเป็น `false` และรีสตาร์ทคอนเทนเนอร์
+หากไม่ทำงาน ตรวจสอบว่า `ENABLE_VNC` ไม่ได้ถูกตั้งค่าเป็น `false` แล้วรีสตาร์ทคอนเทนเนอร์
 
 ### ข้อผิดพลาด "Cannot open display" หรือ "No display"
 
@@ -258,17 +258,17 @@ ps aux | grep Xvfb
 echo "$DISPLAY"
 ```
 
-ค่าควรเป็น `:99` หากว่างเปล่า ให้เพิ่ม `DISPLAY=:99` ลงในไฟล์ `.env` หรือ `devcontainer.json` และรีสตาร์ท
+ควรเป็น `:99` หากว่างเปล่า ให้เพิ่ม `DISPLAY=:99` ใน `.env` หรือ `devcontainer.json` แล้วรีสตาร์ท
 
 ### พอร์ต 6080 ปฏิเสธการเชื่อมต่อ
 
-noVNC อาจไม่ได้ทำงานอยู่ ตรวจสอบภายในคอนเทนเนอร์:
+noVNC อาจไม่ทำงาน ตรวจสอบภายในคอนเทนเนอร์:
 
 ```bash
 ps aux | grep -E 'novnc|websockify'
 ```
 
-หากไม่ทำงาน ตรวจสอบว่า `ENABLE_VNC` เป็น `true` (ค่าเริ่มต้น) และตรวจสอบบันทึกคอนเทนเนอร์:
+หากไม่ทำงาน ตรวจสอบว่า `ENABLE_VNC` เป็น `true` (ค่าเริ่มต้น) และตรวจสอบ log ของคอนเทนเนอร์:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -289,7 +289,7 @@ podman-compose logs dev | grep -i vnc
 
 ### พอร์ต 6080 ถูกใช้งานอยู่แล้ว
 
-เปลี่ยนพอร์ตโฮสต์ในไฟล์ `docker-compose.yml`:
+เปลี่ยนพอร์ตฝั่ง host ใน `docker-compose.yml`:
 
 ```yaml
 ports:
@@ -300,13 +300,13 @@ ports:
 
 ### Chrome remote debugging ไม่ตอบสนอง
 
-อินสแตนซ์ Chrome ที่ใช้ร่วมกันควรทำงานอยู่บนพอร์ต 9222 ตรวจสอบภายในคอนเทนเนอร์:
+อินสแตนซ์ Chrome ที่ใช้ร่วมกันควรทำงานบนพอร์ต 9222 ตรวจสอบภายในคอนเทนเนอร์:
 
 ```bash
 # Chrome ทำงานอยู่หรือไม่?
 curl http://localhost:9222/json/version
 
-# ตรวจสอบบันทึก Chrome
+# ตรวจสอบ log ของ Chrome
 cat ~/.local/share/chrome-browser/chrome.log
 
 # ตรวจสอบ symlink
@@ -317,14 +317,14 @@ ls -la /opt/google/chrome/chrome
 start_chrome_browser
 ```
 
-หาก symlink หายไป ให้ดึงอิมเมจล่าสุดและรีสตาร์ทคอนเทนเนอร์
+หาก symlink หายไป ให้ดึงอิมเมจล่าสุดแล้วรีสตาร์ทคอนเทนเนอร์
 
 ### ข้อผิดพลาด Browser profile lock
 
-ด้วยสถาปัตยกรรมเบราว์เซอร์แบบใช้ร่วมกัน ข้อผิดพลาด profile lock ไม่ควรเกิดขึ้น หากคุณพบข้อผิดพลาดนี้ อาจมีกระบวนการ Chrome ที่ค้างอยู่กำลังล็อกไฟล์:
+ด้วยสถาปัตยกรรมเบราว์เซอร์ที่ใช้ร่วมกัน ข้อผิดพลาด profile lock ไม่ควรเกิดขึ้น หากพบ อาจมีกระบวนการ Chrome ที่ค้างอยู่ถือ lock ไว้:
 
 ```bash
-# ปิดกระบวนการ Chrome ที่ค้างอยู่
+# หยุดกระบวนการ Chrome ที่ค้างอยู่
 pkill -f 'chrome.*remote-debugging-port' || true
 
 # ลบไฟล์ lock
@@ -337,14 +337,14 @@ start_chrome_browser
 
 ### เครื่องมือ chrome-devtools-mcp ซ้ำกัน
 
-เซิร์ฟเวอร์ chrome-devtools-mcp ถูกลงทะเบียนแบบ global ใน `~/.claude/settings.json` หากคุณมีไฟล์ `.mcp.json` ระดับ repo ที่ลงทะเบียนเช่นกัน คุณจะเห็นเครื่องมือซ้ำกัน ให้ลบรายการ `chrome-devtools-mcp` ออกจากไฟล์ `.mcp.json` ระดับ repo:
+เซิร์ฟเวอร์ chrome-devtools-mcp ถูกลงทะเบียนไว้ในระดับ global ใน `~/.claude/settings.json` หากคุณมี `.mcp.json` ระดับ repo ที่ลงทะเบียนไว้ด้วย คุณจะเห็นเครื่องมือซ้ำกัน ลบรายการ `chrome-devtools-mcp` ออกจากไฟล์ `.mcp.json` ระดับ repo:
 
 ```bash
 # ตรวจสอบการกำหนดค่าระดับ repo
 cat .mcp.json
 ```
 
-ลบคีย์ `chrome-devtools-mcp` ออกจากไฟล์ `.mcp.json` ระดับ repo เพื่อใช้การลงทะเบียนแบบ global
+ลบคีย์ `chrome-devtools-mcp` ออกจาก `.mcp.json` ระดับ repo เพื่อใช้การลงทะเบียนแบบ global
 
 ## รีเซ็ตทั้งหมด
 
@@ -371,4 +371,4 @@ podman-compose up -d
 </TabItem>
 </Tabs>
 
-การดำเนินการนี้จะลบข้อมูลทั้งหมดในวอลุ่ม คุณจะต้อง clone repo ใหม่และกำหนดค่าเครื่องมือใหม่
+คำสั่งนี้จะลบข้อมูลทั้งหมดใน volume คุณจะต้อง clone repo ใหม่และกำหนดค่าเครื่องมือใหม่อีกครั้ง

@@ -10,7 +10,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Diese Seite richtet sich an Entwickler, die das Repository klonen, das Image lokal bauen oder das Dockerfile anpassen möchten. Wenn Sie nur den vorgefertigten Container verwenden möchten, siehe [Erste Schritte](./getting-started).
+Diese Seite richtet sich an Entwickler, die das Repository klonen, das Image lokal bauen oder das Dockerfile anpassen möchten. Wenn Sie lediglich den vorgefertigten Container verwenden möchten, siehe [Erste Schritte](./getting-started).
 
 ## Repository klonen
 
@@ -23,14 +23,14 @@ cd devcontainer
 
 ```text
 .
-├── Dockerfile                  # Multi-Stage Image Build
-├── docker-compose.yml          # Basis-Compose — lädt vorgefertigtes Image
+├── Dockerfile                  # Multi-Stage Image-Build
+├── docker-compose.yml          # Basis-Compose — bezieht vorgefertigtes Image
 ├── docker-compose.build.yml    # Build-Override — explizit mit -f verwenden
 ├── .devcontainer/              # VS Code Dev Container Konfiguration
 │   └── devcontainer.json
 ├── entrypoint.sh               # Container-Startskript
 ├── .env.example                # Beispiel-Umgebungsvariablen
-├── docs/                       # Dokumentationswebsite (Starlight)
+├── docs/                       # Dokumentationsseite (Starlight)
 ├── claude-config/              # Claude Code Konfigurationsdateien
 ├── codex-config/               # Codex-Konfiguration
 ├── pi-config/                  # Pi-Konfiguration
@@ -39,7 +39,7 @@ cd devcontainer
 
 ## Build-Datei
 
-Die Datei `docker-compose.build.yml` fügt lokale Build-Unterstützung hinzu. Sie wird **nicht** automatisch zusammengeführt — Sie müssen sie explizit mit `-f`-Flags übergeben. Das bedeutet, `docker compose up -d` (oder `podman-compose up -d`) lädt immer das vorgefertigte Image von GHCR, unabhängig davon, ob Sie das Repository geklont haben oder nicht.
+Die Datei `docker-compose.build.yml` fügt lokale Build-Unterstützung hinzu. Sie wird **nicht** automatisch zusammengeführt — Sie müssen sie explizit mit `-f`-Flags angeben. Das bedeutet, `docker compose up -d` (oder `podman-compose up -d`) bezieht immer das vorgefertigte Image von GHCR, unabhängig davon, ob Sie das Repository geklont haben oder nicht.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -93,7 +93,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-Dies führt die Build-Datei mit der Basis-Compose-Datei zusammen, baut das Image aus dem lokalen `Dockerfile` und startet den Container. Das `--build`-Flag erzwingt einen Neubau, auch wenn ein gecachtes Image existiert.
+Dies führt die Build-Datei mit der Basis-Compose-Datei zusammen, baut das Image aus dem lokalen `Dockerfile` und startet den Container. Das `--build`-Flag erzwingt einen Neubau, auch wenn ein zwischengespeichertes Image existiert.
 
 ## Zweistufige Build-Architektur
 
@@ -101,23 +101,23 @@ Das Dockerfile verwendet einen zweistufigen Build, der für Docker-Layer-Caching
 
 ### Stufe 1: `deps` (stabile Grundlagen, ~4,5 GB)
 
-Diese Layer werden nur neu gebaut, wenn ein Versions-ARG aktualisiert wird oder sich APT-Pakete ändern. Bei typischen Tool-Änderungen überspringt BuildKit diese gesamte Stufe.
+Diese Layer werden nur neu gebaut, wenn ein Versions-ARG aktualisiert wird oder sich APT-Pakete ändern. Bei typischen Änderungen an Tools überspringt BuildKit diese gesamte Stufe.
 
 | Abschnitt | Inhalt |
 |-----------|--------|
 | 1. APT-Repos | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft, Google Cloud, Dart SDK |
-| 2. APT-Pakete | Systemtools, Node.js, Python, Java, Terraform, GitHub CLI, Docker Engine, Azure CLI, PowerShell, Locales |
+| 2. APT-Pakete | Systemwerkzeuge, Node.js, Python, Java, Terraform, GitHub CLI, Docker Engine, Azure CLI, PowerShell, Locales |
 | 2b. Sicherheits-APT-Pakete | Netzwerkanalyse, Web-Scanner, Passwort-Tools, Reverse Engineering, Forensik (~80 Pakete) |
-| 3. Python-Bootstrap | Symlinks + pip via get-pip.py |
+| 3. Python-Bootstrap | Symlinks + pip über get-pip.py |
 | 4. Go | Offizieller Tarball (neueste stabile Version, zur Build-Zeit aufgelöst) |
 | 5. Rust | rustup (systemweit, neueste stabile Version) |
-| 6. Maven + Gradle | Binär-Downloads nach `/opt` |
+| 6. Maven + Gradle | Binäre Downloads nach `/opt` |
 | 7. VNC-Stack | Xvfb, x11vnc, noVNC, fluxbox — Remote-Anzeige über Browser |
 | 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (neueste Releases) |
 
-### Stufe 2: `final` (volatile Tools + Benutzer-Setup, ~1,5 GB)
+### Stufe 2: `final` (veränderliche Tools + Benutzereinrichtung, ~1,5 GB)
 
-Diese Layer ändern sich häufiger (npm/pip-Updates, Konfigurationsänderungen), werden aber schnell neu gebaut, da die umfangreiche `deps`-Stufe gecacht ist.
+Diese Layer ändern sich häufiger (npm/pip-Updates, Konfigurationsänderungen), werden aber schnell neu gebaut, da die umfangreiche `deps`-Stufe zwischengespeichert ist.
 
 | Abschnitt | Inhalt |
 |-----------|--------|
@@ -140,17 +140,17 @@ Diese Layer ändern sich häufiger (npm/pip-Updates, Konfigurationsänderungen),
 | 12g. R-Linter | lintr |
 | 12h. Sicherheits-Ruby-Gems | wpscan, evil-winrm |
 | 12i. Git-geklonte Sicherheitstools | testssl.sh, exploitdb (searchsploit), SecLists, docker-bench-security, recon-ng, spiderfoot |
-| 13. Playwright-Browser | Chromium + Systemabhängigkeiten via `playwright install --with-deps` |
+| 13. Playwright-Browser | Chromium + Systemabhängigkeiten über `playwright install --with-deps` |
 | 13b. Chrome DevTools MCP | Chrome-Symlink + MCP-Pre-Cache + Headless-Patch |
 | 14. Homebrew | Linuxbrew (KI-Assistenten-Abhängigkeiten + Formatierer) |
-| 15. ZSH-Plugins | oh-my-zsh Custom-Plugins |
+| 15. ZSH-Plugins | oh-my-zsh benutzerdefinierte Plugins |
 | 16. Shell-Bootstrap | npm-global, tfenv, compinit |
 | 17. Claude Code + Codex-Konfiguration | Tool-Awareness-Speicher, verwaltete Richtlinie, Selbsttest-Skript, Codex-Konfiguration |
 | 18. Entrypoint | Container-Startskript (absolut letztes COPY) |
 
 ## Tools hinzufügen
 
-Bearbeiten Sie das `Dockerfile` und fügen Sie Ihr Tool zum entsprechenden Abschnitt hinzu. Nach dem Hinzufügen neu bauen:
+Bearbeiten Sie das `Dockerfile` und fügen Sie Ihr Tool dem entsprechenden Abschnitt hinzu. Bauen Sie nach dem Hinzufügen neu:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -169,11 +169,11 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-Oder in VS Code: **Dev Containers &rarr; Container neu bauen**.
+Oder in VS Code: **Dev Containers &rarr; Container neu erstellen**.
 
 ### APT-Pakete
 
-Zum `apt-get install`-Block in Abschnitt 2 hinzufügen:
+Fügen Sie zum `apt-get install`-Block in Abschnitt 2 hinzu:
 
 ```dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -184,7 +184,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ### npm-Tools
 
-Zum `npm install -g`-Block in Abschnitt 11 hinzufügen:
+Fügen Sie zum `npm install -g`-Block in Abschnitt 11 hinzu:
 
 ```dockerfile
 RUN npm install -g \
@@ -193,7 +193,7 @@ RUN npm install -g \
 
 ### pip-Tools
 
-Zum `pip install`-Block in Abschnitt 12 hinzufügen:
+Fügen Sie zum `pip install`-Block in Abschnitt 12 hinzu:
 
 ```dockerfile
 RUN pip install --no-cache-dir --break-system-packages \
@@ -202,7 +202,7 @@ RUN pip install --no-cache-dir --break-system-packages \
 
 ### Binäre Downloads
 
-Zu Abschnitt 10 hinzufügen oder einen neuen `RUN`-Layer mit Architekturerkennung erstellen:
+Fügen Sie zu Abschnitt 10 hinzu oder erstellen Sie einen neuen `RUN`-Layer mit Architekturerkennung:
 
 ```dockerfile
 RUN ARCH=$(dpkg --print-architecture) \
@@ -212,10 +212,10 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## Build-Cache
 
-CI verwendet **Registry-basiertes Caching** — Build-Layer werden in GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) gespeichert, anstatt im GitHub Actions Cache. Dies vermeidet das 10-GB-GHA-Cache-Limit, das bei diesem ~6 GB großen Multi-Architektur-Image häufig zu vollständigen Neubauten führte.
+CI verwendet **Registry-basiertes Caching** — Build-Layer werden in GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) gespeichert, anstatt im GitHub Actions Cache. Dies vermeidet das 10 GB GHA-Cache-Limit, das bei diesem ~6 GB großen Multi-Architektur-Image häufige vollständige Neubauten verursachte.
 
-Die zweistufige Architektur arbeitet mit dem Registry-Cache so zusammen, dass:
+Die zweistufige Architektur funktioniert mit dem Registry-Cache folgendermaßen:
 
-- **Tool-Versionsanhebungen** (npm, pip, binäre Tools) — nur die `final`-Stufe neu gebaut wird (~5 Min.)
-- **Konfigurationsdatei-Änderungen** (`claude-config/`, `entrypoint.sh`) — nur die letzten Layer neu gebaut werden (~1 Min.)
+- **Tool-Versionserhöhungen** (npm, pip, binäre Tools) — nur die `final`-Stufe wird neu gebaut (~5 Min.)
+- **Konfigurationsdatei-Änderungen** (`claude-config/`, `entrypoint.sh`) — nur die letzten Layer werden neu gebaut (~1 Min.)
 - **Grundlagen-Änderungen** (APT-Pakete, Go/Rust/Java-Versionen) — vollständiger Neubau beider Stufen (~30 Min.)

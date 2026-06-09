@@ -1,6 +1,6 @@
 ---
 title: ローカル開発
-description: リポジトリをクローンし、ローカルでビルドし、Dockerイメージをカスタマイズします。
+description: リポジトリのクローン、ローカルビルド、Dockerイメージのカスタマイズ。
 sidebar:
   order: 5
 i18n:
@@ -10,7 +10,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-このページは、リポジトリをクローンし、ローカルでイメージをビルドしたり、Dockerfileをカスタマイズしたい開発者向けです。ビルド済みコンテナを使用するだけの場合は、[はじめに](./getting-started)をご覧ください。
+このページは、リポジトリをクローンし、イメージをローカルでビルドしたり、Dockerfileをカスタマイズしたい開発者向けです。ビルド済みコンテナを使用するだけの場合は、[はじめに](./getting-started)を参照してください。
 
 ## リポジトリのクローン
 
@@ -39,18 +39,18 @@ cd devcontainer
 
 ## ビルドファイル
 
-`docker-compose.build.yml` ファイルはローカルビルドのサポートを追加します。このファイルは自動マージ**されません** — `-f` フラグを使って明示的に指定する必要があります。これにより、リポジトリをクローンしたかどうかに関わらず、`docker compose up -d`（または `podman-compose up -d`）は常にGHCRからビルド済みイメージをプルします。
+`docker-compose.build.yml` ファイルはローカルビルドサポートを追加します。これは自動マージ**されません** — `-f` フラグで明示的に渡す必要があります。つまり、`docker compose up -d`（または `podman-compose up -d`）は、リポジトリをクローンしたかどうかに関わらず、常にGHCRからビルド済みイメージをプルします。
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-通常の `docker compose up` がビルド済みイメージのみを使用する（`build:` コンテキストなし）ことを確認できます：
+プレーンな `docker compose up` がビルド済みイメージのみを使用する（`build:` コンテキストなし）ことを確認できます：
 
 ```bash
 docker compose config
 ```
 
-明示的なビルド設定と比較してみてください：
+明示的なビルド設定と比較してください：
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml config
@@ -59,13 +59,13 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml config
 </TabItem>
 <TabItem label="Podman">
 
-通常の `podman-compose up` がビルド済みイメージのみを使用する（`build:` コンテキストなし）ことを確認できます：
+プレーンな `podman-compose up` がビルド済みイメージのみを使用する（`build:` コンテキストなし）ことを確認できます：
 
 ```bash
 podman-compose config
 ```
 
-明示的なビルド設定と比較してみてください：
+明示的なビルド設定と比較してください：
 
 ```bash
 podman-compose -f docker-compose.yml -f docker-compose.build.yml config
@@ -74,7 +74,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml config
 </TabItem>
 </Tabs>
 
-## ローカルでのビルド
+## ローカルビルド
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -93,15 +93,15 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-これにより、ビルドファイルがベースのcomposeファイルとマージされ、ローカルの `Dockerfile` からイメージがビルドされ、コンテナが起動します。`--build` フラグは、キャッシュされたイメージが存在する場合でも強制的に再ビルドします。
+これにより、ビルドファイルがベースのcomposeファイルとマージされ、ローカルの `Dockerfile` からイメージがビルドされ、コンテナが起動します。`--build` フラグは、キャッシュされたイメージが存在する場合でも強制的にリビルドします。
 
-## 2段階ビルドアーキテクチャ
+## 2ステージビルドアーキテクチャ
 
-DockerfileはDockerレイヤーキャッシュに最適化された2段階ビルドを使用しています：
+DockerfileはDockerレイヤーキャッシュに最適化された2ステージビルドを使用します：
 
-### ステージ1: `deps`（安定した基盤、約4.5 GB）
+### ステージ 1: `deps`（安定した基盤、約4.5 GB）
 
-これらのレイヤーは、バージョンARGが更新されるかAPTパッケージが変更された場合にのみ再ビルドされます。通常のツール変更のみの場合、BuildKitはこのステージ全体をスキップします。
+これらのレイヤーは、バージョンARGが更新されるかAPTパッケージが変更された場合にのみリビルドされます。一般的なツールのみの変更では、BuildKitはこのステージ全体をスキップします。
 
 | セクション | 内容 |
 |---------|----------|
@@ -115,9 +115,9 @@ DockerfileはDockerレイヤーキャッシュに最適化された2段階ビル
 | 7. VNCスタック | Xvfb、x11vnc、noVNC、fluxbox — ブラウザ経由のリモートディスプレイ |
 | 8. Nerdフォント | JetBrainsMono、Hack、FiraCode（最新リリース） |
 
-### ステージ2: `final`（変更頻度の高いツール + ユーザー設定、約1.5 GB）
+### ステージ 2: `final`（頻繁に変更されるツール + ユーザー設定、約1.5 GB）
 
-これらのレイヤーはより頻繁に変更されます（npm/pipの更新、設定変更）が、重い `deps` ステージがキャッシュされているため、素早く再ビルドされます。
+これらのレイヤーはより頻繁に変更されますが（npm/pipの更新、設定変更）、重い `deps` ステージがキャッシュされているため、素早くリビルドできます。
 
 | セクション | 内容 |
 |---------|----------|
@@ -134,23 +134,23 @@ DockerfileはDockerレイヤーキャッシュに最適化された2段階ビル
 | 10j. Metasploit | エクスプロイトフレームワーク（amd64のみ） |
 | 11. npmグローバルツール | claude-code、prettier、markdownlint-cli2、devcontainers-cli、playwright、pi-coding-agent、oh-my-pi |
 | 12. pipツール | pre-commit、ansible、black、pylint、yamllint、playwright |
-| 12c. Rubyリンター | rubocop + 拡張 |
-| 12e. Perlリンターモジュール | Perl::Critic拡張 |
+| 12c. Rubyリンター | rubocop + 拡張機能 |
+| 12e. Perlリンターモジュール | Perl::Critic拡張機能 |
 | 12f. Luaリンター | luacheck |
 | 12g. Rリンター | lintr |
 | 12h. セキュリティRuby gems | wpscan、evil-winrm |
-| 12i. Git-cloneセキュリティツール | testssl.sh、exploitdb（searchsploit）、SecLists、docker-bench-security、recon-ng、spiderfoot |
+| 12i. Gitクローンされたセキュリティツール | testssl.sh、exploitdb（searchsploit）、SecLists、docker-bench-security、recon-ng、spiderfoot |
 | 13. Playwrightブラウザ | Chromium + `playwright install --with-deps` によるシステム依存関係 |
 | 13b. Chrome DevTools MCP | Chromeシンボリックリンク + MCPプリキャッシュ + ヘッドレスパッチ |
 | 14. Homebrew | Linuxbrew（AIアシスタント依存関係 + フォーマッター） |
 | 15. ZSHプラグイン | oh-my-zshカスタムプラグイン |
 | 16. シェルブートストラップ | npm-global、tfenv、compinit |
-| 17. Claude Code + Codex設定 | ツール認識メモリ、マネージドポリシー、セルフテストスクリプト、Codex設定 |
-| 18. エントリーポイント | コンテナ起動スクリプト（最後のCOPY） |
+| 17. Claude Code + Codex設定 | ツール認識メモリ、管理ポリシー、セルフテストスクリプト、Codex設定 |
+| 18. エントリポイント | コンテナ起動スクリプト（最後のCOPY） |
 
 ## ツールの追加
 
-`Dockerfile` を編集し、適切なセクションにツールを追加します。追加後に再ビルドしてください：
+`Dockerfile` を編集し、適切なセクションにツールを追加します。追加後にリビルドしてください：
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -169,7 +169,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-または VS Code で：**Dev Containers &rarr; Rebuild Container**。
+またはVS Codeで：**Dev Containers &rarr; Rebuild Container**。
 
 ### APTパッケージ
 
@@ -202,7 +202,7 @@ RUN pip install --no-cache-dir --break-system-packages \
 
 ### バイナリダウンロード
 
-セクション10に追加するか、アーキテクチャ検出付きの新しい `RUN` レイヤーを作成します：
+セクション10に追加するか、アーキテクチャ検出を含む新しい `RUN` レイヤーを作成します：
 
 ```dockerfile
 RUN ARCH=$(dpkg --print-architecture) \
@@ -212,10 +212,10 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## ビルドキャッシュ
 
-CIは**レジストリベースのキャッシュ**を使用しています — ビルドレイヤーはGitHub Actionsキャッシュではなく、GHCR（`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`）に保存されます。これにより、この約6 GBのマルチアーキテクチャイメージで頻繁なフルリビルドを引き起こしていた10 GBのGHAキャッシュ制限を回避できます。
+CIは**レジストリベースのキャッシュ**を使用します — ビルドレイヤーはGitHub Actionsキャッシュではなく、GHCR（`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`）に保存されます。これにより、この約6 GBのマルチアーキテクチャイメージで頻繁なフルリビルドを引き起こしていた10 GBのGHAキャッシュ制限を回避できます。
 
-2段階アーキテクチャはレジストリキャッシュと連携して、以下のように動作します：
+2ステージアーキテクチャはレジストリキャッシュと連携して以下のように動作します：
 
-- **ツールバージョンの更新**（npm、pip、バイナリツール）— `final` ステージのみ再ビルド（約5分）
-- **設定ファイルの変更**（`claude-config/`、`entrypoint.sh`）— 最後の数レイヤーのみ再ビルド（約1分）
+- **ツールバージョンの更新**（npm、pip、バイナリツール）— `final` ステージのみリビルド（約5分）
+- **設定ファイルの変更**（`claude-config/`、`entrypoint.sh`）— 最後の数レイヤーのみリビルド（約1分）
 - **基盤の変更**（APTパッケージ、Go/Rust/Javaバージョン）— 両ステージのフルリビルド（約30分）

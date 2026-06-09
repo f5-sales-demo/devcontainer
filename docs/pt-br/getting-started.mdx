@@ -1,7 +1,7 @@
 ---
 title: Primeiros Passos
 description: >-
-  Baixe um arquivo, inicie o container e conecte — sem necessidade de Git ou
+  Baixe um arquivo, inicie o contêiner e conecte-se — sem necessidade de Git ou
   clonagem.
 sidebar:
   order: 2
@@ -12,7 +12,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-:::tip[Instalação Rápida para macOS]
+:::tip[Instalação Rápida no macOS]
 Se você está no macOS com Apple Silicon, pule esta página e use o [instalador de uma linha](/devcontainer/install/):
 
 ```bash
@@ -24,15 +24,15 @@ Ele cuida dos pacotes Homebrew, configuração do iTerm2, configuração do Podm
 
 ## Pré-requisitos
 
-### Runtime de Container
+### Runtime de Contêiner
 
-Você precisa de um runtime de container na sua máquina. Docker ou Podman funcionam.
+Você precisa de um runtime de contêiner na sua máquina. Docker ou Podman funcionam.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
 | Plataforma | Instalação |
-|----------|---------|
+|------------|------------|
 | macOS | [Docker Desktop para Mac](https://docs.docker.com/desktop/install/mac-install/) |
 | Windows | [Docker Desktop para Windows](https://docs.docker.com/desktop/install/windows-install/) (backend WSL2) |
 | Linux | [Docker Engine](https://docs.docker.com/engine/install/) ou [Docker Desktop para Linux](https://docs.docker.com/desktop/install/linux/) |
@@ -48,7 +48,7 @@ docker compose version
 <TabItem label="Podman">
 
 | Plataforma | Instalação |
-|----------|---------|
+|------------|------------|
 | macOS | [Podman Desktop para Mac](https://podman-desktop.io/docs/installation/macos-install) |
 | Windows | [Podman Desktop para Windows](https://podman-desktop.io/docs/installation/windows-install) |
 | Linux | [Podman](https://podman.io/docs/installation#installing-on-linux) + [Podman Compose](https://github.com/containers/podman-compose#installation) |
@@ -61,7 +61,7 @@ podman-compose version
 ```
 
 :::note[Apenas Linux]
-O Podman no Linux executa containers diretamente (sem VM). Certifique-se de que o socket do Podman está ativo para que o `podman-compose` possa se conectar:
+O Podman no Linux executa contêineres diretamente (sem VM). Certifique-se de que o socket do Podman esteja ativo para que o `podman-compose` possa se conectar:
 
 ```bash
 systemctl --user enable --now podman.socket
@@ -74,9 +74,9 @@ systemctl --user enable --now podman.socket
 ### Recursos do Sistema
 
 | Recurso | Mínimo | Recomendado |
-|----------|---------|-------------|
+|---------|--------|-------------|
 | Disco | 5 GB | 10 GB+ |
-| RAM | 8 GB alocados para o runtime de container | 12 GB+ |
+| RAM | 8 GB alocados para o runtime de contêiner | 12 GB+ |
 | CPU | 2 núcleos | 4+ núcleos |
 
 <Tabs syncKey="runtime">
@@ -94,7 +94,7 @@ podman machine set --cpus 4 --memory 12288
 podman machine stop && podman machine start
 ```
 
-No **Linux**, os containers compartilham os recursos do host diretamente — nenhuma configuração de recursos é necessária.
+No **Linux**, os contêineres compartilham os recursos do host diretamente — nenhuma configuração de recursos é necessária.
 
 </TabItem>
 </Tabs>
@@ -127,9 +127,9 @@ LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
 LITELLM_API_KEY=your-api-key
 ```
 
-Defina apenas o domínio — o container deriva automaticamente os sufixos de URL específicos do provedor (ex.: `/anthropic` para Claude Code).
+Defina apenas o domínio — o contêiner deriva automaticamente os sufixos de URL específicos do provedor (ex.: `/anthropic` para Claude Code).
 
-### Preenchimento automático a partir de credenciais locais
+### Preencher automaticamente a partir de credenciais locais
 
 Se você tem `git` e `gh` configurados no seu host, pode preencher a maioria dos valores do `.env` automaticamente. Comece copiando o template:
 
@@ -154,10 +154,10 @@ echo "GH_TOKEN=$(gh auth token)" >> .env
 echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 ```
 
-Em seguida, edite o `.env` para adicionar seu token OAuth ou configurações de proxy LiteLLM (veja as opções acima).
+Depois edite o `.env` para adicionar seu token OAuth ou configurações de proxy LiteLLM (veja as opções acima).
 
 :::tip[Assistentes de IA]
-O arquivo `.env.example` contém marcadores `@auto-detect` em cada variável que pode ser preenchida a partir de ferramentas locais. Assistentes de IA como Claude Code podem procurar esses marcadores e executar os comandos associados para construir um `.env` completo automaticamente.
+O arquivo `.env.example` contém marcadores `@auto-detect` em todas as variáveis que podem ser preenchidas a partir de ferramentas locais. Assistentes de IA como o Claude Code podem procurar esses marcadores e executar os comandos associados para construir um `.env` completo automaticamente.
 :::
 
 ## 3. Iniciar
@@ -236,11 +236,11 @@ claude
 
 ## 7. Display Remoto (noVNC)
 
-O container inclui um display virtual para observar agentes de IA controlando um navegador. Abra `http://localhost:6080/vnc.html` para conectar. Veja [Display Remoto (noVNC)](./vnc) para detalhes.
+O contêiner inclui um display virtual para assistir agentes de IA controlarem um navegador. Abra `http://localhost:6080/vnc.html` para conectar. Veja [Display Remoto (noVNC)](./vnc) para detalhes.
 
 ## 8. Automação de Navegador (Chrome DevTools MCP)
 
-O Claude Code pode navegar páginas web, tirar capturas de tela e inspecionar o DOM usando o servidor Chrome DevTools MCP integrado. Nenhuma configuração necessária — funciona automaticamente em modo headless. Veja [Chrome DevTools MCP](./chrome) para detalhes.
+O Claude Code pode navegar em páginas web, capturar screenshots e inspecionar o DOM usando o servidor Chrome DevTools MCP integrado. Nenhuma configuração necessária — funciona automaticamente em modo headless. Veja [Chrome DevTools MCP](./chrome) para detalhes.
 
 ## 9. Parando e Reiniciando
 
@@ -281,4 +281,4 @@ Seu código em `/workspace` e o diretório home persistem entre reinicializaçõ
 
 ---
 
-Para builds locais e customização do Dockerfile, veja [Desenvolvimento Local](./local-development). Para integração com VS Code, veja [VS Code](./vscode). Para opções de display remoto, veja [Display Remoto (noVNC)](./vnc).
+Para builds locais e personalização do Dockerfile, veja [Desenvolvimento Local](./local-development). Para integração com VS Code, veja [VS Code](./vscode). Para opções de display remoto, veja [Display Remoto (noVNC)](./vnc).

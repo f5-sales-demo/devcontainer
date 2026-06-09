@@ -1,8 +1,8 @@
 ---
 title: Per Iniziare
 description: >-
-  Scarica un file, avvia il container e connettiti — non serve Git né clonare
-  repository.
+  Scarica un file, avvia il container e connettiti — non servono Git né
+  clonazione.
 sidebar:
   order: 2
 i18n:
@@ -13,20 +13,20 @@ i18n:
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 :::tip[Installazione rapida su macOS]
-Se utilizzi macOS con Apple Silicon, salta questa pagina e usa l'[installer a una riga](/devcontainer/install/):
+Se utilizzi macOS con Apple Silicon, salta questa pagina e usa l'[installer in una riga](/devcontainer/install/):
 
 ```bash
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-Si occupa dei pacchetti Homebrew, della configurazione di iTerm2, del setup di Podman e scarica tutto il necessario.
+Gestisce i pacchetti Homebrew, la configurazione di iTerm2, il setup di Podman e scarica tutto il necessario.
 ::::
 
 ## Prerequisiti
 
 ### Runtime per Container
 
-Hai bisogno di un runtime per container sulla tua macchina. Sia Docker che Podman funzionano.
+Hai bisogno di un runtime per container sulla tua macchina. Docker o Podman funzionano entrambi.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -61,7 +61,7 @@ podman-compose version
 ```
 
 :::note[Solo Linux]
-Podman su Linux esegue i container direttamente (senza VM). Assicurati che il socket di Podman sia attivo affinché `podman-compose` possa connettersi:
+Podman su Linux esegue i container direttamente (senza VM). Assicurati che il socket Podman sia attivo affinché `podman-compose` possa connettersi:
 
 ```bash
 systemctl --user enable --now podman.socket
@@ -82,12 +82,12 @@ systemctl --user enable --now podman.socket
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-Regola i limiti delle risorse in Docker Desktop &rarr; Settings &rarr; Resources.
+Modifica i limiti delle risorse in Docker Desktop &rarr; Impostazioni &rarr; Risorse.
 
 </TabItem>
 <TabItem label="Podman">
 
-Su **macOS/Windows**, regola i limiti delle risorse in Podman Desktop &rarr; Settings &rarr; Resources, oppure tramite CLI:
+Su **macOS/Windows**, modifica i limiti delle risorse in Podman Desktop &rarr; Impostazioni &rarr; Risorse, oppure tramite CLI:
 
 ```bash
 podman machine set --cpus 4 --memory 12288
@@ -129,7 +129,7 @@ LITELLM_API_KEY=your-api-key
 
 Imposta solo il dominio — il container deriva automaticamente i suffissi URL specifici del provider (ad es. `/anthropic` per Claude Code).
 
-### Popolamento automatico dalle credenziali locali
+### Popolare automaticamente dalle credenziali locali
 
 Se hai `git` e `gh` configurati sul tuo host, puoi popolare automaticamente la maggior parte dei valori del `.env`. Inizia copiando il template:
 
@@ -154,10 +154,10 @@ echo "GH_TOKEN=$(gh auth token)" >> .env
 echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 ```
 
-Poi modifica `.env` per aggiungere il tuo token OAuth o le impostazioni del proxy LiteLLM (vedi le opzioni sopra).
+Poi modifica il `.env` per aggiungere il tuo token OAuth o le impostazioni del proxy LiteLLM (vedi le opzioni sopra).
 
 :::tip[Assistenti AI]
-Il file `.env.example` contiene marcatori `@auto-detect` su ogni variabile che può essere popolata da strumenti locali. Gli assistenti AI come Claude Code possono cercare questi marcatori ed eseguire i comandi associati per costruire automaticamente un `.env` completo.
+Il file `.env.example` contiene marcatori `@auto-detect` su ogni variabile che può essere popolata dagli strumenti locali. Gli assistenti AI come Claude Code possono cercare questi marcatori ed eseguire i comandi associati per costruire automaticamente un `.env` completo.
 :::
 
 ## 3. Avvio
@@ -236,7 +236,7 @@ claude
 
 ## 7. Display Remoto (noVNC)
 
-Il container include un display virtuale per osservare gli agenti AI che controllano un browser. Apri `http://localhost:6080/vnc.html` per connetterti. Consulta [Display Remoto (noVNC)](./vnc) per i dettagli.
+Il container include un display virtuale per osservare gli agenti AI controllare un browser. Apri `http://localhost:6080/vnc.html` per connetterti. Consulta [Display Remoto (noVNC)](./vnc) per i dettagli.
 
 ## 8. Automazione del Browser (Chrome DevTools MCP)
 
@@ -254,7 +254,7 @@ docker compose down
 # Riavvio
 docker compose up -d
 
-# Elimina tutto e riparti da zero
+# Eliminare tutto e ricominciare da zero
 docker compose down -v
 docker compose up -d
 ```
@@ -269,7 +269,7 @@ podman-compose down
 # Riavvio (pull assicura l'immagine più recente)
 podman-compose pull && podman-compose up -d
 
-# Elimina tutto e riparti da zero
+# Eliminare tutto e ricominciare da zero
 podman-compose down -v
 podman-compose pull && podman-compose up -d
 ```

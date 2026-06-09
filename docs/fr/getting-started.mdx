@@ -1,5 +1,5 @@
 ---
-title: Premiers pas
+title: Démarrage rapide
 description: >-
   Téléchargez un fichier, démarrez le conteneur et connectez-vous — ni Git ni
   clonage requis.
@@ -12,21 +12,21 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-:::tip[Installation rapide macOS]
+:::tip[Installation rapide sur macOS]
 Si vous êtes sur macOS avec Apple Silicon, ignorez cette page et utilisez l'[installateur en une ligne](/devcontainer/install/) :
 
 ```bash
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-Il gère les paquets Homebrew, la configuration d'iTerm2, la mise en place de Podman, et télécharge tout ce dont vous avez besoin.
+Il gère les paquets Homebrew, la configuration d'iTerm2, la mise en place de Podman et télécharge tout ce dont vous avez besoin.
 ::::
 
 ## Prérequis
 
 ### Environnement d'exécution de conteneurs
 
-Vous avez besoin d'un environnement d'exécution de conteneurs sur votre machine. Docker ou Podman fonctionneront tous les deux.
+Vous avez besoin d'un environnement d'exécution de conteneurs sur votre machine. Docker ou Podman fonctionnent tous les deux.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -108,9 +108,9 @@ mkdir devcontainer && cd devcontainer
 curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/docker-compose.yml
 ```
 
-## 2. Ajoutez vos identifiants d'authentification (optionnel)
+## 2. Ajoutez vos identifiants d'authentification (Optionnel)
 
-Créez un fichier `.env` dans le même dossier pour pré-configurer Claude Code. Choisissez l'une des options suivantes :
+Créez un fichier `.env` dans le même dossier pour préconfigurer Claude Code. Choisissez l'une des options suivantes :
 
 ### Option A : Claude Max (OAuth)
 
@@ -154,10 +154,10 @@ echo "GH_TOKEN=$(gh auth token)" >> .env
 echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 ```
 
-Ensuite, éditez `.env` pour ajouter votre jeton OAuth ou les paramètres de proxy LiteLLM (voir les options ci-dessus).
+Ensuite, éditez le `.env` pour ajouter votre jeton OAuth ou vos paramètres de proxy LiteLLM (voir les options ci-dessus).
 
 :::tip[Assistants IA]
-Le fichier `.env.example` contient des marqueurs `@auto-detect` sur chaque variable pouvant être remplie à partir des outils locaux. Les assistants IA comme Claude Code peuvent scanner ces marqueurs et exécuter les commandes associées pour construire automatiquement un `.env` complet.
+Le fichier `.env.example` contient des marqueurs `@auto-detect` sur chaque variable pouvant être remplie à partir d'outils locaux. Les assistants IA comme Claude Code peuvent scanner ces marqueurs et exécuter les commandes associées pour construire automatiquement un `.env` complet.
 :::
 
 ## 3. Démarrage
@@ -240,7 +240,7 @@ Le conteneur inclut un affichage virtuel pour observer les agents IA contrôler 
 
 ## 8. Automatisation du navigateur (Chrome DevTools MCP)
 
-Claude Code peut naviguer sur des pages web, prendre des captures d'écran et inspecter le DOM grâce au serveur Chrome DevTools MCP intégré. Aucune configuration nécessaire — cela fonctionne automatiquement en mode headless. Consultez [Chrome DevTools MCP](./chrome) pour plus de détails.
+Claude Code peut naviguer sur des pages web, prendre des captures d'écran et inspecter le DOM grâce au serveur Chrome DevTools MCP intégré. Aucune configuration nécessaire — il fonctionne automatiquement en mode headless. Consultez [Chrome DevTools MCP](./chrome) pour plus de détails.
 
 ## 9. Arrêt et redémarrage
 

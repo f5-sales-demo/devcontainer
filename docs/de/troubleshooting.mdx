@@ -1,6 +1,6 @@
 ---
 title: Fehlerbehebung
-description: Häufige Probleme und deren Lösungen.
+description: Häufige Probleme und deren Lösung.
 sidebar:
   order: 8
 i18n:
@@ -60,7 +60,7 @@ podman-compose up -d
 
 ### Claude zeigt "Not logged in"
 
-Der Entrypoint setzt `~/.claude.json` mit Onboarding-Flags. Falls diese fehlt:
+Der Entrypoint befüllt `~/.claude.json` mit Onboarding-Flags. Falls die Datei fehlt:
 
 ```bash
 echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
@@ -76,8 +76,8 @@ echo "$ANTHROPIC_API_KEY"
 
 Häufige Ursachen:
 
-- **LiteLLM-Proxy-Schlüssel fehlt oder ist ungültig** — wenn Sie den Proxy-Modus verwenden, stellen Sie sicher, dass `LITELLM_API_KEY` in `.env` die korrekten Proxy-Anmeldedaten enthält, und starten Sie dann den Container neu, damit der Entrypoint `ANTHROPIC_API_KEY` ableiten kann.
-- **OAuth-Token oder Proxy-Modus-Konflikt** — verwenden Sie genau einen Authentifizierungsmodus. Wenn `CLAUDE_CODE_OAUTH_TOKEN` gesetzt ist, hat es Vorrang vor dem LiteLLM-Proxy-Modus.
+- **LiteLLM-Proxy-Schlüssel fehlt oder ist ungültig** — Wenn Sie den Proxy-Modus verwenden, stellen Sie sicher, dass `LITELLM_API_KEY` in `.env` die korrekten Proxy-Anmeldedaten enthält. Starten Sie dann den Container neu, damit der Entrypoint `ANTHROPIC_API_KEY` ableiten kann.
+- **OAuth-Token oder Proxy-Modus-Konflikt** — Verwenden Sie genau einen Authentifizierungsmodus. Wenn `CLAUDE_CODE_OAUTH_TOKEN` gesetzt ist, hat es Vorrang vor dem LiteLLM-Proxy-Modus.
 
 ### API-Anfragen schlagen mit 401 fehl
 
@@ -87,7 +87,7 @@ Prüfen Sie, ob Ihr API-Schlüssel korrekt gesetzt ist:
 echo "$ANTHROPIC_API_KEY"
 ```
 
-Überprüfen Sie die Funktionalität durch einen direkten Aufruf bei Ihrem Anbieter.
+Überprüfen Sie die Funktion durch einen direkten Aufruf an Ihren Anbieter.
 
 ### Claude meldet "model not found"
 
@@ -97,30 +97,30 @@ Das Modell wird durch Ihren Anbieter und API-Schlüssel bestimmt. Prüfen Sie di
 
 ### "gh: not authenticated"
 
-Die `gh`-CLI benötigt eine `GH_TOKEN`-Umgebungsvariable. Fügen Sie diese zu Ihrer `.env`-Datei hinzu:
+Die `gh`-CLI benötigt eine `GH_TOKEN`-Umgebungsvariable. Fügen Sie diese Ihrer `.env`-Datei hinzu:
 
 ```ini
 GH_TOKEN=ghp_your-token-here
 ```
 
-Erstellen Sie ein Token unter [github.com/settings/tokens](https://github.com/settings/tokens). Sowohl feingranulare Tokens (empfohlen) als auch klassische Tokens mit `repo`-Berechtigung funktionieren. Starten Sie den Container nach der Aktualisierung von `.env` neu.
+Erstellen Sie ein Token unter [github.com/settings/tokens](https://github.com/settings/tokens). Feingranulare Tokens (empfohlen) oder klassische Tokens mit `repo`-Berechtigung funktionieren beide. Starten Sie den Container nach der Aktualisierung von `.env` neu.
 
 ### HTTPS-Git-Clone schlägt mit 401 fehl
 
 Wenn `GH_TOKEN` gesetzt ist, führt der Entrypoint `gh auth setup-git` aus, um den Git-Credential-Helper für HTTPS zu konfigurieren. Falls HTTPS-Operationen fehlschlagen:
 
-1. Überprüfen Sie die Gültigkeit des Tokens: `gh auth status`
+1. Überprüfen Sie, ob das Token gültig ist: `gh auth status`
 2. Prüfen Sie, ob der Credential-Helper konfiguriert ist: `git config --global credential.helper`
 3. Starten Sie den Container neu, um den Entrypoint erneut auszuführen
 
 ### SSH vs. HTTPS
 
-Beide Authentifizierungsmethoden können im Container gleichzeitig existieren:
+Beide Authentifizierungsmethoden können im Container koexistieren:
 
 - **SSH** (`SSH_PRIVATE_KEY` in `.env`) — verwendet `git@github.com:`-URLs. Erforderlich, wenn Ihre Organisation SSH vorschreibt.
 - **HTTPS** (`GH_TOKEN` in `.env`) — verwendet `https://github.com/`-URLs. Einfachere Einrichtung, keine Schlüsselverwaltung.
 
-Wenn beide konfiguriert sind, verwendet Git das Protokoll, das zur Remote-URL passt. Um bei einem bestehenden Clone zu wechseln:
+Wenn beide konfiguriert sind, verwendet Git das Protokoll, das zur Remote-URL passt. Um einen bestehenden Klon umzustellen:
 
 ```bash
 # SSH zu HTTPS
@@ -140,7 +140,7 @@ sudo chown -R $(id -u):$(id -g) /workspace ~
 
 ### npm install schlägt mit EACCES fehl
 
-Der Entrypoint konfiguriert automatisch ein vom Benutzer beschreibbares npm-Global-Präfix unter `~/.npm-global`, sodass `npm install -g`-Befehle zur Laufzeit ohne `sudo` funktionieren sollten. Falls weiterhin EACCES-Fehler auftreten, wenden Sie die Korrektur manuell an:
+Der Entrypoint konfiguriert automatisch ein benutzerbeschreibbares npm-Global-Prefix unter `~/.npm-global`, sodass `npm install -g`-Befehle zur Laufzeit ohne `sudo` funktionieren sollten. Falls weiterhin EACCES-Fehler auftreten, wenden Sie die Korrektur manuell an:
 
 ```bash
 mkdir -p ~/.npm-global
@@ -152,7 +152,7 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 
 ### Build dauert sehr lange
 
-Der erste Build lädt das Basis-Image herunter (~1 GB). Nachfolgende Builds nutzen den Cache. Falls es jedes Mal langsam ist:
+Der erste Build lädt das Basis-Image herunter (~1 GB). Nachfolgende Builds verwenden den Cache. Falls es jedes Mal langsam ist:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -205,7 +205,7 @@ curl -I https://github.com
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-Falls DNS fehlschlägt, fügen Sie Folgendes zur `/etc/docker/daemon.json` auf dem Host hinzu:
+Falls DNS fehlschlägt, fügen Sie auf dem Host in `/etc/docker/daemon.json` hinzu:
 
 ```json
 {
@@ -226,7 +226,7 @@ sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
 exit
 ```
 
-Oder fügen Sie DNS-Einstellungen zu `~/.config/containers/containers.conf` auf dem Host hinzu:
+Oder fügen Sie DNS-Einstellungen in `~/.config/containers/containers.conf` auf dem Host hinzu:
 
 ```ini
 [containers]
@@ -248,7 +248,7 @@ Xvfb wurde möglicherweise nicht gestartet. Prüfen Sie innerhalb des Containers
 ps aux | grep Xvfb
 ```
 
-Falls nicht aktiv, prüfen Sie, ob `ENABLE_VNC` nicht auf `false` gesetzt ist, und starten Sie den Container neu.
+Falls nicht aktiv, überprüfen Sie, dass `ENABLE_VNC` nicht auf `false` gesetzt ist, und starten Sie den Container neu.
 
 ### "Cannot open display" oder "No display"-Fehler
 
@@ -260,7 +260,7 @@ echo "$DISPLAY"
 
 Der Wert sollte `:99` sein. Falls leer, fügen Sie `DISPLAY=:99` zu Ihrer `.env` oder `devcontainer.json` hinzu und starten Sie neu.
 
-### Port 6080 Verbindung abgelehnt
+### Port 6080 — Verbindung abgelehnt
 
 noVNC läuft möglicherweise nicht. Prüfen Sie innerhalb des Containers:
 
@@ -287,7 +287,7 @@ podman-compose logs dev | grep -i vnc
 </TabItem>
 </Tabs>
 
-### Port 6080 bereits belegt
+### Port 6080 wird bereits verwendet
 
 Ändern Sie den Host-Port in `docker-compose.yml`:
 
@@ -298,9 +298,9 @@ ports:
 
 ## Chrome DevTools MCP
 
-### Chrome Remote-Debugging antwortet nicht
+### Chrome Remote-Debugging reagiert nicht
 
-Die gemeinsame Chrome-Instanz sollte auf Port 9222 laufen. Prüfen Sie innerhalb des Containers:
+Die gemeinsam genutzte Chrome-Instanz sollte auf Port 9222 laufen. Prüfen Sie innerhalb des Containers:
 
 ```bash
 # Läuft Chrome?
@@ -321,10 +321,10 @@ Falls der Symlink fehlt, laden Sie das neueste Image herunter und starten Sie de
 
 ### Browser-Profil-Sperrfehler
 
-Mit der gemeinsamen Browser-Architektur sollten Profil-Sperrfehler nicht auftreten. Falls dennoch einer auftritt, hält möglicherweise ein veralteter Chrome-Prozess die Sperre:
+Mit der gemeinsam genutzten Browser-Architektur sollten Profil-Sperrfehler nicht auftreten. Falls dennoch einer erscheint, hält möglicherweise ein verwaister Chrome-Prozess die Sperre:
 
 ```bash
-# Veraltete Chrome-Prozesse beenden
+# Verwaiste Chrome-Prozesse beenden
 pkill -f 'chrome.*remote-debugging-port' || true
 
 # Sperrdatei entfernen
@@ -337,14 +337,14 @@ start_chrome_browser
 
 ### Doppelte chrome-devtools-mcp-Tools
 
-Der chrome-devtools-mcp-Server ist nun global in `~/.claude/settings.json` registriert. Wenn Sie eine projektbezogene `.mcp.json` haben, die ihn ebenfalls registriert, werden doppelte Tools angezeigt. Entfernen Sie den `chrome-devtools-mcp`-Eintrag aus projektbezogenen `.mcp.json`-Dateien:
+Der chrome-devtools-mcp-Server ist jetzt global in `~/.claude/settings.json` registriert. Wenn Sie eine projektspezifische `.mcp.json` haben, die ihn ebenfalls registriert, werden doppelte Tools angezeigt. Entfernen Sie den `chrome-devtools-mcp`-Eintrag aus projektspezifischen `.mcp.json`-Dateien:
 
 ```bash
-# Projektbezogene Konfiguration prüfen
+# Projektspezifische Konfiguration prüfen
 cat .mcp.json
 ```
 
-Entfernen Sie den `chrome-devtools-mcp`-Schlüssel aus allen projektbezogenen `.mcp.json`-Dateien, um die globale Registrierung zu verwenden.
+Entfernen Sie den `chrome-devtools-mcp`-Schlüssel aus allen projektspezifischen `.mcp.json`-Dateien, um die globale Registrierung zu verwenden.
 
 ## Alles zurücksetzen
 

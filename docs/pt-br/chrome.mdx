@@ -10,7 +10,7 @@ i18n:
   translator: machine
 ---
 
-O container inclui um servidor [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) pré-configurado que oferece ao Claude Code capacidades de automação de navegador headless. Navegue em páginas web, tire capturas de tela, inspecione o DOM e interaja com elementos da página — sem necessidade de configuração adicional.
+O contêiner inclui um servidor [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) pré-configurado que oferece ao Claude Code capacidades de automação de navegador headless. Navegue por páginas web, tire capturas de tela, inspecione o DOM e interaja com elementos da página — sem necessidade de configuração adicional.
 
 ## Como Funciona
 
@@ -21,7 +21,7 @@ O entrypoint inicia um Chrome headless persistente com depuração remota na por
 | Ferramenta | Descrição |
 |------|-------------|
 | `navigate_page` | Navega para uma URL e aguarda o carregamento da página |
-| `take_screenshot` | Captura uma captura de tela PNG da página atual |
+| `take_screenshot` | Captura uma screenshot PNG da página atual |
 | `take_snapshot` | Obtém um snapshot da árvore de acessibilidade da página |
 | `click` | Clica em um elemento na página |
 | `type` | Digita texto em um campo de entrada |
@@ -33,18 +33,18 @@ O entrypoint inicia um Chrome headless persistente com depuração remota na por
 
 ## Arquitetura
 
-A stack do navegador utiliza quatro componentes que trabalham juntos:
+A pilha do navegador usa quatro componentes que trabalham juntos:
 
-1. **Playwright Chromium** — Binário Chromium compatível com ARM64 instalado no momento da build via `npx playwright install --with-deps chromium`
+1. **Playwright Chromium** — Binário Chromium compatível com ARM64 instalado em tempo de build via `npx playwright install --with-deps chromium`
 2. **Symlink do Chrome** — faz a ponte entre o caminho esperado pelo Puppeteer (`/opt/google/chrome/chrome`) e o binário do Playwright
-3. **Processo Chrome compartilhado** — iniciado pelo `chrome-browser.sh` com `--remote-debugging-port=9222`, reinicia automaticamente em caso de falha
+3. **Processo Chrome compartilhado** — iniciado por `chrome-browser.sh` com `--remote-debugging-port=9222`, reinicia automaticamente em caso de falha
 4. **Registro MCP global** — `settings.json` registra o chrome-devtools-mcp com `--browserUrl=http://localhost:9222`
 
-O Google Chrome não possui pacote `.deb` para ARM64, e o pacote apt `chromium-browser` do Ubuntu 24.04 redireciona para snap (que não funciona em containers). O Chromium empacotado pelo Playwright é a única opção confiável para containers ARM64.
+O Google Chrome não possui pacote `.deb` para ARM64, e o pacote apt `chromium-browser` do Ubuntu 24.04 redireciona para snap (que não funciona em contêineres). O Chromium empacotado pelo Playwright é a única opção confiável para contêineres ARM64.
 
 ## Verificação
 
-Confirme que a configuração funciona dentro do container:
+Confirme que a configuração funciona dentro do contêiner:
 
 ```bash
 # Chrome binary responds
@@ -62,9 +62,9 @@ claude-self-test
 
 ## Modo com Interface (VNC)
 
-Quando `ENABLE_VNC=true`, o entrypoint inicia a stack VNC antes de iniciar o Chrome. O script `chrome-browser.sh` detecta que `DISPLAY` está definido e executa o Chrome em modo com interface no display virtual, para que você possa ver o navegador no visualizador VNC.
+Quando `ENABLE_VNC=true`, o entrypoint inicia a pilha VNC antes de iniciar o Chrome. O script `chrome-browser.sh` detecta que `DISPLAY` está definido e executa o Chrome em modo com interface no display virtual, para que você possa ver o navegador no visualizador VNC.
 
-Abra `http://localhost:6080/vnc.html` para ver o display virtual. Consulte [Display Remoto (noVNC)](./vnc) para detalhes.
+Abra `http://localhost:6080/vnc.html` para ver o display virtual. Consulte [Display Remoto (noVNC)](./vnc) para mais detalhes.
 
 ## Solução de Problemas
 

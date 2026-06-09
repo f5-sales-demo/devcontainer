@@ -1,6 +1,6 @@
 ---
 title: 远程显示 (noVNC)
-description: 通过浏览器中的虚拟显示器查看有头浏览器并与之交互。
+description: 通过浏览器中的虚拟显示器查看和操作有头浏览器。
 sidebar:
   order: 3
 i18n:
@@ -10,14 +10,14 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-容器运行一个虚拟显示栈（Xvfb + x11vnc + noVNC + fluxbox），因此您可以观察 AI 代理控制浏览器，并在需要时进行干预——例如处理登录或 MFA 提示。
+容器运行一个虚拟显示栈（Xvfb + x11vnc + noVNC + fluxbox），让您可以观察 AI 代理控制浏览器，并在需要时进行干预——例如处理登录或多因素认证提示。
 
 ## 连接
 
 1. 在浏览器中打开 `http://localhost:6080/vnc.html` 并点击 **Connect**
 2. 您将看到一个轻量级的 fluxbox 桌面——这是容器的虚拟显示器
 
-使用 `@playwright/mcp` 有头模式的 AI 代理会将 Chromium 渲染到此显示器中。您可以随时在 noVNC 窗口中点击和输入来进行干预——无需暂停/恢复操作。
+使用 `@playwright/mcp` 有头模式的 AI 代理会将 Chromium 渲染到此显示器上。您可以随时在 noVNC 窗口中点击和输入来进行干预——无需暂停/恢复操作。
 
 ## 手动启动浏览器
 
@@ -38,11 +38,11 @@ npx playwright test --headed
 | 变量 | 默认值 | 描述 |
 |----------|---------|-------------|
 | `ENABLE_VNC` | `true` | 设置为 `false` 以禁用 VNC 栈 |
-| `VNC_RESOLUTION` | `1280x1024x24` | 虚拟显示器分辨率（宽x高x色深） |
+| `VNC_RESOLUTION` | `1280x1024x24` | 虚拟显示分辨率（宽x高x色深） |
 | `DISPLAY` | `:99` | X11 显示编号 |
-| `NOVNC_HOST_PORT` | `6080` | noVNC 的主机端口（可覆盖以避免与其他容器冲突） |
+| `NOVNC_HOST_PORT` | `6080` | noVNC 的主机端口（可修改以避免与其他容器冲突） |
 
-在 `.env` 文件或 `.devcontainer/devcontainer.json` 的 `containerEnv` 中设置这些变量。
+在您的 `.env` 文件或 `.devcontainer/devcontainer.json` 的 `containerEnv` 中设置这些变量。
 
 ## 禁用 VNC 栈
 

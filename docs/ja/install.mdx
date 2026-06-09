@@ -14,11 +14,11 @@ i18n:
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-この単一コマンドで初回セットアップがすべて完了します：
+この単一のコマンドで初回セットアップのすべてを処理します：
 
-1. Homebrewパッケージのインストール（podman、podman-compose、gh、iterm2、nerd fonts）
-2. iTerm2の設定（フォント、ベル、スクロールバック、ダークテーマ、Shift+Enterキーバインド）
-3. Podmanマシンの初期化とチューニング（16 GB RAM、4 CPU、220 GBディスク、zram、swappiness）
+1. Homebrewパッケージをインストール（podman、podman-compose、gh、iterm2、nerd fonts）
+2. iTerm2を設定（フォント、ベル、スクロールバック、ダークテーマ、Shift+Enterキーバインド）
+3. Podmanマシンを初期化・チューニング（16 GB RAM、4 CPU、220 GBディスク、zram、swappiness）
 4. `docker-compose.yml`、`devcontainer.sh`、`.env`テンプレートをカレントディレクトリにダウンロード
 
 :::note[Homebrewが必要です]
@@ -40,17 +40,17 @@ vi .env
 ./devcontainer.sh
 ```
 
-スクリプトはタイムゾーンを自動検出し、起動のたびに`gh auth token`から最新のGitHubトークンを取得します。
+このスクリプトはタイムゾーンを自動検出し、実行のたびに`gh auth token`から最新のGitHubトークンを取得します。
 
 ## 作成されるファイル
 
-インストーラーを実行すると、ディレクトリに以下のファイルが作成されます：
+インストーラーの実行後、ディレクトリには以下のファイルが含まれます：
 
 | ファイル | 用途 |
 |---|---|
-| `devcontainer.sh` | ランチャースクリプト（コンテナの起動にはこれを実行） |
+| `devcontainer.sh` | ランチャースクリプト（コンテナ起動時にこれを実行） |
 | `docker-compose.yml` | コンテナサービス定義 |
-| `.env` | 認証情報（テンプレートから生成、初回起動前に編集が必要） |
+| `.env` | 認証情報（テンプレートから作成、初回起動前に編集が必要） |
 
 ## 2回目以降の起動
 
@@ -64,7 +64,7 @@ vi .env
 podman exec -it devcontainer zsh
 ```
 
-## アップデート
+## 更新
 
 最新のイメージをプルして再起動します：
 
@@ -75,7 +75,7 @@ podman compose pull
 
 ## ローカルビルド
 
-ソースからローカルでイメージをビルドします（arm64のみ）：
+ソースからイメージをローカルでビルドします（arm64のみ）：
 
 ```bash
 ./devcontainer.sh build

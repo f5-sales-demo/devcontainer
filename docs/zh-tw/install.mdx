@@ -17,18 +17,18 @@ curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | b
 這一行指令會處理完整的首次執行設定：
 
 1. 安裝 Homebrew 套件（podman、podman-compose、gh、iterm2、nerd fonts）
-2. 設定 iTerm2（字型、提示音、捲動緩衝區、深色主題、Shift+Enter 快捷鍵綁定）
-3. 初始化並調整 Podman 虛擬機（16 GB RAM、4 CPU、220 GB 磁碟、zram、swappiness）
-4. 將 `docker-compose.yml`、`devcontainer.sh` 和 `.env` 範本下載到當前目錄
+2. 設定 iTerm2（字型、提示音、捲動緩衝區、深色主題、Shift+Enter 按鍵綁定）
+3. 初始化並調校 Podman 虛擬機（16 GB RAM、4 CPUs、220 GB 磁碟、zram、swappiness）
+4. 將 `docker-compose.yml`、`devcontainer.sh` 和 `.env` 範本下載至目前目錄
 
 :::note[需要 Homebrew]
-如果尚未安裝 Homebrew，腳本會退出並提供安裝說明。
-您的 IT 部門可能會以受管軟體的方式提供 Homebrew——請先向他們確認。
+如果尚未安裝 Homebrew，腳本會結束並提供安裝說明。
+您的 IT 部門可能已將 Homebrew 作為受管軟體提供——請先向他們確認。
 :::
 
 ## 安裝後
 
-使用您的憑證編輯 `.env`：
+編輯 `.env` 填入您的憑證：
 
 ```bash
 vi .env
@@ -40,7 +40,7 @@ vi .env
 ./devcontainer.sh
 ```
 
-該腳本會偵測您的時區，並在每次呼叫時透過 `gh auth token` 取得最新的 GitHub 權杖。
+此腳本會偵測您的時區，並在每次執行時從 `gh auth token` 取得最新的 GitHub 權杖。
 
 ## 建立的檔案
 
@@ -66,16 +66,16 @@ podman exec -it devcontainer zsh
 
 ## 更新
 
-拉取最新映像並重新啟動：
+拉取最新映像檔並重新啟動：
 
 ```bash
 podman compose pull
 ./devcontainer.sh
 ```
 
-## 本機建置
+## 本地建置
 
-從原始碼在本機建置映像（僅限 arm64）：
+從原始碼在本地建置映像檔（僅限 arm64）：
 
 ```bash
 ./devcontainer.sh build

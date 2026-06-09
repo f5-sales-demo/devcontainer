@@ -17,12 +17,12 @@ curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | b
 Questo singolo comando gestisce l'intera configurazione iniziale:
 
 1. Installa i pacchetti Homebrew (podman, podman-compose, gh, iterm2, nerd fonts)
-2. Configura iTerm2 (font, campanella, scrollback, tema scuro, combinazione tasti Shift+Invio)
-3. Inizializza e ottimizza la macchina Podman (16 GB RAM, 4 CPU, 220 GB disco, zram, swappiness)
+2. Configura iTerm2 (font, campanella, scrollback, tema scuro, scorciatoia Shift+Invio)
+3. Inizializza e ottimizza la macchina Podman (16 GB di RAM, 4 CPU, 220 GB di disco, zram, swappiness)
 4. Scarica `docker-compose.yml`, `devcontainer.sh` e il template `.env` nella directory corrente
 
 :::note[Homebrew richiesto]
-Se Homebrew non è installato, lo script termina con le istruzioni per l'installazione.
+Se Homebrew non è installato, lo script termina fornendo le istruzioni.
 Il vostro reparto IT potrebbe fornire Homebrew come software gestito — verificate prima con loro.
 :::
 
@@ -50,7 +50,7 @@ Dopo aver eseguito l'installer, la vostra directory conterrà:
 |---|---|
 | `devcontainer.sh` | Script di avvio (eseguitelo per avviare il container) |
 | `docker-compose.yml` | Definizione del servizio container |
-| `.env` | Le vostre credenziali (dal template, modificatelo prima del primo avvio) |
+| `.env` | Le vostre credenziali (dal template, da modificare prima del primo avvio) |
 
 ## Avvii successivi
 

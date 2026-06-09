@@ -1,7 +1,7 @@
 ---
-title: Affichage distant (noVNC)
+title: Affichage à distance (noVNC)
 description: >-
-  Visualisez et interagissez avec les navigateurs en mode graphique via un
+  Observez et interagissez avec les navigateurs en mode graphique via un
   affichage virtuel dans votre navigateur.
 sidebar:
   order: 3
@@ -19,11 +19,11 @@ Le conteneur exécute une pile d'affichage virtuel (Xvfb + x11vnc + noVNC + flux
 1. Ouvrez `http://localhost:6080/vnc.html` dans votre navigateur et cliquez sur **Connect**
 2. Vous verrez un bureau fluxbox léger — il s'agit de l'affichage virtuel du conteneur
 
-Les agents IA utilisant `@playwright/mcp` en mode graphique rendent Chromium dans cet affichage. Vous pouvez cliquer et saisir du texte directement dans la fenêtre noVNC pour intervenir à tout moment — aucune pause/reprise n'est nécessaire.
+Les agents IA utilisant `@playwright/mcp` en mode graphique affichent Chromium sur cet écran. Vous pouvez cliquer et saisir du texte directement dans la fenêtre noVNC pour intervenir à tout moment — aucune pause/reprise n'est nécessaire.
 
 ## Lancement manuel du navigateur
 
-Pour ouvrir un navigateur manuellement à l'intérieur du conteneur :
+Pour ouvrir un navigateur manuellement dans le conteneur :
 
 ```bash
 chromium --no-sandbox &
@@ -48,7 +48,7 @@ Définissez-les dans votre fichier `.env` ou dans `.devcontainer/devcontainer.js
 
 ## Désactivation de la pile VNC
 
-Pour un fonctionnement en mode headless uniquement, définissez `ENABLE_VNC=false` dans `.env` et redémarrez le conteneur :
+Pour un fonctionnement uniquement en mode headless, définissez `ENABLE_VNC=false` dans `.env` et redémarrez le conteneur :
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -71,4 +71,4 @@ podman-compose up -d
 
 ## Dépannage
 
-Consultez [Dépannage — Affichage distant](./troubleshooting#remote-display-novnc) pour les solutions aux écrans noirs, erreurs de connexion refusée et conflits de ports.
+Consultez [Dépannage — Affichage à distance](./troubleshooting#remote-display-novnc) pour des solutions aux écrans noirs, aux erreurs de connexion refusée et aux conflits de ports.

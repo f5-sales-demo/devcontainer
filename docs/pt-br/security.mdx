@@ -14,7 +14,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Em fevereiro de 2025, a LayerX Security Research divulgou uma vulnerabilidade crítica de execução remota de código sem interação do usuário (zero-click) no framework de Extensões Desktop (DXT) do Claude da Anthropic. As extensões são executadas sem sandbox, com privilégios totais do sistema, atuando como pontes de execução entre o modelo de linguagem e o sistema operacional local.
 
-Muitas equipes de segurança corporativa agora exigem que ferramentas de codificação com IA sejam executadas apenas dentro de máquinas virtuais dedicadas, contêineres ou ambientes descartáveis — não diretamente nos endpoints corporativos.
+Muitas equipes de segurança corporativa agora exigem que ferramentas de codificação com IA sejam executadas apenas dentro de máquinas virtuais dedicadas, contêineres ou ambientes descartáveis — não diretamente em endpoints corporativos.
 
 **Este devcontainer atende a esse requisito.**
 
@@ -24,22 +24,20 @@ Muitas equipes de segurança corporativa agora exigem que ferramentas de codific
 +------------------------------------------------+
 |  Máquina Host (endpoint corporativo)           |
 |                                                |
-|  - Nenhum binário de ferramenta de IA          |
-|    instalado                                   |
+|  - Nenhum binário de ferramenta IA instalado   |
 |  - Nenhuma extensão ou plugin de IA            |
 |  - Apenas Docker é necessário                  |
 |                                                |
 |  +------------------------------------------+  |
 |  |  Contêiner Docker (isolado)              |  |
 |  |                                          |  |
-|  |  Ferramentas de IA executam aqui:        |  |
+|  |  Ferramentas de IA rodam aqui:           |  |
 |  |  - Claude Code CLI                       |  |
 |  |  - Codex                                 |  |
 |  |                                          |  |
 |  |  Sem acesso a:                           |  |
 |  |  x Sistema de arquivos do host           |  |
-|  |  x Keychain / armazenamento de           |  |
-|  |    credenciais do host                   |  |
+|  |  x Keychain / armazenamento de credenciais|  |
 |  |  x Área de transferência do host         |  |
 |  |  x Interfaces de rede do host            |  |
 |  |  x Outras aplicações do host             |  |
@@ -51,15 +49,15 @@ Muitas equipes de segurança corporativa agora exigem que ferramentas de codific
 
 ### Sem Montagem de Volumes do Host
 
-Todos os dados residem em volumes nomeados do Docker — não em diretórios do host montados via bind. Um comprometimento dentro do contêiner **não pode** acessar arquivos na sua máquina host. Consulte [Configuração — Persistência de Dados](./configuration#data-persistence) para detalhes dos volumes.
+Todos os dados residem em volumes nomeados do Docker — não em diretórios do host montados via bind. Um comprometimento dentro do contêiner **não pode** acessar arquivos na sua máquina host. Consulte [Configuração — Persistência de Dados](./configuration#data-persistence) para detalhes sobre volumes.
 
 ### Sem Armazenamentos de Credenciais Compartilhados
 
-O contêiner não tem acesso ao macOS Keychain, Windows Credential Manager, perfis de navegador ou ao agente SSH do host. As chaves SSH são injetadas na inicialização por meio de uma variável de ambiente codificada em base64 e existem apenas dentro do contêiner.
+O contêiner não tem acesso ao macOS Keychain, ao Gerenciador de Credenciais do Windows, perfis de navegador ou ao agente SSH do host. As chaves SSH são injetadas na inicialização via uma variável de ambiente codificada em base64 e existem apenas dentro do contêiner.
 
 ### Sem Sincronização de Área de Transferência
 
-Contêineres Docker não compartilham o estado da área de transferência com o host. Dados não podem vazar através de copiar/colar.
+Contêineres Docker não compartilham o estado da área de transferência com o host. Dados não podem vazar por copiar/colar.
 
 ### Isolamento de Rede
 
@@ -101,21 +99,21 @@ Este ambiente executa ferramentas de IA como **interfaces de linha de comando ap
 
 O `docker-compose.yml` aplica diversas medidas de defesa em profundidade:
 
-- **Remoção de capabilities** — Todas as capabilities do Linux são removidas (`cap_drop: ALL`), e apenas o conjunto mínimo é readicionado: `CHOWN`, `DAC_OVERRIDE`, `FOWNER` (para correções de permissão de volumes no entrypoint), `SETUID`/`SETGID` (para sudo), `NET_RAW` (para ping/tcpdump) e `NET_ADMIN` (para ferramentas de captura de pacotes como Wireshark e bettercap).
-- **Limites de recursos** — CPU (4 cores), memória (8 GB) e contagem de PIDs (4096) são limitados via `mem_limit`, `cpus` e `pids_limit` para prevenir ataques de exaustão de recursos.
-- **tmpfs para `/tmp`** — O diretório `/tmp` é montado como tmpfs de 256 MB, mantendo arquivos temporários em memória e impedindo que persistam na camada gravável do contêiner.
+- **Remoção de capabilities** — Todas as capabilities do Linux são removidas (`cap_drop: ALL`), e então apenas o conjunto mínimo é readicionado: `CHOWN`, `DAC_OVERRIDE`, `FOWNER` (para correções de permissão de volume no entrypoint), `SETUID`/`SETGID` (para sudo), `NET_RAW` (para ping/tcpdump) e `NET_ADMIN` (para ferramentas de captura de pacotes como Wireshark e bettercap).
+- **Limites de recursos** — CPU (4 núcleos), memória (8 GB) e contagem de PIDs (4096) são limitados via `mem_limit`, `cpus` e `pids_limit` para prevenir ataques de exaustão de recursos.
+- **tmpfs para `/tmp`** — O diretório `/tmp` é montado como um tmpfs de 256 MB, mantendo arquivos temporários em memória e impedindo que persistam na camada gravável do contêiner.
 - **Validação TLS ativada por padrão** — `NODE_TLS_REJECT_UNAUTHORIZED` não é definido, então o Node.js valida certificados TLS por padrão. Usuários que precisam aceitar certificados autoassinados (por exemplo, para um proxy interno) podem optar por adicionar `NODE_TLS_REJECT_UNAUTHORIZED=0` ao seu arquivo `.env`.
-- **Umask para chave SSH** — As chaves privadas SSH são escritas com `umask 077`, garantindo que o arquivo nunca fique legível para todos — mesmo brevemente — entre a criação e a chamada `chmod`.
+- **Umask para chave SSH** — As chaves privadas SSH são escritas com `umask 077`, de modo que o arquivo nunca fica legível para todos — mesmo brevemente — entre a criação e a chamada `chmod`.
 
 ### Ferramentas de Segurança e Teste de Penetração
 
-O contêiner inclui aproximadamente 80 ferramentas pré-instaladas de segurança e teste de penetração para cenários de teste autorizados. As ferramentas são organizadas por categoria:
+O contêiner inclui aproximadamente 80 ferramentas de segurança e teste de penetração pré-instaladas para cenários de teste autorizados. As ferramentas são organizadas por categoria:
 
 | Categoria | Ferramentas (exemplos) |
 |----------|-----------------|
 | Análise de rede | tshark, wireshark, masscan, hping3, bettercap (amd64), netdiscover |
 | Scanners web | nikto, sqlmap, dirb, whatweb, sslscan, OWASP ZAP, dalfox, feroxbuster |
-| Senha e autenticação | hydra, john, hashcat, medusa, ncrack |
+| Senhas e autenticação | hydra, john, hashcat, medusa, ncrack |
 | Engenharia reversa | radare2, Ghidra, gdb, binwalk, strace, ltrace |
 | Reconhecimento | subfinder, amass, httpx, nuclei, gau, waybackurls, recon-ng, spiderfoot |
 | Fuzzing e enumeração | ffuf, gobuster, SecLists |
@@ -135,7 +133,7 @@ Para a lista completa, execute `claude-self-test` dentro do contêiner (a seçã
 | Sem acesso a compartilhamentos de arquivos do host | Sim |
 | Sem sincronização de área de transferência | Sim |
 | Sem armazenamentos de credenciais compartilhados | Sim |
-| Sem split tunneling VPN em redes de produção | Sim |
+| Sem split tunneling VPN para redes de produção | Sim |
 | Ambiente é descartável | Sim |
 | Sem extensões ou plugins desktop | Sim |
 | Capabilities do Linux removidas (privilégio mínimo) | Sim |
@@ -143,11 +141,11 @@ Para a lista completa, execute `claude-self-test` dentro do contêiner (a seçã
 | Validação de certificado TLS habilitada por padrão | Sim |
 | Serviços internos vinculados apenas ao localhost | Sim |
 
-## Boas Práticas
+## Melhores Práticas
 
 1. **Não instale ferramentas de codificação com IA na sua máquina host.** Use este contêiner em vez disso.
 2. **Não adicione bind mounts** ao `docker-compose.yml`. A configuração com volumes nomeados é intencional.
-3. **Rotacione as chaves SSH** usadas dentro do contêiner periodicamente.
+3. **Faça a rotação das chaves SSH** usadas dentro do contêiner periodicamente.
 4. **Revise o `.env` antes de compartilhar.** Ele contém chaves de API e pode conter chaves privadas SSH.
 5. **Atualize periodicamente** para obter correções de segurança:
 

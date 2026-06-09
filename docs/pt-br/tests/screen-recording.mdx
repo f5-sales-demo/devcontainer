@@ -1,8 +1,8 @@
 ---
 title: Teste de Gravação de Tela
 description: >-
-  Comprova que o Xvfb, o Chromium em modo headed (via Playwright) e a gravação
-  de tela com ffmpeg funcionam juntos dentro do devcontainer.
+  Comprova que o Xvfb, o Chromium com interface gráfica (via Playwright) e a
+  gravação de tela com ffmpeg funcionam juntos dentro do devcontainer.
 sidebar:
   order: 1
 i18n:
@@ -12,20 +12,20 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Este teste verifica a pilha completa de VNC/navegador ao gravar uma sessão de navegador em modo headed para um arquivo MP4. Ele comprova que:
+Este teste verifica toda a pilha VNC/navegador gravando uma sessão de navegador com interface gráfica em um arquivo MP4. Ele comprova que:
 
 - O **Xvfb** está em execução e aceitando conexões em `:99`
-- O **Chromium** pode ser iniciado em modo headed no display virtual
+- O **Chromium** pode ser iniciado em modo com interface gráfica no display virtual
 - O **ffmpeg** pode capturar o display via x11grab
 - O **MP4** resultante é um vídeo válido e reproduzível
 
 ## Como Funciona
 
-1. Consulta repetidamente `xdpyinfo -display :99` até que o display X esteja pronto (mesmo padrão do entrypoint)
-2. Inicia a gravação do ffmpeg capturando o display a 10 fps
-3. Lança o Chromium em modo headed via `sync_api` do Playwright
-4. Navega para `https://example.com` (pausa de 3 s), depois para `https://httpbin.org` (pausa de 3 s)
-5. Envia SIGTERM para o ffmpeg para finalização limpa do MP4
+1. Consulta `xdpyinfo -display :99` até que o display X esteja pronto (mesmo padrão do entrypoint)
+2. Inicia a gravação do display com ffmpeg a 10 fps
+3. Inicia o Chromium com interface gráfica via `sync_api` do Playwright
+4. Navega para `https://example.com` (pausa de 3 s), depois `https://httpbin.org` (pausa de 3 s)
+5. Envia SIGTERM ao ffmpeg para finalização limpa do MP4
 6. Reporta o caminho de saída e o tamanho do arquivo
 
 ## Script
@@ -196,13 +196,13 @@ Stopping ffmpeg ...
 SUCCESS: /tmp/recording.mp4 (1,234,567 bytes)
 ```
 
-O MP4 deve mostrar a janela do Chromium renderizando ambos os sites no desktop do fluxbox. Reproduza-o com `ffplay`, `vlc`, ou faça o download a partir do container para verificar.
+O MP4 deve mostrar a janela do Chromium renderizando ambos os sites no desktop do fluxbox. Reproduza-o com `ffplay`, `vlc`, ou faça o download do container para verificar.
 
 ## O Que uma Falha Significa
 
 | Sintoma | Causa provável |
 | ---- | ---- |
-| `Xvfb display :99 not ready` | O Xvfb não foi iniciado — verifique se o entrypoint executou a pilha VNC |
+| `Xvfb display :99 not ready` | Xvfb não iniciado — verifique se o entrypoint executou a pilha VNC |
 | `ffmpeg: x11grab error` | Incompatibilidade de display ou ffmpeg sem suporte a x11grab |
 | `Playwright launch error` | Chromium não instalado ou faltando `--no-sandbox` |
-| MP4 com 0 bytes | O ffmpeg foi encerrado antes de gravar — verifique o tratamento de SIGTERM |
+| MP4 com 0 bytes | ffmpeg foi encerrado antes de gravar — verifique o tratamento do SIGTERM |

@@ -12,12 +12,12 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-El contenedor ejecuta una pila de pantalla virtual (Xvfb + x11vnc + noVNC + fluxbox) para que pueda observar a los agentes de IA controlar un navegador e intervenir cuando sea necesario — por ejemplo, para gestionar solicitudes de inicio de sesión o MFA.
+El contenedor ejecuta una pila de pantalla virtual (Xvfb + x11vnc + noVNC + fluxbox) para que pueda observar a los agentes de IA controlando un navegador e intervenir cuando sea necesario — por ejemplo, para manejar solicitudes de inicio de sesión o MFA.
 
 ## Conexión
 
 1. Abra `http://localhost:6080/vnc.html` en su navegador y haga clic en **Connect**
-2. Verá un escritorio fluxbox ligero — esta es la pantalla virtual del contenedor
+2. Verá un escritorio ligero de fluxbox — esta es la pantalla virtual del contenedor
 
 Los agentes de IA que utilizan `@playwright/mcp` en modo con interfaz gráfica renderizan Chromium en esta pantalla. Puede hacer clic y escribir directamente en la ventana de noVNC para intervenir en cualquier momento — no es necesario pausar/reanudar.
 
@@ -37,7 +37,7 @@ npx playwright test --headed
 
 ## Variables de Entorno
 
-| Variable | Valor predeterminado | Descripción |
+| Variable | Predeterminado | Descripción |
 |----------|---------|-------------|
 | `ENABLE_VNC` | `true` | Establezca en `false` para deshabilitar la pila VNC |
 | `VNC_RESOLUTION` | `1280x1024x24` | Resolución de la pantalla virtual (AnchoxAltoxProfundidad) |
@@ -48,7 +48,7 @@ Establezca estos valores en su archivo `.env` o en `.devcontainer/devcontainer.j
 
 ## Deshabilitar la Pila VNC
 
-Para operación solo en modo sin interfaz gráfica, establezca `ENABLE_VNC=false` en `.env` y reinicie el contenedor:
+Para operación exclusivamente sin interfaz gráfica, establezca `ENABLE_VNC=false` en `.env` y reinicie el contenedor:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">

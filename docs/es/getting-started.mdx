@@ -87,7 +87,7 @@ Ajuste los límites de recursos en Docker Desktop &rarr; Settings &rarr; Resourc
 </TabItem>
 <TabItem label="Podman">
 
-En **macOS/Windows**, ajuste los límites de recursos en Podman Desktop &rarr; Settings &rarr; Resources, o mediante la CLI:
+En **macOS/Windows**, ajuste los límites de recursos en Podman Desktop &rarr; Settings &rarr; Resources, o a través de la CLI:
 
 ```bash
 podman machine set --cpus 4 --memory 12288
@@ -120,14 +120,14 @@ CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
 
 ### Opción B: LiteLLM o proxy compatible con Anthropic
 
-Si tiene una instancia de LiteLLM u otro proxy compatible con Anthropic, configure estas dos variables:
+Si tiene una instancia de LiteLLM u otro proxy compatible con Anthropic, establezca estas dos variables:
 
 ```ini
 LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
 LITELLM_API_KEY=your-api-key
 ```
 
-Configure solo el dominio — el contenedor deriva automáticamente los sufijos de URL específicos del proveedor (por ejemplo, `/anthropic` para Claude Code).
+Establezca solo el dominio — el contenedor deriva automáticamente los sufijos de URL específicos del proveedor (p. ej., `/anthropic` para Claude Code).
 
 ### Autocompletar desde credenciales locales
 
@@ -157,7 +157,7 @@ echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 Luego edite `.env` para agregar su token OAuth o la configuración del proxy LiteLLM (vea las opciones anteriores).
 
 :::tip[Asistentes de IA]
-El archivo `.env.example` contiene marcadores `@auto-detect` en cada variable que puede completarse desde herramientas locales. Los asistentes de IA como Claude Code pueden buscar estos marcadores y ejecutar los comandos asociados para construir un `.env` completo automáticamente.
+El archivo `.env.example` contiene marcadores `@auto-detect` en cada variable que puede completarse desde herramientas locales. Los asistentes de IA como Claude Code pueden escanear estos marcadores y ejecutar los comandos asociados para construir un `.env` completo automáticamente.
 :::
 
 ## 3. Iniciar
@@ -219,7 +219,7 @@ az --version
 terraform --version
 ```
 
-Pruebe la conexión con la IA:
+Pruebe la conexión con IA:
 
 ```bash
 claude -p "Say hello"
@@ -240,7 +240,7 @@ El contenedor incluye una pantalla virtual para observar a los agentes de IA con
 
 ## 8. Automatización del navegador (Chrome DevTools MCP)
 
-Claude Code puede navegar páginas web, tomar capturas de pantalla e inspeccionar el DOM usando el servidor Chrome DevTools MCP integrado. No se necesita configuración — funciona automáticamente en modo headless. Consulte [Chrome DevTools MCP](./chrome) para más detalles.
+Claude Code puede navegar páginas web, tomar capturas de pantalla e inspeccionar el DOM usando el servidor MCP de Chrome DevTools integrado. No se necesita configuración — funciona automáticamente en modo headless. Consulte [Chrome DevTools MCP](./chrome) para más detalles.
 
 ## 9. Detener y reiniciar
 

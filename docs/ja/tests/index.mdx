@@ -1,6 +1,6 @@
 ---
 title: インテグレーションテスト
-description: devcontainer のランタイムスタックがエンドツーエンドで動作することを検証する自動テストです。
+description: devcontainerのランタイムスタックがエンドツーエンドで動作することを検証する自動テストです。
 sidebar:
   order: 7
 i18n:
@@ -8,11 +8,11 @@ i18n:
   translator: machine
 ---
 
-これらのテストは、devcontainer の主要なサブシステムがランタイム時に連携して動作することを検証します。Docker イメージに組み込まれているわけではなく、実行中のコンテナ内で実行してその機能を確認します。
+これらのテストは、devcontainerの主要なサブシステムが実行時に連携して動作することを検証します。Dockerイメージには組み込まれていません。実行中のコンテナ内で実行して、その機能を確認してください。
 
 ## 利用可能なテスト
 
 | テスト | 検証内容 |
 | ---- | ---- |
-| [画面録画](/devcontainer/tests/screen-recording/) | Xvfb ディスプレイ、ヘッド付き Chromium（Playwright）、および ffmpeg 録画が有効な MP4 を生成すること |
-| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Chrome シンボリックリンク、ヘッドレスパッチ、および MCP ナビゲーションが有効なスクリーンショットを生成すること |
+| [画面録画](/devcontainer/tests/screen-recording/) | Xvfbディスプレイ、ヘッド付きChromium（Playwright）、およびffmpeg録画が有効なMP4を生成すること |
+| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Chromeシンボリックリンク、ヘッドレスパッチ、およびMCPナビゲーションが有効なスクリーンショットを生成すること |

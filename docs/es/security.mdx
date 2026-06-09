@@ -1,7 +1,7 @@
 ---
 title: Seguridad
 description: >-
-  Cómo el modelo de aislamiento protege su máquina host y el entorno
+  Cómo el modelo de aislamiento protege su máquina anfitriona y el entorno
   corporativo.
 sidebar:
   order: 7
@@ -12,9 +12,9 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-## Contexto
+## Antecedentes
 
-En febrero de 2025, LayerX Security Research reveló una vulnerabilidad crítica de ejecución remota de código sin interacción del usuario en el framework de Extensiones de Escritorio de Claude (DXT) de Anthropic. Las extensiones se ejecutan sin sandbox con privilegios completos del sistema, actuando como puentes de ejecución entre el modelo de lenguaje y el sistema operativo local.
+En febrero de 2025, LayerX Security Research reveló una vulnerabilidad crítica de ejecución remota de código sin interacción del usuario en el framework de Extensiones de Escritorio (DXT) de Claude de Anthropic. Las extensiones se ejecutan sin aislamiento con privilegios completos del sistema, actuando como puentes de ejecución entre el modelo de lenguaje y el sistema operativo local.
 
 Muchos equipos de seguridad corporativa ahora requieren que las herramientas de codificación con IA se ejecuten únicamente dentro de máquinas virtuales dedicadas, contenedores o entornos desechables — no directamente en los endpoints corporativos.
 
@@ -24,55 +24,55 @@ Muchos equipos de seguridad corporativa ahora requieren que las herramientas de 
 
 ```
 +------------------------------------------------+
-|  Máquina Host (endpoint corporativo)           |
+|  Máquina Anfitriona (endpoint corporativo)     |
 |                                                |
-|  - Sin binarios de herramientas de IA          |
-|  - Sin extensiones o plugins de IA             |
+|  - Sin binarios de herramientas IA instalados  |
+|  - Sin extensiones o plugins de herramientas IA|
 |  - Solo se requiere Docker                     |
 |                                                |
 |  +------------------------------------------+  |
 |  |  Contenedor Docker (aislado)             |  |
 |  |                                          |  |
-|  |  Las herramientas de IA se ejecutan aquí:|  |
+|  |  Las herramientas IA se ejecutan aquí:   |  |
 |  |  - Claude Code CLI                       |  |
 |  |  - Codex                                 |  |
 |  |                                          |  |
 |  |  Sin acceso a:                           |  |
-|  |  x Sistema de archivos del host          |  |
+|  |  x Sistema de archivos del anfitrión     |  |
 |  |  x Llavero / almacén de credenciales     |  |
-|  |  x Portapapeles del host                 |  |
-|  |  x Interfaces de red del host            |  |
-|  |  x Otras aplicaciones del host           |  |
+|  |  x Portapapeles del anfitrión            |  |
+|  |  x Interfaces de red del anfitrión       |  |
+|  |  x Otras aplicaciones del anfitrión      |  |
 |  +------------------------------------------+  |
 +------------------------------------------------+
 ```
 
 ## Controles de Seguridad
 
-### Sin Montajes de Volúmenes del Host
+### Sin Montajes de Volúmenes del Anfitrión
 
-Todos los datos residen en volúmenes nombrados de Docker — no en directorios del host montados por bind. Un compromiso dentro del contenedor **no puede** acceder a archivos en su máquina host. Consulte [Configuración — Persistencia de Datos](./configuration#data-persistence) para detalles sobre los volúmenes.
+Todos los datos residen en volúmenes nombrados de Docker — no en directorios del anfitrión montados por enlace. Un compromiso dentro del contenedor **no puede** acceder a archivos en su máquina anfitriona. Consulte [Configuración — Persistencia de Datos](./configuration#data-persistence) para detalles sobre los volúmenes.
 
 ### Sin Almacenes de Credenciales Compartidos
 
-El contenedor no tiene acceso al Llavero de macOS, al Administrador de Credenciales de Windows, perfiles de navegador ni al agente SSH del host. Las claves SSH se inyectan al inicio mediante una variable de entorno codificada en base64 y existen únicamente dentro del contenedor.
+El contenedor no tiene acceso al Llavero de macOS, al Administrador de Credenciales de Windows, perfiles de navegador o al agente SSH del anfitrión. Las claves SSH se inyectan al inicio mediante una variable de entorno codificada en base64 y existen únicamente dentro del contenedor.
 
 ### Sin Sincronización de Portapapeles
 
-Los contenedores Docker no comparten el estado del portapapeles con el host. Los datos no pueden filtrarse a través de copiar/pegar.
+Los contenedores Docker no comparten el estado del portapapeles con el anfitrión. Los datos no pueden filtrarse a través de copiar/pegar.
 
 ### Aislamiento de Red
 
-El contenedor se comunica con el mundo exterior en uno de los dos modos de autenticación soportados:
+El contenedor se comunica con el mundo exterior en uno de dos modos de autenticación soportados:
 
 - **Modo proxy LiteLLM** — HTTPS saliente hacia su proxy LiteLLM a través del NAT de Docker.
 - **Modo OAuth** — HTTPS saliente directamente hacia Anthropic a través del NAT de Docker.
 
-El contenedor no tiene acceso a túneles VPN, interfaces de red corporativas ni otros servicios en el host.
+El contenedor no tiene acceso a túneles VPN, interfaces de red corporativas u otros servicios en el anfitrión.
 
 ### Efímero por Diseño
 
-Todo el entorno puede ser destruido y recreado en segundos. Trate el contenedor como desechable.
+El entorno completo puede ser destruido y recreado en segundos. Trate el contenedor como desechable.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -95,21 +95,21 @@ podman-compose pull && podman-compose up -d
 
 ### Herramientas Solo de Línea de Comandos
 
-Este entorno ejecuta herramientas de IA como **interfaces de línea de comandos únicamente**. Sin aplicaciones de escritorio, sin extensiones de navegador, sin frameworks DXT. La vulnerabilidad que motivó este modelo de aislamiento no aplica al uso por CLI dentro de un contenedor.
+Este entorno ejecuta herramientas de IA como **interfaces de línea de comandos únicamente**. Sin aplicaciones de escritorio, sin extensiones de navegador, sin frameworks DXT. La vulnerabilidad que motivó este modelo de aislamiento no aplica al uso de CLI dentro de un contenedor.
 
 ### Endurecimiento del Contenedor
 
 El `docker-compose.yml` aplica varias medidas de defensa en profundidad:
 
-- **Eliminación de capacidades** — Todas las capacidades de Linux se eliminan (`cap_drop: ALL`), y luego solo se vuelve a agregar el conjunto mínimo: `CHOWN`, `DAC_OVERRIDE`, `FOWNER` (para correcciones de permisos de volúmenes en el entrypoint), `SETUID`/`SETGID` (para sudo), `NET_RAW` (para ping/tcpdump) y `NET_ADMIN` (para herramientas de captura de paquetes como Wireshark y bettercap).
+- **Eliminación de capacidades** — Todas las capacidades de Linux se eliminan (`cap_drop: ALL`), y luego solo se re-agregan el conjunto mínimo: `CHOWN`, `DAC_OVERRIDE`, `FOWNER` (para correcciones de permisos de volúmenes en el entrypoint), `SETUID`/`SETGID` (para sudo), `NET_RAW` (para ping/tcpdump) y `NET_ADMIN` (para herramientas de captura de paquetes como Wireshark y bettercap).
 - **Límites de recursos** — CPU (4 núcleos), memoria (8 GB) y conteo de PIDs (4096) están limitados mediante `mem_limit`, `cpus` y `pids_limit` para prevenir ataques de agotamiento de recursos.
-- **tmpfs para `/tmp`** — El directorio `/tmp` se monta como un tmpfs de 256 MB, manteniendo los archivos temporales en memoria y evitando que persistan en la capa de escritura del contenedor.
+- **tmpfs para `/tmp`** — El directorio `/tmp` se monta como un tmpfs de 256 MB, manteniendo los archivos temporales en memoria y evitando que persistan en la capa escribible del contenedor.
 - **Validación TLS activada por defecto** — `NODE_TLS_REJECT_UNAUTHORIZED` no está configurada, por lo que Node.js valida los certificados TLS por defecto. Los usuarios que necesiten aceptar certificados autofirmados (por ejemplo, para un proxy interno) pueden optar por agregar `NODE_TLS_REJECT_UNAUTHORIZED=0` a su archivo `.env`.
-- **Umask de clave SSH** — Las claves privadas SSH se escriben bajo `umask 077`, por lo que el archivo nunca es legible por todos — ni siquiera brevemente — entre la creación y la llamada a `chmod`.
+- **Umask de claves SSH** — Las claves privadas SSH se escriben con `umask 077`, de modo que el archivo nunca es legible por todos — ni siquiera brevemente — entre la creación y la llamada `chmod`.
 
 ### Herramientas de Seguridad y Pruebas de Penetración
 
-El contenedor incluye aproximadamente 80 herramientas preinstaladas de seguridad y pruebas de penetración para escenarios de pruebas autorizadas. Las herramientas están organizadas por categoría:
+El contenedor incluye aproximadamente 80 herramientas de seguridad y pruebas de penetración preinstaladas para escenarios de pruebas autorizadas. Las herramientas están organizadas por categoría:
 
 | Categoría | Herramientas (ejemplos) |
 |----------|-----------------|
@@ -122,7 +122,7 @@ El contenedor incluye aproximadamente 80 herramientas preinstaladas de seguridad
 | Cadena de suministro y secretos | trufflehog, grype, syft, gitleaks, trivy |
 | Frameworks de explotación | Metasploit (amd64), searchsploit (ExploitDB) |
 
-Algunas herramientas (bettercap, Metasploit) solo están disponibles en amd64 debido a restricciones de empaquetado del proyecto upstream. Las herramientas de captura de paquetes (tshark, bettercap) requieren la capacidad `NET_ADMIN`, que está incluida en el `docker-compose.yml` por defecto.
+Algunas herramientas (bettercap, Metasploit) solo están disponibles en amd64 debido a restricciones de empaquetado del proveedor. Las herramientas de captura de paquetes (tshark, bettercap) requieren la capacidad `NET_ADMIN`, que está incluida en el `docker-compose.yml` predeterminado.
 
 Para la lista completa, ejecute `claude-self-test` dentro del contenedor (la sección 7 verifica todas las herramientas de seguridad).
 
@@ -130,14 +130,14 @@ Para la lista completa, ejecute `claude-self-test` dentro del contenedor (la sec
 
 | Requisito | Estado |
 |---|---|
-| Herramientas de IA no instaladas en el endpoint del host | Sí |
+| Herramientas IA no instaladas en el endpoint anfitrión | Sí |
 | Se ejecuta en VM o contenedor aislado | Sí |
-| Sin acceso a recursos compartidos del host | Sí |
+| Sin acceso a recursos compartidos del anfitrión | Sí |
 | Sin sincronización de portapapeles | Sí |
 | Sin almacenes de credenciales compartidos | Sí |
-| Sin túnel dividido VPN hacia redes de producción | Sí |
+| Sin túneles VPN divididos hacia redes de producción | Sí |
 | El entorno es desechable | Sí |
-| Sin extensiones de escritorio ni plugins | Sí |
+| Sin extensiones de escritorio o plugins | Sí |
 | Capacidades de Linux eliminadas (mínimo privilegio) | Sí |
 | Límites de recursos aplicados (CPU/memoria/PIDs) | Sí |
 | Validación de certificados TLS habilitada por defecto | Sí |
@@ -145,11 +145,11 @@ Para la lista completa, ejecute `claude-self-test` dentro del contenedor (la sec
 
 ## Mejores Prácticas
 
-1. **No instale herramientas de codificación con IA en su máquina host.** Use este contenedor en su lugar.
-2. **No agregue montajes bind** al `docker-compose.yml`. La configuración de volúmenes nombrados es intencional.
+1. **No instale herramientas de codificación con IA en su máquina anfitriona.** Use este contenedor en su lugar.
+2. **No agregue montajes por enlace** al `docker-compose.yml`. La configuración de volúmenes nombrados es intencional.
 3. **Rote las claves SSH** utilizadas dentro del contenedor periódicamente.
-4. **Revise `.env` antes de compartirlo.** Contiene claves de API y puede contener claves privadas SSH.
-5. **Actualice periódicamente** para obtener parches de seguridad:
+4. **Revise `.env` antes de compartir.** Contiene claves de API y puede contener claves privadas SSH.
+5. **Actualice periódicamente** para incorporar parches de seguridad:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -170,5 +170,5 @@ Para la lista completa, ejecute `claude-self-test` dentro del contenedor (la sec
 ## Referencias
 
 - [LayerX: Claude Desktop Extensions RCE](https://layerxsecurity.com/blog/claude-desktop-extensions-rce/)
-- [Especificación de Dev Containers](https://containers.dev/)
-- [Mejores Prácticas de Seguridad de Docker](https://docs.docker.com/engine/security/)
+- [Dev Containers Specification](https://containers.dev/)
+- [Docker Security Best Practices](https://docs.docker.com/engine/security/)

@@ -10,44 +10,44 @@ i18n:
   translator: machine
 ---
 
-Der Container enthält einen vorkonfigurierten [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp)-Server, der Claude Code Headless-Browser-Automatisierungsfähigkeiten verleiht. Navigieren Sie Webseiten, erstellen Sie Screenshots, inspizieren Sie das DOM und interagieren Sie mit Seitenelementen — ohne zusätzliche Einrichtung.
+Der Container enthält einen vorkonfigurierten [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp)-Server, der Claude Code Headless-Browser-Automatisierungsfähigkeiten verleiht. Navigieren Sie durch Webseiten, erstellen Sie Screenshots, inspizieren Sie das DOM und interagieren Sie mit Seitenelementen — ohne zusätzliche Einrichtung.
 
 ## Funktionsweise
 
-Der Entrypoint startet ein persistentes Headless-Chrome mit Remote-Debugging auf Port 9222. Der chrome-devtools-mcp MCP-Server ist in den Claude Code-Einstellungen registriert und verbindet sich über `--browserUrl` mit diesem gemeinsam genutzten Browser. Alle Sitzungen teilen sich eine einzelne Browser-Instanz und ein Cookie-Jar — Anmeldungen, Cookies und Authentifizierung bleiben projektübergreifend erhalten.
+Der Entrypoint startet ein persistentes Headless-Chrome mit Remote-Debugging auf Port 9222. Der chrome-devtools-mcp MCP-Server ist in den Claude Code-Einstellungen registriert und verbindet sich über `--browserUrl` mit diesem gemeinsam genutzten Browser. Alle Sitzungen teilen sich eine einzelne Browser-Instanz und einen Cookie-Speicher — Anmeldungen, Cookies und Authentifizierungen bleiben projektübergreifend erhalten.
 
-## Verfügbare Tools
+## Verfügbare Werkzeuge
 
-| Tool | Beschreibung |
+| Werkzeug | Beschreibung |
 |------|-------------|
 | `navigate_page` | Zu einer URL navigieren und warten, bis die Seite geladen ist |
-| `take_screenshot` | Einen PNG-Screenshot der aktuellen Seite aufnehmen |
-| `take_snapshot` | Einen Barrierefreiheitsbaum-Snapshot der Seite erhalten |
+| `take_screenshot` | Einen PNG-Screenshot der aktuellen Seite erstellen |
+| `take_snapshot` | Einen Accessibility-Tree-Snapshot der Seite erhalten |
 | `click` | Auf ein Element auf der Seite klicken |
 | `type` | Text in ein Eingabefeld eingeben |
-| `hover` | Über ein Element hovern |
+| `hover` | Mit der Maus über ein Element fahren |
 | `scroll` | Die Seite oder ein bestimmtes Element scrollen |
 | `evaluate` | JavaScript im Seitenkontext ausführen |
-| `get_console_logs` | Konsolen-Log-Nachrichten abrufen |
+| `get_console_logs` | Konsolenprotokollnachrichten abrufen |
 | `get_page_info` | Seitenmetadaten abrufen (Titel, URL usw.) |
 
 ## Architektur
 
 Der Browser-Stack verwendet vier Komponenten, die zusammenarbeiten:
 
-1. **Playwright Chromium** — ARM64-kompatibles Chromium-Binary, das zur Build-Zeit über `npx playwright install --with-deps chromium` installiert wird
-2. **Chrome-Symlink** — verbindet den von Puppeteer erwarteten Pfad (`/opt/google/chrome/chrome`) mit dem Playwright-Binary
-3. **Gemeinsam genutzter Chrome-Prozess** — wird von `chrome-browser.sh` mit `--remote-debugging-port=9222` gestartet, startet bei Absturz automatisch neu
+1. **Playwright Chromium** — ARM64-kompatible Chromium-Binärdatei, die zur Build-Zeit über `npx playwright install --with-deps chromium` installiert wird
+2. **Chrome-Symlink** — verbindet Puppeteers erwarteten Pfad (`/opt/google/chrome/chrome`) mit der Playwright-Binärdatei
+3. **Gemeinsamer Chrome-Prozess** — wird von `chrome-browser.sh` mit `--remote-debugging-port=9222` gestartet, startet bei Absturz automatisch neu
 4. **Globale MCP-Registrierung** — `settings.json` registriert chrome-devtools-mcp mit `--browserUrl=http://localhost:9222`
 
-Google Chrome hat kein ARM64-`.deb`-Paket, und das `chromium-browser`-apt-Paket von Ubuntu 24.04 leitet zu Snap weiter (was in Containern nicht funktioniert). Playwrights gebündeltes Chromium ist die einzige zuverlässige Option für ARM64-Container.
+Google Chrome hat kein ARM64-`.deb`-Paket, und das `chromium-browser`-Apt-Paket von Ubuntu 24.04 leitet zu Snap weiter (was in Containern nicht funktioniert). Playwrights gebündeltes Chromium ist die einzige zuverlässige Option für ARM64-Container.
 
-## Verifizierung
+## Überprüfung
 
 Bestätigen Sie, dass die Einrichtung innerhalb des Containers funktioniert:
 
 ```bash
-# Chrome-Binary antwortet
+# Chrome-Binärdatei antwortet
 /opt/google/chrome/chrome --version
 
 # Symlink ist korrekt
@@ -56,16 +56,16 @@ ls -la /opt/google/chrome/chrome
 # Remote-Debugging ist aktiv
 curl http://localhost:9222/json/version
 
-# Selbsttest enthält Chrome-Prüfungen
+# Selbsttest beinhaltet Chrome-Prüfungen
 claude-self-test
 ```
 
 ## Headed-Modus (VNC)
 
-Wenn `ENABLE_VNC=true` gesetzt ist, startet der Entrypoint den VNC-Stack, bevor Chrome gestartet wird. Das `chrome-browser.sh`-Skript erkennt, dass `DISPLAY` gesetzt ist, und führt Chrome im Headed-Modus auf dem virtuellen Display aus, sodass Sie den Browser im VNC-Viewer sehen können.
+Wenn `ENABLE_VNC=true` gesetzt ist, startet der Entrypoint den VNC-Stack, bevor Chrome gestartet wird. Das Skript `chrome-browser.sh` erkennt, dass `DISPLAY` gesetzt ist, und führt Chrome im Headed-Modus auf dem virtuellen Display aus, sodass Sie den Browser im VNC-Viewer sehen können.
 
-Öffnen Sie `http://localhost:6080/vnc.html`, um das virtuelle Display zu sehen. Siehe [Remote-Display (noVNC)](./vnc) für Details.
+Öffnen Sie `http://localhost:6080/vnc.html`, um das virtuelle Display zu sehen. Weitere Details finden Sie unter [Remote-Display (noVNC)](./vnc).
 
 ## Fehlerbehebung
 
-Siehe [Fehlerbehebung — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) für Lösungen zu häufigen Problemen, einschließlich Remote-Debugging-Fehler, Profil-Sperrfehler und doppelter MCP-Tools.
+Siehe [Fehlerbehebung — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) für Lösungen zu häufigen Problemen, einschließlich Remote-Debugging-Fehlern, Profil-Sperrfehlern und doppelten MCP-Werkzeugen.

@@ -1,6 +1,6 @@
 ---
 title: Chrome DevTools MCP
-description: 共有ヘッドレスChromeインスタンスを介したブラウザ自動化、スクリーンショット、DOM検査。
+description: 共有ヘッドレス Chrome インスタンスを介したブラウザ自動化、スクリーンショット、DOM インスペクション。
 sidebar:
   order: 4
 i18n:
@@ -8,62 +8,62 @@ i18n:
   translator: machine
 ---
 
-コンテナには事前設定された [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) サーバーが含まれており、Claude Codeにヘッドレスブラウザ自動化機能を提供します。Webページのナビゲーション、スクリーンショットの取得、DOMの検査、ページ要素との対話が、追加のセットアップなしで可能です。
+コンテナには、事前設定済みの [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) サーバーが含まれており、Claude Code にヘッドレスブラウザ自動化機能を提供します。Web ページのナビゲーション、スクリーンショットの取得、DOM のインスペクション、ページ要素との対話が、追加のセットアップなしで利用可能です。
 
 ## 仕組み
 
-エントリーポイントは、ポート9222でリモートデバッグが有効な永続的なヘッドレスChromeを起動します。chrome-devtools-mcp MCPサーバーはClaude Codeの設定に登録され、`--browserUrl`を介してこの共有ブラウザに接続します。すべてのセッションが単一のブラウザインスタンスとCookie jarを共有するため、ログイン、Cookie、認証はプロジェクト間で保持されます。
+エントリポイントは、ポート 9222 でリモートデバッグが有効な永続的なヘッドレス Chrome を起動します。chrome-devtools-mcp MCP サーバーは Claude Code の設定に登録され、`--browserUrl` を介してこの共有ブラウザに接続します。すべてのセッションが単一のブラウザインスタンスと Cookie jar を共有するため、ログイン、Cookie、認証がプロジェクト間で持続します。
 
 ## 利用可能なツール
 
 | ツール | 説明 |
 |------|-------------|
-| `navigate_page` | URLに移動してページの読み込みを待機する |
-| `take_screenshot` | 現在のページのPNGスクリーンショットをキャプチャする |
-| `take_snapshot` | ページのアクセシビリティツリースナップショットを取得する |
+| `navigate_page` | URL に移動し、ページの読み込みを待機する |
+| `take_screenshot` | 現在のページの PNG スクリーンショットをキャプチャする |
+| `take_snapshot` | ページのアクセシビリティツリーのスナップショットを取得する |
 | `click` | ページ上の要素をクリックする |
 | `type` | 入力フィールドにテキストを入力する |
-| `hover` | 要素の上にホバーする |
+| `hover` | 要素にホバーする |
 | `scroll` | ページまたは特定の要素をスクロールする |
-| `evaluate` | ページコンテキストでJavaScriptを実行する |
+| `evaluate` | ページコンテキストで JavaScript を実行する |
 | `get_console_logs` | コンソールログメッセージを取得する |
-| `get_page_info` | ページメタデータ（タイトル、URLなど）を取得する |
+| `get_page_info` | ページのメタデータ（タイトル、URL など）を取得する |
 
 ## アーキテクチャ
 
-ブラウザスタックは、連携して動作する4つのコンポーネントを使用します：
+ブラウザスタックは、連携して動作する 4 つのコンポーネントで構成されています：
 
-1. **Playwright Chromium** — ビルド時に `npx playwright install --with-deps chromium` でインストールされるARM64互換のChromiumバイナリ
-2. **Chromeシンボリックリンク** — Puppeteerが期待するパス（`/opt/google/chrome/chrome`）をPlaywrightバイナリにブリッジする
-3. **共有Chromeプロセス** — `chrome-browser.sh`によって `--remote-debugging-port=9222` で起動され、クラッシュ時に自動再起動する
-4. **グローバルMCP登録** — `settings.json`がchrome-devtools-mcpを `--browserUrl=http://localhost:9222` で登録する
+1. **Playwright Chromium** — ビルド時に `npx playwright install --with-deps chromium` でインストールされる ARM64 対応の Chromium バイナリ
+2. **Chrome シンボリックリンク** — Puppeteer が期待するパス（`/opt/google/chrome/chrome`）を Playwright バイナリにブリッジする
+3. **共有 Chrome プロセス** — `chrome-browser.sh` によって `--remote-debugging-port=9222` で起動され、クラッシュ時に自動再起動する
+4. **グローバル MCP 登録** — `settings.json` が `--browserUrl=http://localhost:9222` で chrome-devtools-mcp を登録する
 
-Google ChromeにはARM64用の`.deb`パッケージがなく、Ubuntu 24.04の`chromium-browser` aptパッケージはsnap（コンテナ内では動作しない）にリダイレクトされます。PlaywrightにバンドルされたChromiumが、ARM64コンテナで唯一信頼できるオプションです。
+Google Chrome には ARM64 用の `.deb` パッケージがなく、Ubuntu 24.04 の `chromium-browser` apt パッケージは snap にリダイレクトされます（コンテナ内では動作しません）。Playwright にバンドルされた Chromium が、ARM64 コンテナで唯一信頼できるオプションです。
 
 ## 検証
 
-コンテナ内でセットアップが動作することを確認します：
+コンテナ内でセットアップが正しく動作していることを確認します：
 
 ```bash
-# Chromeバイナリが応答する
+# Chrome バイナリが応答する
 /opt/google/chrome/chrome --version
 
 # シンボリックリンクが正しい
 ls -la /opt/google/chrome/chrome
 
-# リモートデバッグがアクティブである
+# リモートデバッグがアクティブ
 curl http://localhost:9222/json/version
 
-# セルフテストにChromeチェックが含まれる
+# セルフテストに Chrome チェックが含まれる
 claude-self-test
 ```
 
 ## ヘッドモード（VNC）
 
-`ENABLE_VNC=true`の場合、エントリーポイントはChromeを起動する前にVNCスタックを開始します。`chrome-browser.sh`スクリプトは`DISPLAY`が設定されていることを検出し、仮想ディスプレイ上でChromeをヘッドモードで実行するため、VNCビューアでブラウザを確認できます。
+`ENABLE_VNC=true` の場合、エントリポイントは Chrome を起動する前に VNC スタックを開始します。`chrome-browser.sh` スクリプトは `DISPLAY` が設定されていることを検出し、仮想ディスプレイ上でヘッドモードの Chrome を実行するため、VNC ビューアでブラウザを確認できます。
 
-`http://localhost:6080/vnc.html`を開いて仮想ディスプレイを確認してください。詳細は[リモートディスプレイ（noVNC）](./vnc)を参照してください。
+`http://localhost:6080/vnc.html` を開くと仮想ディスプレイが表示されます。詳細は[リモートディスプレイ（noVNC）](./vnc)を参照してください。
 
 ## トラブルシューティング
 
-リモートデバッグの失敗、プロファイルロックエラー、重複MCPツールなどの一般的な問題の解決策については、[トラブルシューティング — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp)を参照してください。
+リモートデバッグの失敗、プロファイルロックエラー、MCP ツールの重複など、よくある問題の解決策については [トラブルシューティング — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) を参照してください。

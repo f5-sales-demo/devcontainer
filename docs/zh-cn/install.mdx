@@ -14,19 +14,19 @@ i18n:
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-这条命令会完成全部首次运行设置：
+这条命令将完成全部首次运行设置：
 
 1. 安装 Homebrew 软件包（podman、podman-compose、gh、iterm2、nerd fonts）
-2. 配置 iTerm2（字体、提示音、回滚缓冲区、暗色主题、Shift+Enter 键绑定）
-3. 初始化并调优 Podman 虚拟机（16 GB 内存、4 个 CPU、220 GB 磁盘、zram、swappiness）
+2. 配置 iTerm2（字体、响铃、回滚缓冲区、深色主题、Shift+Enter 键绑定）
+3. 初始化并调优 Podman 虚拟机（16 GB 内存、4 CPU、220 GB 磁盘、zram、swappiness）
 4. 将 `docker-compose.yml`、`devcontainer.sh` 和 `.env` 模板下载到当前目录
 
 :::note[需要 Homebrew]
-如果未安装 Homebrew，脚本会退出并显示安装说明。
-您的 IT 部门可能已将 Homebrew 作为托管软件提供——请先向他们确认。
+如果未安装 Homebrew，脚本将退出并显示安装说明。
+您的 IT 部门可能已将 Homebrew 作为托管软件提供——请先与他们确认。
 :::
 
-## 安装完成后
+## 安装后操作
 
 编辑 `.env` 文件，填入您的凭据：
 
@@ -48,9 +48,9 @@ vi .env
 
 | 文件 | 用途 |
 |---|---|
-| `devcontainer.sh` | 启动脚本（运行此脚本以启动容器） |
+| `devcontainer.sh` | 启动脚本（运行此文件以启动容器） |
 | `docker-compose.yml` | 容器服务定义 |
-| `.env` | 您的凭据（从模板生成，首次启动前请编辑） |
+| `.env` | 您的凭据（从模板生成，首次启动前需编辑） |
 
 ## 后续启动
 
@@ -66,7 +66,7 @@ podman exec -it devcontainer zsh
 
 ## 更新
 
-拉取最新镜像并重新启动：
+拉取最新镜像并重启：
 
 ```bash
 podman compose pull

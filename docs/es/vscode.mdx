@@ -12,7 +12,7 @@ i18n:
 
 1. [VS Code](https://code.visualstudio.com/)
 2. [Extensión Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
-3. Docker o Podman ejecutándose en su máquina (consulte [Primeros pasos](./getting-started#container-runtime)). VS Code Dev Containers también soporta [Podman como backend](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman).
+3. Docker o Podman ejecutándose en su máquina (consulte [Primeros pasos](./getting-started#container-runtime)). VS Code Dev Containers también es compatible con [Podman como backend](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman).
 
 ## Inicio rápido
 
@@ -37,7 +37,7 @@ El archivo `.devcontainer/devcontainer.json` indica a VS Code que use Docker Com
 "workspaceFolder": "/workspace"
 ```
 
-La configuración del devcontainer incluye explícitamente el archivo de construcción, de modo que VS Code puede construir la imagen localmente cuando utiliza "Reopen in Container" o "Rebuild Container".
+La configuración del devcontainer incluye explícitamente el archivo de compilación, de modo que VS Code puede construir la imagen localmente cuando utiliza "Reopen in Container" o "Rebuild Container".
 
 ## Extensiones
 
@@ -45,17 +45,17 @@ Las extensiones se instalan automáticamente dentro del contenedor:
 
 | Extensión | Descripción |
 |-----------|-------------|
-| Python | Soporte para el lenguaje Python |
-| ESLint | Linting de JavaScript/TypeScript |
+| Python | Soporte del lenguaje Python |
+| ESLint | Análisis de código JavaScript/TypeScript |
 | Prettier | Formateo de código |
 | Docker | Soporte para Dockerfile y compose |
-| Terraform | Soporte para el lenguaje HCL |
-| Go | Soporte para el lenguaje Go |
-| Rust Analyzer | Soporte para el lenguaje Rust |
-| YAML | Soporte para YAML |
+| Terraform | Soporte del lenguaje HCL |
+| Go | Soporte del lenguaje Go |
+| Rust Analyzer | Soporte del lenguaje Rust |
+| YAML | Soporte del lenguaje YAML |
 | Kubernetes | Soporte para manifiestos de Kubernetes |
 
-Para agregar extensiones, edite el array `customizations.vscode.extensions` en `.devcontainer/devcontainer.json`.
+Para agregar extensiones, edite el arreglo `customizations.vscode.extensions` en `.devcontainer/devcontainer.json`.
 
 ## Reenvío de puertos
 

@@ -68,7 +68,7 @@ echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
 
 ### Claude affiche "Invalid API key"
 
-Vérifiez quelle valeur est réellement définie :
+Vérifiez quelle valeur est effectivement définie :
 
 ```bash
 echo "$ANTHROPIC_API_KEY"
@@ -77,7 +77,7 @@ echo "$ANTHROPIC_API_KEY"
 Causes courantes :
 
 - **Clé proxy LiteLLM manquante ou invalide** — si vous utilisez le mode proxy, assurez-vous que `LITELLM_API_KEY` dans `.env` contient les identifiants proxy corrects, puis redémarrez le conteneur pour que le point d'entrée puisse dériver `ANTHROPIC_API_KEY`.
-- **Incompatibilité entre le jeton OAuth et le mode proxy** — utilisez exactement un seul mode d'authentification. Si `CLAUDE_CODE_OAUTH_TOKEN` est défini, il prend la priorité sur le mode proxy LiteLLM.
+- **Incompatibilité entre jeton OAuth et mode proxy** — utilisez exactement un seul mode d'authentification. Si `CLAUDE_CODE_OAUTH_TOKEN` est défini, il prend le pas sur le mode proxy LiteLLM.
 
 ### Les requêtes API échouent avec 401
 
@@ -89,9 +89,9 @@ echo "$ANTHROPIC_API_KEY"
 
 Vérifiez qu'elle fonctionne en effectuant un appel direct à votre fournisseur.
 
-### Claude indique "model not found"
+### Claude dit "model not found"
 
-Le modèle est déterminé par votre fournisseur et votre clé API. Consultez la documentation de votre fournisseur pour les modèles disponibles.
+Le modèle est déterminé par votre fournisseur et votre clé API. Consultez la documentation de votre fournisseur pour connaître les modèles disponibles.
 
 ## GitHub CLI
 
@@ -105,13 +105,13 @@ GH_TOKEN=ghp_your-token-here
 
 Créez un jeton sur [github.com/settings/tokens](https://github.com/settings/tokens). Les jetons à granularité fine (recommandés) ou les jetons classiques avec le scope `repo` fonctionnent tous les deux. Redémarrez le conteneur après avoir mis à jour `.env`.
 
-### Le clonage git en HTTPS échoue avec 401
+### Le clonage git HTTPS échoue avec 401
 
-Lorsque `GH_TOKEN` est défini, le point d'entrée exécute `gh auth setup-git` pour configurer l'assistant d'identification git pour HTTPS. Si les opérations HTTPS échouent :
+Quand `GH_TOKEN` est défini, le point d'entrée exécute `gh auth setup-git` pour configurer l'assistant d'identification git pour HTTPS. Si les opérations HTTPS échouent :
 
 1. Vérifiez que le jeton est valide : `gh auth status`
 2. Vérifiez que l'assistant d'identification est configuré : `git config --global credential.helper`
-3. Redémarrez le conteneur pour réexécuter le point d'entrée
+3. Redémarrez le conteneur pour relancer le point d'entrée
 
 ### SSH vs HTTPS
 
@@ -120,7 +120,7 @@ Les deux méthodes d'authentification peuvent coexister dans le conteneur :
 - **SSH** (`SSH_PRIVATE_KEY` dans `.env`) — utilise les URL `git@github.com:`. Requis si votre organisation impose SSH.
 - **HTTPS** (`GH_TOKEN` dans `.env`) — utilise les URL `https://github.com/`. Configuration plus simple, pas de gestion de clés.
 
-Si les deux sont configurés, git utilise le protocole correspondant à l'URL distante. Pour basculer un clone existant :
+Si les deux sont configurés, git utilise le protocole correspondant à l'URL du dépôt distant. Pour basculer un clone existant :
 
 ```bash
 # SSH vers HTTPS
@@ -140,7 +140,7 @@ sudo chown -R $(id -u):$(id -g) /workspace ~
 
 ### npm install échoue avec EACCES
 
-Le point d'entrée configure automatiquement un préfixe global npm accessible en écriture par l'utilisateur dans `~/.npm-global`, de sorte que les commandes `npm install -g` à l'exécution devraient fonctionner sans `sudo`. Si vous rencontrez toujours des erreurs EACCES, appliquez manuellement le correctif :
+Le point d'entrée configure automatiquement un préfixe global npm accessible en écriture à l'utilisateur dans `~/.npm-global`, de sorte que les commandes `npm install -g` à l'exécution devraient fonctionner sans `sudo`. Si vous rencontrez toujours des erreurs EACCES, appliquez le correctif manuellement :
 
 ```bash
 mkdir -p ~/.npm-global
@@ -190,7 +190,7 @@ podman system prune -a --volumes
 </TabItem>
 </Tabs>
 
-**Attention :** Cela supprime tous les conteneurs, images et volumes inutilisés — pas seulement ceux de ce projet.
+**Attention :** Cela supprime tous les conteneurs, images et volumes inutilisés — pas uniquement ceux de ce projet.
 
 ## Réseau
 
@@ -205,7 +205,7 @@ curl -I https://github.com
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-Si le DNS échoue, ajoutez à `/etc/docker/daemon.json` sur l'hôte :
+Si le DNS échoue, ajoutez dans `/etc/docker/daemon.json` sur l'hôte :
 
 ```json
 {
@@ -226,7 +226,7 @@ sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
 exit
 ```
 
-Ou ajoutez les paramètres DNS à `~/.config/containers/containers.conf` sur l'hôte :
+Ou ajoutez les paramètres DNS dans `~/.config/containers/containers.conf` sur l'hôte :
 
 ```ini
 [containers]
@@ -248,7 +248,7 @@ Xvfb n'a peut-être pas démarré. Vérifiez à l'intérieur du conteneur :
 ps aux | grep Xvfb
 ```
 
-S'il ne fonctionne pas, vérifiez que `ENABLE_VNC` n'est pas défini à `false` et redémarrez le conteneur.
+S'il ne tourne pas, vérifiez que `ENABLE_VNC` n'est pas défini à `false` et redémarrez le conteneur.
 
 ### Erreur "Cannot open display" ou "No display"
 
@@ -262,13 +262,13 @@ Elle devrait être `:99`. Si elle est vide, ajoutez `DISPLAY=:99` à votre `.env
 
 ### Connexion refusée sur le port 6080
 
-noVNC n'est peut-être pas en cours d'exécution. Vérifiez à l'intérieur du conteneur :
+noVNC ne tourne peut-être pas. Vérifiez à l'intérieur du conteneur :
 
 ```bash
 ps aux | grep -E 'novnc|websockify'
 ```
 
-S'il ne fonctionne pas, vérifiez que `ENABLE_VNC` est défini à `true` (la valeur par défaut) et consultez les journaux du conteneur :
+S'il ne tourne pas, vérifiez que `ENABLE_VNC` est à `true` (valeur par défaut) et consultez les journaux du conteneur :
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -298,15 +298,15 @@ ports:
 
 ## Chrome DevTools MCP
 
-### Le débogage distant de Chrome ne répond pas
+### Le débogage distant Chrome ne répond pas
 
-L'instance Chrome partagée devrait être en cours d'exécution sur le port 9222. Vérifiez à l'intérieur du conteneur :
+L'instance Chrome partagée devrait tourner sur le port 9222. Vérifiez à l'intérieur du conteneur :
 
 ```bash
-# Chrome est-il en cours d'exécution ?
+# Chrome tourne-t-il ?
 curl http://localhost:9222/json/version
 
-# Vérifier les journaux de Chrome
+# Vérifier les journaux Chrome
 cat ~/.local/share/chrome-browser/chrome.log
 
 # Vérifier le lien symbolique
@@ -321,10 +321,10 @@ Si le lien symbolique est manquant, récupérez la dernière image et redémarre
 
 ### Erreur de verrouillage du profil navigateur
 
-Avec l'architecture de navigateur partagé, les erreurs de verrouillage de profil ne devraient pas se produire. Si vous en rencontrez une, un processus Chrome obsolète pourrait détenir le verrou :
+Avec l'architecture de navigateur partagé, les erreurs de verrouillage de profil ne devraient pas se produire. Si vous en rencontrez une, un processus Chrome obsolète détient peut-être le verrou :
 
 ```bash
-# Tuer tous les processus Chrome obsolètes
+# Arrêter tout processus Chrome obsolète
 pkill -f 'chrome.*remote-debugging-port' || true
 
 # Supprimer le fichier de verrouillage
@@ -337,7 +337,7 @@ start_chrome_browser
 
 ### Outils chrome-devtools-mcp en double
 
-Le serveur chrome-devtools-mcp est maintenant enregistré globalement dans `~/.claude/settings.json`. Si vous avez un `.mcp.json` par dépôt qui l'enregistre également, vous verrez des outils en double. Supprimez l'entrée `chrome-devtools-mcp` des fichiers `.mcp.json` par dépôt :
+Le serveur chrome-devtools-mcp est désormais enregistré globalement dans `~/.claude/settings.json`. Si vous avez un `.mcp.json` par dépôt qui l'enregistre également, vous verrez des outils en double. Supprimez l'entrée `chrome-devtools-mcp` des fichiers `.mcp.json` par dépôt :
 
 ```bash
 # Vérifier la configuration par dépôt

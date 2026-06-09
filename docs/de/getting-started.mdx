@@ -24,9 +24,9 @@ Er kümmert sich um Homebrew-Pakete, iTerm2-Konfiguration, Podman-Setup und läd
 
 ## Voraussetzungen
 
-### Container-Laufzeitumgebung
+### Container-Runtime
 
-Sie benötigen eine Container-Laufzeitumgebung auf Ihrem Rechner. Entweder Docker oder Podman funktioniert.
+Sie benötigen eine Container-Runtime auf Ihrem Rechner. Sowohl Docker als auch Podman funktionieren.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -37,7 +37,7 @@ Sie benötigen eine Container-Laufzeitumgebung auf Ihrem Rechner. Entweder Docke
 | Windows | [Docker Desktop für Windows](https://docs.docker.com/desktop/install/windows-install/) (WSL2-Backend) |
 | Linux | [Docker Engine](https://docs.docker.com/engine/install/) oder [Docker Desktop für Linux](https://docs.docker.com/desktop/install/linux/) |
 
-Überprüfen Sie, ob es funktioniert:
+Überprüfen Sie die Funktionsfähigkeit:
 
 ```bash
 docker --version
@@ -53,7 +53,7 @@ docker compose version
 | Windows | [Podman Desktop für Windows](https://podman-desktop.io/docs/installation/windows-install) |
 | Linux | [Podman](https://podman.io/docs/installation#installing-on-linux) + [Podman Compose](https://github.com/containers/podman-compose#installation) |
 
-Überprüfen Sie, ob es funktioniert:
+Überprüfen Sie die Funktionsfähigkeit:
 
 ```bash
 podman --version
@@ -61,7 +61,7 @@ podman-compose version
 ```
 
 :::note[Nur Linux]
-Podman unter Linux führt Container direkt aus (keine VM). Stellen Sie sicher, dass der Podman-Socket aktiv ist, damit `podman-compose` sich verbinden kann:
+Podman unter Linux führt Container direkt aus (keine VM). Stellen Sie sicher, dass der Podman-Socket aktiv ist, damit `podman-compose` eine Verbindung herstellen kann:
 
 ```bash
 systemctl --user enable --now podman.socket
@@ -76,18 +76,18 @@ systemctl --user enable --now podman.socket
 | Ressource | Minimum | Empfohlen |
 |-----------|---------|-----------|
 | Festplatte | 5 GB | 10 GB+ |
-| RAM | 8 GB der Container-Laufzeitumgebung zugewiesen | 12 GB+ |
+| RAM | 8 GB der Container-Runtime zugewiesen | 12 GB+ |
 | CPU | 2 Kerne | 4+ Kerne |
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-Passen Sie die Ressourcenlimits in Docker Desktop &rarr; Einstellungen &rarr; Ressourcen an.
+Passen Sie die Ressourcenlimits unter Docker Desktop &rarr; Einstellungen &rarr; Ressourcen an.
 
 </TabItem>
 <TabItem label="Podman">
 
-Unter **macOS/Windows** passen Sie die Ressourcenlimits in Podman Desktop &rarr; Einstellungen &rarr; Ressourcen an, oder über die CLI:
+Unter **macOS/Windows** passen Sie die Ressourcenlimits unter Podman Desktop &rarr; Einstellungen &rarr; Ressourcen oder über die CLI an:
 
 ```bash
 podman machine set --cpus 4 --memory 12288
@@ -120,24 +120,24 @@ CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
 
 ### Option B: LiteLLM oder Anthropic-kompatibler Proxy
 
-Wenn Sie eine LiteLLM-Instanz oder einen anderen Anthropic-kompatiblen Proxy haben, setzen Sie diese zwei Variablen:
+Wenn Sie eine LiteLLM-Instanz oder einen anderen Anthropic-kompatiblen Proxy haben, setzen Sie diese beiden Variablen:
 
 ```ini
 LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
 LITELLM_API_KEY=your-api-key
 ```
 
-Setzen Sie nur die Domain — der Container leitet providerspezifische URL-Suffixe automatisch ab (z. B. `/anthropic` für Claude Code).
+Setzen Sie nur die Domain — der Container leitet anbieterspezifische URL-Suffixe automatisch ab (z. B. `/anthropic` für Claude Code).
 
 ### Automatisches Befüllen aus lokalen Anmeldedaten
 
-Wenn Sie `git` und `gh` auf Ihrem Host konfiguriert haben, können Sie die meisten `.env`-Werte automatisch befüllen. Beginnen Sie mit dem Kopieren der Vorlage:
+Wenn Sie `git` und `gh` auf Ihrem Host konfiguriert haben, können Sie die meisten `.env`-Werte automatisch befüllen. Kopieren Sie zunächst die Vorlage:
 
 ```bash
 cp .env.example .env
 ```
 
-Führen Sie dann die Befehle aus, die zu Ihrem Setup passen:
+Führen Sie dann die Befehle aus, die zu Ihrer Konfiguration passen:
 
 ```bash
 # Git identity
@@ -154,10 +154,10 @@ echo "GH_TOKEN=$(gh auth token)" >> .env
 echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 ```
 
-Bearbeiten Sie dann `.env`, um Ihr OAuth-Token oder Ihre LiteLLM-Proxy-Einstellungen hinzuzufügen (siehe Optionen oben).
+Bearbeiten Sie dann `.env`, um Ihr OAuth-Token oder die LiteLLM-Proxy-Einstellungen hinzuzufügen (siehe Optionen oben).
 
 :::tip[KI-Assistenten]
-Die `.env.example`-Datei enthält `@auto-detect`-Marker bei jeder Variable, die aus lokalen Tools befüllt werden kann. KI-Assistenten wie Claude Code können diese Marker scannen und die zugehörigen Befehle ausführen, um automatisch eine vollständige `.env` zu erstellen.
+Die `.env.example`-Datei enthält `@auto-detect`-Markierungen bei jeder Variable, die aus lokalen Tools befüllt werden kann. KI-Assistenten wie Claude Code können diese Markierungen erkennen und die zugehörigen Befehle ausführen, um automatisch eine vollständige `.env` zu erstellen.
 :::
 
 ## 3. Starten
@@ -179,7 +179,7 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-Beim ersten Start wird das vorgefertigte Image von ghcr.io heruntergeladen (~1 Min. je nach Verbindungsgeschwindigkeit). Nachfolgende Starts verwenden das zwischengespeicherte Image und dauern nur Sekunden.
+Beim ersten Start wird das vorgefertigte Image von ghcr.io heruntergeladen (~1 Min. je nach Verbindung). Nachfolgende Starts verwenden das gecachte Image und dauern nur Sekunden.
 
 ## 4. Verbinden
 
@@ -236,11 +236,11 @@ claude
 
 ## 7. Remote-Anzeige (noVNC)
 
-Der Container enthält ein virtuelles Display, um KI-Agenten bei der Steuerung eines Browsers zuzusehen. Öffnen Sie `http://localhost:6080/vnc.html`, um sich zu verbinden. Siehe [Remote-Anzeige (noVNC)](./vnc) für Details.
+Der Container enthält eine virtuelle Anzeige, um KI-Agenten bei der Steuerung eines Browsers zu beobachten. Öffnen Sie `http://localhost:6080/vnc.html`, um sich zu verbinden. Weitere Details finden Sie unter [Remote-Anzeige (noVNC)](./vnc).
 
 ## 8. Browser-Automatisierung (Chrome DevTools MCP)
 
-Claude Code kann Webseiten navigieren, Screenshots aufnehmen und das DOM mithilfe des integrierten Chrome DevTools MCP-Servers untersuchen. Keine Einrichtung erforderlich — es funktioniert automatisch im Headless-Modus. Siehe [Chrome DevTools MCP](./chrome) für Details.
+Claude Code kann Webseiten navigieren, Screenshots erstellen und das DOM mithilfe des integrierten Chrome DevTools MCP-Servers inspizieren. Keine Einrichtung erforderlich — es funktioniert automatisch im Headless-Modus. Weitere Details finden Sie unter [Chrome DevTools MCP](./chrome).
 
 ## 9. Stoppen und Neustarten
 
@@ -266,7 +266,7 @@ docker compose up -d
 # Stoppen (Daten bleiben erhalten)
 podman-compose down
 
-# Erneut starten (Pull stellt sicher, dass das neueste Image verwendet wird)
+# Erneut starten (pull stellt das neueste Image sicher)
 podman-compose pull && podman-compose up -d
 
 # Alles löschen und neu beginnen
@@ -277,8 +277,8 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-Ihr Code in `/workspace` und das Home-Verzeichnis bleiben über Neustarts hinweg erhalten. Siehe [Konfiguration — Datenpersistenz](./configuration#data-persistence) für Details.
+Ihr Code in `/workspace` und das Home-Verzeichnis bleiben über Neustarts hinweg erhalten. Weitere Details finden Sie unter [Konfiguration — Datenpersistenz](./configuration#data-persistence).
 
 ---
 
-Für lokale Builds und Dockerfile-Anpassungen siehe [Lokale Entwicklung](./local-development). Für VS Code-Integration siehe [VS Code](./vscode). Für Remote-Anzeigeoptionen siehe [Remote-Anzeige (noVNC)](./vnc).
+Für lokale Builds und Dockerfile-Anpassungen siehe [Lokale Entwicklung](./local-development). Für die VS Code-Integration siehe [VS Code](./vscode). Für Remote-Anzeigeoptionen siehe [Remote-Anzeige (noVNC)](./vnc).

@@ -10,7 +10,7 @@ i18n:
   translator: machine
 ---
 
-Il container include un server [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) preconfigurato che fornisce a Claude Code funzionalità di automazione del browser headless. Naviga pagine web, cattura screenshot, ispeziona il DOM e interagisci con gli elementi della pagina — senza alcuna configurazione aggiuntiva.
+Il container include un server [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) preconfigurato che fornisce a Claude Code capacità di automazione del browser headless. Naviga pagine web, cattura screenshot, ispeziona il DOM e interagisci con gli elementi della pagina — senza configurazione aggiuntiva.
 
 ## Come Funziona
 
@@ -35,12 +35,12 @@ L'entrypoint avvia un Chrome headless persistente con debug remoto sulla porta 9
 
 Lo stack del browser utilizza quattro componenti che lavorano insieme:
 
-1. **Playwright Chromium** — Binario Chromium compatibile con ARM64 installato in fase di build tramite `npx playwright install --with-deps chromium`
+1. **Playwright Chromium** — Binario Chromium compatibile con ARM64 installato al momento della build tramite `npx playwright install --with-deps chromium`
 2. **Symlink Chrome** — collega il percorso atteso da Puppeteer (`/opt/google/chrome/chrome`) al binario di Playwright
 3. **Processo Chrome condiviso** — avviato da `chrome-browser.sh` con `--remote-debugging-port=9222`, si riavvia automaticamente in caso di crash
 4. **Registrazione MCP globale** — `settings.json` registra chrome-devtools-mcp con `--browserUrl=http://localhost:9222`
 
-Google Chrome non dispone di un pacchetto `.deb` per ARM64, e il pacchetto apt `chromium-browser` di Ubuntu 24.04 reindirizza a snap (che non funziona nei container). Il Chromium incluso in Playwright è l'unica opzione affidabile per i container ARM64.
+Google Chrome non dispone di un pacchetto `.deb` per ARM64, e il pacchetto apt `chromium-browser` di Ubuntu 24.04 reindirizza a snap (che non funziona nei container). Il Chromium integrato di Playwright è l'unica opzione affidabile per i container ARM64.
 
 ## Verifica
 
@@ -62,10 +62,10 @@ claude-self-test
 
 ## Modalità con Interfaccia Grafica (VNC)
 
-Quando `ENABLE_VNC=true`, l'entrypoint avvia lo stack VNC prima di lanciare Chrome. Lo script `chrome-browser.sh` rileva che `DISPLAY` è impostato ed esegue Chrome in modalità con interfaccia grafica sul display virtuale, così puoi vedere il browser nel visualizzatore VNC.
+Quando `ENABLE_VNC=true`, l'entrypoint avvia lo stack VNC prima di lanciare Chrome. Lo script `chrome-browser.sh` rileva che `DISPLAY` è impostato e avvia Chrome in modalità con interfaccia grafica sul display virtuale, così puoi vedere il browser nel visualizzatore VNC.
 
 Apri `http://localhost:6080/vnc.html` per vedere il display virtuale. Consulta [Display Remoto (noVNC)](./vnc) per i dettagli.
 
 ## Risoluzione dei Problemi
 
-Consulta [Risoluzione dei Problemi — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) per le soluzioni ai problemi comuni, inclusi errori di debug remoto, errori di blocco del profilo e strumenti MCP duplicati.
+Consulta [Risoluzione dei Problemi — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) per soluzioni ai problemi comuni, inclusi errori di debug remoto, errori di blocco del profilo e strumenti MCP duplicati.

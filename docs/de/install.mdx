@@ -19,12 +19,12 @@ curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | b
 Dieser einzelne Befehl übernimmt die vollständige Ersteinrichtung:
 
 1. Installiert Homebrew-Pakete (podman, podman-compose, gh, iterm2, Nerd Fonts)
-2. Konfiguriert iTerm2 (Schriftart, Signalton, Scrollback, dunkles Theme, Shift+Enter-Tastenkombination)
+2. Konfiguriert iTerm2 (Schriftart, Signalton, Scrollback, dunkles Theme, Shift+Enter-Tastenbelegung)
 3. Initialisiert und optimiert die Podman-Maschine (16 GB RAM, 4 CPUs, 220 GB Festplatte, zram, Swappiness)
 4. Lädt `docker-compose.yml`, `devcontainer.sh` und die `.env`-Vorlage in das aktuelle Verzeichnis herunter
 
 :::note[Homebrew erforderlich]
-Falls Homebrew nicht installiert ist, wird das Skript mit entsprechenden Anweisungen beendet.
+Falls Homebrew nicht installiert ist, bricht das Skript mit entsprechenden Anweisungen ab.
 Ihre IT-Abteilung stellt Homebrew möglicherweise als verwaltete Software bereit — erkundigen Sie sich zuerst dort.
 :::
 
@@ -46,7 +46,7 @@ Das Skript erkennt Ihre Zeitzone und ruft bei jedem Aufruf ein aktuelles GitHub-
 
 ## Was erstellt wird
 
-Nach Ausführung des Installers enthält Ihr Verzeichnis:
+Nach Ausführung des Installers enthält Ihr Verzeichnis folgende Dateien:
 
 | Datei | Zweck |
 |---|---|
@@ -54,7 +54,7 @@ Nach Ausführung des Installers enthält Ihr Verzeichnis:
 | `docker-compose.yml` | Container-Service-Definition |
 | `.env` | Ihre Zugangsdaten (aus Vorlage, vor dem ersten Start bearbeiten) |
 
-## Nachfolgende Starts
+## Weitere Starts
 
 ```bash
 ./devcontainer.sh

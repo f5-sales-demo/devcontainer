@@ -1,8 +1,8 @@
 ---
 title: Exibição Remota (noVNC)
 description: >-
-  Assista e interaja com navegadores em modo visível por meio de uma exibição
-  virtual no seu navegador.
+  Assista e interaja com navegadores em modo visível através de uma tela virtual
+  no seu navegador.
 sidebar:
   order: 3
 i18n:
@@ -12,14 +12,14 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-O contêiner executa uma pilha de exibição virtual (Xvfb + x11vnc + noVNC + fluxbox) para que você possa assistir agentes de IA controlando um navegador e intervir quando necessário — por exemplo, para lidar com prompts de login ou MFA.
+O contêiner executa uma pilha de exibição virtual (Xvfb + x11vnc + noVNC + fluxbox) para que você possa observar agentes de IA controlando um navegador e intervir quando necessário — por exemplo, para lidar com prompts de login ou MFA.
 
 ## Conectando
 
-1. Abra `http://localhost:6080/vnc.html` no seu navegador e clique em **Conectar**
-2. Você verá um desktop leve do fluxbox — esta é a exibição virtual do contêiner
+1. Abra `http://localhost:6080/vnc.html` no seu navegador e clique em **Connect**
+2. Você verá um desktop leve do fluxbox — esta é a tela virtual do contêiner
 
-Agentes de IA usando `@playwright/mcp` em modo visível renderizam o Chromium nesta exibição. Você pode clicar e digitar diretamente na janela do noVNC para intervir a qualquer momento — sem necessidade de pausar/retomar.
+Agentes de IA usando `@playwright/mcp` em modo visível renderizam o Chromium nesta tela. Você pode clicar e digitar diretamente na janela do noVNC para intervir a qualquer momento — sem necessidade de pausar/retomar.
 
 ## Inicialização Manual do Navegador
 
@@ -40,11 +40,11 @@ npx playwright test --headed
 | Variável | Padrão | Descrição |
 |----------|--------|-----------|
 | `ENABLE_VNC` | `true` | Defina como `false` para desabilitar a pilha VNC |
-| `VNC_RESOLUTION` | `1280x1024x24` | Resolução da exibição virtual (LxAxProfundidade) |
+| `VNC_RESOLUTION` | `1280x1024x24` | Resolução da tela virtual (LxAxProfundidade) |
 | `DISPLAY` | `:99` | Número do display X11 |
 | `NOVNC_HOST_PORT` | `6080` | Porta do host para o noVNC (altere para evitar conflitos com outros contêineres) |
 
-Defina estas variáveis no seu arquivo `.env` ou em `.devcontainer/devcontainer.json` em `containerEnv`.
+Defina estas variáveis no seu arquivo `.env` ou em `.devcontainer/devcontainer.json` sob `containerEnv`.
 
 ## Desabilitando a Pilha VNC
 
@@ -71,4 +71,4 @@ podman-compose up -d
 
 ## Solução de Problemas
 
-Consulte [Solução de Problemas — Exibição Remota](./troubleshooting#remote-display-novnc) para soluções de telas pretas, erros de conexão recusada e conflitos de porta.
+Consulte [Solução de Problemas — Exibição Remota](./troubleshooting#remote-display-novnc) para soluções de tela preta, erros de conexão recusada e conflitos de porta.

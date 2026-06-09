@@ -1,6 +1,7 @@
 ---
 title: 画面録画テスト
-description: Xvfb、ヘッド付きChromium（Playwright経由）、およびffmpeg画面録画がdevcontainer内で連携して動作することを検証します。
+description: >-
+  Xvfb、ヘッド付きChromium（Playwright経由）、およびffmpegによる画面録画がdevcontainer内で連携して動作することを証明します。
 sidebar:
   order: 1
 i18n:
@@ -10,25 +11,25 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-このテストは、ヘッド付きブラウザセッションをMP4ファイルに録画することで、VNC/ブラウザスタック全体を検証します。以下を証明します：
+このテストは、ヘッド付きブラウザセッションをMP4ファイルに録画することで、VNC/ブラウザスタック全体を検証します。以下の項目を証明します：
 
-- **Xvfb** が起動しており、`:99` で接続を受け付けていること
-- **Chromium** が仮想ディスプレイ上でヘッド付きモードで起動できること
-- **ffmpeg** がx11grab経由でディスプレイをキャプチャできること
-- 生成された **MP4** が有効で再生可能な動画であること
+- **Xvfb** が起動しており、`:99` で接続を受け付けている
+- **Chromium** が仮想ディスプレイ上でヘッド付きモードで起動できる
+- **ffmpeg** がx11grabを使用してディスプレイをキャプチャできる
+- 生成された **MP4** が有効で再生可能な動画である
 
 ## 動作の仕組み
 
-1. Xディスプレイの準備が完了するまで `xdpyinfo -display :99` をポーリングします（エントリポイントと同じパターン）
-2. 10 fpsでディスプレイのffmpeg録画を開始します
+1. Xディスプレイが準備完了するまで `xdpyinfo -display :99` をポーリングします（エントリポイントと同じパターン）
+2. 10 fpsでディスプレイを録画するffmpegを開始します
 3. Playwrightの `sync_api` を使用してヘッド付きChromiumを起動します
 4. `https://example.com`（3秒間の一時停止）に移動し、次に `https://httpbin.org`（3秒間の一時停止）に移動します
-5. クリーンなMP4ファイナライズのためにffmpegにSIGTERMを送信します
+5. MP4のクリーンな最終処理のためにffmpegにSIGTERMを送信します
 6. 出力パスとファイルサイズを報告します
 
 ## スクリプト
 
-以下をコンテナ内で `vnc-browser-test.py` として保存するか、このリポジトリの `docs/tests/` ディレクトリからコピーしてください：
+以下を `vnc-browser-test.py` としてコンテナ内に保存するか、このリポジトリの `docs/tests/` ディレクトリからコピーしてください：
 
 ```python
 #!/usr/bin/env python3
@@ -194,9 +195,9 @@ Stopping ffmpeg ...
 SUCCESS: /tmp/recording.mp4 (1,234,567 bytes)
 ```
 
-MP4にはfluxboxデスクトップ上でChromiumウィンドウが両方のウェブサイトをレンダリングしている様子が表示されるはずです。`ffplay`、`vlc` で再生するか、コンテナからダウンロードして確認してください。
+MP4には、fluxboxデスクトップ上で両方のウェブサイトをレンダリングしているChromiumウィンドウが表示されるはずです。`ffplay`、`vlc` で再生するか、コンテナからダウンロードして確認してください。
 
-## 失敗が意味すること
+## 失敗の意味
 
 | 症状 | 考えられる原因 |
 | ---- | ---- |

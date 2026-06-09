@@ -1,8 +1,8 @@
 ---
 title: Chrome DevTools MCP
 description: >-
-  การทำงานอัตโนมัติของเบราว์เซอร์ การจับภาพหน้าจอ และการตรวจสอบ DOM
-  ผ่านอินสแตนซ์ headless Chrome ที่ใช้ร่วมกัน
+  การควบคุมเบราว์เซอร์อัตโนมัติ การจับภาพหน้าจอ และการตรวจสอบ DOM ผ่านอินสแตนซ์
+  headless Chrome ที่ใช้ร่วมกัน
 sidebar:
   order: 4
 i18n:
@@ -10,37 +10,37 @@ i18n:
   translator: machine
 ---
 
-คอนเทนเนอร์มีเซิร์ฟเวอร์ [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) ที่กำหนดค่าไว้ล่วงหน้า ซึ่งให้ความสามารถในการทำงานอัตโนมัติของ headless browser แก่ Claude Code สามารถนำทางเว็บเพจ จับภาพหน้าจอ ตรวจสอบ DOM และโต้ตอบกับองค์ประกอบในหน้าเว็บ — ไม่ต้องตั้งค่าเพิ่มเติม
+คอนเทนเนอร์ประกอบด้วยเซิร์ฟเวอร์ [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) ที่กำหนดค่าไว้ล่วงหน้า ซึ่งให้ความสามารถในการควบคุมเบราว์เซอร์แบบ headless อัตโนมัติแก่ Claude Code สามารถนำทางหน้าเว็บ จับภาพหน้าจอ ตรวจสอบ DOM และโต้ตอบกับองค์ประกอบของหน้า — โดยไม่ต้องตั้งค่าเพิ่มเติม
 
 ## วิธีการทำงาน
 
-entrypoint จะเปิดใช้งาน headless Chrome แบบถาวรพร้อม remote debugging บนพอร์ต 9222 เซิร์ฟเวอร์ chrome-devtools-mcp MCP ถูกลงทะเบียนในการตั้งค่า Claude Code และเชื่อมต่อกับเบราว์เซอร์ที่ใช้ร่วมกันผ่าน `--browserUrl` ทุกเซสชันใช้อินสแตนซ์เบราว์เซอร์เดียวกันและ cookie jar เดียวกัน — การเข้าสู่ระบบ คุกกี้ และการยืนยันตัวตนจะคงอยู่ข้ามโปรเจกต์
+entrypoint จะเปิดใช้งาน headless Chrome แบบถาวรที่มี remote debugging บนพอร์ต 9222 เซิร์ฟเวอร์ chrome-devtools-mcp MCP จะถูกลงทะเบียนในการตั้งค่าของ Claude Code และเชื่อมต่อกับเบราว์เซอร์ที่ใช้ร่วมกันผ่าน `--browserUrl` เซสชันทั้งหมดใช้อินสแตนซ์เบราว์เซอร์และ cookie jar เดียวกัน — การเข้าสู่ระบบ คุกกี้ และการยืนยันตัวตนจะคงอยู่ข้ามโปรเจกต์ต่างๆ
 
-## เครื่องมือที่พร้อมใช้งาน
+## เครื่องมือที่ใช้ได้
 
 | เครื่องมือ | คำอธิบาย |
 |------|-------------|
-| `navigate_page` | นำทางไปยัง URL และรอให้หน้าเว็บโหลดเสร็จ |
-| `take_screenshot` | จับภาพหน้าจอ PNG ของหน้าเว็บปัจจุบัน |
-| `take_snapshot` | รับ accessibility tree snapshot ของหน้าเว็บ |
-| `click` | คลิกองค์ประกอบบนหน้าเว็บ |
-| `type` | พิมพ์ข้อความลงในช่องป้อนข้อมูล |
+| `navigate_page` | นำทางไปยัง URL และรอให้หน้าโหลดเสร็จ |
+| `take_screenshot` | จับภาพหน้าจอ PNG ของหน้าปัจจุบัน |
+| `take_snapshot` | รับ snapshot ของ accessibility tree ของหน้า |
+| `click` | คลิกองค์ประกอบบนหน้า |
+| `type` | พิมพ์ข้อความลงในช่องกรอกข้อมูล |
 | `hover` | วางเมาส์เหนือองค์ประกอบ |
-| `scroll` | เลื่อนหน้าเว็บหรือองค์ประกอบเฉพาะ |
-| `evaluate` | รัน JavaScript ในบริบทของหน้าเว็บ |
+| `scroll` | เลื่อนหน้าหรือองค์ประกอบที่ระบุ |
+| `evaluate` | รัน JavaScript ในบริบทของหน้า |
 | `get_console_logs` | ดึงข้อความ console log |
-| `get_page_info` | รับข้อมูลเมตาของหน้าเว็บ (ชื่อเรื่อง, URL ฯลฯ) |
+| `get_page_info` | รับเมตาดาต้าของหน้า (ชื่อเรื่อง, URL ฯลฯ) |
 
 ## สถาปัตยกรรม
 
-สแต็กเบราว์เซอร์ใช้สี่ส่วนประกอบที่ทำงานร่วมกัน:
+สแตกเบราว์เซอร์ใช้สี่ส่วนประกอบที่ทำงานร่วมกัน:
 
-1. **Playwright Chromium** — ไบนารี Chromium ที่รองรับ ARM64 ติดตั้งในขั้นตอน build ผ่าน `npx playwright install --with-deps chromium`
-2. **Chrome symlink** — เชื่อมต่อเส้นทางที่ Puppeteer คาดหวัง (`/opt/google/chrome/chrome`) ไปยังไบนารี Playwright
+1. **Playwright Chromium** — ไบนารี Chromium ที่รองรับ ARM64 ติดตั้งตอน build ผ่าน `npx playwright install --with-deps chromium`
+2. **Chrome symlink** — เชื่อมเส้นทางที่ Puppeteer คาดหวัง (`/opt/google/chrome/chrome`) ไปยังไบนารีของ Playwright
 3. **กระบวนการ Chrome ที่ใช้ร่วมกัน** — เปิดใช้งานโดย `chrome-browser.sh` ด้วย `--remote-debugging-port=9222` รีสตาร์ทอัตโนมัติเมื่อเกิดข้อผิดพลาด
 4. **การลงทะเบียน MCP แบบ global** — `settings.json` ลงทะเบียน chrome-devtools-mcp ด้วย `--browserUrl=http://localhost:9222`
 
-Google Chrome ไม่มีแพ็กเกจ `.deb` สำหรับ ARM64 และแพ็กเกจ apt `chromium-browser` ของ Ubuntu 24.04 เปลี่ยนเส้นทางไปยัง snap (ซึ่งไม่ทำงานในคอนเทนเนอร์) Chromium ที่มาพร้อมกับ Playwright เป็นตัวเลือกเดียวที่เชื่อถือได้สำหรับคอนเทนเนอร์ ARM64
+Google Chrome ไม่มีแพ็กเกจ `.deb` สำหรับ ARM64 และแพ็กเกจ apt `chromium-browser` ของ Ubuntu 24.04 จะ redirect ไปยัง snap (ซึ่งใช้งานไม่ได้ในคอนเทนเนอร์) Chromium ที่รวมมากับ Playwright เป็นตัวเลือกเดียวที่เชื่อถือได้สำหรับคอนเทนเนอร์ ARM64
 
 ## การตรวจสอบ
 
@@ -62,10 +62,10 @@ claude-self-test
 
 ## โหมด Headed (VNC)
 
-เมื่อ `ENABLE_VNC=true` entrypoint จะเริ่มสแต็ก VNC ก่อนเปิดใช้งาน Chrome สคริปต์ `chrome-browser.sh` ตรวจจับว่ามีการตั้งค่า `DISPLAY` แล้วและรัน Chrome ในโหมด headed บนจอแสดงผลเสมือน เพื่อให้คุณสามารถเห็นเบราว์เซอร์ใน VNC viewer ได้
+เมื่อ `ENABLE_VNC=true` entrypoint จะเริ่มสแตก VNC ก่อนเปิดใช้งาน Chrome สคริปต์ `chrome-browser.sh` ตรวจจับว่า `DISPLAY` ถูกตั้งค่าแล้วและรัน Chrome ในโหมด headed บนจอแสดงผลเสมือน ทำให้คุณสามารถเห็นเบราว์เซอร์ใน VNC viewer ได้
 
-เปิด `http://localhost:6080/vnc.html` เพื่อดูจอแสดงผลเสมือน ดู [จอแสดงผลระยะไกล (noVNC)](./vnc) สำหรับรายละเอียด
+เปิด `http://localhost:6080/vnc.html` เพื่อดูจอแสดงผลเสมือน ดูรายละเอียดที่ [จอแสดงผลระยะไกล (noVNC)](./vnc)
 
 ## การแก้ไขปัญหา
 
-ดู [การแก้ไขปัญหา — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) สำหรับวิธีแก้ไขปัญหาทั่วไป รวมถึงความล้มเหลวของ remote debugging ข้อผิดพลาด profile lock และเครื่องมือ MCP ที่ซ้ำกัน
+ดู [การแก้ไขปัญหา — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) สำหรับวิธีแก้ปัญหาที่พบบ่อย รวมถึงปัญหา remote debugging ล้มเหลว ข้อผิดพลาดล็อกโปรไฟล์ และเครื่องมือ MCP ที่ซ้ำกัน

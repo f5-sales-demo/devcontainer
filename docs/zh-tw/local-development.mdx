@@ -1,6 +1,6 @@
 ---
-title: 本機開發
-description: 複製儲存庫、在本機建置，以及自訂 Docker 映像。
+title: 本地開發
+description: 複製儲存庫、本地建置，以及自訂 Docker 映像。
 sidebar:
   order: 5
 i18n:
@@ -10,7 +10,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-本頁面適用於想要複製儲存庫、在本機建置映像或自訂 Dockerfile 的開發者。如果您只想使用預建容器，請參閱[快速入門](./getting-started)。
+本頁面適用於想要複製儲存庫、本地建置映像或自訂 Dockerfile 的開發者。如果您只是想使用預建容器，請參閱[快速入門](./getting-started)。
 
 ## 複製儲存庫
 
@@ -39,12 +39,12 @@ cd devcontainer
 
 ## 建置檔案
 
-`docker-compose.build.yml` 檔案新增了本機建置支援。它**不會**自動合併——您必須使用 `-f` 旗標明確傳遞。這表示無論您是否複製了儲存庫，`docker compose up -d`（或 `podman-compose up -d`）都會從 GHCR 拉取預建映像。
+`docker-compose.build.yml` 檔案提供本地建置支援。它**不會**自動合併——您必須使用 `-f` 旗標明確傳入。這表示無論您是否複製了儲存庫，`docker compose up -d`（或 `podman-compose up -d`）始終會從 GHCR 拉取預建映像。
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-您可以驗證單純的 `docker compose up` 僅使用預建映像（沒有 `build:` 上下文）：
+您可以驗證單純的 `docker compose up` 僅使用預建映像（無 `build:` 內容）：
 
 ```bash
 docker compose config
@@ -59,7 +59,7 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml config
 </TabItem>
 <TabItem label="Podman">
 
-您可以驗證單純的 `podman-compose up` 僅使用預建映像（沒有 `build:` 上下文）：
+您可以驗證單純的 `podman-compose up` 僅使用預建映像（無 `build:` 內容）：
 
 ```bash
 podman-compose config
@@ -74,7 +74,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml config
 </TabItem>
 </Tabs>
 
-## 在本機建置
+## 本地建置
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -93,7 +93,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-這會將建置檔案與基礎 compose 檔案合併，從本機 `Dockerfile` 建置映像，並啟動容器。`--build` 旗標會強制重新建置，即使已存在快取映像。
+這會將建置檔案與基礎 compose 檔案合併，從本地 `Dockerfile` 建置映像，並啟動容器。`--build` 旗標會強制重新建置，即使快取映像已存在。
 
 ## 兩階段建置架構
 
@@ -101,19 +101,19 @@ Dockerfile 使用針對 Docker 層快取最佳化的兩階段建置：
 
 ### 第 1 階段：`deps`（穩定基礎，約 4.5 GB）
 
-這些層僅在版本 ARG 變更或 APT 套件改變時才會重新建置。在一般僅工具變更的情況下，BuildKit 會跳過整個階段。
+這些層僅在版本 ARG 更新或 APT 套件變更時才會重新建置。在一般僅工具變更時，BuildKit 會跳過整個階段。
 
 | 區段 | 內容 |
 |---------|----------|
 | 1. APT 儲存庫 | NodeSource、deadsnakes、HashiCorp、GitHub、Docker、Microsoft、Google Cloud、Dart SDK |
 | 2. APT 套件 | 系統工具、Node.js、Python、Java、Terraform、GitHub CLI、Docker 引擎、Azure CLI、PowerShell、語系 |
 | 2b. 安全性 APT 套件 | 網路分析、網頁掃描器、密碼工具、逆向工程、鑑識（約 80 個套件） |
-| 3. Python 引導 | 符號連結 + 透過 get-pip.py 安裝 pip |
-| 4. Go | 官方 tarball（最新穩定版，建置時解析） |
-| 5. Rust | rustup（系統範圍，最新穩定版） |
+| 3. Python 初始化 | 符號連結 + 透過 get-pip.py 安裝 pip |
+| 4. Go | 官方壓縮檔（最新穩定版，建置時解析） |
+| 5. Rust | rustup（系統層級，最新穩定版） |
 | 6. Maven + Gradle | 二進位檔下載至 `/opt` |
 | 7. VNC 堆疊 | Xvfb、x11vnc、noVNC、fluxbox — 透過瀏覽器遠端顯示 |
-| 8. Nerd Fonts | JetBrainsMono、Hack、FiraCode（最新版本） |
+| 8. Nerd 字型 | JetBrainsMono、Hack、FiraCode（最新版本） |
 
 ### 第 2 階段：`final`（易變工具 + 使用者設定，約 1.5 GB）
 
@@ -126,31 +126,31 @@ Dockerfile 使用針對 Docker 層快取最佳化的兩階段建置：
 | 10b. 額外二進位檔 | VS Code CLI、oc、yq、terragrunt、ibmcloud、fzf、hadolint、codex |
 | 10c. Super-linter 二進位檔 | shfmt、gitleaks、editorconfig-checker、trivy、clj-kondo、dotenv-linter、golangci-lint、goreleaser、kubeconform、protolint、scalafmt、ktlint |
 | 10d. Java JAR 工具 | checkstyle、google-java-format（包裝腳本） |
-| 10e. PHP linter | phpcs、phpstan、psalm（PHAR 下載） |
+| 10e. PHP 檢查工具 | phpcs、phpstan、psalm（PHAR 下載） |
 | 10f. PowerShell 模組 | PSScriptAnalyzer、arm-ttk |
 | 10g. 安全性二進位檔 | nuclei、subfinder、httpx、ffuf、gobuster、feroxbuster、dalfox、amass、trufflehog、grype、syft、bettercap（amd64） |
 | 10h. OWASP ZAP | 基於 Java 的網頁應用程式掃描器 |
 | 10i. Ghidra | 逆向工程框架 |
-| 10j. Metasploit | 滲透測試框架（僅限 amd64） |
+| 10j. Metasploit | 滲透測試框架（僅 amd64） |
 | 11. npm 全域工具 | claude-code、prettier、markdownlint-cli2、devcontainers-cli、playwright、pi-coding-agent、oh-my-pi |
 | 12. pip 工具 | pre-commit、ansible、black、pylint、yamllint、playwright |
-| 12c. Ruby linter | rubocop + 擴充套件 |
-| 12e. Perl linter 模組 | Perl::Critic 擴充套件 |
-| 12f. Lua linter | luacheck |
-| 12g. R linter | lintr |
+| 12c. Ruby 檢查工具 | rubocop + 擴充套件 |
+| 12e. Perl 檢查模組 | Perl::Critic 擴充套件 |
+| 12f. Lua 檢查工具 | luacheck |
+| 12g. R 檢查工具 | lintr |
 | 12h. 安全性 Ruby gems | wpscan、evil-winrm |
-| 12i. Git 複製的安全性工具 | testssl.sh、exploitdb（searchsploit）、SecLists、docker-bench-security、recon-ng、spiderfoot |
+| 12i. Git 複製的安全性工具 | testssl.sh、exploitdb (searchsploit)、SecLists、docker-bench-security、recon-ng、spiderfoot |
 | 13. Playwright 瀏覽器 | Chromium + 透過 `playwright install --with-deps` 安裝系統依賴 |
 | 13b. Chrome DevTools MCP | Chrome 符號連結 + MCP 預快取 + 無頭模式修補 |
-| 14. Homebrew | Linuxbrew（AI 助理依賴 + 格式化工具） |
+| 14. Homebrew | Linuxbrew（AI 助手依賴 + 格式化工具） |
 | 15. ZSH 外掛 | oh-my-zsh 自訂外掛 |
-| 16. Shell 引導 | npm-global、tfenv、compinit |
+| 16. Shell 初始化 | npm-global、tfenv、compinit |
 | 17. Claude Code + Codex 設定 | 工具感知記憶、管理策略、自我測試腳本、Codex 設定 |
-| 18. 進入點 | 容器啟動腳本（絕對最後一個 COPY） |
+| 18. 進入點 | 容器啟動腳本（絕對最後的 COPY） |
 
 ## 新增工具
 
-編輯 `Dockerfile` 並將您的工具新增至適當的區段。新增後重新建置：
+編輯 `Dockerfile` 並將您的工具加入適當的區段。新增後重新建置：
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -173,7 +173,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 
 ### APT 套件
 
-新增至第 2 區段的 `apt-get install` 區塊：
+加入第 2 區段的 `apt-get install` 區塊：
 
 ```dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -184,7 +184,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ### npm 工具
 
-新增至第 11 區段的 `npm install -g` 區塊：
+加入第 11 區段的 `npm install -g` 區塊：
 
 ```dockerfile
 RUN npm install -g \
@@ -193,7 +193,7 @@ RUN npm install -g \
 
 ### pip 工具
 
-新增至第 12 區段的 `pip install` 區塊：
+加入第 12 區段的 `pip install` 區塊：
 
 ```dockerfile
 RUN pip install --no-cache-dir --break-system-packages \
@@ -202,7 +202,7 @@ RUN pip install --no-cache-dir --break-system-packages \
 
 ### 二進位檔下載
 
-新增至第 10 區段或建立新的 `RUN` 層並加入架構偵測：
+加入第 10 區段或建立新的 `RUN` 層並使用架構偵測：
 
 ```dockerfile
 RUN ARCH=$(dpkg --print-architecture) \
@@ -212,10 +212,10 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## 建置快取
 
-CI 使用**基於登錄檔的快取**——建置層儲存在 GHCR（`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`）而非 GitHub Actions 快取中。這避免了 10 GB GHA 快取限制，該限制會導致此約 6 GB 的多架構映像頻繁進行完整重建。
+CI 使用**基於登錄檔的快取**——建置層儲存在 GHCR（`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`）中，而非 GitHub Actions 快取。這避免了 10 GB GHA 快取限制，該限制曾導致此約 6 GB 多架構映像頻繁進行完整重新建置。
 
-兩階段架構與登錄檔快取搭配使用，使得：
+兩階段架構與登錄檔快取協同運作，使得：
 
-- **工具版本升級**（npm、pip、二進位工具）——僅重建 `final` 階段（約 5 分鐘）
-- **設定檔變更**（`claude-config/`、`entrypoint.sh`）——僅重建最後幾層（約 1 分鐘）
-- **基礎變更**（APT 套件、Go/Rust/Java 版本）——完整重建兩個階段（約 30 分鐘）
+- **工具版本更新**（npm、pip、二進位工具）——僅重新建置 `final` 階段（約 5 分鐘）
+- **設定檔變更**（`claude-config/`、`entrypoint.sh`）——僅重新建置最後幾層（約 1 分鐘）
+- **基礎變更**（APT 套件、Go/Rust/Java 版本）——兩個階段完整重新建置（約 30 分鐘）

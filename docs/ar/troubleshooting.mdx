@@ -37,7 +37,7 @@ podman-compose up -d
 
 ### "claude: command not found"
 
-قد تكون الصورة قديمة. قم بسحب أحدث إصدار وأعد التشغيل:
+قد تكون الصورة قديمة. اسحب أحدث إصدار وأعد التشغيل:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -60,7 +60,7 @@ podman-compose up -d
 
 ### Claude يظهر "Not logged in"
 
-يقوم نقطة الدخول بتهيئة `~/.claude.json` بعلامات الإعداد الأولي. إذا كان مفقوداً:
+نقطة الدخول تُنشئ ملف `~/.claude.json` مع إشارات الإعداد الأولي. إذا كان مفقوداً:
 
 ```bash
 echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
@@ -68,7 +68,7 @@ echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
 
 ### Claude يظهر "Invalid API key"
 
-تحقق من القيمة المعيّنة فعلياً:
+تحقق من القيمة المُعيَّنة فعلياً:
 
 ```bash
 echo "$ANTHROPIC_API_KEY"
@@ -79,15 +79,15 @@ echo "$ANTHROPIC_API_KEY"
 - **مفتاح وكيل LiteLLM مفقود أو غير صالح** — إذا كنت تستخدم وضع الوكيل، تأكد من أن `LITELLM_API_KEY` في `.env` يحتوي على بيانات اعتماد الوكيل الصحيحة، ثم أعد تشغيل الحاوية حتى تتمكن نقطة الدخول من اشتقاق `ANTHROPIC_API_KEY`.
 - **عدم تطابق رمز OAuth أو وضع الوكيل** — استخدم وضع مصادقة واحد فقط. إذا تم تعيين `CLAUDE_CODE_OAUTH_TOKEN`، فإنه يأخذ الأولوية على وضع وكيل LiteLLM.
 
-### طلبات API تفشل بخطأ 401
+### طلبات API تفشل مع خطأ 401
 
-تحقق من أن مفتاح API الخاص بك معيّن بشكل صحيح:
+تحقق من أن مفتاح API مُعيَّن بشكل صحيح:
 
 ```bash
 echo "$ANTHROPIC_API_KEY"
 ```
 
-تحقق من عمله بإجراء استدعاء مباشر لمزود الخدمة الخاص بك.
+تحقق من عمله عن طريق إجراء استدعاء مباشر لمزود الخدمة الخاص بك.
 
 ### Claude يقول "model not found"
 
@@ -97,15 +97,15 @@ echo "$ANTHROPIC_API_KEY"
 
 ### "gh: not authenticated"
 
-تتطلب واجهة سطر أوامر `gh` متغير بيئة `GH_TOKEN`. أضفه إلى ملف `.env`:
+واجهة سطر أوامر `gh` تتطلب متغير بيئة `GH_TOKEN`. أضفه إلى ملف `.env` الخاص بك:
 
 ```ini
 GH_TOKEN=ghp_your-token-here
 ```
 
-أنشئ رمزاً في [github.com/settings/tokens](https://github.com/settings/tokens). تعمل كل من الرموز الدقيقة (موصى بها) والرموز الكلاسيكية ذات نطاق `repo`. أعد تشغيل الحاوية بعد تحديث `.env`.
+أنشئ رمزاً في [github.com/settings/tokens](https://github.com/settings/tokens). الرموز الدقيقة (موصى بها) أو الرموز الكلاسيكية مع نطاق `repo` كلاهما يعمل. أعد تشغيل الحاوية بعد تحديث `.env`.
 
-### استنساخ HTTPS عبر git يفشل بخطأ 401
+### استنساخ HTTPS عبر git يفشل مع خطأ 401
 
 عند تعيين `GH_TOKEN`، تقوم نقطة الدخول بتشغيل `gh auth setup-git` لتكوين مساعد بيانات اعتماد git لـ HTTPS. إذا فشلت عمليات HTTPS:
 
@@ -120,7 +120,7 @@ GH_TOKEN=ghp_your-token-here
 - **SSH** (`SSH_PRIVATE_KEY` في `.env`) — يستخدم عناوين `git@github.com:`. مطلوب إذا كانت مؤسستك تفرض SSH.
 - **HTTPS** (`GH_TOKEN` في `.env`) — يستخدم عناوين `https://github.com/`. إعداد أبسط، بدون إدارة مفاتيح.
 
-إذا تم تكوين كليهما، يستخدم git البروتوكول الذي يطابق عنوان URL البعيد. للتبديل في استنساخ موجود:
+إذا تم تكوين كليهما، يستخدم git البروتوكول الذي يتطابق مع عنوان URL البعيد. للتبديل في استنساخ موجود:
 
 ```bash
 # SSH to HTTPS
@@ -138,7 +138,7 @@ git remote set-url origin git@github.com:owner/repo.git
 sudo chown -R $(id -u):$(id -g) /workspace ~
 ```
 
-### فشل npm install بخطأ EACCES
+### فشل npm install مع خطأ EACCES
 
 تقوم نقطة الدخول تلقائياً بتكوين بادئة npm عامة قابلة للكتابة بواسطة المستخدم في `~/.npm-global`، لذا يجب أن تعمل أوامر `npm install -g` أثناء التشغيل بدون `sudo`. إذا كنت لا تزال ترى أخطاء EACCES، أعد تطبيق الإصلاح يدوياً:
 
@@ -152,7 +152,7 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 
 ### البناء يستغرق وقتاً طويلاً جداً
 
-يقوم البناء الأول بتنزيل الصورة الأساسية (~1 جيجابايت). تستخدم عمليات البناء اللاحقة ذاكرة التخزين المؤقت. إذا كان بطيئاً في كل مرة:
+أول عملية بناء تقوم بتنزيل الصورة الأساسية (~1 جيجابايت). عمليات البناء اللاحقة تستخدم ذاكرة التخزين المؤقت. إذا كان بطيئاً في كل مرة:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -190,7 +190,7 @@ podman system prune -a --volumes
 </TabItem>
 </Tabs>
 
-**تحذير:** يؤدي هذا إلى إزالة جميع الحاويات والصور والأقراص غير المستخدمة — وليس فقط الخاصة بهذا المشروع.
+**تحذير:** هذا يزيل جميع الحاويات والصور ووحدات التخزين غير المستخدمة — وليس فقط الخاصة بهذا المشروع.
 
 ## الشبكات
 
@@ -205,7 +205,7 @@ curl -I https://github.com
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-إذا فشل DNS، أضف إلى `/etc/docker/daemon.json` على الجهاز المضيف:
+إذا فشل DNS، أضف إلى `/etc/docker/daemon.json` على المضيف:
 
 ```json
 {
@@ -226,7 +226,7 @@ sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
 exit
 ```
 
-أو أضف إعدادات DNS إلى `~/.config/containers/containers.conf` على الجهاز المضيف:
+أو أضف إعدادات DNS إلى `~/.config/containers/containers.conf` على المضيف:
 
 ```ini
 [containers]
@@ -248,11 +248,11 @@ dns_servers = ["8.8.8.8", "8.8.4.4"]
 ps aux | grep Xvfb
 ```
 
-إذا لم يكن قيد التشغيل، تحقق من أن `ENABLE_VNC` ليس معيّناً على `false` وأعد تشغيل الحاوية.
+إذا لم يكن قيد التشغيل، تحقق من أن `ENABLE_VNC` غير مُعيَّن على `false` وأعد تشغيل الحاوية.
 
 ### خطأ "Cannot open display" أو "No display"
 
-قد لا يكون متغير البيئة `DISPLAY` معيّناً. تحقق:
+قد لا يكون متغير البيئة `DISPLAY` مُعيَّناً. تحقق:
 
 ```bash
 echo "$DISPLAY"
@@ -268,7 +268,7 @@ echo "$DISPLAY"
 ps aux | grep -E 'novnc|websockify'
 ```
 
-إذا لم يكن قيد التشغيل، تحقق من أن `ENABLE_VNC` معيّن على `true` (الافتراضي) وتحقق من سجلات الحاوية:
+إذا لم يكن قيد التشغيل، تحقق من أن `ENABLE_VNC` مُعيَّن على `true` (الافتراضي) وراجع سجلات الحاوية:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -287,7 +287,7 @@ podman-compose logs dev | grep -i vnc
 </TabItem>
 </Tabs>
 
-### المنفذ 6080 مستخدم بالفعل
+### المنفذ 6080 قيد الاستخدام بالفعل
 
 غيّر منفذ المضيف في `docker-compose.yml`:
 
@@ -321,7 +321,7 @@ start_chrome_browser
 
 ### خطأ قفل ملف تعريف المتصفح
 
-مع بنية المتصفح المشترك، لا ينبغي أن تحدث أخطاء قفل ملف التعريف. إذا رأيت خطأً، فقد تكون عملية Chrome قديمة تحتفظ بالقفل:
+مع بنية المتصفح المشترك، لا ينبغي أن تحدث أخطاء قفل الملف الشخصي. إذا رأيت واحداً، فقد تكون عملية Chrome قديمة تحتفظ بالقفل:
 
 ```bash
 # Kill any stale Chrome processes
@@ -337,14 +337,14 @@ start_chrome_browser
 
 ### أدوات chrome-devtools-mcp مكررة
 
-تم تسجيل خادم chrome-devtools-mcp عالمياً في `~/.claude/settings.json`. إذا كان لديك `.mcp.json` خاص بالمستودع يقوم أيضاً بتسجيله، فسترى أدوات مكررة. أزل إدخال `chrome-devtools-mcp` من ملفات `.mcp.json` الخاصة بالمستودع:
+خادم chrome-devtools-mcp مسجل الآن عالمياً في `~/.claude/settings.json`. إذا كان لديك ملف `.mcp.json` خاص بالمستودع يسجله أيضاً، فسترى أدوات مكررة. أزل إدخال `chrome-devtools-mcp` من ملفات `.mcp.json` الخاصة بالمستودع:
 
 ```bash
 # Check for per-repo config
 cat .mcp.json
 ```
 
-أزل مفتاح `chrome-devtools-mcp` من أي `.mcp.json` خاص بالمستودع لاستخدام التسجيل العالمي.
+أزل مفتاح `chrome-devtools-mcp` من أي ملف `.mcp.json` خاص بالمستودع لاستخدام التسجيل العالمي.
 
 ## إعادة تعيين كل شيء
 
@@ -371,4 +371,4 @@ podman-compose up -d
 </TabItem>
 </Tabs>
 
-يؤدي هذا إلى تدمير جميع البيانات في الأقراص. ستحتاج إلى إعادة استنساخ المستودعات وإعادة تكوين الأدوات.
+هذا يدمر جميع البيانات في وحدات التخزين. ستحتاج إلى إعادة استنساخ المستودعات وإعادة تكوين الأدوات.
