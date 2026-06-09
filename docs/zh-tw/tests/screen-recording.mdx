@@ -1,6 +1,6 @@
 ---
-title: 螢幕錄影測試
-description: 證明 Xvfb、有頭模式 Chromium（透過 Playwright）以及 ffmpeg 螢幕錄影能在 devcontainer 內協同運作。
+title: 螢幕錄製測試
+description: 驗證 Xvfb、有頭模式 Chromium（透過 Playwright）以及 ffmpeg 螢幕錄製在 devcontainer 內能夠正常協同運作。
 sidebar:
   order: 1
 i18n:
@@ -10,21 +10,21 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-此測試透過將有頭瀏覽器工作階段錄製為 MP4 檔案，來驗證完整的 VNC/瀏覽器堆疊。它證明了：
+此測試透過將有頭瀏覽器工作階段錄製為 MP4 檔案來驗證完整的 VNC/瀏覽器堆疊。它證明了：
 
-- **Xvfb** 正在運行並接受 `:99` 上的連線
-- **Chromium** 能夠在虛擬顯示器上以有頭模式啟動
-- **ffmpeg** 能夠透過 x11grab 擷取顯示畫面
+- **Xvfb** 正在運行並在 `:99` 上接受連線
+- **Chromium** 可以在虛擬顯示器上以有頭模式啟動
+- **ffmpeg** 可以透過 x11grab 擷取顯示器畫面
 - 產生的 **MP4** 是有效且可播放的影片
 
 ## 運作原理
 
-1. 輪詢 `xdpyinfo -display :99` 直到 X 顯示器就緒（與 entrypoint 相同的模式）
-2. 以 10 fps 啟動 ffmpeg 錄製顯示畫面
+1. 輪詢 `xdpyinfo -display :99` 直到 X 顯示器就緒（與入口點相同的模式）
+2. 以 10 fps 啟動 ffmpeg 錄製顯示器畫面
 3. 透過 Playwright 的 `sync_api` 啟動有頭模式 Chromium
 4. 導覽至 `https://example.com`（暫停 3 秒），然後導覽至 `https://httpbin.org`（暫停 3 秒）
-5. 向 ffmpeg 發送 SIGTERM 以正確完成 MP4 檔案寫入
-6. 回報輸出路徑和檔案大小
+5. 向 ffmpeg 發送 SIGTERM 以完成 MP4 的正常收尾
+6. 報告輸出路徑和檔案大小
 
 ## 腳本
 
@@ -194,13 +194,13 @@ Stopping ffmpeg ...
 SUCCESS: /tmp/recording.mp4 (1,234,567 bytes)
 ```
 
-MP4 應該會顯示 Chromium 視窗在 fluxbox 桌面上渲染兩個網站的畫面。使用 `ffplay`、`vlc` 播放，或從容器下載檔案來進行驗證。
+MP4 應顯示 Chromium 視窗在 fluxbox 桌面上渲染兩個網站的畫面。使用 `ffplay`、`vlc` 播放，或從容器中下載以進行驗證。
 
-## 失敗的含義
+## 失敗的意義
 
 | 症狀 | 可能原因 |
 | ---- | ---- |
-| `Xvfb display :99 not ready` | Xvfb 未啟動 — 請檢查 entrypoint 是否執行了 VNC 堆疊 |
+| `Xvfb display :99 not ready` | Xvfb 未啟動 — 檢查入口點是否執行了 VNC 堆疊 |
 | `ffmpeg: x11grab error` | 顯示器不匹配或 ffmpeg 缺少 x11grab 支援 |
 | `Playwright launch error` | Chromium 未安裝或缺少 `--no-sandbox` 參數 |
-| MP4 大小為 0 位元組 | ffmpeg 在寫入前被終止 — 請檢查 SIGTERM 處理邏輯 |
+| MP4 為 0 位元組 | ffmpeg 在寫入前被終止 — 檢查 SIGTERM 處理 |

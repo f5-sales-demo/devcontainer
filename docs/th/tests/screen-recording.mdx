@@ -1,8 +1,8 @@
 ---
-title: Screen Recording Test
+title: การทดสอบการบันทึกหน้าจอ
 description: >-
-  พิสูจน์ว่า Xvfb, headed Chromium (ผ่าน Playwright) และการบันทึกหน้าจอด้วย
-  ffmpeg ทำงานร่วมกันได้ภายใน devcontainer
+  พิสูจน์ว่า Xvfb, Chromium แบบ headed (ผ่าน Playwright) และการบันทึกหน้าจอด้วย
+  ffmpeg ทำงานร่วมกันได้อย่างถูกต้องภายใน devcontainer
 sidebar:
   order: 1
 i18n:
@@ -12,25 +12,25 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-การทดสอบนี้ตรวจสอบ VNC/browser stack ทั้งหมดโดยการบันทึกเซสชันเบราว์เซอร์แบบ headed เป็นไฟล์ MP4 โดยพิสูจน์ว่า:
+การทดสอบนี้ตรวจสอบการทำงานของ VNC/browser stack ทั้งหมด โดยการบันทึกเซสชันเบราว์เซอร์แบบ headed เป็นไฟล์ MP4 เพื่อพิสูจน์ว่า:
 
 - **Xvfb** กำลังทำงานและรับการเชื่อมต่อบน `:99`
-- **Chromium** สามารถเปิดในโหมด headed บนจอแสดงผลเสมือนได้
-- **ffmpeg** สามารถจับภาพจอแสดงผลผ่าน x11grab ได้
-- **MP4** ที่ได้เป็นวิดีโอที่ถูกต้องและเล่นได้
+- **Chromium** สามารถเปิดในโหมด headed บน virtual display ได้
+- **ffmpeg** สามารถจับภาพหน้าจอผ่าน x11grab ได้
+- ไฟล์ **MP4** ที่ได้เป็นวิดีโอที่ถูกต้องและเล่นได้
 
 ## วิธีการทำงาน
 
-1. สำรวจ `xdpyinfo -display :99` จนกว่าจอแสดงผล X จะพร้อม (รูปแบบเดียวกับ entrypoint)
-2. เริ่มบันทึก ffmpeg ที่ 10 fps
-3. เปิด headed Chromium ผ่าน `sync_api` ของ Playwright
+1. ตรวจสอบ `xdpyinfo -display :99` ซ้ำจนกว่า X display จะพร้อม (รูปแบบเดียวกับ entrypoint)
+2. เริ่มต้น ffmpeg บันทึกหน้าจอที่ 10 fps
+3. เปิด Chromium แบบ headed ผ่าน `sync_api` ของ Playwright
 4. นำทางไปยัง `https://example.com` (หยุด 3 วินาที) จากนั้น `https://httpbin.org` (หยุด 3 วินาที)
-5. ส่ง SIGTERM ไปยัง ffmpeg เพื่อจบไฟล์ MP4 อย่างสมบูรณ์
+5. ส่ง SIGTERM ไปยัง ffmpeg เพื่อสรุปไฟล์ MP4 อย่างถูกต้อง
 6. รายงานเส้นทางผลลัพธ์และขนาดไฟล์
 
 ## สคริปต์
 
-บันทึกไฟล์ต่อไปนี้เป็น `vnc-browser-test.py` ภายในคอนเทนเนอร์ หรือคัดลอกจากไดเรกทอรี `docs/tests/` ของ repo นี้:
+บันทึกไฟล์ต่อไปนี้เป็น `vnc-browser-test.py` ภายในคอนเทนเนอร์ หรือคัดลอกจากไดเรกทอรี `docs/tests/` ของรีโพนี้:
 
 ```python
 #!/usr/bin/env python3
@@ -196,13 +196,13 @@ Stopping ffmpeg ...
 SUCCESS: /tmp/recording.mp4 (1,234,567 bytes)
 ```
 
-ไฟล์ MP4 ควรแสดงหน้าต่าง Chromium ที่เรนเดอร์เว็บไซต์ทั้งสองบนเดสก์ท็อป fluxbox เล่นกลับด้วย `ffplay`, `vlc` หรือดาวน์โหลดจากคอนเทนเนอร์เพื่อตรวจสอบ
+ไฟล์ MP4 ควรแสดงหน้าต่าง Chromium ที่กำลังแสดงผลทั้งสองเว็บไซต์บนเดสก์ท็อป fluxbox เล่นไฟล์กลับด้วย `ffplay`, `vlc` หรือดาวน์โหลดจากคอนเทนเนอร์เพื่อตรวจสอบ
 
-## ความหมายเมื่อเกิดความล้มเหลว
+## ความหมายเมื่อทดสอบล้มเหลว
 
-| อาการ | สาเหตุที่น่าจะเป็น |
+| อาการ | สาเหตุที่เป็นไปได้ |
 | ---- | ---- |
 | `Xvfb display :99 not ready` | Xvfb ไม่ได้เริ่มต้น — ตรวจสอบว่า entrypoint ได้รัน VNC stack แล้ว |
-| `ffmpeg: x11grab error` | จอแสดงผลไม่ตรงกันหรือ ffmpeg ไม่รองรับ x11grab |
+| `ffmpeg: x11grab error` | Display ไม่ตรงกันหรือ ffmpeg ไม่รองรับ x11grab |
 | `Playwright launch error` | Chromium ไม่ได้ติดตั้งหรือขาด `--no-sandbox` |
-| MP4 มีขนาด 0 ไบต์ | ffmpeg ถูกหยุดก่อนที่จะเขียนเสร็จ — ตรวจสอบการจัดการ SIGTERM |
+| MP4 มีขนาด 0 ไบต์ | ffmpeg ถูกหยุดก่อนเขียนข้อมูล — ตรวจสอบการจัดการ SIGTERM |

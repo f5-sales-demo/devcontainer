@@ -33,11 +33,11 @@ podman-compose up -d
 </TabItem>
 </Tabs>
 
-## AI 工具无法使用
+## AI 工具无法正常工作
 
 ### "claude: command not found"
 
-镜像可能已过期。拉取最新版本并重启：
+镜像可能已过时。拉取最新版本并重新启动：
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -60,7 +60,7 @@ podman-compose up -d
 
 ### Claude 显示 "Not logged in"
 
-入口点脚本会在 `~/.claude.json` 中设置引导标志。如果该文件缺失：
+入口脚本会在 `~/.claude.json` 中写入引导标志。如果该文件缺失：
 
 ```bash
 echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
@@ -76,7 +76,7 @@ echo "$ANTHROPIC_API_KEY"
 
 常见原因：
 
-- **LiteLLM 代理密钥缺失或无效** — 如果您使用的是代理模式，请确保 `.env` 中的 `LITELLM_API_KEY` 包含正确的代理凭据，然后重启容器以便入口点脚本派生 `ANTHROPIC_API_KEY`。
+- **LiteLLM 代理密钥缺失或无效** — 如果您使用代理模式，请确保 `.env` 中的 `LITELLM_API_KEY` 包含正确的代理凭证，然后重启容器以便入口脚本生成 `ANTHROPIC_API_KEY`。
 - **OAuth 令牌或代理模式不匹配** — 请仅使用一种认证模式。如果设置了 `CLAUDE_CODE_OAUTH_TOKEN`，它将优先于 LiteLLM 代理模式。
 
 ### API 请求返回 401 错误
@@ -103,24 +103,24 @@ echo "$ANTHROPIC_API_KEY"
 GH_TOKEN=ghp_your-token-here
 ```
 
-在 [github.com/settings/tokens](https://github.com/settings/tokens) 创建令牌。细粒度令牌（推荐）或具有 `repo` 范围的经典令牌均可使用。更新 `.env` 后重启容器。
+在 [github.com/settings/tokens](https://github.com/settings/tokens) 创建令牌。细粒度令牌（推荐）或具有 `repo` 权限的经典令牌均可使用。更新 `.env` 后请重启容器。
 
 ### HTTPS git clone 返回 401 失败
 
-当设置了 `GH_TOKEN` 时，入口点脚本会运行 `gh auth setup-git` 来配置 HTTPS 的 git 凭据助手。如果 HTTPS 操作失败：
+当设置了 `GH_TOKEN` 时，入口脚本会运行 `gh auth setup-git` 来配置用于 HTTPS 的 git 凭证助手。如果 HTTPS 操作失败：
 
 1. 验证令牌是否有效：`gh auth status`
-2. 检查凭据助手是否已配置：`git config --global credential.helper`
-3. 重启容器以重新运行入口点脚本
+2. 检查凭证助手是否已配置：`git config --global credential.helper`
+3. 重启容器以重新运行入口脚本
 
 ### SSH 与 HTTPS
 
-两种认证方式可以在容器中共存：
+容器中可以同时使用两种认证方式：
 
 - **SSH**（`.env` 中的 `SSH_PRIVATE_KEY`）— 使用 `git@github.com:` URL。如果您的组织强制要求使用 SSH，则必须使用此方式。
-- **HTTPS**（`.env` 中的 `GH_TOKEN`）— 使用 `https://github.com/` URL。设置更简单，无需管理密钥。
+- **HTTPS**（`.env` 中的 `GH_TOKEN`）— 使用 `https://github.com/` URL。设置更简单，无需密钥管理。
 
-如果两者都已配置，git 会使用与远程 URL 匹配的协议。要切换现有克隆的协议：
+如果两者都已配置，git 会根据远程 URL 匹配的协议来选择使用哪种方式。要切换现有克隆仓库的协议：
 
 ```bash
 # SSH 切换到 HTTPS
@@ -140,7 +140,7 @@ sudo chown -R $(id -u):$(id -g) /workspace ~
 
 ### npm install 出现 EACCES 错误
 
-入口点脚本会自动在 `~/.npm-global` 配置用户可写的 npm 全局前缀，因此运行时的 `npm install -g` 命令应无需 `sudo` 即可工作。如果仍然出现 EACCES 错误，请手动重新应用修复：
+入口脚本会自动在 `~/.npm-global` 配置用户可写的 npm 全局前缀，因此运行时的 `npm install -g` 命令无需 `sudo` 即可使用。如果仍然出现 EACCES 错误，请手动重新应用修复：
 
 ```bash
 mkdir -p ~/.npm-global
@@ -150,7 +150,7 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 
 ## 构建问题
 
-### 构建耗时过长
+### 构建耗时很长
 
 首次构建需要下载基础镜像（约 1 GB）。后续构建会使用缓存。如果每次都很慢：
 
@@ -192,7 +192,7 @@ podman system prune -a --volumes
 
 **警告：** 此操作会删除所有未使用的容器、镜像和卷 — 不仅限于本项目的。
 
-## 网络
+## 网络问题
 
 ### 容器内无法访问互联网
 
@@ -205,7 +205,7 @@ curl -I https://github.com
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-如果 DNS 解析失败，请在宿主机的 `/etc/docker/daemon.json` 中添加：
+如果 DNS 解析失败，在宿主机的 `/etc/docker/daemon.json` 中添加：
 
 ```json
 {
@@ -218,7 +218,7 @@ curl -I https://github.com
 </TabItem>
 <TabItem label="Podman">
 
-如果 DNS 解析失败，请在 Podman 虚拟机内配置 DNS：
+如果 DNS 解析失败，在 Podman 虚拟机内配置 DNS：
 
 ```bash
 podman machine ssh
@@ -238,7 +238,7 @@ dns_servers = ["8.8.8.8", "8.8.4.4"]
 </TabItem>
 </Tabs>
 
-## 远程显示 (noVNC)
+## 远程显示（noVNC）
 
 ### noVNC 显示黑屏
 
@@ -258,7 +258,7 @@ ps aux | grep Xvfb
 echo "$DISPLAY"
 ```
 
-应该为 `:99`。如果为空，请在 `.env` 或 `devcontainer.json` 中添加 `DISPLAY=:99` 并重启。
+其值应为 `:99`。如果为空，请在您的 `.env` 或 `devcontainer.json` 中添加 `DISPLAY=:99` 并重启。
 
 ### 端口 6080 连接被拒绝
 
@@ -268,7 +268,7 @@ noVNC 可能未运行。在容器内检查：
 ps aux | grep -E 'novnc|websockify'
 ```
 
-如果未运行，请验证 `ENABLE_VNC` 为 `true`（默认值）并检查容器日志：
+如果未运行，请验证 `ENABLE_VNC` 为 `true`（默认值），并检查容器日志：
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -321,7 +321,7 @@ start_chrome_browser
 
 ### 浏览器配置文件锁定错误
 
-使用共享浏览器架构时，不应出现配置文件锁定错误。如果遇到此问题，可能是残留的 Chrome 进程持有锁：
+使用共享浏览器架构时，不应出现配置文件锁定错误。如果出现此错误，可能是残留的 Chrome 进程持有了锁：
 
 ```bash
 # 终止所有残留的 Chrome 进程
@@ -337,14 +337,14 @@ start_chrome_browser
 
 ### chrome-devtools-mcp 工具重复
 
-chrome-devtools-mcp 服务器现已在 `~/.claude/settings.json` 中全局注册。如果您有一个也注册了它的项目级 `.mcp.json`，您将看到重复的工具。请从项目级 `.mcp.json` 文件中移除 `chrome-devtools-mcp` 条目：
+chrome-devtools-mcp 服务器现已在 `~/.claude/settings.json` 中全局注册。如果您的项目级 `.mcp.json` 也注册了它，您将看到重复的工具。请从项目级 `.mcp.json` 文件中删除 `chrome-devtools-mcp` 条目：
 
 ```bash
 # 检查项目级配置
 cat .mcp.json
 ```
 
-从任何项目级 `.mcp.json` 中移除 `chrome-devtools-mcp` 键以使用全局注册。
+从任何项目级 `.mcp.json` 中删除 `chrome-devtools-mcp` 键以使用全局注册。
 
 ## 重置所有内容
 

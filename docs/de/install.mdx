@@ -24,7 +24,7 @@ Dieser einzelne Befehl übernimmt die vollständige Ersteinrichtung:
 4. Lädt `docker-compose.yml`, `devcontainer.sh` und die `.env`-Vorlage in das aktuelle Verzeichnis herunter
 
 :::note[Homebrew erforderlich]
-Falls Homebrew nicht installiert ist, bricht das Skript mit entsprechenden Anweisungen ab.
+Falls Homebrew nicht installiert ist, wird das Skript mit entsprechenden Anweisungen beendet.
 Ihre IT-Abteilung stellt Homebrew möglicherweise als verwaltete Software bereit — erkundigen Sie sich zuerst dort.
 :::
 
@@ -46,7 +46,7 @@ Das Skript erkennt Ihre Zeitzone und ruft bei jedem Aufruf ein aktuelles GitHub-
 
 ## Was erstellt wird
 
-Nach Ausführung des Installers enthält Ihr Verzeichnis folgende Dateien:
+Nach Ausführung des Installers enthält Ihr Verzeichnis:
 
 | Datei | Zweck |
 |---|---|
@@ -54,7 +54,7 @@ Nach Ausführung des Installers enthält Ihr Verzeichnis folgende Dateien:
 | `docker-compose.yml` | Container-Service-Definition |
 | `.env` | Ihre Zugangsdaten (aus Vorlage, vor dem ersten Start bearbeiten) |
 
-## Weitere Starts
+## Nachfolgende Starts
 
 ```bash
 ./devcontainer.sh

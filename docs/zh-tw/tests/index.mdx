@@ -1,6 +1,6 @@
 ---
 title: 整合測試
-description: 驗證開發容器執行時期堆疊端對端運作的自動化測試。
+description: 驗證開發容器執行環境堆疊端對端運作的自動化測試。
 sidebar:
   order: 7
 i18n:
@@ -8,11 +8,11 @@ i18n:
   translator: machine
 ---
 
-這些測試驗證開發容器的主要子系統在執行時期能否協同運作。它們並未內建於 Docker 映像檔中——請在執行中的容器內執行這些測試以驗證其功能。
+這些測試驗證開發容器的主要子系統在執行時能夠協同運作。它們並非內建於 Docker 映像中——請在執行中的容器內執行這些測試，以驗證其功能。
 
 ## 可用測試
 
 | 測試 | 驗證內容 |
 | ---- | ---- |
-| [螢幕錄製](/devcontainer/tests/screen-recording/) | Xvfb 顯示、有介面的 Chromium（Playwright）和 ffmpeg 錄製能產生有效的 MP4 檔案 |
-| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Chrome 符號連結、無頭模式修補和 MCP 導航能產生有效的螢幕截圖 |
+| [螢幕錄製](/devcontainer/tests/screen-recording/) | Xvfb 顯示、有介面的 Chromium（Playwright）以及 ffmpeg 錄製能產生有效的 MP4 檔案 |
+| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Chrome 符號連結、無頭模式修補以及 MCP 導覽能產生有效的螢幕截圖 |

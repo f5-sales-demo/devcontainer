@@ -1,5 +1,5 @@
 ---
-title: Primeros pasos
+title: Primeros Pasos
 description: >-
   Descargue un archivo, inicie el contenedor y conéctese — no se requiere Git ni
   clonar repositorios.
@@ -13,7 +13,7 @@ i18n:
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 :::tip[Instalación rápida en macOS]
-Si está en macOS con Apple Silicon, omita esta página y use el [instalador de una sola línea](/devcontainer/install/):
+Si está en macOS con Apple Silicon, omita esta página y use el [instalador de una línea](/devcontainer/install/):
 
 ```bash
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
@@ -26,13 +26,13 @@ Se encarga de los paquetes de Homebrew, la configuración de iTerm2, la configur
 
 ### Entorno de ejecución de contenedores
 
-Necesita un entorno de ejecución de contenedores en su máquina. Docker o Podman funcionarán.
+Necesita un entorno de ejecución de contenedores en su máquina. Tanto Docker como Podman funcionarán.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
 | Plataforma | Instalación |
-|------------|-------------|
+|----------|---------|
 | macOS | [Docker Desktop para Mac](https://docs.docker.com/desktop/install/mac-install/) |
 | Windows | [Docker Desktop para Windows](https://docs.docker.com/desktop/install/windows-install/) (backend WSL2) |
 | Linux | [Docker Engine](https://docs.docker.com/engine/install/) o [Docker Desktop para Linux](https://docs.docker.com/desktop/install/linux/) |
@@ -48,7 +48,7 @@ docker compose version
 <TabItem label="Podman">
 
 | Plataforma | Instalación |
-|------------|-------------|
+|----------|---------|
 | macOS | [Podman Desktop para Mac](https://podman-desktop.io/docs/installation/macos-install) |
 | Windows | [Podman Desktop para Windows](https://podman-desktop.io/docs/installation/windows-install) |
 | Linux | [Podman](https://podman.io/docs/installation#installing-on-linux) + [Podman Compose](https://github.com/containers/podman-compose#installation) |
@@ -74,7 +74,7 @@ systemctl --user enable --now podman.socket
 ### Recursos del sistema
 
 | Recurso | Mínimo | Recomendado |
-|---------|--------|-------------|
+|----------|---------|-------------|
 | Disco | 5 GB | 10 GB+ |
 | RAM | 8 GB asignados al entorno de ejecución de contenedores | 12 GB+ |
 | CPU | 2 núcleos | 4+ núcleos |
@@ -87,7 +87,7 @@ Ajuste los límites de recursos en Docker Desktop &rarr; Settings &rarr; Resourc
 </TabItem>
 <TabItem label="Podman">
 
-En **macOS/Windows**, ajuste los límites de recursos en Podman Desktop &rarr; Settings &rarr; Resources, o a través de la CLI:
+En **macOS/Windows**, ajuste los límites de recursos en Podman Desktop &rarr; Settings &rarr; Resources, o mediante la CLI:
 
 ```bash
 podman machine set --cpus 4 --memory 12288
@@ -120,14 +120,14 @@ CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
 
 ### Opción B: LiteLLM o proxy compatible con Anthropic
 
-Si tiene una instancia de LiteLLM u otro proxy compatible con Anthropic, establezca estas dos variables:
+Si tiene una instancia de LiteLLM u otro proxy compatible con Anthropic, configure estas dos variables:
 
 ```ini
 LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
 LITELLM_API_KEY=your-api-key
 ```
 
-Establezca solo el dominio — el contenedor deriva automáticamente los sufijos de URL específicos del proveedor (por ejemplo, `/anthropic` para Claude Code).
+Configure solo el dominio — el contenedor deriva automáticamente los sufijos de URL específicos del proveedor (por ejemplo, `/anthropic` para Claude Code).
 
 ### Autocompletar desde credenciales locales
 
@@ -179,7 +179,7 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-La primera ejecución descarga la imagen preconstruida desde ghcr.io (~1 min dependiendo de su conexión). Los inicios posteriores usan la imagen en caché y tardan segundos.
+La primera ejecución descarga la imagen preconstruida desde ghcr.io (~1 min dependiendo de su conexión). Los inicios posteriores usan la imagen en caché y toman segundos.
 
 ## 4. Conectar
 

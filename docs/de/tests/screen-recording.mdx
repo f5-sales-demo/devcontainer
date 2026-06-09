@@ -1,8 +1,8 @@
 ---
-title: Screen-Recording-Test
+title: Bildschirmaufnahme-Test
 description: >-
-  Beweist, dass Xvfb, Chromium im sichtbaren Modus (über Playwright) und die
-  ffmpeg-Bildschirmaufnahme innerhalb des Devcontainers zusammen funktionieren.
+  Beweist, dass Xvfb, Chromium im sichtbaren Modus (über Playwright) und
+  ffmpeg-Bildschirmaufnahme im Devcontainer zusammen funktionieren.
 sidebar:
   order: 1
 i18n:
@@ -12,11 +12,11 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Dieser Test überprüft den vollständigen VNC/Browser-Stack, indem eine Browser-Sitzung im sichtbaren Modus als MP4-Datei aufgezeichnet wird. Er beweist, dass:
+Dieser Test verifiziert den vollständigen VNC/Browser-Stack, indem eine Browser-Sitzung im sichtbaren Modus als MP4-Datei aufgezeichnet wird. Er beweist, dass:
 
-- **Xvfb** läuft und Verbindungen auf `:99` akzeptiert
+- **Xvfb** läuft und Verbindungen auf `:99` annimmt
 - **Chromium** im sichtbaren Modus auf dem virtuellen Display gestartet werden kann
-- **ffmpeg** das Display über x11grab aufzeichnen kann
+- **ffmpeg** das Display über x11grab aufnehmen kann
 - Die resultierende **MP4**-Datei ein gültiges, abspielbares Video ist
 
 ## Funktionsweise
@@ -30,7 +30,7 @@ Dieser Test überprüft den vollständigen VNC/Browser-Stack, indem eine Browser
 
 ## Skript
 
-Speichern Sie Folgendes als `vnc-browser-test.py` im Container oder kopieren Sie es aus dem Verzeichnis `docs/tests/` dieses Repositories:
+Speichern Sie Folgendes als `vnc-browser-test.py` im Container, oder kopieren Sie es aus dem Verzeichnis `docs/tests/` dieses Repositories:
 
 ```python
 #!/usr/bin/env python3
@@ -196,13 +196,13 @@ Stopping ffmpeg ...
 SUCCESS: /tmp/recording.mp4 (1,234,567 bytes)
 ```
 
-Die MP4-Datei sollte das Chromium-Fenster zeigen, das beide Websites auf dem Fluxbox-Desktop rendert. Spielen Sie sie mit `ffplay`, `vlc` ab oder laden Sie sie aus dem Container herunter, um sie zu überprüfen.
+Die MP4-Datei sollte das Chromium-Fenster zeigen, das beide Websites auf dem Fluxbox-Desktop rendert. Spielen Sie sie mit `ffplay`, `vlc` ab oder laden Sie sie zur Überprüfung aus dem Container herunter.
 
-## Was ein Fehlschlag bedeutet
+## Bedeutung eines Fehlschlags
 
 | Symptom | Wahrscheinliche Ursache |
 | ---- | ---- |
-| `Xvfb display :99 not ready` | Xvfb wurde nicht gestartet — prüfen Sie, ob der Entrypoint den VNC-Stack ausgeführt hat |
-| `ffmpeg: x11grab error` | Display-Abweichung oder ffmpeg fehlt die x11grab-Unterstützung |
-| `Playwright launch error` | Chromium ist nicht installiert oder `--no-sandbox` fehlt |
-| MP4 ist 0 Bytes | ffmpeg wurde vor dem Schreiben beendet — prüfen Sie die SIGTERM-Behandlung |
+| `Xvfb display :99 not ready` | Xvfb nicht gestartet — prüfen Sie, ob der Entrypoint den VNC-Stack ausgeführt hat |
+| `ffmpeg: x11grab error` | Display-Abweichung oder ffmpeg ohne x11grab-Unterstützung |
+| `Playwright launch error` | Chromium nicht installiert oder `--no-sandbox` fehlt |
+| MP4 hat 0 Bytes | ffmpeg wurde vor dem Schreiben beendet — prüfen Sie die SIGTERM-Behandlung |

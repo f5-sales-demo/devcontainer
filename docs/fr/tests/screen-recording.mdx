@@ -12,7 +12,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Ce test vérifie l'intégralité de la pile VNC/navigateur en enregistrant une session de navigateur en mode fenêtré dans un fichier MP4. Il prouve que :
+Ce test vérifie l'ensemble de la pile VNC/navigateur en enregistrant une session de navigateur en mode fenêtré dans un fichier MP4. Il prouve que :
 
 - **Xvfb** est en cours d'exécution et accepte les connexions sur `:99`
 - **Chromium** peut se lancer en mode fenêtré sur l'affichage virtuel
@@ -22,11 +22,11 @@ Ce test vérifie l'intégralité de la pile VNC/navigateur en enregistrant une s
 ## Fonctionnement
 
 1. Interroge `xdpyinfo -display :99` jusqu'à ce que l'affichage X soit prêt (même schéma que le point d'entrée)
-2. Démarre l'enregistrement ffmpeg de l'affichage à 10 images par seconde
-3. Lance Chromium en mode fenêtré via le `sync_api` de Playwright
+2. Démarre l'enregistrement ffmpeg de l'affichage à 10 ips
+3. Lance Chromium en mode fenêtré via `sync_api` de Playwright
 4. Navigue vers `https://example.com` (pause de 3 s), puis `https://httpbin.org` (pause de 3 s)
 5. Envoie SIGTERM à ffmpeg pour une finalisation propre du MP4
-6. Indique le chemin de sortie et la taille du fichier
+6. Affiche le chemin de sortie et la taille du fichier
 
 ## Script
 
@@ -202,7 +202,7 @@ Le MP4 devrait montrer la fenêtre Chromium affichant les deux sites web sur le 
 
 | Symptôme | Cause probable |
 | ---- | ---- |
-| `Xvfb display :99 not ready` | Xvfb n'a pas démarré — vérifiez que le point d'entrée a lancé la pile VNC |
-| `ffmpeg: x11grab error` | Incohérence d'affichage ou ffmpeg sans support x11grab |
-| `Playwright launch error` | Chromium non installé ou `--no-sandbox` manquant |
+| `Xvfb display :99 not ready` | Xvfb n'est pas démarré — vérifiez que le point d'entrée a lancé la pile VNC |
+| `ffmpeg: x11grab error` | Discordance d'affichage ou ffmpeg ne prend pas en charge x11grab |
+| `Playwright launch error` | Chromium n'est pas installé ou `--no-sandbox` est manquant |
 | Le MP4 fait 0 octet | ffmpeg a été tué avant l'écriture — vérifiez la gestion du SIGTERM |

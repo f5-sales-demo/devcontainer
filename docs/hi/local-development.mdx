@@ -1,6 +1,8 @@
 ---
-title: Local Development
-description: 'रिपॉजिटरी क्लोन करें, लोकली बिल्ड करें, और Docker इमेज कस्टमाइज़ करें।'
+title: स्थानीय विकास
+description: >-
+  रिपॉजिटरी क्लोन करें, स्थानीय रूप से बिल्ड करें, और Docker इमेज को कस्टमाइज़
+  करें।
 sidebar:
   order: 5
 i18n:
@@ -10,7 +12,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-यह पेज उन डेवलपर्स के लिए है जो रिपॉजिटरी क्लोन करना, इमेज को लोकली बिल्ड करना, या Dockerfile को कस्टमाइज़ करना चाहते हैं। यदि आप केवल प्री-बिल्ट कंटेनर का उपयोग करना चाहते हैं, तो [शुरू करें](./getting-started) देखें।
+यह पृष्ठ उन डेवलपर्स के लिए है जो रिपॉजिटरी क्लोन करना, इमेज को स्थानीय रूप से बिल्ड करना, या Dockerfile को कस्टमाइज़ करना चाहते हैं। यदि आप केवल पूर्व-निर्मित कंटेनर का उपयोग करना चाहते हैं, तो [शुरुआत करें](./getting-started) देखें।
 
 ## रिपॉजिटरी क्लोन करें
 
@@ -39,18 +41,18 @@ cd devcontainer
 
 ## बिल्ड फ़ाइल
 
-`docker-compose.build.yml` फ़ाइल लोकल बिल्ड सपोर्ट जोड़ती है। यह **ऑटो-मर्ज नहीं** होती — आपको इसे `-f` फ्लैग के साथ स्पष्ट रूप से पास करना होगा। इसका मतलब है कि `docker compose up -d` (या `podman-compose up -d`) हमेशा GHCR से प्री-बिल्ट इमेज पुल करता है, चाहे आपने रिपो क्लोन की हो या नहीं।
+`docker-compose.build.yml` फ़ाइल स्थानीय बिल्ड सपोर्ट जोड़ती है। यह **स्वचालित रूप से मर्ज नहीं** होती — आपको इसे `-f` फ्लैग के साथ स्पष्ट रूप से पास करना होगा। इसका मतलब है कि `docker compose up -d` (या `podman-compose up -d`) हमेशा GHCR से पूर्व-निर्मित इमेज पुल करता है, चाहे आपने रिपॉजिटरी क्लोन की हो या नहीं।
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-आप सत्यापित कर सकते हैं कि साधारण `docker compose up` केवल प्री-बिल्ट इमेज का उपयोग करता है (कोई `build:` context नहीं):
+आप सत्यापित कर सकते हैं कि साधारण `docker compose up` केवल पूर्व-निर्मित इमेज का उपयोग करता है (कोई `build:` कॉन्टेक्स्ट नहीं):
 
 ```bash
 docker compose config
 ```
 
-स्पष्ट बिल्ड कॉन्फ़िगरेशन के साथ तुलना करें:
+स्पष्ट बिल्ड कॉन्फ़िगरेशन से तुलना करें:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml config
@@ -59,13 +61,13 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml config
 </TabItem>
 <TabItem label="Podman">
 
-आप सत्यापित कर सकते हैं कि साधारण `podman-compose up` केवल प्री-बिल्ट इमेज का उपयोग करता है (कोई `build:` context नहीं):
+आप सत्यापित कर सकते हैं कि साधारण `podman-compose up` केवल पूर्व-निर्मित इमेज का उपयोग करता है (कोई `build:` कॉन्टेक्स्ट नहीं):
 
 ```bash
 podman-compose config
 ```
 
-स्पष्ट बिल्ड कॉन्फ़िगरेशन के साथ तुलना करें:
+स्पष्ट बिल्ड कॉन्फ़िगरेशन से तुलना करें:
 
 ```bash
 podman-compose -f docker-compose.yml -f docker-compose.build.yml config
@@ -74,7 +76,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml config
 </TabItem>
 </Tabs>
 
-## लोकली बिल्ड करना
+## स्थानीय रूप से बिल्ड करना
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -93,64 +95,64 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-यह बिल्ड फ़ाइल को बेस compose फ़ाइल के साथ मर्ज करता है, लोकल `Dockerfile` से इमेज बिल्ड करता है, और कंटेनर शुरू करता है। `--build` फ्लैग कैश्ड इमेज मौजूद होने पर भी रीबिल्ड को फोर्स करता है।
+यह बिल्ड फ़ाइल को बेस compose फ़ाइल के साथ मर्ज करता है, स्थानीय `Dockerfile` से इमेज बिल्ड करता है, और कंटेनर शुरू करता है। `--build` फ्लैग कैश्ड इमेज मौजूद होने पर भी रीबिल्ड को बाध्य करता है।
 
-## टू-स्टेज बिल्ड आर्किटेक्चर
+## दो-चरणीय बिल्ड आर्किटेक्चर
 
-Dockerfile Docker लेयर कैशिंग के लिए अनुकूलित टू-स्टेज बिल्ड का उपयोग करता है:
+Dockerfile Docker लेयर कैशिंग के लिए अनुकूलित दो-चरणीय बिल्ड का उपयोग करता है:
 
-### स्टेज 1: `deps` (स्थिर नींव, ~4.5 GB)
+### चरण 1: `deps` (स्थिर आधार, ~4.5 GB)
 
-ये लेयर्स केवल तभी रीबिल्ड होती हैं जब कोई version ARG बदला जाए या APT पैकेज बदलें। सामान्य टूल-ओनली बदलावों पर, BuildKit इस पूरे स्टेज को स्किप कर देता है।
+ये लेयर्स केवल तभी रीबिल्ड होती हैं जब कोई वर्शन ARG बदला जाता है या APT पैकेज बदलते हैं। सामान्य टूल-ओनली परिवर्तनों पर, BuildKit इस पूरे चरण को छोड़ देता है।
 
-| सेक्शन | सामग्री |
+| अनुभाग | सामग्री |
 |---------|----------|
 | 1. APT repos | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft, Google Cloud, Dart SDK |
 | 2. APT packages | सिस्टम टूल्स, Node.js, Python, Java, Terraform, GitHub CLI, Docker engine, Azure CLI, PowerShell, locales |
-| 2b. Security APT packages | नेटवर्क विश्लेषण, वेब स्कैनर, पासवर्ड टूल्स, रिवर्स इंजीनियरिंग, फोरेंसिक्स (~80 पैकेज) |
+| 2b. सुरक्षा APT packages | नेटवर्क विश्लेषण, वेब स्कैनर्स, पासवर्ड टूल्स, रिवर्स इंजीनियरिंग, फोरेंसिक्स (~80 पैकेज) |
 | 3. Python bootstrap | Symlinks + get-pip.py के माध्यम से pip |
-| 4. Go | आधिकारिक tarball (नवीनतम स्थिर, बिल्ड समय पर रिज़ॉल्व) |
+| 4. Go | आधिकारिक tarball (नवीनतम स्थिर, बिल्ड समय पर रिज़ॉल्व किया गया) |
 | 5. Rust | rustup (सिस्टम-वाइड, नवीनतम स्थिर) |
 | 6. Maven + Gradle | `/opt` में बाइनरी डाउनलोड |
-| 7. VNC stack | Xvfb, x11vnc, noVNC, fluxbox — ब्राउज़र के माध्यम से रिमोट डिस्प्ले |
+| 7. VNC स्टैक | Xvfb, x11vnc, noVNC, fluxbox — ब्राउज़र के माध्यम से रिमोट डिस्प्ले |
 | 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (नवीनतम रिलीज़) |
 
-### स्टेज 2: `final` (परिवर्तनशील टूल्स + उपयोगकर्ता सेटअप, ~1.5 GB)
+### चरण 2: `final` (अस्थिर टूल्स + उपयोगकर्ता सेटअप, ~1.5 GB)
 
-ये लेयर्स अधिक बार बदलती हैं (npm/pip अपडेट, config बदलाव) लेकिन जल्दी रीबिल्ड होती हैं क्योंकि भारी `deps` स्टेज कैश्ड होता है।
+ये लेयर्स अधिक बार बदलती हैं (npm/pip अपडेट, कॉन्फ़िग परिवर्तन) लेकिन तेज़ी से रीबिल्ड होती हैं क्योंकि भारी `deps` चरण कैश्ड होता है।
 
-| सेक्शन | सामग्री |
+| अनुभाग | सामग्री |
 |---------|----------|
 | 9. AWS CLI v2 | आधिकारिक इंस्टॉलर |
-| 10. Binary tools | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv |
-| 10b. Additional binaries | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint, codex |
-| 10c. Super-linter binaries | shfmt, gitleaks, editorconfig-checker, trivy, clj-kondo, dotenv-linter, golangci-lint, goreleaser, kubeconform, protolint, scalafmt, ktlint |
-| 10d. Java JAR tools | checkstyle, google-java-format (wrapper scripts) |
+| 10. बाइनरी टूल्स | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv |
+| 10b. अतिरिक्त बाइनरीज़ | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint, codex |
+| 10c. Super-linter बाइनरीज़ | shfmt, gitleaks, editorconfig-checker, trivy, clj-kondo, dotenv-linter, golangci-lint, goreleaser, kubeconform, protolint, scalafmt, ktlint |
+| 10d. Java JAR टूल्स | checkstyle, google-java-format (wrapper स्क्रिप्ट्स) |
 | 10e. PHP linters | phpcs, phpstan, psalm (PHAR डाउनलोड) |
 | 10f. PowerShell modules | PSScriptAnalyzer, arm-ttk |
-| 10g. Security binaries | nuclei, subfinder, httpx, ffuf, gobuster, feroxbuster, dalfox, amass, trufflehog, grype, syft, bettercap (amd64) |
+| 10g. सुरक्षा बाइनरीज़ | nuclei, subfinder, httpx, ffuf, gobuster, feroxbuster, dalfox, amass, trufflehog, grype, syft, bettercap (amd64) |
 | 10h. OWASP ZAP | Java-आधारित वेब एप्लिकेशन स्कैनर |
 | 10i. Ghidra | रिवर्स इंजीनियरिंग फ्रेमवर्क |
 | 10j. Metasploit | एक्सप्लॉइटेशन फ्रेमवर्क (केवल amd64) |
-| 11. npm global tools | claude-code, prettier, markdownlint-cli2, devcontainers-cli, playwright, pi-coding-agent, oh-my-pi |
-| 12. pip tools | pre-commit, ansible, black, pylint, yamllint, playwright |
+| 11. npm ग्लोबल टूल्स | claude-code, prettier, markdownlint-cli2, devcontainers-cli, playwright, pi-coding-agent, oh-my-pi |
+| 12. pip टूल्स | pre-commit, ansible, black, pylint, yamllint, playwright |
 | 12c. Ruby linters | rubocop + एक्सटेंशन |
 | 12e. Perl linter modules | Perl::Critic एक्सटेंशन |
 | 12f. Lua linter | luacheck |
 | 12g. R linter | lintr |
-| 12h. Security Ruby gems | wpscan, evil-winrm |
-| 12i. Git-cloned security tools | testssl.sh, exploitdb (searchsploit), SecLists, docker-bench-security, recon-ng, spiderfoot |
-| 13. Playwright browsers | `playwright install --with-deps` के माध्यम से Chromium + सिस्टम deps |
+| 12h. सुरक्षा Ruby gems | wpscan, evil-winrm |
+| 12i. Git-क्लोन सुरक्षा टूल्स | testssl.sh, exploitdb (searchsploit), SecLists, docker-bench-security, recon-ng, spiderfoot |
+| 13. Playwright ब्राउज़र्स | Chromium + `playwright install --with-deps` के माध्यम से सिस्टम deps |
 | 13b. Chrome DevTools MCP | Chrome symlink + MCP प्री-कैश + headless पैच |
-| 14. Homebrew | Linuxbrew (AI assistant deps + formatters) |
+| 14. Homebrew | Linuxbrew (AI सहायक deps + फॉर्मेटर्स) |
 | 15. ZSH plugins | oh-my-zsh कस्टम प्लगइन्स |
 | 16. Shell bootstrap | npm-global, tfenv, compinit |
-| 17. Claude Code + Codex config | टूल अवेयरनेस मेमोरी, मैनेज्ड पॉलिसी, सेल्फ-टेस्ट स्क्रिप्ट, Codex config |
+| 17. Claude Code + Codex कॉन्फ़िग | टूल अवेयरनेस मेमोरी, मैनेज्ड पॉलिसी, सेल्फ-टेस्ट स्क्रिप्ट, Codex कॉन्फ़िग |
 | 18. Entrypoint | कंटेनर स्टार्टअप स्क्रिप्ट (अंतिम COPY) |
 
 ## टूल्स जोड़ना
 
-`Dockerfile` संपादित करें और अपने टूल को उपयुक्त सेक्शन में जोड़ें। जोड़ने के बाद रीबिल्ड करें:
+`Dockerfile` को संपादित करें और अपने टूल को उचित अनुभाग में जोड़ें। जोड़ने के बाद रीबिल्ड करें:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -173,7 +175,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 
 ### APT पैकेज
 
-सेक्शन 2 के `apt-get install` ब्लॉक में जोड़ें:
+अनुभाग 2 के `apt-get install` ब्लॉक में जोड़ें:
 
 ```dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -184,7 +186,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ### npm टूल्स
 
-सेक्शन 11 के `npm install -g` ब्लॉक में जोड़ें:
+अनुभाग 11 के `npm install -g` ब्लॉक में जोड़ें:
 
 ```dockerfile
 RUN npm install -g \
@@ -193,7 +195,7 @@ RUN npm install -g \
 
 ### pip टूल्स
 
-सेक्शन 12 के `pip install` ब्लॉक में जोड़ें:
+अनुभाग 12 के `pip install` ब्लॉक में जोड़ें:
 
 ```dockerfile
 RUN pip install --no-cache-dir --break-system-packages \
@@ -202,7 +204,7 @@ RUN pip install --no-cache-dir --break-system-packages \
 
 ### बाइनरी डाउनलोड
 
-सेक्शन 10 में जोड़ें या आर्किटेक्चर डिटेक्शन के साथ एक नई `RUN` लेयर बनाएं:
+अनुभाग 10 में जोड़ें या आर्किटेक्चर डिटेक्शन के साथ एक नई `RUN` लेयर बनाएं:
 
 ```dockerfile
 RUN ARCH=$(dpkg --print-architecture) \
@@ -212,10 +214,10 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## बिल्ड कैश
 
-CI **रजिस्ट्री-आधारित कैशिंग** का उपयोग करता है — बिल्ड लेयर्स GitHub Actions कैश के बजाय GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) में संग्रहीत होती हैं। यह 10 GB GHA कैश सीमा से बचाता है जो इस ~6 GB मल्टी-आर्किटेक्चर इमेज के लिए बार-बार पूर्ण रीबिल्ड का कारण बनती थी।
+CI **रजिस्ट्री-आधारित कैशिंग** का उपयोग करता है — बिल्ड लेयर्स GitHub Actions कैश के बजाय GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) में स्टोर की जाती हैं। यह 10 GB GHA कैश सीमा से बचाता है जो इस ~6 GB मल्टी-आर्किटेक्चर इमेज के लिए बार-बार पूर्ण रीबिल्ड का कारण बनती थी।
 
-टू-स्टेज आर्किटेक्चर रजिस्ट्री कैश के साथ इस प्रकार काम करता है:
+दो-चरणीय आर्किटेक्चर रजिस्ट्री कैश के साथ इस प्रकार काम करता है:
 
-- **टूल वर्शन बंप** (npm, pip, बाइनरी टूल्स) — केवल `final` स्टेज रीबिल्ड (~5 मिनट)
-- **Config फ़ाइल बदलाव** (`claude-config/`, `entrypoint.sh`) — केवल अंतिम कुछ लेयर्स रीबिल्ड (~1 मिनट)
-- **फाउंडेशन बदलाव** (APT पैकेज, Go/Rust/Java वर्शन) — दोनों स्टेज का पूर्ण रीबिल्ड (~30 मिनट)
+- **टूल वर्शन बम्प्स** (npm, pip, बाइनरी टूल्स) — केवल `final` चरण रीबिल्ड होता है (~5 मिनट)
+- **कॉन्फ़िग फ़ाइल परिवर्तन** (`claude-config/`, `entrypoint.sh`) — केवल अंतिम कुछ लेयर्स रीबिल्ड होती हैं (~1 मिनट)
+- **आधार परिवर्तन** (APT पैकेज, Go/Rust/Java वर्शन) — दोनों चरणों का पूर्ण रीबिल्ड (~30 मिनट)

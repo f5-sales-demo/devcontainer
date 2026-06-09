@@ -37,7 +37,7 @@ podman-compose up -d
 
 ### 「claude: command not found」
 
-映像檔可能已過時。請拉取最新版本並重新啟動：
+映像檔可能已過時。拉取最新版本並重新啟動：
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -60,7 +60,7 @@ podman-compose up -d
 
 ### Claude 顯示「Not logged in」
 
-進入點腳本會在 `~/.claude.json` 中設定引導標記。如果檔案遺失：
+進入點會在 `~/.claude.json` 中設定初始化旗標。如果檔案遺失：
 
 ```bash
 echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
@@ -76,12 +76,12 @@ echo "$ANTHROPIC_API_KEY"
 
 常見原因：
 
-- **LiteLLM 代理金鑰遺失或無效** — 如果您使用代理模式，請確認 `.env` 中的 `LITELLM_API_KEY` 包含正確的代理憑證，然後重新啟動容器，讓進入點腳本能夠推導 `ANTHROPIC_API_KEY`。
-- **OAuth 權杖或代理模式不匹配** — 請只使用一種驗證模式。如果設定了 `CLAUDE_CODE_OAUTH_TOKEN`，它會優先於 LiteLLM 代理模式。
+- **LiteLLM 代理金鑰遺失或無效** — 如果您使用代理模式，請確保 `.env` 中的 `LITELLM_API_KEY` 包含正確的代理憑證，然後重新啟動容器，以便進入點能夠衍生 `ANTHROPIC_API_KEY`。
+- **OAuth 權杖或代理模式不匹配** — 請僅使用一種認證模式。如果設定了 `CLAUDE_CODE_OAUTH_TOKEN`，它會優先於 LiteLLM 代理模式。
 
 ### API 請求回傳 401 錯誤
 
-檢查您的 API 金鑰是否設定正確：
+檢查您的 API 金鑰是否正確設定：
 
 ```bash
 echo "$ANTHROPIC_API_KEY"
@@ -97,36 +97,36 @@ echo "$ANTHROPIC_API_KEY"
 
 ### 「gh: not authenticated」
 
-`gh` CLI 需要 `GH_TOKEN` 環境變數。請將其新增至您的 `.env` 檔案：
+`gh` CLI 需要 `GH_TOKEN` 環境變數。將其新增到您的 `.env` 檔案中：
 
 ```ini
 GH_TOKEN=ghp_your-token-here
 ```
 
-在 [github.com/settings/tokens](https://github.com/settings/tokens) 建立權杖。細粒度權杖（建議）或具有 `repo` 範圍的傳統權杖皆可使用。更新 `.env` 後請重新啟動容器。
+在 [github.com/settings/tokens](https://github.com/settings/tokens) 建立權杖。細粒度權杖（建議使用）或具有 `repo` 範圍的傳統權杖皆可。更新 `.env` 後重新啟動容器。
 
 ### HTTPS git clone 回傳 401 錯誤
 
-當設定了 `GH_TOKEN` 時，進入點腳本會執行 `gh auth setup-git` 來設定 HTTPS 的 git 憑證輔助程式。如果 HTTPS 操作失敗：
+當設定了 `GH_TOKEN` 時，進入點會執行 `gh auth setup-git` 來設定 HTTPS 的 git 憑證助手。如果 HTTPS 操作失敗：
 
 1. 驗證權杖是否有效：`gh auth status`
-2. 檢查憑證輔助程式是否已設定：`git config --global credential.helper`
-3. 重新啟動容器以重新執行進入點腳本
+2. 檢查憑證助手是否已設定：`git config --global credential.helper`
+3. 重新啟動容器以重新執行進入點
 
 ### SSH 與 HTTPS
 
-兩種驗證方式可以在容器中並存：
+兩種認證方法可以在容器中共存：
 
 - **SSH**（`.env` 中的 `SSH_PRIVATE_KEY`）— 使用 `git@github.com:` URL。如果您的組織強制使用 SSH 則為必要。
 - **HTTPS**（`.env` 中的 `GH_TOKEN`）— 使用 `https://github.com/` URL。設定更簡單，無需管理金鑰。
 
-如果兩者都已設定，git 會使用與遠端 URL 匹配的協定。若要切換現有的複製倉庫：
+如果兩者都已設定，git 會使用與遠端 URL 匹配的協定。要切換現有的 clone：
 
 ```bash
-# SSH 切換為 HTTPS
+# SSH 轉 HTTPS
 git remote set-url origin https://github.com/owner/repo.git
 
-# HTTPS 切換為 SSH
+# HTTPS 轉 SSH
 git remote set-url origin git@github.com:owner/repo.git
 ```
 
@@ -138,9 +138,9 @@ git remote set-url origin git@github.com:owner/repo.git
 sudo chown -R $(id -u):$(id -g) /workspace ~
 ```
 
-### npm install 回傳 EACCES 錯誤
+### npm install 因 EACCES 失敗
 
-進入點腳本會自動在 `~/.npm-global` 設定使用者可寫入的 npm 全域前綴，因此執行階段的 `npm install -g` 命令應該不需要 `sudo` 即可運作。如果您仍然看到 EACCES 錯誤，請手動重新套用修正：
+進入點會自動在 `~/.npm-global` 設定使用者可寫入的 npm 全域前綴，因此執行時的 `npm install -g` 命令應該不需要 `sudo`。如果仍然看到 EACCES 錯誤，請手動重新套用修正：
 
 ```bash
 mkdir -p ~/.npm-global
@@ -148,11 +148,11 @@ npm config set prefix ~/.npm-global
 export PATH="$HOME/.npm-global/bin:$PATH"
 ```
 
-## 建置問題
+## 建構問題
 
-### 建置花費非常長的時間
+### 建構花費很長時間
 
-首次建置會下載基礎映像檔（約 1 GB）。後續建置會使用快取。如果每次都很慢：
+首次建構會下載基礎映像檔（約 1 GB）。後續建構會使用快取。如果每次都很慢：
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -190,11 +190,11 @@ podman system prune -a --volumes
 </TabItem>
 </Tabs>
 
-**警告：** 這會移除所有未使用的容器、映像檔和磁碟區 — 不僅限於此專案的。
+**警告：** 這會移除所有未使用的容器、映像檔和卷宗 — 不僅限於本專案的。
 
 ## 網路
 
-### 無法從容器內部連線到網際網路
+### 無法從容器內部連接網際網路
 
 ```bash
 ping -c 1 8.8.8.8
@@ -205,7 +205,7 @@ curl -I https://github.com
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-如果 DNS 失敗，請在主機的 `/etc/docker/daemon.json` 中新增：
+如果 DNS 失敗，在主機的 `/etc/docker/daemon.json` 中新增：
 
 ```json
 {
@@ -218,7 +218,7 @@ curl -I https://github.com
 </TabItem>
 <TabItem label="Podman">
 
-如果 DNS 失敗，請在 Podman 虛擬機內設定 DNS：
+如果 DNS 失敗，在 Podman 虛擬機內設定 DNS：
 
 ```bash
 podman machine ssh
@@ -242,7 +242,7 @@ dns_servers = ["8.8.8.8", "8.8.4.4"]
 
 ### noVNC 出現黑色畫面
 
-Xvfb 可能未啟動。在容器內檢查：
+Xvfb 可能尚未啟動。在容器內檢查：
 
 ```bash
 ps aux | grep Xvfb
@@ -258,9 +258,9 @@ ps aux | grep Xvfb
 echo "$DISPLAY"
 ```
 
-應該是 `:99`。如果為空，請在您的 `.env` 或 `devcontainer.json` 中新增 `DISPLAY=:99` 並重新啟動。
+應為 `:99`。如果為空，請在您的 `.env` 或 `devcontainer.json` 中新增 `DISPLAY=:99` 並重新啟動。
 
-### 連接埠 6080 連線被拒
+### 連接埠 6080 連線被拒絕
 
 noVNC 可能未在執行。在容器內檢查：
 
@@ -268,7 +268,7 @@ noVNC 可能未在執行。在容器內檢查：
 ps aux | grep -E 'novnc|websockify'
 ```
 
-如果未在執行，請驗證 `ENABLE_VNC` 為 `true`（預設值）並檢查容器日誌：
+如果未在執行，請確認 `ENABLE_VNC` 為 `true`（預設值）並檢查容器日誌：
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -287,9 +287,9 @@ podman-compose logs dev | grep -i vnc
 </TabItem>
 </Tabs>
 
-### 連接埠 6080 已被佔用
+### 連接埠 6080 已被占用
 
-在 `docker-compose.yml` 中更改主機連接埠：
+在 `docker-compose.yml` 中變更主機連接埠：
 
 ```yaml
 ports:
@@ -298,9 +298,9 @@ ports:
 
 ## Chrome DevTools MCP
 
-### Chrome 遠端除錯無回應
+### Chrome 遠端除錯沒有回應
 
-共用的 Chrome 實例應該在連接埠 9222 上執行。在容器內檢查：
+共享的 Chrome 實例應在連接埠 9222 上執行。在容器內檢查：
 
 ```bash
 # Chrome 是否在執行？
@@ -321,10 +321,10 @@ start_chrome_browser
 
 ### 瀏覽器設定檔鎖定錯誤
 
-使用共用瀏覽器架構時，不應發生設定檔鎖定錯誤。如果您看到此錯誤，可能是殘留的 Chrome 程序持有鎖定：
+使用共享瀏覽器架構時，不應發生設定檔鎖定錯誤。如果出現此錯誤，可能是過期的 Chrome 處理程序持有鎖定：
 
 ```bash
-# 終止任何殘留的 Chrome 程序
+# 終止任何過期的 Chrome 處理程序
 pkill -f 'chrome.*remote-debugging-port' || true
 
 # 移除鎖定檔案
@@ -335,16 +335,16 @@ rm -f ~/.cache/chrome-devtools-mcp/chrome-profile/SingletonLock
 start_chrome_browser
 ```
 
-### 重複的 chrome-devtools-mcp 工具
+### chrome-devtools-mcp 工具重複
 
-chrome-devtools-mcp 伺服器現在已在 `~/.claude/settings.json` 中全域註冊。如果您的每個倉庫的 `.mcp.json` 也註冊了它，您將看到重複的工具。請從每個倉庫的 `.mcp.json` 檔案中移除 `chrome-devtools-mcp` 項目：
+chrome-devtools-mcp 伺服器現已在 `~/.claude/settings.json` 中全域註冊。如果您有同樣註冊了它的每個儲存庫 `.mcp.json`，您將看到重複的工具。請從每個儲存庫的 `.mcp.json` 檔案中移除 `chrome-devtools-mcp` 項目：
 
 ```bash
-# 檢查每個倉庫的設定
+# 檢查每個儲存庫的設定
 cat .mcp.json
 ```
 
-從任何每個倉庫的 `.mcp.json` 中移除 `chrome-devtools-mcp` 金鑰，以使用全域註冊。
+從任何每個儲存庫的 `.mcp.json` 中移除 `chrome-devtools-mcp` 鍵，以使用全域註冊。
 
 ## 重設所有設定
 
@@ -371,4 +371,4 @@ podman-compose up -d
 </TabItem>
 </Tabs>
 
-這會銷毀磁碟區中的所有資料。您需要重新複製倉庫並重新設定工具。
+這會銷毀卷宗中的所有資料。您需要重新 clone 儲存庫並重新設定工具。

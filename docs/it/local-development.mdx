@@ -1,5 +1,5 @@
 ---
-title: Local Development
+title: Sviluppo Locale
 description: >-
   Clonare il repository, compilare localmente e personalizzare l'immagine
   Docker.
@@ -12,7 +12,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Questa pagina è destinata agli sviluppatori che desiderano clonare il repository, compilare l'immagine localmente o personalizzare il Dockerfile. Se si desidera semplicemente utilizzare il container precompilato, consultare [Per iniziare](./getting-started).
+Questa pagina è destinata agli sviluppatori che desiderano clonare il repository, compilare l'immagine localmente o personalizzare il Dockerfile. Se desiderate semplicemente utilizzare il container pre-compilato, consultate [Primi Passi](./getting-started).
 
 ## Clonare il Repository
 
@@ -41,18 +41,18 @@ cd devcontainer
 
 ## File di Build
 
-Il file `docker-compose.build.yml` aggiunge il supporto alla build locale. **Non** viene unito automaticamente — è necessario passarlo esplicitamente con i flag `-f`. Questo significa che `docker compose up -d` (o `podman-compose up -d`) scarica sempre l'immagine precompilata da GHCR, indipendentemente dal fatto che il repository sia stato clonato o meno.
+Il file `docker-compose.build.yml` aggiunge il supporto alla build locale. **Non** viene unito automaticamente — è necessario passarlo esplicitamente con i flag `-f`. Ciò significa che `docker compose up -d` (o `podman-compose up -d`) scarica sempre l'immagine pre-compilata da GHCR, indipendentemente dal fatto che abbiate clonato il repository o meno.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-È possibile verificare che un semplice `docker compose up` utilizzi solo l'immagine precompilata (nessun contesto `build:`):
+Potete verificare che un semplice `docker compose up` utilizzi solo l'immagine pre-compilata (nessun contesto `build:`):
 
 ```bash
 docker compose config
 ```
 
-Confrontare con la configurazione di build esplicita:
+Confrontate con la configurazione di build esplicita:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml config
@@ -61,13 +61,13 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml config
 </TabItem>
 <TabItem label="Podman">
 
-È possibile verificare che un semplice `podman-compose up` utilizzi solo l'immagine precompilata (nessun contesto `build:`):
+Potete verificare che un semplice `podman-compose up` utilizzi solo l'immagine pre-compilata (nessun contesto `build:`):
 
 ```bash
 podman-compose config
 ```
 
-Confrontare con la configurazione di build esplicita:
+Confrontate con la configurazione di build esplicita:
 
 ```bash
 podman-compose -f docker-compose.yml -f docker-compose.build.yml config
@@ -95,7 +95,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-Questo unisce il file di build con il file compose di base, compila l'immagine dal `Dockerfile` locale e avvia il container. Il flag `--build` forza una ricompilazione anche se esiste un'immagine in cache.
+Questo unisce il file di build con il file compose di base, compila l'immagine dal `Dockerfile` locale e avvia il container. Il flag `--build` forza una ricompilazione anche se esiste un'immagine nella cache.
 
 ## Architettura di Build a Due Stadi
 
@@ -103,23 +103,23 @@ Il Dockerfile utilizza una build a due stadi ottimizzata per il caching dei laye
 
 ### Stadio 1: `deps` (fondamenta stabili, ~4,5 GB)
 
-Questi layer vengono ricompilati solo quando viene aggiornato un ARG di versione o cambiano i pacchetti APT. Con modifiche ai soli strumenti, BuildKit salta interamente questo stadio.
+Questi layer vengono ricompilati solo quando viene aggiornato un ARG di versione o cambiano i pacchetti APT. In caso di modifiche ai soli strumenti, BuildKit salta interamente questo stadio.
 
 | Sezione | Contenuti |
 |---------|----------|
 | 1. Repository APT | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft, Google Cloud, Dart SDK |
 | 2. Pacchetti APT | Strumenti di sistema, Node.js, Python, Java, Terraform, GitHub CLI, Docker engine, Azure CLI, PowerShell, locali |
-| 2b. Pacchetti APT di sicurezza | Analisi di rete, scanner web, strumenti per password, reverse engineering, forensics (~80 pacchetti) |
+| 2b. Pacchetti APT di sicurezza | Analisi di rete, scanner web, strumenti per password, reverse engineering, forensica (~80 pacchetti) |
 | 3. Bootstrap Python | Symlink + pip tramite get-pip.py |
 | 4. Go | Tarball ufficiale (ultima versione stabile, risolta al momento della build) |
 | 5. Rust | rustup (a livello di sistema, ultima versione stabile) |
 | 6. Maven + Gradle | Download binari in `/opt` |
-| 7. Stack VNC | Xvfb, x11vnc, noVNC, fluxbox — display remoto tramite browser |
+| 7. Stack VNC | Xvfb, x11vnc, noVNC, fluxbox — display remoto via browser |
 | 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (ultime release) |
 
 ### Stadio 2: `final` (strumenti volatili + configurazione utente, ~1,5 GB)
 
-Questi layer cambiano più frequentemente (aggiornamenti npm/pip, modifiche di configurazione) ma si ricompilano rapidamente perché lo stadio pesante `deps` è in cache.
+Questi layer cambiano più frequentemente (aggiornamenti npm/pip, modifiche alla configurazione) ma si ricompilano velocemente perché lo stadio pesante `deps` è nella cache.
 
 | Sezione | Contenuti |
 |---------|----------|
@@ -131,7 +131,7 @@ Questi layer cambiano più frequentemente (aggiornamenti npm/pip, modifiche di c
 | 10e. Linter PHP | phpcs, phpstan, psalm (download PHAR) |
 | 10f. Moduli PowerShell | PSScriptAnalyzer, arm-ttk |
 | 10g. Binari di sicurezza | nuclei, subfinder, httpx, ffuf, gobuster, feroxbuster, dalfox, amass, trufflehog, grype, syft, bettercap (amd64) |
-| 10h. OWASP ZAP | Scanner per applicazioni web basato su Java |
+| 10h. OWASP ZAP | Scanner di applicazioni web basato su Java |
 | 10i. Ghidra | Framework di reverse engineering |
 | 10j. Metasploit | Framework di exploitation (solo amd64) |
 | 11. Strumenti npm globali | claude-code, prettier, markdownlint-cli2, devcontainers-cli, playwright, pi-coding-agent, oh-my-pi |
@@ -144,15 +144,15 @@ Questi layer cambiano più frequentemente (aggiornamenti npm/pip, modifiche di c
 | 12i. Strumenti di sicurezza clonati da Git | testssl.sh, exploitdb (searchsploit), SecLists, docker-bench-security, recon-ng, spiderfoot |
 | 13. Browser Playwright | Chromium + dipendenze di sistema tramite `playwright install --with-deps` |
 | 13b. Chrome DevTools MCP | Symlink Chrome + pre-cache MCP + patch headless |
-| 14. Homebrew | Linuxbrew (dipendenze assistente AI + formattatori) |
+| 14. Homebrew | Linuxbrew (dipendenze assistenti AI + formattatori) |
 | 15. Plugin ZSH | Plugin personalizzati oh-my-zsh |
 | 16. Bootstrap shell | npm-global, tfenv, compinit |
-| 17. Configurazione Claude Code + Codex | Memoria di consapevolezza degli strumenti, policy gestita, script di auto-test, configurazione Codex |
+| 17. Configurazione Claude Code + Codex | Memoria di consapevolezza strumenti, policy gestita, script di auto-test, configurazione Codex |
 | 18. Entrypoint | Script di avvio del container (ultimo COPY in assoluto) |
 
-## Aggiunta di Strumenti
+## Aggiungere Strumenti
 
-Modificare il `Dockerfile` e aggiungere lo strumento alla sezione appropriata. Ricompilare dopo l'aggiunta:
+Modificate il `Dockerfile` e aggiungete il vostro strumento nella sezione appropriata. Ricompilate dopo l'aggiunta:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -171,11 +171,11 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-Oppure in VS Code: **Dev Containers &rarr; Rebuild Container**.
+Oppure in VS Code: **Dev Containers &rarr; Ricompila Container**.
 
 ### Pacchetti APT
 
-Aggiungere al blocco `apt-get install` della sezione 2:
+Aggiungete al blocco `apt-get install` della sezione 2:
 
 ```dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -186,7 +186,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ### Strumenti npm
 
-Aggiungere al blocco `npm install -g` della sezione 11:
+Aggiungete al blocco `npm install -g` della sezione 11:
 
 ```dockerfile
 RUN npm install -g \
@@ -195,7 +195,7 @@ RUN npm install -g \
 
 ### Strumenti pip
 
-Aggiungere al blocco `pip install` della sezione 12:
+Aggiungete al blocco `pip install` della sezione 12:
 
 ```dockerfile
 RUN pip install --no-cache-dir --break-system-packages \
@@ -204,7 +204,7 @@ RUN pip install --no-cache-dir --break-system-packages \
 
 ### Download binari
 
-Aggiungere alla sezione 10 o creare un nuovo layer `RUN` con rilevamento dell'architettura:
+Aggiungete alla sezione 10 o create un nuovo layer `RUN` con rilevamento dell'architettura:
 
 ```dockerfile
 RUN ARCH=$(dpkg --print-architecture) \

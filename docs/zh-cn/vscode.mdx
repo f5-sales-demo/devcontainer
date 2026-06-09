@@ -12,7 +12,7 @@ i18n:
 
 1. [VS Code](https://code.visualstudio.com/)
 2. [Dev Containers 扩展](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
-3. 在您的机器上运行 Docker 或 Podman（参见[入门指南](./getting-started#container-runtime)）。VS Code Dev Containers 也支持[将 Podman 作为后端](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman)。
+3. 在您的机器上运行 Docker 或 Podman（请参阅[快速入门](./getting-started#container-runtime)）。VS Code Dev Containers 也支持[将 Podman 作为后端](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman)。
 
 ## 快速开始
 
@@ -21,7 +21,7 @@ git clone https://github.com/f5xc-salesdemos/devcontainer.git
 code devcontainer
 ```
 
-VS Code 会检测到 `.devcontainer/devcontainer.json` 并显示通知：**"Reopen in Container"**。点击它，或使用命令面板：
+VS Code 检测到 `.devcontainer/devcontainer.json` 并显示通知：**"在容器中重新打开"**。点击它，或使用命令面板：
 
 > **Dev Containers: Reopen in Container**
 
@@ -37,11 +37,11 @@ VS Code 会构建（或拉取）镜像、启动容器、安装扩展，并在容
 "workspaceFolder": "/workspace"
 ```
 
-devcontainer 配置显式包含了构建文件，因此当您使用"Reopen in Container"或"Rebuild Container"时，VS Code 可以在本地构建镜像。
+devcontainer 配置显式包含了构建文件，因此当您使用"在容器中重新打开"或"重新构建容器"时，VS Code 可以在本地构建镜像。
 
 ## 扩展
 
-扩展会自动安装在容器内：
+扩展会自动安装到容器内：
 
 | 扩展 | 描述 |
 |-----------|-------------|
@@ -59,13 +59,13 @@ devcontainer 配置显式包含了构建文件，因此当您使用"Reopen in Co
 
 ## 端口转发
 
-VS Code 会自动转发 compose 文件中定义的端口。noVNC 显示界面可通过 `http://localhost:6080/vnc.html` 访问——当端口就绪时，VS Code 会通知您。
+VS Code 会自动转发 compose 文件中定义的端口。noVNC 显示界面可通过 `http://localhost:6080/vnc.html` 访问 — VS Code 会在端口就绪时通知您。
 
-您也可以从 VS Code 的 **Ports** 面板中按需转发其他端口。
+可以从 VS Code 的 **Ports** 面板按需转发其他端口。
 
 ## Devcontainer CLI 替代方案
 
-如果您更喜欢命令行而不是 VS Code 界面：
+如果您更喜欢命令行而非 VS Code UI：
 
 ```bash
 npm install -g @devcontainers/cli
@@ -76,8 +76,8 @@ devcontainer exec --workspace-folder . zsh
 
 ## 重新构建
 
-在更改 `Dockerfile` 或 compose 文件后：
+更改 `Dockerfile` 或 compose 文件后：
 
 > **Dev Containers: Rebuild Container**
 
-这将重新构建镜像并重启容器。命名卷（`workspace`、`home`）在重新构建后会保留。
+这将重新构建镜像并重启容器。命名卷（`workspace`、`home`）在重新构建后会持久保留。

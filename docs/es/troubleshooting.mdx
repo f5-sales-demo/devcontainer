@@ -60,7 +60,7 @@ podman-compose up -d
 
 ### Claude muestra "Not logged in"
 
-El punto de entrada configura `~/.claude.json` con los indicadores de incorporación. Si falta:
+El entrypoint inicializa `~/.claude.json` con las flags de onboarding. Si falta:
 
 ```bash
 echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
@@ -68,7 +68,7 @@ echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
 
 ### Claude muestra "Invalid API key"
 
-Verifique qué valor está configurado realmente:
+Verifique qué valor está realmente configurado:
 
 ```bash
 echo "$ANTHROPIC_API_KEY"
@@ -76,7 +76,7 @@ echo "$ANTHROPIC_API_KEY"
 
 Causas comunes:
 
-- **Clave del proxy LiteLLM faltante o inválida** — si está usando el modo proxy, asegúrese de que `LITELLM_API_KEY` en `.env` contenga la credencial de proxy correcta, luego reinicie el contenedor para que el punto de entrada pueda derivar `ANTHROPIC_API_KEY`.
+- **Clave del proxy LiteLLM faltante o inválida** — si está usando el modo proxy, asegúrese de que `LITELLM_API_KEY` en `.env` contenga la credencial correcta del proxy, luego reinicie el contenedor para que el entrypoint pueda derivar `ANTHROPIC_API_KEY`.
 - **Token OAuth o discrepancia en el modo proxy** — use exactamente un modo de autenticación. Si `CLAUDE_CODE_OAUTH_TOKEN` está configurado, tiene prioridad sobre el modo proxy de LiteLLM.
 
 ### Las solicitudes a la API fallan con 401
@@ -103,24 +103,24 @@ La CLI `gh` requiere una variable de entorno `GH_TOKEN`. Agréguela a su archivo
 GH_TOKEN=ghp_your-token-here
 ```
 
-Cree un token en [github.com/settings/tokens](https://github.com/settings/tokens). Funcionan tanto los tokens de acceso detallado (recomendados) como los tokens clásicos con el alcance `repo`. Reinicie el contenedor después de actualizar `.env`.
+Cree un token en [github.com/settings/tokens](https://github.com/settings/tokens). Tanto los tokens de granularidad fina (recomendados) como los tokens clásicos con alcance `repo` funcionan. Reinicie el contenedor después de actualizar `.env`.
 
-### La clonación HTTPS de git falla con 401
+### La clonación git por HTTPS falla con 401
 
-Cuando `GH_TOKEN` está configurado, el punto de entrada ejecuta `gh auth setup-git` para configurar el asistente de credenciales de git para HTTPS. Si las operaciones HTTPS fallan:
+Cuando `GH_TOKEN` está configurado, el entrypoint ejecuta `gh auth setup-git` para configurar el helper de credenciales de git para HTTPS. Si las operaciones HTTPS fallan:
 
 1. Verifique que el token sea válido: `gh auth status`
-2. Compruebe que el asistente de credenciales esté configurado: `git config --global credential.helper`
-3. Reinicie el contenedor para volver a ejecutar el punto de entrada
+2. Compruebe que el helper de credenciales esté configurado: `git config --global credential.helper`
+3. Reinicie el contenedor para volver a ejecutar el entrypoint
 
 ### SSH vs HTTPS
 
 Ambos métodos de autenticación pueden coexistir en el contenedor:
 
 - **SSH** (`SSH_PRIVATE_KEY` en `.env`) — usa URLs `git@github.com:`. Requerido si su organización exige SSH.
-- **HTTPS** (`GH_TOKEN` en `.env`) — usa URLs `https://github.com/`. Configuración más sencilla, sin gestión de claves.
+- **HTTPS** (`GH_TOKEN` en `.env`) — usa URLs `https://github.com/`. Configuración más simple, sin gestión de claves.
 
-Si ambos están configurados, git usa el protocolo que coincida con la URL remota. Para cambiar un clon existente:
+Si ambos están configurados, git usa el protocolo que coincida con la URL del remoto. Para cambiar un clon existente:
 
 ```bash
 # SSH a HTTPS
@@ -140,7 +140,7 @@ sudo chown -R $(id -u):$(id -g) /workspace ~
 
 ### npm install falla con EACCES
 
-El punto de entrada configura automáticamente un prefijo global de npm con permisos de escritura para el usuario en `~/.npm-global`, por lo que los comandos `npm install -g` en tiempo de ejecución deberían funcionar sin `sudo`. Si aún ve errores EACCES, aplique la corrección manualmente:
+El entrypoint configura automáticamente un prefijo global de npm con permisos de escritura del usuario en `~/.npm-global`, por lo que los comandos `npm install -g` en tiempo de ejecución deberían funcionar sin `sudo`. Si aún ve errores EACCES, aplique la corrección manualmente:
 
 ```bash
 mkdir -p ~/.npm-global
@@ -152,7 +152,7 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 
 ### La compilación tarda mucho tiempo
 
-La primera compilación descarga la imagen base (~1 GB). Las compilaciones posteriores usan la caché. Si es lento cada vez:
+La primera compilación descarga la imagen base (~1 GB). Las compilaciones posteriores usan caché. Si es lenta cada vez:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -190,11 +190,11 @@ podman system prune -a --volumes
 </TabItem>
 </Tabs>
 
-**Advertencia:** Esto elimina todos los contenedores, imágenes y volúmenes no utilizados, no solo los de este proyecto.
+**Advertencia:** Esto elimina todos los contenedores, imágenes y volúmenes no utilizados — no solo los de este proyecto.
 
 ## Red
 
-### No se puede acceder a Internet desde dentro del contenedor
+### No se puede acceder a internet desde dentro del contenedor
 
 ```bash
 ping -c 1 8.8.8.8
@@ -226,7 +226,7 @@ sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
 exit
 ```
 
-O agregue la configuración DNS a `~/.config/containers/containers.conf` en el host:
+O agregue la configuración de DNS a `~/.config/containers/containers.conf` en el host:
 
 ```ini
 [containers]
@@ -252,7 +252,7 @@ Si no está ejecutándose, compruebe que `ENABLE_VNC` no esté configurado como 
 
 ### Error "Cannot open display" o "No display"
 
-Es posible que la variable de entorno `DISPLAY` no esté configurada. Verifique:
+La variable de entorno `DISPLAY` puede no estar configurada. Verifique:
 
 ```bash
 echo "$DISPLAY"
@@ -268,7 +268,7 @@ Es posible que noVNC no esté ejecutándose. Verifique dentro del contenedor:
 ps aux | grep -E 'novnc|websockify'
 ```
 
-Si no está ejecutándose, verifique que `ENABLE_VNC` sea `true` (el valor predeterminado) y revise los registros del contenedor:
+Si no está ejecutándose, verifique que `ENABLE_VNC` sea `true` (el valor predeterminado) y compruebe los logs del contenedor:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -306,7 +306,7 @@ La instancia compartida de Chrome debería estar ejecutándose en el puerto 9222
 # ¿Está Chrome ejecutándose?
 curl http://localhost:9222/json/version
 
-# Verificar los registros de Chrome
+# Verificar los logs de Chrome
 cat ~/.local/share/chrome-browser/chrome.log
 
 # Verificar el enlace simbólico

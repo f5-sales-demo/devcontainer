@@ -1,8 +1,8 @@
 ---
-title: Guida introduttiva
+title: Per Iniziare
 description: >-
-  Scarica un file, avvia il container e connettiti — non sono necessari Git né
-  clonazione.
+  Scarica un file, avvia il container e connettiti — non serve Git né clonare
+  repository.
 sidebar:
   order: 2
 i18n:
@@ -13,20 +13,20 @@ i18n:
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 :::tip[Installazione rapida su macOS]
-Se utilizzi macOS con Apple Silicon, salta questa pagina e usa l'[installer a riga singola](/devcontainer/install/):
+Se utilizzi macOS con Apple Silicon, salta questa pagina e usa l'[installer a una riga](/devcontainer/install/):
 
 ```bash
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-Gestisce i pacchetti Homebrew, la configurazione di iTerm2, il setup di Podman e scarica tutto il necessario.
+Si occupa dei pacchetti Homebrew, della configurazione di iTerm2, del setup di Podman e scarica tutto il necessario.
 ::::
 
 ## Prerequisiti
 
-### Runtime per container
+### Runtime per Container
 
-È necessario un runtime per container sulla propria macchina. Sia Docker che Podman funzionano.
+Hai bisogno di un runtime per container sulla tua macchina. Sia Docker che Podman funzionano.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -61,7 +61,7 @@ podman-compose version
 ```
 
 :::note[Solo Linux]
-Podman su Linux esegue i container direttamente (senza VM). Assicurati che il socket Podman sia attivo affinché `podman-compose` possa connettersi:
+Podman su Linux esegue i container direttamente (senza VM). Assicurati che il socket di Podman sia attivo affinché `podman-compose` possa connettersi:
 
 ```bash
 systemctl --user enable --now podman.socket
@@ -71,7 +71,7 @@ systemctl --user enable --now podman.socket
 </TabItem>
 </Tabs>
 
-### Risorse di sistema
+### Risorse di Sistema
 
 | Risorsa | Minimo | Consigliato |
 |---------|--------|-------------|
@@ -82,12 +82,12 @@ systemctl --user enable --now podman.socket
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-Regola i limiti delle risorse in Docker Desktop &rarr; Impostazioni &rarr; Risorse.
+Regola i limiti delle risorse in Docker Desktop &rarr; Settings &rarr; Resources.
 
 </TabItem>
 <TabItem label="Podman">
 
-Su **macOS/Windows**, regola i limiti delle risorse in Podman Desktop &rarr; Impostazioni &rarr; Risorse, oppure tramite la CLI:
+Su **macOS/Windows**, regola i limiti delle risorse in Podman Desktop &rarr; Settings &rarr; Resources, oppure tramite CLI:
 
 ```bash
 podman machine set --cpus 4 --memory 12288
@@ -108,7 +108,7 @@ mkdir devcontainer && cd devcontainer
 curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/docker-compose.yml
 ```
 
-## 2. Aggiungi le tue credenziali di autenticazione (opzionale)
+## 2. Aggiungi le Tue Credenziali di Autenticazione (Opzionale)
 
 Crea un file `.env` nella stessa cartella per pre-configurare Claude Code. Scegli una delle seguenti opzioni:
 
@@ -154,10 +154,10 @@ echo "GH_TOKEN=$(gh auth token)" >> .env
 echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 ```
 
-Poi modifica il `.env` per aggiungere il tuo token OAuth o le impostazioni del proxy LiteLLM (vedi le opzioni sopra).
+Poi modifica `.env` per aggiungere il tuo token OAuth o le impostazioni del proxy LiteLLM (vedi le opzioni sopra).
 
 :::tip[Assistenti AI]
-Il file `.env.example` contiene marcatori `@auto-detect` su ogni variabile che può essere popolata dagli strumenti locali. Gli assistenti AI come Claude Code possono cercare questi marcatori ed eseguire i comandi associati per costruire automaticamente un `.env` completo.
+Il file `.env.example` contiene marcatori `@auto-detect` su ogni variabile che può essere popolata da strumenti locali. Gli assistenti AI come Claude Code possono cercare questi marcatori ed eseguire i comandi associati per costruire automaticamente un `.env` completo.
 :::
 
 ## 3. Avvio
@@ -225,7 +225,7 @@ Testa la connessione AI:
 claude -p "Say hello"
 ```
 
-## 6. Il tuo primo progetto
+## 6. Il Tuo Primo Progetto
 
 ```bash
 cd /workspace
@@ -234,15 +234,15 @@ cd your-project
 claude
 ```
 
-## 7. Display remoto (noVNC)
+## 7. Display Remoto (noVNC)
 
-Il container include un display virtuale per osservare gli agenti AI controllare un browser. Apri `http://localhost:6080/vnc.html` per connetterti. Consulta [Display remoto (noVNC)](./vnc) per i dettagli.
+Il container include un display virtuale per osservare gli agenti AI che controllano un browser. Apri `http://localhost:6080/vnc.html` per connetterti. Consulta [Display Remoto (noVNC)](./vnc) per i dettagli.
 
-## 8. Automazione browser (Chrome DevTools MCP)
+## 8. Automazione del Browser (Chrome DevTools MCP)
 
-Claude Code può navigare pagine web, acquisire screenshot e ispezionare il DOM utilizzando il server Chrome DevTools MCP integrato. Non è necessaria alcuna configurazione — funziona automaticamente in modalità headless. Consulta [Chrome DevTools MCP](./chrome) per i dettagli.
+Claude Code può navigare pagine web, catturare screenshot e ispezionare il DOM utilizzando il server Chrome DevTools MCP integrato. Non è necessaria alcuna configurazione — funziona automaticamente in modalità headless. Consulta [Chrome DevTools MCP](./chrome) per i dettagli.
 
-## 9. Arresto e riavvio
+## 9. Arresto e Riavvio
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -254,7 +254,7 @@ docker compose down
 # Riavvio
 docker compose up -d
 
-# Distruggi tutto e ricomincia da zero
+# Elimina tutto e riparti da zero
 docker compose down -v
 docker compose up -d
 ```
@@ -269,7 +269,7 @@ podman-compose down
 # Riavvio (pull assicura l'immagine più recente)
 podman-compose pull && podman-compose up -d
 
-# Distruggi tutto e ricomincia da zero
+# Elimina tutto e riparti da zero
 podman-compose down -v
 podman-compose pull && podman-compose up -d
 ```
@@ -277,8 +277,8 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-Il tuo codice in `/workspace` e la directory home persistono tra i riavvii. Consulta [Configurazione — Persistenza dei dati](./configuration#data-persistence) per i dettagli.
+Il tuo codice in `/workspace` e la directory home persistono tra i riavvii. Consulta [Configurazione — Persistenza dei Dati](./configuration#data-persistence) per i dettagli.
 
 ---
 
-Per build locali e personalizzazione del Dockerfile, consulta [Sviluppo locale](./local-development). Per l'integrazione con VS Code, consulta [VS Code](./vscode). Per le opzioni di display remoto, consulta [Display remoto (noVNC)](./vnc).
+Per build locali e personalizzazione del Dockerfile, consulta [Sviluppo Locale](./local-development). Per l'integrazione con VS Code, consulta [VS Code](./vscode). Per le opzioni di display remoto, consulta [Display Remoto (noVNC)](./vnc).

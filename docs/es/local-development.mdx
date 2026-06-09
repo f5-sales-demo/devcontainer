@@ -39,7 +39,7 @@ cd devcontainer
 
 ## Archivo de Compilación
 
-El archivo `docker-compose.build.yml` añade soporte de compilación local. **No** se fusiona automáticamente — debe pasarlo explícitamente con las flags `-f`. Esto significa que `docker compose up -d` (o `podman-compose up -d`) siempre descarga la imagen precompilada de GHCR, independientemente de si clonó el repositorio o no.
+El archivo `docker-compose.build.yml` añade soporte de compilación local. **No** se fusiona automáticamente — debe pasarlo explícitamente con las opciones `-f`. Esto significa que `docker compose up -d` (o `podman-compose up -d`) siempre descarga la imagen precompilada de GHCR, haya clonado el repositorio o no.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -50,7 +50,7 @@ Puede verificar que un simple `docker compose up` utiliza únicamente la imagen 
 docker compose config
 ```
 
-Compare con la configuración explícita de compilación:
+Compare con la configuración de compilación explícita:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml config
@@ -65,7 +65,7 @@ Puede verificar que un simple `podman-compose up` utiliza únicamente la imagen 
 podman-compose config
 ```
 
-Compare con la configuración explícita de compilación:
+Compare con la configuración de compilación explícita:
 
 ```bash
 podman-compose -f docker-compose.yml -f docker-compose.build.yml config
@@ -93,64 +93,64 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-Esto fusiona el archivo de compilación con el archivo compose base, compila la imagen desde el `Dockerfile` local e inicia el contenedor. La flag `--build` fuerza una recompilación incluso si existe una imagen en caché.
+Esto fusiona el archivo de compilación con el archivo compose base, compila la imagen desde el `Dockerfile` local e inicia el contenedor. La opción `--build` fuerza una recompilación incluso si existe una imagen en caché.
 
 ## Arquitectura de Compilación en Dos Etapas
 
-El Dockerfile utiliza una compilación en dos etapas optimizada para el almacenamiento en caché de capas de Docker:
+El Dockerfile utiliza una compilación en dos etapas optimizada para el caché de capas de Docker:
 
-### Etapa 1: `deps` (fundamentos estables, ~4.5 GB)
+### Etapa 1: `deps` (bases estables, ~4.5 GB)
 
-Estas capas solo se recompilan cuando se actualiza una versión ARG o cambian los paquetes APT. En cambios típicos que solo afectan herramientas, BuildKit omite esta etapa por completo.
+Estas capas solo se recompilan cuando se actualiza una versión ARG o cambian los paquetes APT. En cambios típicos de herramientas, BuildKit omite esta etapa completa.
 
-| Sección | Contenido |
+| Sección | Contenidos |
 |---------|----------|
 | 1. Repositorios APT | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft, Google Cloud, Dart SDK |
-| 2. Paquetes APT | Herramientas del sistema, Node.js, Python, Java, Terraform, GitHub CLI, motor Docker, Azure CLI, PowerShell, locales |
+| 2. Paquetes APT | Herramientas del sistema, Node.js, Python, Java, Terraform, GitHub CLI, Docker engine, Azure CLI, PowerShell, locales |
 | 2b. Paquetes APT de seguridad | Análisis de red, escáneres web, herramientas de contraseñas, ingeniería inversa, forense (~80 paquetes) |
-| 3. Bootstrap de Python | Symlinks + pip mediante get-pip.py |
+| 3. Bootstrap de Python | Symlinks + pip vía get-pip.py |
 | 4. Go | Tarball oficial (última versión estable, resuelta en tiempo de compilación) |
-| 5. Rust | rustup (a nivel de sistema, última versión estable) |
+| 5. Rust | rustup (a nivel del sistema, última versión estable) |
 | 6. Maven + Gradle | Descargas binarias a `/opt` |
 | 7. Pila VNC | Xvfb, x11vnc, noVNC, fluxbox — pantalla remota vía navegador |
 | 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (últimas versiones) |
 
 ### Etapa 2: `final` (herramientas volátiles + configuración de usuario, ~1.5 GB)
 
-Estas capas cambian con mayor frecuencia (actualizaciones de npm/pip, cambios de configuración) pero se recompilan rápidamente porque la pesada etapa `deps` está en caché.
+Estas capas cambian con más frecuencia (actualizaciones de npm/pip, cambios de configuración) pero se recompilan rápidamente porque la etapa pesada `deps` está en caché.
 
-| Sección | Contenido |
+| Sección | Contenidos |
 |---------|----------|
 | 9. AWS CLI v2 | Instalador oficial |
 | 10. Herramientas binarias | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv |
 | 10b. Binarios adicionales | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint, codex |
 | 10c. Binarios de super-linter | shfmt, gitleaks, editorconfig-checker, trivy, clj-kondo, dotenv-linter, golangci-lint, goreleaser, kubeconform, protolint, scalafmt, ktlint |
-| 10d. Herramientas JAR de Java | checkstyle, google-java-format (scripts wrapper) |
-| 10e. Linters de PHP | phpcs, phpstan, psalm (descargas PHAR) |
-| 10f. Módulos de PowerShell | PSScriptAnalyzer, arm-ttk |
+| 10d. Herramientas Java JAR | checkstyle, google-java-format (scripts envolventes) |
+| 10e. Linters PHP | phpcs, phpstan, psalm (descargas PHAR) |
+| 10f. Módulos PowerShell | PSScriptAnalyzer, arm-ttk |
 | 10g. Binarios de seguridad | nuclei, subfinder, httpx, ffuf, gobuster, feroxbuster, dalfox, amass, trufflehog, grype, syft, bettercap (amd64) |
 | 10h. OWASP ZAP | Escáner de aplicaciones web basado en Java |
 | 10i. Ghidra | Framework de ingeniería inversa |
 | 10j. Metasploit | Framework de explotación (solo amd64) |
 | 11. Herramientas npm globales | claude-code, prettier, markdownlint-cli2, devcontainers-cli, playwright, pi-coding-agent, oh-my-pi |
 | 12. Herramientas pip | pre-commit, ansible, black, pylint, yamllint, playwright |
-| 12c. Linters de Ruby | rubocop + extensiones |
-| 12e. Módulos de linter Perl | Extensiones de Perl::Critic |
-| 12f. Linter de Lua | luacheck |
-| 12g. Linter de R | lintr |
+| 12c. Linters Ruby | rubocop + extensiones |
+| 12e. Módulos linter Perl | Extensiones de Perl::Critic |
+| 12f. Linter Lua | luacheck |
+| 12g. Linter R | lintr |
 | 12h. Gemas Ruby de seguridad | wpscan, evil-winrm |
 | 12i. Herramientas de seguridad clonadas con Git | testssl.sh, exploitdb (searchsploit), SecLists, docker-bench-security, recon-ng, spiderfoot |
-| 13. Navegadores Playwright | Chromium + dependencias del sistema mediante `playwright install --with-deps` |
+| 13. Navegadores Playwright | Chromium + dependencias del sistema vía `playwright install --with-deps` |
 | 13b. Chrome DevTools MCP | Symlink de Chrome + pre-caché MCP + parche headless |
 | 14. Homebrew | Linuxbrew (dependencias de asistentes IA + formateadores) |
 | 15. Plugins ZSH | Plugins personalizados de oh-my-zsh |
-| 16. Bootstrap del shell | npm-global, tfenv, compinit |
-| 17. Configuración de Claude Code + Codex | Memoria de reconocimiento de herramientas, política gestionada, script de autotest, configuración de Codex |
+| 16. Bootstrap de shell | npm-global, tfenv, compinit |
+| 17. Configuración de Claude Code + Codex | Memoria de reconocimiento de herramientas, política gestionada, script de auto-prueba, configuración de Codex |
 | 18. Entrypoint | Script de inicio del contenedor (último COPY absoluto) |
 
-## Añadir Herramientas
+## Agregar Herramientas
 
-Edite el `Dockerfile` y añada su herramienta en la sección correspondiente. Recompile después de añadirla:
+Edite el `Dockerfile` y agregue su herramienta en la sección apropiada. Recompile después de agregar:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -173,7 +173,7 @@ O en VS Code: **Dev Containers &rarr; Rebuild Container**.
 
 ### Paquetes APT
 
-Añada al bloque `apt-get install` de la sección 2:
+Agregue al bloque `apt-get install` de la sección 2:
 
 ```dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -184,7 +184,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ### Herramientas npm
 
-Añada al bloque `npm install -g` de la sección 11:
+Agregue al bloque `npm install -g` de la sección 11:
 
 ```dockerfile
 RUN npm install -g \
@@ -193,7 +193,7 @@ RUN npm install -g \
 
 ### Herramientas pip
 
-Añada al bloque `pip install` de la sección 12:
+Agregue al bloque `pip install` de la sección 12:
 
 ```dockerfile
 RUN pip install --no-cache-dir --break-system-packages \
@@ -202,7 +202,7 @@ RUN pip install --no-cache-dir --break-system-packages \
 
 ### Descargas binarias
 
-Añada a la sección 10 o cree una nueva capa `RUN` con detección de arquitectura:
+Agregue a la sección 10 o cree una nueva capa `RUN` con detección de arquitectura:
 
 ```dockerfile
 RUN ARCH=$(dpkg --print-architecture) \
@@ -212,10 +212,10 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## Caché de Compilación
 
-CI utiliza **caché basado en registro** — las capas de compilación se almacenan en GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) en lugar de la caché de GitHub Actions. Esto evita el límite de 10 GB de la caché de GHA que causaba recompilaciones completas frecuentes para esta imagen multi-arquitectura de ~6 GB.
+CI utiliza **caché basado en registro** — las capas de compilación se almacenan en GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) en lugar del caché de GitHub Actions. Esto evita el límite de 10 GB del caché de GHA que causaba recompilaciones completas frecuentes para esta imagen multi-arquitectura de ~6 GB.
 
-La arquitectura en dos etapas funciona con la caché de registro de manera que:
+La arquitectura de dos etapas funciona con el caché de registro de manera que:
 
-- **Actualizaciones de versión de herramientas** (npm, pip, herramientas binarias) — solo recompila la etapa `final` (~5 min)
-- **Cambios en archivos de configuración** (`claude-config/`, `entrypoint.sh`) — solo recompila las últimas capas (~1 min)
-- **Cambios en los fundamentos** (paquetes APT, versiones de Go/Rust/Java) — recompilación completa de ambas etapas (~30 min)
+- **Actualizaciones de versiones de herramientas** (npm, pip, herramientas binarias) — recompila solo la etapa `final` (~5 min)
+- **Cambios en archivos de configuración** (`claude-config/`, `entrypoint.sh`) — recompila solo las últimas capas (~1 min)
+- **Cambios en las bases** (paquetes APT, versiones de Go/Rust/Java) — recompilación completa de ambas etapas (~30 min)

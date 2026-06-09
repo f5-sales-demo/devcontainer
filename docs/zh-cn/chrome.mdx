@@ -8,11 +8,11 @@ i18n:
   translator: machine
 ---
 
-容器包含一个预配置的 [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) 服务器，为 Claude Code 提供无头浏览器自动化能力。无需额外设置即可导航网页、截取屏幕截图、检查 DOM 以及与页面元素交互。
+容器中包含一个预配置的 [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) 服务器，为 Claude Code 提供无头浏览器自动化能力。无需额外设置，即可导航网页、截取屏幕截图、检查 DOM 以及与页面元素交互。
 
 ## 工作原理
 
-入口脚本会启动一个持久的无头 Chrome，并在端口 9222 上开启远程调试。chrome-devtools-mcp MCP 服务器在 Claude Code 设置中注册，并通过 `--browserUrl` 连接到这个共享浏览器。所有会话共享同一个浏览器实例和 Cookie 容器——登录状态、Cookie 和认证信息在各项目间持久保存。
+入口点会启动一个持久化的无头 Chrome，并在端口 9222 上启用远程调试。chrome-devtools-mcp MCP 服务器注册在 Claude Code 设置中，并通过 `--browserUrl` 连接到此共享浏览器。所有会话共享同一个浏览器实例和 cookie 存储——登录状态、cookie 和身份验证在各项目间持久保存。
 
 ## 可用工具
 
@@ -23,7 +23,7 @@ i18n:
 | `take_snapshot` | 获取页面的无障碍树快照 |
 | `click` | 点击页面上的元素 |
 | `type` | 在输入框中输入文本 |
-| `hover` | 悬停在元素上 |
+| `hover` | 将鼠标悬停在元素上 |
 | `scroll` | 滚动页面或特定元素 |
 | `evaluate` | 在页面上下文中执行 JavaScript |
 | `get_console_logs` | 获取控制台日志消息 |
@@ -34,11 +34,11 @@ i18n:
 浏览器栈使用四个协同工作的组件：
 
 1. **Playwright Chromium** — 在构建时通过 `npx playwright install --with-deps chromium` 安装的 ARM64 兼容 Chromium 二进制文件
-2. **Chrome 符号链接** — 将 Puppeteer 预期的路径（`/opt/google/chrome/chrome`）桥接到 Playwright 二进制文件
-3. **共享 Chrome 进程** — 由 `chrome-browser.sh` 以 `--remote-debugging-port=9222` 参数启动，崩溃后自动重启
+2. **Chrome 符号链接** — 将 Puppeteer 期望的路径（`/opt/google/chrome/chrome`）桥接到 Playwright 二进制文件
+3. **共享 Chrome 进程** — 由 `chrome-browser.sh` 启动，使用 `--remote-debugging-port=9222`，崩溃时自动重启
 4. **全局 MCP 注册** — `settings.json` 使用 `--browserUrl=http://localhost:9222` 注册 chrome-devtools-mcp
 
-Google Chrome 没有 ARM64 的 `.deb` 安装包，而 Ubuntu 24.04 的 `chromium-browser` apt 包会重定向到 snap（在容器中无法使用）。Playwright 捆绑的 Chromium 是 ARM64 容器中唯一可靠的选择。
+Google Chrome 没有 ARM64 的 `.deb` 包，而 Ubuntu 24.04 的 `chromium-browser` apt 包会重定向到 snap（在容器中无法使用）。Playwright 捆绑的 Chromium 是 ARM64 容器中唯一可靠的选择。
 
 ## 验证
 
@@ -58,12 +58,12 @@ curl http://localhost:9222/json/version
 claude-self-test
 ```
 
-## 有界面模式（VNC）
+## 有头模式（VNC）
 
-当 `ENABLE_VNC=true` 时，入口脚本会在启动 Chrome 之前启动 VNC 栈。`chrome-browser.sh` 脚本检测到 `DISPLAY` 已设置后，会在虚拟显示器上以有界面模式运行 Chrome，这样您可以在 VNC 查看器中看到浏览器。
+当 `ENABLE_VNC=true` 时，入口点会在启动 Chrome 之前启动 VNC 栈。`chrome-browser.sh` 脚本检测到 `DISPLAY` 已设置后，会在虚拟显示器上以有头模式运行 Chrome，这样您就可以在 VNC 查看器中看到浏览器。
 
-打开 `http://localhost:6080/vnc.html` 查看虚拟显示器。详情请参阅 [远程显示（noVNC）](./vnc)。
+打开 `http://localhost:6080/vnc.html` 查看虚拟显示器。详情请参阅[远程显示（noVNC）](./vnc)。
 
 ## 故障排除
 
-请参阅 [故障排除 — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp)，获取常见问题的解决方案，包括远程调试失败、配置文件锁定错误和重复 MCP 工具等问题。
+请参阅[故障排除 — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp)，获取常见问题的解决方案，包括远程调试失败、配置文件锁定错误和重复 MCP 工具等问题。

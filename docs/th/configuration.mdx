@@ -1,6 +1,6 @@
 ---
 title: การกำหนดค่า
-description: 'ตัวแปรสภาพแวดล้อม, ชั้นการสร้าง, การคงอยู่ของข้อมูล, และการปรับแต่ง'
+description: 'ตัวแปรสภาพแวดล้อม, เลเยอร์การ build, การคงอยู่ของข้อมูล และการปรับแต่ง'
 sidebar:
   order: 2
 i18n:
@@ -10,16 +10,16 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-การกำหนดค่าทั้งหมดอยู่ในไฟล์ `.env` ที่รูทของโปรเจกต์ ไฟล์นี้ถูก gitignore — จะไม่ถูก commit
+การกำหนดค่าทั้งหมดอยู่ในไฟล์ `.env` ที่รากของโปรเจกต์ ไฟล์นี้ถูก gitignore ไว้ — จะไม่ถูก commit
 
 ## ตัวแปรสภาพแวดล้อม
 
 ### ผู้ให้บริการ AI
 
-คอนเทนเนอร์รองรับโหมดการยืนยันตัวตนแบบ **ไม่สามารถใช้ร่วมกันได้** สองโหมด (ตามลำดับความสำคัญ):
+คอนเทนเนอร์รองรับโหมดการพิสูจน์ตัวตนแบบ **ใช้ได้เพียงอย่างเดียว** สองโหมด (เรียงตามลำดับความสำคัญ):
 
-- **LiteLLM proxy** — ตั้งค่า `LITELLM_BASE_URL` และ `LITELLM_API_KEY` เพื่อส่งผ่าน LiteLLM proxy (ดูด้านล่าง)
-- **โหมด OAuth** — ตั้งค่า `CLAUDE_CODE_OAUTH_TOKEN` เท่านั้น (ดูด้านล่าง)
+- **LiteLLM proxy** — ตั้งค่า `LITELLM_BASE_URL` และ `LITELLM_API_KEY` เพื่อ route ผ่าน LiteLLM proxy (ดูด้านล่าง)
+- **โหมด OAuth** — ตั้งค่าเฉพาะ `CLAUDE_CODE_OAUTH_TOKEN` เท่านั้น (ดูด้านล่าง)
 
 อย่ารวมโหมดเข้าด้วยกัน — ใช้เพียงโหมดเดียว
 
@@ -27,65 +27,65 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 | ตัวแปร | คำอธิบาย | ตัวอย่าง |
 |----------|-------------|---------|
-| `CLAUDE_CODE_OAUTH_TOKEN` | โทเค็น OAuth จากการสมัครสมาชิก Claude Max | `sk-ant-oat01-...` |
+| `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token จากการสมัครสมาชิก Claude Max | `sk-ant-oat01-...` |
 
-เมื่อตั้งค่าแล้ว Claude Code จะยืนยันตัวตนโดยตรงกับ Anthropic โดยใช้ OAuth — ไม่ต้องใช้ API key หรือ proxy ดูโทเค็นของคุณได้จากการตั้งค่า Claude Code หรือ [Anthropic console](https://console.anthropic.com/)
+เมื่อตั้งค่าแล้ว Claude Code จะพิสูจน์ตัวตนโดยตรงกับ Anthropic ผ่าน OAuth — ไม่ต้องใช้ API key หรือ proxy รับ token ของคุณได้จากการตั้งค่า Claude Code หรือ [คอนโซล Anthropic](https://console.anthropic.com/)
 
 ### LiteLLM Proxy
 
-หาก LiteLLM (หรือ proxy อื่น) ของคุณรองรับ Anthropic Messages API แบบเนทีฟอยู่แล้ว — รวมถึง `web_search`, streaming และ tool use — ให้ตั้งค่า `LITELLM_BASE_URL` เป็นโดเมนของ proxy คอนเทนเนอร์จะสร้าง URL เฉพาะผู้ให้บริการโดยอัตโนมัติ:
+หาก LiteLLM (หรืออื่นๆ) proxy ของคุณรองรับ Anthropic Messages API แบบ native อยู่แล้ว — รวมถึง `web_search`, streaming และ tool use — ให้ตั้งค่า `LITELLM_BASE_URL` เป็นโดเมนของ proxy คอนเทนเนอร์จะคำนวณ URL เฉพาะผู้ให้บริการโดยอัตโนมัติ:
 
 - Anthropic endpoint → `${LITELLM_BASE_URL}/anthropic` (ใช้โดย Claude Code)
 - OpenAI-compatible endpoint → `${LITELLM_BASE_URL}/openai/v1`
 
 | ตัวแปร | คำอธิบาย | ตัวอย่าง |
 |----------|-------------|---------|
-| `LITELLM_BASE_URL` | โดเมนของ LiteLLM proxy ของคุณ (ไม่ต้องมี path suffix) | `https://litellm.example.com` |
-| `LITELLM_API_KEY` | API key สำหรับการยืนยันตัวตนกับ proxy | `your-api-key` หรือค่าเริ่มต้นเป็น `litellm-proxy` |
+| `LITELLM_BASE_URL` | โดเมนของ LiteLLM proxy ของคุณ (ไม่ต้องใส่ path suffix) | `https://litellm.example.com` |
+| `LITELLM_API_KEY` | API key สำหรับการพิสูจน์ตัวตนกับ proxy | `your-api-key` หรือค่าเริ่มต้นเป็น `litellm-proxy` |
 
-ผู้ใช้ต้องตั้งค่าเฉพาะโดเมนเท่านั้น — path suffix ของผู้ให้บริการจะถูกเพิ่มโดยอัตโนมัติ
-ในขณะรันไทม์ entrypoint จะสร้าง `ANTHROPIC_API_KEY` จาก `LITELLM_API_KEY` เพื่อให้ Claude Code สามารถใช้ข้อมูลประจำตัวของ proxy ได้โดยไม่ต้องมีตัวแปรแยกสำหรับผู้ใช้
+ผู้ใช้ต้องตั้งค่าเฉพาะโดเมน — provider path suffix จะถูกเพิ่มโดยอัตโนมัติ
+ในเวลารันไทม์ entrypoint จะคำนวณ `ANTHROPIC_API_KEY` จาก `LITELLM_API_KEY` เพื่อให้ Claude Code สามารถใช้ proxy credential ได้โดยไม่ต้องมีตัวแปรแยกต่างหากสำหรับผู้ใช้
 
-ชื่อโมเดล **ไม่ได้** ถูก remap ในโหมดนี้ Claude Code จะส่งตัวระบุโมเดลมาตรฐาน (เช่น `claude-sonnet-4-6`) และ LiteLLM จะส่งต่อไปยังแบ็กเอนด์ที่คุณกำหนดค่าไว้
+ชื่อโมเดล **ไม่ถูก** remap ในโหมดนี้ Claude Code จะส่ง model identifier มาตรฐาน (เช่น `claude-sonnet-4-6`) และ LiteLLM จะ route ไปยัง backend ที่คุณกำหนดค่าไว้
 
 ### การตรวจสอบใบรับรอง TLS
 
-ตามค่าเริ่มต้น Node.js จะตรวจสอบใบรับรอง TLS สำหรับการเชื่อมต่อ HTTPS ทั้งหมด หากผู้ให้บริการ API ต้นทางของคุณใช้ใบรับรองแบบ self-signed (พบบ่อยกับ Open WebUI หรือ LiteLLM proxy ภายในองค์กร) คุณสามารถปิดการตรวจสอบได้โดยเพิ่มบรรทัดนี้ในไฟล์ `.env` ของคุณ:
+โดยค่าเริ่มต้น Node.js จะตรวจสอบใบรับรอง TLS สำหรับการเชื่อมต่อ HTTPS ทั้งหมด หากผู้ให้บริการ API upstream ของคุณใช้ใบรับรองที่ลงนามด้วยตนเอง (พบได้ทั่วไปกับ Open WebUI หรือ LiteLLM proxy ภายใน) คุณสามารถปิดการตรวจสอบได้โดยเพิ่มสิ่งนี้ในไฟล์ `.env`:
 
 ```ini
 NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
-**ไม่แนะนำ** ให้ใช้ในสภาพแวดล้อมการใช้งานจริง ตั้งค่านี้เฉพาะเมื่อคุณเชื่อถือเส้นทางเครือข่ายระหว่างคอนเทนเนอร์และ API endpoint ของคุณ
+สิ่งนี้ **ไม่แนะนำ** สำหรับการใช้งานจริง ตั้งค่านี้เฉพาะเมื่อคุณเชื่อถือเส้นทางเครือข่ายระหว่างคอนเทนเนอร์และ API endpoint ของคุณ
 
-### AI Coding Agents
+### ตัวแทนเขียนโค้ด AI
 
-คอนเทนเนอร์มี AI coding agents หลายตัวนอกเหนือจาก Claude Code:
+คอนเทนเนอร์มีตัวแทนเขียนโค้ด AI หลายตัวนอกเหนือจาก Claude Code:
 
-| Agent | คำสั่ง | ผู้ให้บริการ |
+| ตัวแทน | คำสั่ง | ผู้ให้บริการ |
 |-------|---------|----------|
 | [Codex](https://github.com/openai/codex) | `codex` | OpenAI-compatible |
-| [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | หลายผู้ให้บริการ (กำหนดค่าขณะรันไทม์) |
-| [Oh-My-Pi](https://github.com/can1357/oh-my-pi) | `omp` | หลายผู้ให้บริการ (กำหนดค่าขณะรันไทม์) |
+| [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | หลายผู้ให้บริการ (กำหนดค่าตอนรันไทม์) |
+| [Oh-My-Pi](https://github.com/can1357/oh-my-pi) | `omp` | หลายผู้ให้บริการ (กำหนดค่าตอนรันไทม์) |
 
-Pi และ Oh-My-Pi ถูกติดตั้งเป็น global npm packages Codex เป็นไบนารีแบบ standalone ที่อัปเดตตัวเองขณะรันไทม์
+Pi และ Oh-My-Pi ถูกติดตั้งเป็น global npm package Codex เป็น standalone binary ที่อัปเดตตัวเองตอนรันไทม์
 
-### Remote Display (noVNC)
+### จอแสดงผลระยะไกล (noVNC)
 
-คอนเทนเนอร์รัน virtual display stack สำหรับดูและโต้ตอบกับเบราว์เซอร์แบบ headed ดู [Remote Display (noVNC)](./vnc) สำหรับคำแนะนำการเชื่อมต่อและตัวแปรสภาพแวดล้อม (`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`)
+คอนเทนเนอร์รัน virtual display stack สำหรับดูและโต้ตอบกับเบราว์เซอร์แบบมีหน้าจอ ดู [จอแสดงผลระยะไกล (noVNC)](./vnc) สำหรับคำแนะนำการเชื่อมต่อและตัวแปรสภาพแวดล้อม (`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`)
 
 ### Chrome DevTools MCP
 
-คอนเทนเนอร์มีเซิร์ฟเวอร์ [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) ที่กำหนดค่าไว้ล่วงหน้าสำหรับการทำงานอัตโนมัติกับเบราว์เซอร์แบบ headless Claude Code สามารถเข้าชมหน้าเว็บ ถ่ายภาพหน้าจอ และตรวจสอบ DOM ได้โดยไม่ต้องตั้งค่าเพิ่มเติม ดู [Chrome DevTools MCP](./chrome) สำหรับรายละเอียด
+คอนเทนเนอร์มี [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) server ที่กำหนดค่าไว้แล้วสำหรับการทำงานอัตโนมัติของเบราว์เซอร์แบบ headless Claude Code สามารถเปิดหน้าเว็บ ถ่ายภาพหน้าจอ และตรวจสอบ DOM ได้โดยไม่ต้องตั้งค่าเพิ่มเติม ดู [Chrome DevTools MCP](./chrome) สำหรับรายละเอียด
 
 ### Git
 
-| ตัวแปร | คำอธิบาย | วิธีการตั้งค่า |
+| ตัวแปร | คำอธิบาย | วิธีตั้งค่า |
 |----------|-------------|------------|
-| `GIT_AUTHOR_NAME` | ชื่อสำหรับ git commits | `git config user.name` |
-| `GIT_AUTHOR_EMAIL` | อีเมลสำหรับ git commits | `git config user.email` |
+| `GIT_AUTHOR_NAME` | ชื่อสำหรับ git commit | `git config user.name` |
+| `GIT_AUTHOR_EMAIL` | อีเมลสำหรับ git commit | `git config user.email` |
 
-หาก git ถูกกำหนดค่าไว้บนเครื่องโฮสต์ของคุณ ให้ดึงค่าทั้งสองโดยอัตโนมัติ:
+หาก git ถูกกำหนดค่าบนเครื่อง host ของคุณ ให้เติมค่าทั้งสองอัตโนมัติ:
 
 ```bash
 echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
@@ -94,27 +94,27 @@ echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
 
 ### SSH
 
-| ตัวแปร | คำอธิบาย | วิธีการตั้งค่า |
+| ตัวแปร | คำอธิบาย | วิธีตั้งค่า |
 |----------|-------------|------------|
-| `SSH_PRIVATE_KEY` | Private key ที่เข้ารหัสแบบ Base64 | `base64 < ~/.ssh/id_ed25519` |
+| `SSH_PRIVATE_KEY` | Private key ที่เข้ารหัส Base64 | `base64 < ~/.ssh/id_ed25519` |
 
 ### GitHub CLI
 
-| ตัวแปร | คำอธิบาย | วิธีการตั้งค่า |
+| ตัวแปร | คำอธิบาย | วิธีตั้งค่า |
 |----------|-------------|------------|
-| `GH_TOKEN` | GitHub personal access token สำหรับ `gh` CLI และ HTTPS git | `gh auth token` (หาก `gh` ถูกติดตั้งในเครื่อง) |
+| `GH_TOKEN` | GitHub personal access token สำหรับ `gh` CLI และ HTTPS git | `gh auth token` (หากติดตั้ง `gh` ไว้ในเครื่อง) |
 
-เมื่อตั้งค่า `GH_TOKEN` ในไฟล์ `.env` แล้ว `gh` CLI จะยืนยันตัวตนโดยอัตโนมัติ — ไม่ต้องรัน `gh auth login` นอกจากนี้ entrypoint ยังรัน `gh auth setup-git` ซึ่งกำหนดค่า git credential helper เพื่อให้ `git clone` และ `git push` ผ่าน HTTPS ทำงานได้โดยไม่ต้องใช้ SSH keys
+เมื่อตั้งค่า `GH_TOKEN` ในไฟล์ `.env` แล้ว `gh` CLI จะพิสูจน์ตัวตนโดยอัตโนมัติ — ไม่ต้องรัน `gh auth login` Entrypoint ยังรัน `gh auth setup-git` ซึ่งกำหนดค่า git credential helper เพื่อให้ HTTPS `git clone` และ `git push` ทำงานได้โดยไม่ต้องใช้ SSH key
 
-หาก `gh` ถูกติดตั้งและยืนยันตัวตนแล้วบนเครื่องโฮสต์ของคุณ ให้ดึงโทเค็นโดยตรง:
+หาก `gh` ถูกติดตั้งและพิสูจน์ตัวตนแล้วบนเครื่อง host ของคุณ ให้ดึง token โดยตรง:
 
 ```bash
 echo "GH_TOKEN=$(gh auth token)" >> .env
 ```
 
-มิฉะนั้น [สร้าง personal access token](https://github.com/settings/tokens) และเพิ่มด้วยตนเอง ทั้ง fine-grained tokens (แนะนำ) และ classic tokens ใช้ได้ Fine-grained tokens ให้คุณจำกัดการเข้าถึงเฉพาะ repository ที่ต้องการ Classic tokens ต้องการ scope `repo` สำหรับการเข้าถึง private repository
+มิฉะนั้น [สร้าง personal access token](https://github.com/settings/tokens) และเพิ่มด้วยตนเอง ทั้ง fine-grained token (แนะนำ) และ classic token ใช้ได้ Fine-grained token ให้คุณจำกัดขอบเขตการเข้าถึงเฉพาะ repository ที่ต้องการ Classic token ต้องการ scope `repo` สำหรับการเข้าถึง private repository
 
-เพื่อตรวจสอบการยืนยันตัวตนภายในคอนเทนเนอร์:
+เพื่อตรวจสอบการพิสูจน์ตัวตนภายในคอนเทนเนอร์:
 
 ```bash
 gh auth status
@@ -122,12 +122,12 @@ gh auth status
 
 ## วิธีการติดตั้งเครื่องมือ
 
-ทุก language runtime, CLI และเครื่องมือถูกติดตั้งโดยตรงใน `Dockerfile` ในเวลาสร้าง image Image ที่สร้างไว้ล่วงหน้าถูกเผยแพร่ไปที่ `ghcr.io/f5xc-salesdemos/devcontainer:latest` ทุกครั้งที่มีการ push ไปยัง `main` ดังนั้นผู้ใช้ส่วนใหญ่ไม่จำเป็นต้องสร้างในเครื่อง
+Runtime ภาษา, CLI และเครื่องมือทุกตัวถูกติดตั้งโดยตรงใน `Dockerfile` ในเวลา build image Pre-built image ถูกเผยแพร่ไปยัง `ghcr.io/f5xc-salesdemos/devcontainer:latest` ทุกครั้งที่ push ไปยัง `main` ดังนั้นผู้ใช้ส่วนใหญ่ไม่จำเป็นต้อง build เองในเครื่อง
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-การรัน `docker compose up -d` จะดึง image ที่สร้างไว้ล่วงหน้าโดยอัตโนมัติ หากต้องการสร้างในเครื่องหลังจากปรับแต่ง Dockerfile ให้ระบุไฟล์ build อย่างชัดเจน:
+การรัน `docker compose up -d` จะดึง pre-built image โดยอัตโนมัติ หากต้องการ build ในเครื่องหลังจากปรับแต่ง Dockerfile ให้ระบุไฟล์ build อย่างชัดเจน:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
@@ -138,7 +138,7 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 <TabItem label="Podman">
 
-การรัน `podman-compose up -d` จะดึง image ที่สร้างไว้ล่วงหน้าโดยอัตโนมัติ หากต้องการสร้างในเครื่องหลังจากปรับแต่ง Dockerfile ให้ระบุไฟล์ build อย่างชัดเจน:
+การรัน `podman-compose up -d` จะดึง pre-built image โดยอัตโนมัติ หากต้องการ build ในเครื่องหลังจากปรับแต่ง Dockerfile ให้ระบุไฟล์ build อย่างชัดเจน:
 
 ```bash
 podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
@@ -149,39 +149,39 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-Dockerfile ใช้การสร้างแบบสองขั้นตอนที่ปรับแต่งสำหรับ Docker layer caching ดู [การพัฒนาในเครื่อง — สถาปัตยกรรมการสร้างแบบสองขั้นตอน](./local-development#two-stage-build-architecture) สำหรับรายละเอียดชั้นทั้งหมดและรายละเอียด build cache
+Dockerfile ใช้การ build แบบสองขั้นตอนที่ปรับแต่งสำหรับ Docker layer caching ดู [การพัฒนาในเครื่อง — สถาปัตยกรรมการ Build แบบสองขั้นตอน](./local-development#two-stage-build-architecture) สำหรับรายละเอียดเลเยอร์ทั้งหมดและรายละเอียด build cache
 
 ## การรับรู้เครื่องมือของ Claude Code
 
-คอนเทนเนอร์มีการกำหนดค่าที่ฝังไว้เพื่อป้องกันไม่ให้ Claude Code สับสนชื่อเครื่องมือ การรับรู้เครื่องมือถูกติดตั้งใน **สอง** ระดับหน่วยความจำเพื่อการป้องกันแบบเชิงลึก:
+คอนเทนเนอร์มีการกำหนดค่าที่ฝังมาแล้วเพื่อป้องกันไม่ให้ Claude Code สับสนชื่อเครื่องมือ การรับรู้เครื่องมือถูกติดตั้งที่ **สอง** ระดับหน่วยความจำเพื่อการป้องกันแบบหลายชั้น:
 
-- **Managed policy** (`/etc/claude-code/CLAUDE.md`) — ติดตั้งในเวลาสร้าง Docker นี่เป็นระดับที่มีความสำคัญสูงสุดในลำดับชั้นหน่วยความจำของ Claude Code และจะถูกโหลดเสมอ แม้ว่าจะมี `CLAUDE.md` ระดับโปรเจกต์ขนาดใหญ่ในไดเรกทอรีการทำงาน
-- **User memory** (`~/.claude/CLAUDE.md`) — ถูกสร้างขึ้นโดย entrypoint ในการเริ่มต้นครั้งแรก ให้ชั้นสำรองและสำเนาที่มองเห็นได้และปรับแต่งได้สำหรับผู้ใช้
+- **นโยบายที่จัดการ** (`/etc/claude-code/CLAUDE.md`) — ติดตั้งตอน Docker build นี่คือระดับที่มีความสำคัญสูงสุดในลำดับชั้นหน่วยความจำของ Claude Code และจะถูกโหลดเสมอ แม้ว่าจะมี `CLAUDE.md` ระดับโปรเจกต์ขนาดใหญ่อยู่ในไดเรกทอรีที่ทำงาน
+- **หน่วยความจำผู้ใช้** (`~/.claude/CLAUDE.md`) — สร้างโดย entrypoint เมื่อเริ่มต้นครั้งแรก ให้เลเยอร์สำรองและสำเนาที่มองเห็นได้และปรับแต่งได้สำหรับผู้ใช้
 
 ### ลำดับความสำคัญของระดับหน่วยความจำ
 
 Claude Code โหลดคำสั่งจากหลายระดับหน่วยความจำ (จากสูงสุดไปต่ำสุด):
 
-1. **Managed policy** (`/etc/claude-code/`) — โหลดเสมอ ไม่สามารถยกเว้นได้
-2. **Project memory** (`./CLAUDE.md`) — โหลดตามไดเรกทอรีโปรเจกต์
-3. **User memory** (`~/.claude/CLAUDE.md`) — โหลดแบบ global สำหรับทุกเซสชัน
-4. **Local memory** (`./CLAUDE.local.md`) — การแทนที่ส่วนตัวระดับโปรเจกต์
+1. **นโยบายที่จัดการ** (`/etc/claude-code/`) — โหลดเสมอ ไม่สามารถยกเว้นได้
+2. **หน่วยความจำโปรเจกต์** (`./CLAUDE.md`) — โหลดตามไดเรกทอรีโปรเจกต์
+3. **หน่วยความจำผู้ใช้** (`~/.claude/CLAUDE.md`) — โหลดทั่วโลกสำหรับทุก session
+4. **หน่วยความจำในเครื่อง** (`./CLAUDE.local.md`) — การแทนที่ส่วนตัวต่อโปรเจกต์
 
-หากไม่มีระดับ Managed policy การรับรู้เครื่องมือใน User memory อาจถูกลดความสำคัญเมื่อแข่งกับ `CLAUDE.md` ระดับโปรเจกต์ขนาดใหญ่ ทำให้ Claude สูญเสียการรับรู้ชื่อเครื่องมือแบบ PascalCase ระดับ Managed รับประกันว่าการรับรู้เครื่องมือจะถูกโหลดในความสำคัญสูงสุดเสมอ
+หากไม่มีระดับนโยบายที่จัดการ การรับรู้เครื่องมือในหน่วยความจำผู้ใช้อาจถูกลดความสำคัญเมื่อแข่งขันกับ `CLAUDE.md` ระดับโปรเจกต์ขนาดใหญ่ ทำให้ Claude สูญเสียการรับรู้ชื่อเครื่องมือแบบ PascalCase ระดับนโยบายที่จัดการรับประกันว่าการรับรู้เครื่องมือจะถูกโหลดที่ลำดับความสำคัญสูงสุดเสมอ
 
 ### การทดสอบตัวเอง
 
-รันการทดสอบตัวเองที่มีอยู่ในตัวเพื่อตรวจสอบการกำหนดค่า:
+รันการทดสอบตัวเองที่มีมาในตัวเพื่อตรวจสอบการกำหนดค่า:
 
 ```bash
 claude-self-test
 ```
 
-การทดสอบนี้จะตรวจสอบว่าไฟล์การกำหนดค่าทั้งหมดอยู่ในที่ที่ถูกต้องและมีการอ้างอิงเครื่องมือที่คาดหวัง
+สิ่งนี้ตรวจสอบว่าไฟล์กำหนดค่าทั้งหมดอยู่ในตำแหน่งที่ถูกต้องและมีการอ้างอิงเครื่องมือที่คาดหวัง
 
 ## การเพิ่มเครื่องมือ
 
-หากต้องการเพิ่มเครื่องมือลงใน image ให้แก้ไข `Dockerfile` และสร้างใหม่ในเครื่อง ดู [การพัฒนาในเครื่อง — การเพิ่มเครื่องมือ](./local-development#adding-tools) สำหรับคำแนะนำในการเพิ่ม APT packages, npm tools, pip tools และการดาวน์โหลดไบนารี
+หากต้องการเพิ่มเครื่องมือในอิมเมจ ให้แก้ไข `Dockerfile` และ build ใหม่ในเครื่อง ดู [การพัฒนาในเครื่อง — การเพิ่มเครื่องมือ](./local-development#adding-tools) สำหรับคำแนะนำในการเพิ่ม APT package, npm tool, pip tool และการดาวน์โหลด binary
 
 ## ส่วนขยาย VS Code
 
@@ -189,31 +189,31 @@ claude-self-test
 
 ## การคงอยู่ของข้อมูล
 
-ข้อมูลทั้งหมดอยู่ใน named volumes — ไม่มีการ mount ไดเรกทอรีของโฮสต์:
+ข้อมูลทั้งหมดอยู่ใน named volume — ไม่มีการ mount ไดเรกทอรี host:
 
-| Volume | จุด Mount | เนื้อหา |
+| Volume | จุดเชื่อมต่อ | เนื้อหา |
 |--------|-------------|----------|
 | `workspace` | `/workspace` | Repository ที่โคลนและไฟล์โปรเจกต์ของคุณ |
-| `home` | `/home/vscode` | ประวัติ shell, การกำหนดค่าเครื่องมือ, แคช, SSH keys |
+| `home` | `/home/vscode` | ประวัติ shell, การกำหนดค่าเครื่องมือ, แคช, SSH key |
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-ทั้งสองคงอยู่ตลอดการรีสตาร์ทและการสร้างคอนเทนเนอร์ใหม่ รัน `docker compose pull` เพื่อดึง image ที่สร้างไว้ล่วงหน้าล่าสุดก่อนรีสตาร์ท
+ทั้งสองจะคงอยู่ตลอดการรีสตาร์ทและ rebuild คอนเทนเนอร์ รัน `docker compose pull` เพื่อดึง pre-built image ล่าสุดก่อนรีสตาร์ท
 
 | การดำเนินการ | ข้อมูล |
 |--------|------|
-| `docker compose down` | คงอยู่ |
+| `docker compose down` | ถูกเก็บรักษาไว้ |
 | `docker compose down -v` | **ถูกลบ** |
 
 </TabItem>
 <TabItem label="Podman">
 
-ทั้งสองคงอยู่ตลอดการรีสตาร์ทและการสร้างคอนเทนเนอร์ใหม่ รัน `podman-compose pull` เพื่อดึง image ที่สร้างไว้ล่วงหน้าล่าสุดก่อนรีสตาร์ท
+ทั้งสองจะคงอยู่ตลอดการรีสตาร์ทและ rebuild คอนเทนเนอร์ รัน `podman-compose pull` เพื่อดึง pre-built image ล่าสุดก่อนรีสตาร์ท
 
 | การดำเนินการ | ข้อมูล |
 |--------|------|
-| `podman-compose down` | คงอยู่ |
+| `podman-compose down` | ถูกเก็บรักษาไว้ |
 | `podman-compose down -v` | **ถูกลบ** |
 
 </TabItem>
@@ -221,8 +221,8 @@ claude-self-test
 
 ## การแมปพอร์ต
 
-| โฮสต์ | คอนเทนเนอร์ | บริการ |
+| Host | คอนเทนเนอร์ | บริการ |
 |------|-----------|---------|
-| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNC remote display (localhost เท่านั้น, แทนที่ด้วย `NOVNC_HOST_PORT`) |
+| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | จอแสดงผลระยะไกล noVNC (localhost เท่านั้น, แทนที่ด้วย `NOVNC_HOST_PORT`) |
 
 พอร์ตถูกผูกกับ `127.0.0.1` เพื่อให้เข้าถึงได้จากเครื่องของคุณเท่านั้น ไม่ใช่จากเครือข่าย

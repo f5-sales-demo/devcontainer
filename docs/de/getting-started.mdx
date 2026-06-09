@@ -19,14 +19,14 @@ Wenn Sie macOS mit Apple Silicon verwenden, überspringen Sie diese Seite und nu
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-Er kümmert sich um Homebrew-Pakete, iTerm2-Konfiguration, Podman-Einrichtung und lädt alles herunter, was Sie benötigen.
+Er kümmert sich um Homebrew-Pakete, iTerm2-Konfiguration, Podman-Setup und lädt alles herunter, was Sie benötigen.
 ::::
 
 ## Voraussetzungen
 
 ### Container-Laufzeitumgebung
 
-Sie benötigen eine Container-Laufzeitumgebung auf Ihrem Rechner. Sowohl Docker als auch Podman funktionieren.
+Sie benötigen eine Container-Laufzeitumgebung auf Ihrem Rechner. Entweder Docker oder Podman funktioniert.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -127,17 +127,17 @@ LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
 LITELLM_API_KEY=your-api-key
 ```
 
-Setzen Sie nur die Domain — der Container leitet anbieterspezifische URL-Suffixe automatisch ab (z. B. `/anthropic` für Claude Code).
+Setzen Sie nur die Domain — der Container leitet providerspezifische URL-Suffixe automatisch ab (z. B. `/anthropic` für Claude Code).
 
 ### Automatisches Befüllen aus lokalen Anmeldedaten
 
-Wenn Sie `git` und `gh` auf Ihrem Host konfiguriert haben, können Sie die meisten `.env`-Werte automatisch befüllen. Beginnen Sie damit, die Vorlage zu kopieren:
+Wenn Sie `git` und `gh` auf Ihrem Host konfiguriert haben, können Sie die meisten `.env`-Werte automatisch befüllen. Beginnen Sie mit dem Kopieren der Vorlage:
 
 ```bash
 cp .env.example .env
 ```
 
-Führen Sie dann die Befehle aus, die zu Ihrer Einrichtung passen:
+Führen Sie dann die Befehle aus, die zu Ihrem Setup passen:
 
 ```bash
 # Git identity
@@ -154,10 +154,10 @@ echo "GH_TOKEN=$(gh auth token)" >> .env
 echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 ```
 
-Bearbeiten Sie dann `.env`, um Ihr OAuth-Token oder LiteLLM-Proxy-Einstellungen hinzuzufügen (siehe Optionen oben).
+Bearbeiten Sie dann `.env`, um Ihr OAuth-Token oder Ihre LiteLLM-Proxy-Einstellungen hinzuzufügen (siehe Optionen oben).
 
 :::tip[KI-Assistenten]
-Die `.env.example`-Datei enthält `@auto-detect`-Markierungen bei jeder Variable, die aus lokalen Tools befüllt werden kann. KI-Assistenten wie Claude Code können diese Markierungen scannen und die zugehörigen Befehle ausführen, um automatisch eine vollständige `.env` zu erstellen.
+Die `.env.example`-Datei enthält `@auto-detect`-Marker bei jeder Variable, die aus lokalen Tools befüllt werden kann. KI-Assistenten wie Claude Code können diese Marker scannen und die zugehörigen Befehle ausführen, um automatisch eine vollständige `.env` zu erstellen.
 :::
 
 ## 3. Starten
@@ -236,11 +236,11 @@ claude
 
 ## 7. Remote-Anzeige (noVNC)
 
-Der Container enthält ein virtuelles Display zur Beobachtung von KI-Agenten, die einen Browser steuern. Öffnen Sie `http://localhost:6080/vnc.html`, um sich zu verbinden. Siehe [Remote-Anzeige (noVNC)](./vnc) für Details.
+Der Container enthält ein virtuelles Display, um KI-Agenten bei der Steuerung eines Browsers zuzusehen. Öffnen Sie `http://localhost:6080/vnc.html`, um sich zu verbinden. Siehe [Remote-Anzeige (noVNC)](./vnc) für Details.
 
 ## 8. Browser-Automatisierung (Chrome DevTools MCP)
 
-Claude Code kann Webseiten navigieren, Screenshots erstellen und das DOM mithilfe des integrierten Chrome DevTools MCP-Servers untersuchen. Keine Einrichtung erforderlich — es funktioniert automatisch im Headless-Modus. Siehe [Chrome DevTools MCP](./chrome) für Details.
+Claude Code kann Webseiten navigieren, Screenshots aufnehmen und das DOM mithilfe des integrierten Chrome DevTools MCP-Servers untersuchen. Keine Einrichtung erforderlich — es funktioniert automatisch im Headless-Modus. Siehe [Chrome DevTools MCP](./chrome) für Details.
 
 ## 9. Stoppen und Neustarten
 
@@ -248,7 +248,7 @@ Claude Code kann Webseiten navigieren, Screenshots erstellen und das DOM mithilf
 <TabItem label="Docker">
 
 ```bash
-# Stoppen (behält Daten bei)
+# Stoppen (Daten bleiben erhalten)
 docker compose down
 
 # Erneut starten
@@ -263,10 +263,10 @@ docker compose up -d
 <TabItem label="Podman">
 
 ```bash
-# Stoppen (behält Daten bei)
+# Stoppen (Daten bleiben erhalten)
 podman-compose down
 
-# Erneut starten (pull stellt sicher, dass das neueste Image verwendet wird)
+# Erneut starten (Pull stellt sicher, dass das neueste Image verwendet wird)
 podman-compose pull && podman-compose up -d
 
 # Alles löschen und neu beginnen

@@ -1,7 +1,7 @@
 ---
 title: Exibição Remota (noVNC)
 description: >-
-  Assista e interaja com navegadores em modo headed através de uma exibição
+  Assista e interaja com navegadores em modo visível por meio de uma exibição
   virtual no seu navegador.
 sidebar:
   order: 3
@@ -12,24 +12,24 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-O container executa uma pilha de exibição virtual (Xvfb + x11vnc + noVNC + fluxbox) para que você possa observar agentes de IA controlando um navegador e intervir quando necessário — por exemplo, para lidar com prompts de login ou MFA.
+O contêiner executa uma pilha de exibição virtual (Xvfb + x11vnc + noVNC + fluxbox) para que você possa assistir agentes de IA controlando um navegador e intervir quando necessário — por exemplo, para lidar com prompts de login ou MFA.
 
 ## Conectando
 
-1. Abra `http://localhost:6080/vnc.html` no seu navegador e clique em **Connect**
-2. Você verá um desktop leve do fluxbox — esta é a exibição virtual do container
+1. Abra `http://localhost:6080/vnc.html` no seu navegador e clique em **Conectar**
+2. Você verá um desktop leve do fluxbox — esta é a exibição virtual do contêiner
 
-Agentes de IA usando `@playwright/mcp` em modo headed renderizam o Chromium nesta exibição. Você pode clicar e digitar diretamente na janela do noVNC para intervir a qualquer momento — sem necessidade de pausar/retomar.
+Agentes de IA usando `@playwright/mcp` em modo visível renderizam o Chromium nesta exibição. Você pode clicar e digitar diretamente na janela do noVNC para intervir a qualquer momento — sem necessidade de pausar/retomar.
 
 ## Inicialização Manual do Navegador
 
-Para abrir um navegador manualmente dentro do container:
+Para abrir um navegador manualmente dentro do contêiner:
 
 ```bash
 chromium --no-sandbox &
 ```
 
-Para executar testes do Playwright em modo headed:
+Para executar testes do Playwright em modo visível:
 
 ```bash
 npx playwright test --headed
@@ -42,13 +42,13 @@ npx playwright test --headed
 | `ENABLE_VNC` | `true` | Defina como `false` para desabilitar a pilha VNC |
 | `VNC_RESOLUTION` | `1280x1024x24` | Resolução da exibição virtual (LxAxProfundidade) |
 | `DISPLAY` | `:99` | Número do display X11 |
-| `NOVNC_HOST_PORT` | `6080` | Porta do host para o noVNC (altere para evitar conflitos com outros containers) |
+| `NOVNC_HOST_PORT` | `6080` | Porta do host para o noVNC (altere para evitar conflitos com outros contêineres) |
 
-Defina estas variáveis no seu arquivo `.env` ou em `.devcontainer/devcontainer.json` sob `containerEnv`.
+Defina estas variáveis no seu arquivo `.env` ou em `.devcontainer/devcontainer.json` em `containerEnv`.
 
 ## Desabilitando a Pilha VNC
 
-Para operação somente headless, defina `ENABLE_VNC=false` no `.env` e reinicie o container:
+Para operação somente em modo headless, defina `ENABLE_VNC=false` no `.env` e reinicie o contêiner:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -71,4 +71,4 @@ podman-compose up -d
 
 ## Solução de Problemas
 
-Consulte [Solução de Problemas — Exibição Remota](./troubleshooting#remote-display-novnc) para soluções de telas pretas, erros de conexão recusada e conflitos de portas.
+Consulte [Solução de Problemas — Exibição Remota](./troubleshooting#remote-display-novnc) para soluções de telas pretas, erros de conexão recusada e conflitos de porta.

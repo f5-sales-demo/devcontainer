@@ -10,18 +10,18 @@ i18n:
   translator: machine
 ---
 
-O container inclui um servidor [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) pré-configurado que oferece ao Claude Code capacidades de automação de navegador headless. Navegue por páginas web, faça capturas de tela, inspecione o DOM e interaja com elementos da página — sem necessidade de configuração adicional.
+O container inclui um servidor [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) pré-configurado que oferece ao Claude Code capacidades de automação de navegador headless. Navegue em páginas web, tire capturas de tela, inspecione o DOM e interaja com elementos da página — sem necessidade de configuração adicional.
 
 ## Como Funciona
 
-O entrypoint inicia um Chrome headless persistente com depuração remota na porta 9222. O servidor MCP chrome-devtools-mcp é registrado nas configurações do Claude Code e se conecta a este navegador compartilhado via `--browserUrl`. Todas as sessões compartilham uma única instância do navegador e o mesmo cookie jar — logins, cookies e autenticação persistem entre projetos.
+O entrypoint inicia um Chrome headless persistente com depuração remota na porta 9222. O servidor MCP chrome-devtools-mcp é registrado nas configurações do Claude Code e se conecta a este navegador compartilhado via `--browserUrl`. Todas as sessões compartilham uma única instância do navegador e cookie jar — logins, cookies e autenticação persistem entre projetos.
 
 ## Ferramentas Disponíveis
 
 | Ferramenta | Descrição |
 |------|-------------|
 | `navigate_page` | Navega para uma URL e aguarda o carregamento da página |
-| `take_screenshot` | Captura uma imagem PNG da página atual |
+| `take_screenshot` | Captura uma captura de tela PNG da página atual |
 | `take_snapshot` | Obtém um snapshot da árvore de acessibilidade da página |
 | `click` | Clica em um elemento na página |
 | `type` | Digita texto em um campo de entrada |
@@ -33,10 +33,10 @@ O entrypoint inicia um Chrome headless persistente com depuração remota na por
 
 ## Arquitetura
 
-A pilha do navegador utiliza quatro componentes que trabalham juntos:
+A stack do navegador utiliza quatro componentes que trabalham juntos:
 
-1. **Playwright Chromium** — Binário Chromium compatível com ARM64 instalado no momento do build via `npx playwright install --with-deps chromium`
-2. **Symlink do Chrome** — conecta o caminho esperado pelo Puppeteer (`/opt/google/chrome/chrome`) ao binário do Playwright
+1. **Playwright Chromium** — Binário Chromium compatível com ARM64 instalado no momento da build via `npx playwright install --with-deps chromium`
+2. **Symlink do Chrome** — faz a ponte entre o caminho esperado pelo Puppeteer (`/opt/google/chrome/chrome`) e o binário do Playwright
 3. **Processo Chrome compartilhado** — iniciado pelo `chrome-browser.sh` com `--remote-debugging-port=9222`, reinicia automaticamente em caso de falha
 4. **Registro MCP global** — `settings.json` registra o chrome-devtools-mcp com `--browserUrl=http://localhost:9222`
 
@@ -62,9 +62,9 @@ claude-self-test
 
 ## Modo com Interface (VNC)
 
-Quando `ENABLE_VNC=true`, o entrypoint inicia a pilha VNC antes de iniciar o Chrome. O script `chrome-browser.sh` detecta que `DISPLAY` está definido e executa o Chrome em modo com interface no display virtual, para que você possa ver o navegador no visualizador VNC.
+Quando `ENABLE_VNC=true`, o entrypoint inicia a stack VNC antes de iniciar o Chrome. O script `chrome-browser.sh` detecta que `DISPLAY` está definido e executa o Chrome em modo com interface no display virtual, para que você possa ver o navegador no visualizador VNC.
 
-Abra `http://localhost:6080/vnc.html` para ver o display virtual. Consulte [Display Remoto (noVNC)](./vnc) para mais detalhes.
+Abra `http://localhost:6080/vnc.html` para ver o display virtual. Consulte [Display Remoto (noVNC)](./vnc) para detalhes.
 
 ## Solução de Problemas
 

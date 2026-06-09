@@ -1,9 +1,9 @@
 ---
 title: Prueba de Grabación de Pantalla
 description: >-
-  Demuestra que Xvfb, Chromium en modo con interfaz gráfica (a través de
-  Playwright) y la grabación de pantalla con ffmpeg funcionan juntos
-  correctamente dentro del devcontainer.
+  Demuestra que Xvfb, Chromium en modo visible (a través de Playwright) y la
+  grabación de pantalla con ffmpeg funcionan correctamente juntos dentro del
+  devcontainer.
 sidebar:
   order: 1
 i18n:
@@ -13,25 +13,25 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Esta prueba verifica la pila completa de VNC/navegador grabando una sesión de navegador con interfaz gráfica en un archivo MP4. Demuestra que:
+Esta prueba verifica la pila completa de VNC/navegador grabando una sesión de navegador en modo visible a un archivo MP4. Demuestra que:
 
-- **Xvfb** está en ejecución y aceptando conexiones en `:99`
-- **Chromium** puede iniciarse en modo con interfaz gráfica en la pantalla virtual
+- **Xvfb** está en ejecución y acepta conexiones en `:99`
+- **Chromium** puede iniciarse en modo visible en la pantalla virtual
 - **ffmpeg** puede capturar la pantalla mediante x11grab
-- El **MP4** resultante es un video válido y reproducible
+- El **MP4** resultante es un vídeo válido y reproducible
 
 ## Cómo Funciona
 
 1. Consulta `xdpyinfo -display :99` hasta que la pantalla X esté lista (mismo patrón que el entrypoint)
-2. Inicia la grabación de ffmpeg capturando la pantalla a 10 fps
-3. Lanza Chromium con interfaz gráfica mediante la `sync_api` de Playwright
+2. Inicia ffmpeg grabando la pantalla a 10 fps
+3. Lanza Chromium en modo visible a través de `sync_api` de Playwright
 4. Navega a `https://example.com` (pausa de 3 s), luego a `https://httpbin.org` (pausa de 3 s)
 5. Envía SIGTERM a ffmpeg para la finalización limpia del MP4
 6. Reporta la ruta de salida y el tamaño del archivo
 
 ## Script
 
-Guarde lo siguiente como `vnc-browser-test.py` dentro del contenedor, o cópielo desde el directorio `docs/tests/` de este repositorio:
+Guarde lo siguiente como `vnc-browser-test.py` dentro del contenedor, o cópielo del directorio `docs/tests/` de este repositorio:
 
 ```python
 #!/usr/bin/env python3
@@ -203,7 +203,7 @@ El MP4 debería mostrar la ventana de Chromium renderizando ambos sitios web en 
 
 | Síntoma | Causa probable |
 | ---- | ---- |
-| `Xvfb display :99 not ready` | Xvfb no se inició — verifique que el entrypoint ejecutó la pila VNC |
-| `ffmpeg: x11grab error` | Discrepancia en la pantalla o ffmpeg no tiene soporte para x11grab |
-| `Playwright launch error` | Chromium no está instalado o falta `--no-sandbox` |
-| El MP4 tiene 0 bytes | ffmpeg fue terminado antes de escribir — verifique el manejo de SIGTERM |
+| `Xvfb display :99 not ready` | Xvfb no iniciado — verifique que el entrypoint ejecutó la pila VNC |
+| `ffmpeg: x11grab error` | Discrepancia en la pantalla o ffmpeg sin soporte de x11grab |
+| `Playwright launch error` | Chromium no instalado o falta `--no-sandbox` |
+| MP4 de 0 bytes | ffmpeg fue terminado antes de escribir — verifique el manejo de SIGTERM |

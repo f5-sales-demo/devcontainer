@@ -8,27 +8,27 @@ i18n:
   translator: machine
 ---
 
-## 一行命令安装
+## 一键安装
 
 ```bash
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-这条命令会完成完整的首次运行设置：
+这条命令会完成全部首次运行设置：
 
 1. 安装 Homebrew 软件包（podman、podman-compose、gh、iterm2、nerd fonts）
-2. 配置 iTerm2（字体、提示音、回滚缓冲区、深色主题、Shift+Enter 快捷键绑定）
+2. 配置 iTerm2（字体、提示音、回滚缓冲区、暗色主题、Shift+Enter 键绑定）
 3. 初始化并调优 Podman 虚拟机（16 GB 内存、4 个 CPU、220 GB 磁盘、zram、swappiness）
 4. 将 `docker-compose.yml`、`devcontainer.sh` 和 `.env` 模板下载到当前目录
 
 :::note[需要 Homebrew]
-如果未安装 Homebrew，脚本会退出并给出安装说明。
-您的 IT 部门可能会将 Homebrew 作为托管软件提供——请先与他们确认。
+如果未安装 Homebrew，脚本会退出并显示安装说明。
+您的 IT 部门可能已将 Homebrew 作为托管软件提供——请先向他们确认。
 :::
 
 ## 安装完成后
 
-使用您的凭据编辑 `.env` 文件：
+编辑 `.env` 文件，填入您的凭据：
 
 ```bash
 vi .env
@@ -40,7 +40,7 @@ vi .env
 ./devcontainer.sh
 ```
 
-该脚本会检测您的时区，并在每次调用时通过 `gh auth token` 获取最新的 GitHub 令牌。
+该脚本会自动检测您的时区，并在每次调用时通过 `gh auth token` 获取最新的 GitHub 令牌。
 
 ## 创建的文件
 
@@ -48,7 +48,7 @@ vi .env
 
 | 文件 | 用途 |
 |---|---|
-| `devcontainer.sh` | 启动脚本（运行此文件以启动容器） |
+| `devcontainer.sh` | 启动脚本（运行此脚本以启动容器） |
 | `docker-compose.yml` | 容器服务定义 |
 | `.env` | 您的凭据（从模板生成，首次启动前请编辑） |
 

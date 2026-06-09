@@ -2,7 +2,7 @@
 title: Chrome DevTools MCP
 description: >-
   Automatisation du navigateur, captures d'écran et inspection du DOM via une
-  instance Chrome headless partagée.
+  instance partagée de Chrome headless.
 sidebar:
   order: 4
 i18n:
@@ -12,9 +12,9 @@ i18n:
 
 Le conteneur inclut un serveur [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) pré-configuré qui offre à Claude Code des capacités d'automatisation de navigateur headless. Naviguez sur des pages web, prenez des captures d'écran, inspectez le DOM et interagissez avec les éléments de la page — aucune configuration supplémentaire nécessaire.
 
-## Fonctionnement
+## Comment ça fonctionne
 
-Le point d'entrée lance un Chrome headless persistant avec le débogage à distance sur le port 9222. Le serveur MCP chrome-devtools-mcp est enregistré dans les paramètres de Claude Code et se connecte à ce navigateur partagé via `--browserUrl`. Toutes les sessions partagent une instance de navigateur unique et un même jar de cookies — les connexions, cookies et authentifications persistent entre les projets.
+Le point d'entrée lance un Chrome headless persistant avec le débogage à distance sur le port 9222. Le serveur MCP chrome-devtools-mcp est enregistré dans les paramètres de Claude Code et se connecte à ce navigateur partagé via `--browserUrl`. Toutes les sessions partagent une seule instance de navigateur et un même jar de cookies — les connexions, cookies et authentifications persistent entre les projets.
 
 ## Outils disponibles
 
@@ -24,7 +24,7 @@ Le point d'entrée lance un Chrome headless persistant avec le débogage à dist
 | `take_screenshot` | Capturer une capture d'écran PNG de la page actuelle |
 | `take_snapshot` | Obtenir un instantané de l'arbre d'accessibilité de la page |
 | `click` | Cliquer sur un élément de la page |
-| `type` | Saisir du texte dans un champ de saisie |
+| `type` | Saisir du texte dans un champ de formulaire |
 | `hover` | Survoler un élément |
 | `scroll` | Faire défiler la page ou un élément spécifique |
 | `evaluate` | Exécuter du JavaScript dans le contexte de la page |
@@ -35,12 +35,12 @@ Le point d'entrée lance un Chrome headless persistant avec le débogage à dist
 
 La pile du navigateur utilise quatre composants qui fonctionnent ensemble :
 
-1. **Playwright Chromium** — binaire Chromium compatible ARM64 installé au moment du build via `npx playwright install --with-deps chromium`
+1. **Playwright Chromium** — Binaire Chromium compatible ARM64 installé au moment du build via `npx playwright install --with-deps chromium`
 2. **Lien symbolique Chrome** — fait le pont entre le chemin attendu par Puppeteer (`/opt/google/chrome/chrome`) et le binaire Playwright
 3. **Processus Chrome partagé** — lancé par `chrome-browser.sh` avec `--remote-debugging-port=9222`, redémarre automatiquement en cas de crash
 4. **Enregistrement MCP global** — `settings.json` enregistre chrome-devtools-mcp avec `--browserUrl=http://localhost:9222`
 
-Google Chrome ne dispose pas de paquet `.deb` pour ARM64, et le paquet apt `chromium-browser` d'Ubuntu 24.04 redirige vers snap (qui ne fonctionne pas dans les conteneurs). Le Chromium intégré à Playwright est la seule option fiable pour les conteneurs ARM64.
+Google Chrome n'a pas de paquet `.deb` pour ARM64, et le paquet apt `chromium-browser` d'Ubuntu 24.04 redirige vers snap (qui ne fonctionne pas dans les conteneurs). Le Chromium fourni par Playwright est la seule option fiable pour les conteneurs ARM64.
 
 ## Vérification
 
@@ -62,10 +62,10 @@ claude-self-test
 
 ## Mode avec affichage (VNC)
 
-Lorsque `ENABLE_VNC=true`, le point d'entrée démarre la pile VNC avant de lancer Chrome. Le script `chrome-browser.sh` détecte que `DISPLAY` est défini et exécute Chrome en mode avec affichage sur l'écran virtuel, vous permettant ainsi de voir le navigateur dans le visualiseur VNC.
+Lorsque `ENABLE_VNC=true`, le point d'entrée démarre la pile VNC avant de lancer Chrome. Le script `chrome-browser.sh` détecte que `DISPLAY` est défini et exécute Chrome en mode avec affichage sur l'écran virtuel, afin que vous puissiez voir le navigateur dans le visualiseur VNC.
 
 Ouvrez `http://localhost:6080/vnc.html` pour voir l'affichage virtuel. Consultez [Affichage distant (noVNC)](./vnc) pour plus de détails.
 
 ## Dépannage
 
-Consultez [Dépannage — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) pour des solutions aux problèmes courants, notamment les échecs de débogage à distance, les erreurs de verrouillage de profil et les outils MCP en double.
+Consultez [Dépannage — Chrome DevTools MCP](./troubleshooting#chrome-devtools-mcp) pour les solutions aux problèmes courants, notamment les échecs de débogage à distance, les erreurs de verrouillage de profil et les outils MCP en double.

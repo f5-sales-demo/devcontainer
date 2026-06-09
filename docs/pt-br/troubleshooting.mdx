@@ -37,7 +37,7 @@ podman-compose up -d
 
 ### "claude: command not found"
 
-A imagem pode estar desatualizada. Baixe a versão mais recente e reinicie:
+A imagem pode estar desatualizada. Baixe a mais recente e reinicie:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -60,7 +60,7 @@ podman-compose up -d
 
 ### Claude mostra "Not logged in"
 
-O entrypoint inicializa `~/.claude.json` com flags de onboarding. Se estiver ausente:
+O entrypoint popula `~/.claude.json` com flags de onboarding. Se estiver faltando:
 
 ```bash
 echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
@@ -76,22 +76,22 @@ echo "$ANTHROPIC_API_KEY"
 
 Causas comuns:
 
-- **Chave do proxy LiteLLM ausente ou inválida** — se você está usando o modo proxy, certifique-se de que `LITELLM_API_KEY` no `.env` contém a credencial correta do proxy, então reinicie o contêiner para que o entrypoint possa derivar `ANTHROPIC_API_KEY`.
-- **Token OAuth ou incompatibilidade de modo proxy** — use exatamente um modo de autenticação. Se `CLAUDE_CODE_OAUTH_TOKEN` estiver definido, ele tem precedência sobre o modo proxy LiteLLM.
+- **Chave do proxy LiteLLM ausente ou inválida** — se você está usando o modo proxy, certifique-se de que `LITELLM_API_KEY` no `.env` contém a credencial correta do proxy, depois reinicie o contêiner para que o entrypoint possa derivar `ANTHROPIC_API_KEY`.
+- **Token OAuth ou incompatibilidade de modo proxy** — use exatamente um modo de autenticação. Se `CLAUDE_CODE_OAUTH_TOKEN` estiver definido, ele tem precedência sobre o modo proxy do LiteLLM.
 
 ### Requisições à API falham com 401
 
-Verifique se sua chave de API está configurada corretamente:
+Verifique se sua chave de API está definida corretamente:
 
 ```bash
 echo "$ANTHROPIC_API_KEY"
 ```
 
-Confirme que funciona fazendo uma chamada direta ao seu provedor.
+Confirme que ela funciona fazendo uma chamada direta ao seu provedor.
 
 ### Claude diz "model not found"
 
-O modelo é determinado pelo seu provedor e chave de API. Consulte a documentação do seu provedor para verificar os modelos disponíveis.
+O modelo é determinado pelo seu provedor e chave de API. Consulte a documentação do seu provedor para ver os modelos disponíveis.
 
 ## GitHub CLI
 
@@ -105,12 +105,12 @@ GH_TOKEN=ghp_your-token-here
 
 Crie um token em [github.com/settings/tokens](https://github.com/settings/tokens). Tokens refinados (recomendado) ou tokens clássicos com escopo `repo` funcionam. Reinicie o contêiner após atualizar o `.env`.
 
-### Clone git via HTTPS falha com 401
+### Clone via HTTPS falha com 401
 
-Quando `GH_TOKEN` está definido, o entrypoint executa `gh auth setup-git` para configurar o helper de credenciais do git para HTTPS. Se as operações HTTPS falharem:
+Quando `GH_TOKEN` está definido, o entrypoint executa `gh auth setup-git` para configurar o auxiliar de credenciais do git para HTTPS. Se as operações HTTPS falharem:
 
 1. Verifique se o token é válido: `gh auth status`
-2. Verifique se o helper de credenciais está configurado: `git config --global credential.helper`
+2. Verifique se o auxiliar de credenciais está configurado: `git config --global credential.helper`
 3. Reinicie o contêiner para re-executar o entrypoint
 
 ### SSH vs HTTPS
@@ -120,7 +120,7 @@ Ambos os métodos de autenticação podem coexistir no contêiner:
 - **SSH** (`SSH_PRIVATE_KEY` no `.env`) — usa URLs `git@github.com:`. Necessário se sua organização exige SSH.
 - **HTTPS** (`GH_TOKEN` no `.env`) — usa URLs `https://github.com/`. Configuração mais simples, sem gerenciamento de chaves.
 
-Se ambos estiverem configurados, o git usa o protocolo que corresponde à URL do remote. Para alternar um clone existente:
+Se ambos estiverem configurados, o git usa o protocolo que corresponder à URL do remote. Para alternar um clone existente:
 
 ```bash
 # SSH para HTTPS
@@ -213,7 +213,7 @@ Se o DNS falhar, adicione ao `/etc/docker/daemon.json` no host:
 }
 ```
 
-Em seguida, reinicie o Docker.
+Depois reinicie o Docker.
 
 </TabItem>
 <TabItem label="Podman">
@@ -226,14 +226,14 @@ sudo sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
 exit
 ```
 
-Ou adicione as configurações de DNS em `~/.config/containers/containers.conf` no host:
+Ou adicione configurações de DNS ao `~/.config/containers/containers.conf` no host:
 
 ```ini
 [containers]
 dns_servers = ["8.8.8.8", "8.8.4.4"]
 ```
 
-Em seguida, reinicie o Podman: `podman machine stop && podman machine start`.
+Depois reinicie o Podman: `podman machine stop && podman machine start`.
 
 </TabItem>
 </Tabs>
@@ -268,7 +268,7 @@ O noVNC pode não estar em execução. Verifique dentro do contêiner:
 ps aux | grep -E 'novnc|websockify'
 ```
 
-Se não estiver em execução, verifique se `ENABLE_VNC` é `true` (o padrão) e confira os logs do contêiner:
+Se não estiver em execução, verifique se `ENABLE_VNC` está como `true` (o padrão) e confira os logs do contêiner:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -309,7 +309,7 @@ curl http://localhost:9222/json/version
 # Verificar logs do Chrome
 cat ~/.local/share/chrome-browser/chrome.log
 
-# Verificar o symlink
+# Verificar o link simbólico
 ls -la /opt/google/chrome/chrome
 
 # Reiniciar o Chrome manualmente
@@ -317,7 +317,7 @@ ls -la /opt/google/chrome/chrome
 start_chrome_browser
 ```
 
-Se o symlink estiver ausente, baixe a imagem mais recente e reinicie o contêiner.
+Se o link simbólico estiver faltando, baixe a imagem mais recente e reinicie o contêiner.
 
 ### Erro de bloqueio do perfil do navegador
 
@@ -337,7 +337,7 @@ start_chrome_browser
 
 ### Ferramentas chrome-devtools-mcp duplicadas
 
-O servidor chrome-devtools-mcp agora está registrado globalmente em `~/.claude/settings.json`. Se você tem um `.mcp.json` por repositório que também o registra, verá ferramentas duplicadas. Remova a entrada `chrome-devtools-mcp` dos arquivos `.mcp.json` por repositório:
+O servidor chrome-devtools-mcp agora está registrado globalmente em `~/.claude/settings.json`. Se você tiver um `.mcp.json` por repositório que também o registra, verá ferramentas duplicadas. Remova a entrada `chrome-devtools-mcp` dos arquivos `.mcp.json` por repositório:
 
 ```bash
 # Verificar configuração por repositório
@@ -346,7 +346,7 @@ cat .mcp.json
 
 Remova a chave `chrome-devtools-mcp` de qualquer `.mcp.json` por repositório para usar o registro global.
 
-## Resetar Tudo
+## Redefinir Tudo
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">

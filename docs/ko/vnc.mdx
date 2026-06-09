@@ -1,6 +1,6 @@
 ---
 title: 원격 디스플레이 (noVNC)
-description: 가상 디스플레이를 통해 브라우저에서 헤디드 브라우저를 관찰하고 상호작용합니다.
+description: 가상 디스플레이를 통해 브라우저에서 헤디드 브라우저를 관찰하고 상호작용하세요.
 sidebar:
   order: 3
 i18n:
@@ -14,7 +14,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## 연결하기
 
-1. 브라우저에서 `http://localhost:6080/vnc.html`을 열고 **Connect**를 클릭합니다
+1. 브라우저에서 `http://localhost:6080/vnc.html`을 열고 **Connect**를 클릭하세요
 2. 경량 fluxbox 데스크톱이 표시됩니다 — 이것이 컨테이너의 가상 디스플레이입니다
 
 헤디드 모드에서 `@playwright/mcp`를 사용하는 AI 에이전트는 이 디스플레이에 Chromium을 렌더링합니다. noVNC 창에서 직접 클릭하고 입력하여 언제든지 개입할 수 있습니다 — 일시정지/재개가 필요하지 않습니다.
@@ -27,7 +27,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 chromium --no-sandbox &
 ```
 
-헤디드 모드에서 Playwright 테스트를 실행하려면:
+헤디드 모드로 Playwright 테스트를 실행하려면:
 
 ```bash
 npx playwright test --headed
@@ -40,13 +40,13 @@ npx playwright test --headed
 | `ENABLE_VNC` | `true` | VNC 스택을 비활성화하려면 `false`로 설정 |
 | `VNC_RESOLUTION` | `1280x1024x24` | 가상 디스플레이 해상도 (너비x높이x색상깊이) |
 | `DISPLAY` | `:99` | X11 디스플레이 번호 |
-| `NOVNC_HOST_PORT` | `6080` | noVNC의 호스트 측 포트 (다른 컨테이너와의 충돌을 방지하려면 변경) |
+| `NOVNC_HOST_PORT` | `6080` | noVNC용 호스트 측 포트 (다른 컨테이너와의 충돌을 피하려면 변경) |
 
-이러한 변수는 `.env` 파일이나 `.devcontainer/devcontainer.json`의 `containerEnv` 항목에서 설정합니다.
+`.env` 파일이나 `.devcontainer/devcontainer.json`의 `containerEnv` 항목에서 설정하세요.
 
 ## VNC 스택 비활성화
 
-헤드리스 전용 운영을 위해 `.env`에서 `ENABLE_VNC=false`를 설정하고 컨테이너를 재시작합니다:
+헤드리스 전용 운영의 경우, `.env`에서 `ENABLE_VNC=false`를 설정하고 컨테이너를 재시작하세요:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">

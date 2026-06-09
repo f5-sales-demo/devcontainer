@@ -1,8 +1,8 @@
 ---
 title: Display Remoto (noVNC)
 description: >-
-  Visualizza e interagisci con i browser in modalità con interfaccia grafica
-  attraverso un display virtuale nel tuo browser.
+  Osserva e interagisci con i browser in modalità headed attraverso un display
+  virtuale nel tuo browser.
 sidebar:
   order: 3
 i18n:
@@ -12,14 +12,14 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Il container esegue uno stack di display virtuale (Xvfb + x11vnc + noVNC + fluxbox) che permette di osservare gli agenti AI mentre controllano un browser e di intervenire quando necessario — ad esempio, per gestire le richieste di login o MFA.
+Il container esegue uno stack di display virtuale (Xvfb + x11vnc + noVNC + fluxbox) che ti permette di osservare gli agenti AI mentre controllano un browser e di intervenire quando necessario — ad esempio, per gestire le schermate di login o i prompt MFA.
 
 ## Connessione
 
-1. Apri `http://localhost:6080/vnc.html` nel tuo browser e clicca su **Connect**
+1. Apri `http://localhost:6080/vnc.html` nel tuo browser e fai clic su **Connect**
 2. Vedrai un desktop fluxbox leggero — questo è il display virtuale del container
 
-Gli agenti AI che utilizzano `@playwright/mcp` in modalità con interfaccia grafica rendono Chromium in questo display. Puoi cliccare e digitare direttamente nella finestra noVNC per intervenire in qualsiasi momento — non è necessario mettere in pausa o riprendere.
+Gli agenti AI che utilizzano `@playwright/mcp` in modalità headed renderizzano Chromium su questo display. Puoi fare clic e digitare direttamente nella finestra noVNC per intervenire in qualsiasi momento — non è necessario mettere in pausa/riprendere.
 
 ## Avvio Manuale del Browser
 
@@ -29,7 +29,7 @@ Per aprire un browser manualmente all'interno del container:
 chromium --no-sandbox &
 ```
 
-Per eseguire i test di Playwright in modalità con interfaccia grafica:
+Per eseguire i test di Playwright in modalità headed:
 
 ```bash
 npx playwright test --headed
@@ -37,18 +37,18 @@ npx playwright test --headed
 
 ## Variabili d'Ambiente
 
-| Variabile | Default | Descrizione |
+| Variabile | Predefinito | Descrizione |
 |----------|---------|-------------|
-| `ENABLE_VNC` | `true` | Imposta su `false` per disabilitare lo stack VNC |
+| `ENABLE_VNC` | `true` | Impostare su `false` per disabilitare lo stack VNC |
 | `VNC_RESOLUTION` | `1280x1024x24` | Risoluzione del display virtuale (LxAxProfondità) |
 | `DISPLAY` | `:99` | Numero del display X11 |
-| `NOVNC_HOST_PORT` | `6080` | Porta lato host per noVNC (modifica per evitare conflitti con altri container) |
+| `NOVNC_HOST_PORT` | `6080` | Porta lato host per noVNC (modificare per evitare conflitti con altri container) |
 
 Imposta queste variabili nel tuo file `.env` o in `.devcontainer/devcontainer.json` sotto `containerEnv`.
 
 ## Disabilitare lo Stack VNC
 
-Per operazioni solo in modalità headless, imposta `ENABLE_VNC=false` nel file `.env` e riavvia il container:
+Per operazioni esclusivamente headless, imposta `ENABLE_VNC=false` nel file `.env` e riavvia il container:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">

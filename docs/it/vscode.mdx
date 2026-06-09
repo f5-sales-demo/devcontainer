@@ -1,8 +1,8 @@
 ---
 title: VS Code
 description: >-
-  Utilizzare il Dev Container con il flusso di lavoro "Reopen in Container" di
-  VS Code.
+  Utilizza il Dev Container con il flusso di lavoro "Reopen in Container" di VS
+  Code.
 sidebar:
   order: 6
 i18n:
@@ -63,11 +63,11 @@ Per aggiungere estensioni, modificare l'array `customizations.vscode.extensions`
 
 VS Code inoltra automaticamente le porte definite nel file compose. Il display noVNC è disponibile all'indirizzo `http://localhost:6080/vnc.html` — VS Code invierà una notifica quando la porta è pronta.
 
-Porte aggiuntive possono essere inoltrate su richiesta dal pannello **Ports** in VS Code.
+Porte aggiuntive possono essere inoltrate su richiesta dal pannello **Porte** in VS Code.
 
-## Alternativa con Devcontainer CLI
+## Alternativa con la CLI Devcontainer
 
-Se si preferisce la riga di comando rispetto all'interfaccia grafica di VS Code:
+Se si preferisce la riga di comando rispetto all'interfaccia di VS Code:
 
 ```bash
 npm install -g @devcontainers/cli
@@ -76,10 +76,10 @@ devcontainer up --workspace-folder .
 devcontainer exec --workspace-folder . zsh
 ```
 
-## Ricostruzione
+## Ricompilazione
 
 Dopo aver modificato il `Dockerfile` o i file compose:
 
 > **Dev Containers: Rebuild Container**
 
-Questo ricostruisce l'immagine e riavvia il container. I volumi con nome (`workspace`, `home`) persistono tra le ricostruzioni.
+Questo ricompila l'immagine e riavvia il container. I volumi con nome (`workspace`, `home`) persistono tra le ricompilazioni.

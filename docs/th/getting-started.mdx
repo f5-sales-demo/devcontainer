@@ -1,6 +1,6 @@
 ---
 title: เริ่มต้นใช้งาน
-description: ดาวน์โหลดไฟล์เดียว เริ่มคอนเทนเนอร์ แล้วเชื่อมต่อ — ไม่ต้องใช้ Git หรือการโคลน
+description: ดาวน์โหลดไฟล์เดียว เริ่มคอนเทนเนอร์ แล้วเชื่อมต่อ — ไม่ต้องใช้ Git หรือ clone
 sidebar:
   order: 2
 i18n:
@@ -10,21 +10,21 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-:::tip[ติดตั้งด่วนสำหรับ macOS]
-หากคุณใช้ macOS กับ Apple Silicon ข้ามหน้านี้แล้วใช้ [ตัวติดตั้งบรรทัดเดียว](/devcontainer/install/):
+:::tip[ติดตั้งด่วนบน macOS]
+หากคุณใช้ macOS กับ Apple Silicon ให้ข้ามหน้านี้แล้วใช้ [ตัวติดตั้งบรรทัดเดียว](/devcontainer/install/):
 
 ```bash
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-ตัวติดตั้งจะจัดการแพ็กเกจ Homebrew, การตั้งค่า iTerm2, การติดตั้ง Podman และดาวน์โหลดทุกอย่างที่คุณต้องการ
+ตัวติดตั้งจะจัดการแพ็กเกจ Homebrew, การตั้งค่า iTerm2, การตั้งค่า Podman และดาวน์โหลดทุกอย่างที่คุณต้องการ
 ::::
 
 ## ข้อกำหนดเบื้องต้น
 
 ### Container Runtime
 
-คุณต้องมี container runtime บนเครื่องของคุณ สามารถใช้ Docker หรือ Podman ก็ได้
+คุณต้องมี container runtime บนเครื่องของคุณ Docker หรือ Podman สามารถใช้ได้ทั้งสอง
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -35,7 +35,7 @@ curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | b
 | Windows | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) (WSL2 backend) |
 | Linux | [Docker Engine](https://docs.docker.com/engine/install/) หรือ [Docker Desktop for Linux](https://docs.docker.com/desktop/install/linux/) |
 
-ตรวจสอบว่าใช้งานได้:
+ตรวจสอบว่าทำงานได้:
 
 ```bash
 docker --version
@@ -51,7 +51,7 @@ docker compose version
 | Windows | [Podman Desktop for Windows](https://podman-desktop.io/docs/installation/windows-install) |
 | Linux | [Podman](https://podman.io/docs/installation#installing-on-linux) + [Podman Compose](https://github.com/containers/podman-compose#installation) |
 
-ตรวจสอบว่าใช้งานได้:
+ตรวจสอบว่าทำงานได้:
 
 ```bash
 podman --version
@@ -59,7 +59,7 @@ podman-compose version
 ```
 
 :::note[เฉพาะ Linux]
-Podman บน Linux รันคอนเทนเนอร์โดยตรง (ไม่มี VM) ตรวจสอบให้แน่ใจว่า Podman socket เปิดใช้งานอยู่เพื่อให้ `podman-compose` สามารถเชื่อมต่อได้:
+Podman บน Linux รันคอนเทนเนอร์โดยตรง (ไม่มี VM) ตรวจสอบให้แน่ใจว่า Podman socket ทำงานอยู่เพื่อให้ `podman-compose` สามารถเชื่อมต่อได้:
 
 ```bash
 systemctl --user enable --now podman.socket
@@ -116,9 +116,9 @@ curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/
 CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
 ```
 
-### ตัวเลือก B: LiteLLM หรือ Anthropic-compatible proxy
+### ตัวเลือก B: LiteLLM หรือ proxy ที่เข้ากันได้กับ Anthropic
 
-หากคุณมี LiteLLM instance หรือ Anthropic-compatible proxy อื่น ให้ตั้งค่าตัวแปรสองตัวนี้:
+หากคุณมี LiteLLM instance หรือ proxy อื่นที่เข้ากันได้กับ Anthropic ให้ตั้งค่าตัวแปรสองตัวนี้:
 
 ```ini
 LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
@@ -127,9 +127,9 @@ LITELLM_API_KEY=your-api-key
 
 ตั้งค่าเฉพาะโดเมน — คอนเทนเนอร์จะสร้าง URL suffix เฉพาะผู้ให้บริการโดยอัตโนมัติ (เช่น `/anthropic` สำหรับ Claude Code)
 
-### ดึงค่าอัตโนมัติจากข้อมูลรับรองในเครื่อง
+### ดึงข้อมูลอัตโนมัติจากข้อมูลรับรองในเครื่อง
 
-หากคุณมี `git` และ `gh` ตั้งค่าไว้บนเครื่องโฮสต์ คุณสามารถเติมค่า `.env` ส่วนใหญ่ได้โดยอัตโนมัติ เริ่มจากคัดลอกเทมเพลต:
+หากคุณมี `git` และ `gh` ที่ตั้งค่าไว้บนเครื่องโฮสต์ คุณสามารถกรอกค่า `.env` ส่วนใหญ่ได้โดยอัตโนมัติ เริ่มต้นด้วยการคัดลอกเทมเพลต:
 
 ```bash
 cp .env.example .env
@@ -154,8 +154,8 @@ echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 
 จากนั้นแก้ไข `.env` เพื่อเพิ่ม OAuth token หรือการตั้งค่า LiteLLM proxy (ดูตัวเลือกด้านบน)
 
-:::tip[AI assistants]
-ไฟล์ `.env.example` มีเครื่องหมาย `@auto-detect` บนทุกตัวแปรที่สามารถเติมค่าจากเครื่องมือในเครื่องได้ AI assistants เช่น Claude Code สามารถสแกนหาเครื่องหมายเหล่านี้และรันคำสั่งที่เกี่ยวข้องเพื่อสร้างไฟล์ `.env` ที่สมบูรณ์โดยอัตโนมัติ
+:::tip[ผู้ช่วย AI]
+ไฟล์ `.env.example` มีเครื่องหมาย `@auto-detect` ในทุกตัวแปรที่สามารถกรอกจากเครื่องมือในเครื่องได้ ผู้ช่วย AI เช่น Claude Code สามารถสแกนเครื่องหมายเหล่านี้และรันคำสั่งที่เกี่ยวข้องเพื่อสร้างไฟล์ `.env` ที่สมบูรณ์โดยอัตโนมัติ
 :::
 
 ## 3. เริ่มต้น
@@ -177,7 +177,7 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-การรันครั้งแรกจะดึง pre-built image จาก ghcr.io (~1 นาที ขึ้นอยู่กับการเชื่อมต่อของคุณ) การเริ่มต้นครั้งถัดไปจะใช้ cached image และใช้เวลาเพียงไม่กี่วินาที
+การรันครั้งแรกจะดึงอิมเมจที่สร้างไว้ล่วงหน้าจาก ghcr.io (~1 นาที ขึ้นอยู่กับความเร็วการเชื่อมต่อ) การเริ่มต้นครั้งต่อไปจะใช้อิมเมจที่แคชไว้และใช้เวลาเพียงไม่กี่วินาที
 
 ## 4. เชื่อมต่อ
 
@@ -232,24 +232,24 @@ cd your-project
 claude
 ```
 
-## 7. หน้าจอระยะไกล (noVNC)
+## 7. การแสดงผลระยะไกล (noVNC)
 
-คอนเทนเนอร์มีหน้าจอเสมือนสำหรับดู AI agents ควบคุมเบราว์เซอร์ เปิด `http://localhost:6080/vnc.html` เพื่อเชื่อมต่อ ดู [หน้าจอระยะไกล (noVNC)](./vnc) สำหรับรายละเอียด
+คอนเทนเนอร์มี virtual display สำหรับดู AI agent ควบคุมเบราว์เซอร์ เปิด `http://localhost:6080/vnc.html` เพื่อเชื่อมต่อ ดู [การแสดงผลระยะไกล (noVNC)](./vnc) สำหรับรายละเอียด
 
-## 8. ระบบอัตโนมัติเบราว์เซอร์ (Chrome DevTools MCP)
+## 8. การควบคุมเบราว์เซอร์อัตโนมัติ (Chrome DevTools MCP)
 
-Claude Code สามารถนำทางหน้าเว็บ ถ่ายภาพหน้าจอ และตรวจสอบ DOM โดยใช้เซิร์ฟเวอร์ Chrome DevTools MCP ที่ติดตั้งมาให้ ไม่ต้องตั้งค่า — ทำงานโดยอัตโนมัติในโหมด headless ดู [Chrome DevTools MCP](./chrome) สำหรับรายละเอียด
+Claude Code สามารถนำทางหน้าเว็บ ถ่ายภาพหน้าจอ และตรวจสอบ DOM โดยใช้เซิร์ฟเวอร์ Chrome DevTools MCP ในตัว ไม่ต้องตั้งค่า — ทำงานโดยอัตโนมัติในโหมด headless ดู [Chrome DevTools MCP](./chrome) สำหรับรายละเอียด
 
-## 9. หยุดและเริ่มใหม่
+## 9. การหยุดและเริ่มต้นใหม่
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
 ```bash
-# หยุด (เก็บข้อมูลไว้)
+# หยุด (เก็บรักษาข้อมูล)
 docker compose down
 
-# เริ่มใหม่
+# เริ่มต้นอีกครั้ง
 docker compose up -d
 
 # ลบทุกอย่างและเริ่มต้นใหม่
@@ -261,10 +261,10 @@ docker compose up -d
 <TabItem label="Podman">
 
 ```bash
-# หยุด (เก็บข้อมูลไว้)
+# หยุด (เก็บรักษาข้อมูล)
 podman-compose down
 
-# เริ่มใหม่ (pull เพื่อให้ได้ image ล่าสุด)
+# เริ่มต้นอีกครั้ง (pull เพื่อให้แน่ใจว่าได้อิมเมจล่าสุด)
 podman-compose pull && podman-compose up -d
 
 # ลบทุกอย่างและเริ่มต้นใหม่
@@ -275,8 +275,8 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-โค้ดของคุณใน `/workspace` และ home directory จะคงอยู่แม้รีสตาร์ท ดู [การตั้งค่า — การคงอยู่ของข้อมูล](./configuration#data-persistence) สำหรับรายละเอียด
+โค้ดของคุณใน `/workspace` และไดเรกทอรี home จะคงอยู่แม้รีสตาร์ท ดู [การตั้งค่า — การคงอยู่ของข้อมูล](./configuration#data-persistence) สำหรับรายละเอียด
 
 ---
 
-สำหรับการ build ในเครื่องและการปรับแต่ง Dockerfile ดู [การพัฒนาในเครื่อง](./local-development) สำหรับการรวมกับ VS Code ดู [VS Code](./vscode) สำหรับตัวเลือกหน้าจอระยะไกล ดู [หน้าจอระยะไกล (noVNC)](./vnc)
+สำหรับการ build ในเครื่องและการปรับแต่ง Dockerfile ดู [การพัฒนาในเครื่อง](./local-development) สำหรับการผสานรวมกับ VS Code ดู [VS Code](./vscode) สำหรับตัวเลือกการแสดงผลระยะไกล ดู [การแสดงผลระยะไกล (noVNC)](./vnc)

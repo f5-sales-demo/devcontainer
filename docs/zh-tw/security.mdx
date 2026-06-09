@@ -12,9 +12,9 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## 背景
 
-2025 年 2 月，LayerX Security Research 揭露了 Anthropic Claude Desktop Extensions (DXT) 框架中一個嚴重的零點擊遠端程式碼執行漏洞。擴充功能在無沙箱環境下以完整系統權限運行，充當語言模型與本機作業系統之間的執行橋樑。
+2025 年 2 月，LayerX Security Research 披露了 Anthropic Claude Desktop Extensions (DXT) 框架中一個嚴重的零點擊遠端程式碼執行漏洞。擴充功能在無沙箱環境下以完整系統權限運行，充當語言模型與本機作業系統之間的執行橋樑。
 
-許多企業安全團隊現在要求 AI 程式碼工具僅在專用虛擬機器、容器或一次性環境中運行——而非直接在企業端點上執行。
+許多企業安全團隊現在要求 AI 編碼工具只能在專用虛擬機器、容器或可拋棄式環境中運行——而非直接在企業端點上執行。
 
 **此 devcontainer 滿足該要求。**
 
@@ -22,53 +22,53 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 ```
 +------------------------------------------------+
-|  Host Machine (corporate endpoint)             |
+|  主機 (企業端點)                                |
 |                                                |
-|  - No AI tool binaries installed               |
-|  - No AI tool extensions or plugins            |
-|  - Only Docker is required                     |
+|  - 未安裝任何 AI 工具二進位檔                    |
+|  - 無 AI 工具擴充功能或外掛                      |
+|  - 僅需要 Docker                               |
 |                                                |
 |  +------------------------------------------+  |
-|  |  Docker Container (isolated)             |  |
+|  |  Docker 容器 (隔離環境)                   |  |
 |  |                                          |  |
-|  |  AI tools run here:                      |  |
+|  |  AI 工具在此執行：                        |  |
 |  |  - Claude Code CLI                       |  |
 |  |  - Codex                                 |  |
 |  |                                          |  |
-|  |  No access to:                           |  |
-|  |  x Host filesystem                       |  |
-|  |  x Host keychain / credential store      |  |
-|  |  x Host clipboard                        |  |
-|  |  x Host network interfaces               |  |
-|  |  x Other host applications               |  |
+|  |  無法存取：                               |  |
+|  |  x 主機檔案系統                           |  |
+|  |  x 主機鑰匙圈 / 憑證儲存區               |  |
+|  |  x 主機剪貼簿                             |  |
+|  |  x 主機網路介面                           |  |
+|  |  x 其他主機應用程式                       |  |
 |  +------------------------------------------+  |
 +------------------------------------------------+
 ```
 
-## 安全控制措施
+## 安全控制
 
 ### 無主機磁碟區掛載
 
-所有資料存放在 Docker 命名磁碟區中——而非綁定掛載的主機目錄。容器內部的入侵**無法**存取主機上的檔案。詳情請參閱[組態設定 — 資料持久化](./configuration#data-persistence)的磁碟區說明。
+所有資料儲存在 Docker 具名磁碟區中——而非綁定掛載的主機目錄。容器內的入侵**無法**存取主機上的檔案。詳細的磁碟區資訊請參閱[設定 — 資料持久化](./configuration#data-persistence)。
 
-### 無共用憑證儲存區
+### 無共享憑證儲存區
 
-容器無法存取 macOS 鑰匙圈、Windows 認證管理員、瀏覽器設定檔或主機 SSH 代理。SSH 金鑰在啟動時透過 base64 編碼的環境變數注入，且僅存在於容器內部。
+容器無法存取 macOS 鑰匙圈、Windows 認證管理員、瀏覽器設定檔或主機 SSH 代理程式。SSH 金鑰在啟動時透過 base64 編碼的環境變數注入，且僅存在於容器內部。
 
 ### 無剪貼簿同步
 
-Docker 容器不與主機共用剪貼簿狀態。資料無法透過複製/貼上洩漏。
+Docker 容器不會與主機共享剪貼簿狀態。資料無法透過複製/貼上洩漏。
 
 ### 網路隔離
 
 容器透過以下兩種支援的驗證模式之一與外部世界通訊：
 
-- **LiteLLM 代理模式** — 透過 Docker 的 NAT 向您的 LiteLLM 代理發送 HTTPS 出站請求。
-- **OAuth 模式** — 透過 Docker 的 NAT 直接向 Anthropic 發送 HTTPS 出站請求。
+- **LiteLLM 代理模式** — 透過 Docker 的 NAT 向您的 LiteLLM 代理發出 HTTPS 輸出連線。
+- **OAuth 模式** — 透過 Docker 的 NAT 直接向 Anthropic 發出 HTTPS 輸出連線。
 
 容器無法存取 VPN 通道、企業網路介面或主機上的其他服務。
 
-### 設計上的臨時性
+### 設計上的暫時性
 
 整個環境可以在數秒內銷毀並重新建立。請將容器視為可拋棄的。
 
@@ -93,61 +93,61 @@ podman-compose pull && podman-compose up -d
 
 ### 僅限 CLI 工具
 
-此環境以**命令列介面**方式運行 AI 工具。沒有桌面應用程式、沒有瀏覽器擴充功能、沒有 DXT 框架。促使建立此隔離模型的漏洞不適用於容器內的 CLI 使用情境。
+此環境以**命令列介面**的方式執行 AI 工具。無桌面應用程式、無瀏覽器擴充功能、無 DXT 框架。促成此隔離模型的漏洞不適用於容器內的 CLI 使用方式。
 
 ### 容器強化
 
 `docker-compose.yml` 套用了多項縱深防禦措施：
 
-- **能力丟棄** — 所有 Linux 能力均被丟棄（`cap_drop: ALL`），然後僅重新新增最小集合：`CHOWN`、`DAC_OVERRIDE`、`FOWNER`（用於入口點中的磁碟區權限修正）、`SETUID`/`SETGID`（用於 sudo）、`NET_RAW`（用於 ping/tcpdump）和 `NET_ADMIN`（用於 Wireshark 和 bettercap 等封包擷取工具）。
+- **能力捨棄** — 所有 Linux 能力均被捨棄（`cap_drop: ALL`），然後僅重新新增最小集合：`CHOWN`、`DAC_OVERRIDE`、`FOWNER`（用於入口點的磁碟區權限修正）、`SETUID`/`SETGID`（用於 sudo）、`NET_RAW`（用於 ping/tcpdump）以及 `NET_ADMIN`（用於 Wireshark 和 bettercap 等封包擷取工具）。
 - **資源限制** — CPU（4 核心）、記憶體（8 GB）和 PID 數量（4096）透過 `mem_limit`、`cpus` 和 `pids_limit` 設定上限，以防止資源耗盡攻擊。
-- **tmpfs 用於 `/tmp`** — `/tmp` 目錄掛載為 256 MB 的 tmpfs，將暫存檔案保留在記憶體中，防止它們持久化到容器的可寫入層。
-- **預設啟用 TLS 驗證** — 未設定 `NODE_TLS_REJECT_UNAUTHORIZED`，因此 Node.js 預設會驗證 TLS 憑證。需要接受自簽憑證的使用者（例如用於內部代理）可以在 `.env` 檔案中新增 `NODE_TLS_REJECT_UNAUTHORIZED=0` 來選擇性啟用。
-- **SSH 金鑰 umask** — SSH 私鑰在 `umask 077` 下寫入，因此檔案永遠不會是全域可讀的——即使在建立和 `chmod` 呼叫之間的短暫期間也不會。
+- **`/tmp` 使用 tmpfs** — `/tmp` 目錄掛載為 256 MB 的 tmpfs，將暫存檔案保留在記憶體中，防止它們持久化到容器的可寫層。
+- **預設啟用 TLS 驗證** — 未設定 `NODE_TLS_REJECT_UNAUTHORIZED`，因此 Node.js 預設會驗證 TLS 憑證。需要接受自簽憑證的使用者（例如用於內部代理）可以在 `.env` 檔案中新增 `NODE_TLS_REJECT_UNAUTHORIZED=0` 來選擇啟用。
+- **SSH 金鑰 umask** — SSH 私鑰在 `umask 077` 下寫入，因此檔案在建立和 `chmod` 呼叫之間永遠不會具有全域可讀權限——即使是短暫的也不會。
 
-### 安全性與滲透測試工具
+### 安全與滲透測試工具
 
-容器包含約 80 個預先安裝的安全性與滲透測試工具，用於授權的測試情境。工具按類別組織：
+容器包含約 80 個預先安裝的安全與滲透測試工具，用於授權的測試情境。工具按類別組織：
 
 | 類別 | 工具（範例） |
 |----------|-----------------|
-| 網路分析 | tshark、wireshark、masscan、hping3、bettercap（amd64）、netdiscover |
-| Web 掃描器 | nikto、sqlmap、dirb、whatweb、sslscan、OWASP ZAP、dalfox、feroxbuster |
-| 密碼與驗證 | hydra、john、hashcat、medusa、ncrack |
-| 逆向工程 | radare2、Ghidra、gdb、binwalk、strace、ltrace |
-| 偵察 | subfinder、amass、httpx、nuclei、gau、waybackurls、recon-ng、spiderfoot |
-| 模糊測試與列舉 | ffuf、gobuster、SecLists |
-| 供應鏈與密鑰 | trufflehog、grype、syft、gitleaks、trivy |
-| 滲透框架 | Metasploit（amd64）、searchsploit（ExploitDB） |
+| 網路分析 | tshark, wireshark, masscan, hping3, bettercap (amd64), netdiscover |
+| 網頁掃描器 | nikto, sqlmap, dirb, whatweb, sslscan, OWASP ZAP, dalfox, feroxbuster |
+| 密碼與驗證 | hydra, john, hashcat, medusa, ncrack |
+| 逆向工程 | radare2, Ghidra, gdb, binwalk, strace, ltrace |
+| 偵察 | subfinder, amass, httpx, nuclei, gau, waybackurls, recon-ng, spiderfoot |
+| 模糊測試與列舉 | ffuf, gobuster, SecLists |
+| 供應鏈與機密 | trufflehog, grype, syft, gitleaks, trivy |
+| 漏洞利用框架 | Metasploit (amd64), searchsploit (ExploitDB) |
 
-部分工具（bettercap、Metasploit）由於上游套件限制，僅在 amd64 上可用。封包擷取工具（tshark、bettercap）需要 `NET_ADMIN` 能力，該能力已包含在預設的 `docker-compose.yml` 中。
+部分工具（bettercap、Metasploit）因上游套件限制僅在 amd64 上可用。封包擷取工具（tshark、bettercap）需要 `NET_ADMIN` 能力，這已包含在預設的 `docker-compose.yml` 中。
 
-如需完整列表，請在容器內執行 `claude-self-test`（第 7 節會檢查所有安全工具）。
+如需完整清單，請在容器內執行 `claude-self-test`（第 7 節檢查所有安全工具）。
 
-## 合規性檢核清單
+## 合規檢核表
 
-| 要求 | 狀態 |
+| 需求 | 狀態 |
 |---|---|
 | AI 工具未安裝在主機端點上 | 是 |
-| 在隔離的 VM 或容器中運行 | 是 |
-| 無法存取主機檔案共用 | 是 |
+| 在隔離的虛擬機器或容器中執行 | 是 |
+| 無法存取主機檔案共享 | 是 |
 | 無剪貼簿同步 | 是 |
-| 無共用憑證儲存區 | 是 |
-| 無 VPN 分割通道至生產網路 | 是 |
-| 環境為可拋棄的 | 是 |
-| 無桌面擴充功能或外掛程式 | 是 |
-| Linux 能力已丟棄（最小權限） | 是 |
+| 無共享憑證儲存區 | 是 |
+| 無 VPN 分割通道進入生產網路 | 是 |
+| 環境可拋棄 | 是 |
+| 無桌面擴充功能或外掛 | 是 |
+| Linux 能力已捨棄（最小權限） | 是 |
 | 已強制執行資源限制（CPU/記憶體/PID） | 是 |
 | 預設啟用 TLS 憑證驗證 | 是 |
 | 內部服務僅綁定至 localhost | 是 |
 
 ## 最佳實踐
 
-1. **請勿在主機上安裝 AI 程式碼工具。** 請改用此容器。
-2. **請勿新增綁定掛載**至 `docker-compose.yml`。命名磁碟區組態是刻意為之的。
+1. **請勿在主機上安裝 AI 編碼工具。**請改用此容器。
+2. **請勿在 `docker-compose.yml` 中新增綁定掛載。**具名磁碟區的設定是刻意為之。
 3. **定期輪換**容器內使用的 SSH 金鑰。
-4. **分享前請審查 `.env`。** 其中包含 API 金鑰，且可能包含 SSH 私鑰。
-5. **定期更新**以取得安全性修補程式：
+4. **分享前請檢查 `.env`。**其中包含 API 金鑰，且可能包含 SSH 私鑰。
+5. **定期更新**以取得安全修補程式：
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -168,5 +168,5 @@ podman-compose pull && podman-compose up -d
 ## 參考資料
 
 - [LayerX: Claude Desktop Extensions RCE](https://layerxsecurity.com/blog/claude-desktop-extensions-rce/)
-- [Dev Containers Specification](https://containers.dev/)
-- [Docker Security Best Practices](https://docs.docker.com/engine/security/)
+- [Dev Containers 規範](https://containers.dev/)
+- [Docker 安全最佳實踐](https://docs.docker.com/engine/security/)

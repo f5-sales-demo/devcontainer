@@ -5,7 +5,6 @@ description: >-
   personalização.
 sidebar:
   order: 2
-  label: Configuração
 i18n:
   sourceHash: 0eca3d50d0f5
   translator: machine
@@ -13,7 +12,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Toda a configuração fica no arquivo `.env` na raiz do projeto. Este arquivo está no gitignore — ele nunca é commitado.
+Toda a configuração reside no arquivo `.env` na raiz do projeto. Este arquivo está no gitignore — ele nunca é commitado.
 
 ## Variáveis de Ambiente
 
@@ -32,7 +31,7 @@ Não combine os modos — use exatamente um.
 |----------|-----------|---------|
 | `CLAUDE_CODE_OAUTH_TOKEN` | Token OAuth de uma assinatura Claude Max | `sk-ant-oat01-...` |
 
-Quando definido, o Claude Code autentica diretamente com a Anthropic usando OAuth — sem necessidade de chave de API ou proxy. Obtenha seu token nas configurações do Claude Code ou no [console da Anthropic](https://console.anthropic.com/).
+Quando definido, o Claude Code se autentica diretamente com a Anthropic usando OAuth — sem necessidade de chave de API ou proxy. Obtenha seu token nas configurações do Claude Code ou no [console da Anthropic](https://console.anthropic.com/).
 
 ### Proxy LiteLLM
 
@@ -44,9 +43,9 @@ Se seu proxy LiteLLM (ou outro) já fala a API nativa de Mensagens da Anthropic 
 | Variável | Descrição | Exemplo |
 |----------|-----------|---------|
 | `LITELLM_BASE_URL` | Domínio do seu proxy LiteLLM (sem sufixo de caminho) | `https://litellm.example.com` |
-| `LITELLM_API_KEY` | Chave de API para autenticação no proxy | `your-api-key` ou padrão `litellm-proxy` |
+| `LITELLM_API_KEY` | Chave de API para autenticação no proxy | `your-api-key` ou o padrão `litellm-proxy` |
 
-Os usuários precisam definir apenas o domínio — os sufixos de caminho do provedor são adicionados automaticamente.
+Os usuários só precisam definir o domínio — os sufixos de caminho do provedor são adicionados automaticamente.
 Em tempo de execução, o entrypoint deriva `ANTHROPIC_API_KEY` de `LITELLM_API_KEY` para que o Claude Code possa consumir a credencial do proxy sem exigir uma variável separada voltada ao usuário.
 
 Os nomes dos modelos **não** são remapeados neste modo. O Claude Code envia seus identificadores de modelo padrão (por exemplo, `claude-sonnet-4-6`) e o LiteLLM os roteia para o backend configurado.
@@ -59,7 +58,7 @@ Por padrão, o Node.js valida certificados TLS para todas as conexões HTTPS. Se
 NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
-Isso **não é recomendado** para uso em produção. Defina isto apenas quando você confiar no caminho de rede entre o container e seu endpoint de API.
+Isto **não é recomendado** para uso em produção. Defina isto apenas quando você confia no caminho de rede entre o container e seu endpoint de API.
 
 ### Agentes de Codificação com IA
 
@@ -71,15 +70,15 @@ O container inclui vários agentes de codificação com IA além do Claude Code:
 | [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | Multi-provedor (configure em tempo de execução) |
 | [Oh-My-Pi](https://github.com/can1357/oh-my-pi) | `omp` | Multi-provedor (configure em tempo de execução) |
 
-Pi e Oh-My-Pi são instalados como pacotes npm globais. Codex é um binário independente que se atualiza automaticamente em tempo de execução.
+Pi e Oh-My-Pi são instalados como pacotes npm globais. Codex é um binário autônomo que se atualiza automaticamente em tempo de execução.
 
 ### Display Remoto (noVNC)
 
-O container executa uma pilha de display virtual para visualizar e interagir com navegadores com interface gráfica. Consulte [Display Remoto (noVNC)](./vnc) para instruções de conexão e variáveis de ambiente (`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`).
+O container executa uma pilha de display virtual para visualizar e interagir com navegadores com interface gráfica. Veja [Display Remoto (noVNC)](./vnc) para instruções de conexão e variáveis de ambiente (`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`).
 
 ### Chrome DevTools MCP
 
-O container inclui um servidor [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) pré-configurado para automação de navegador headless. O Claude Code pode navegar em páginas web, capturar screenshots e inspecionar o DOM sem nenhuma configuração adicional. Consulte [Chrome DevTools MCP](./chrome) para detalhes.
+O container inclui um servidor [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) pré-configurado para automação de navegador headless. O Claude Code pode navegar em páginas web, tirar capturas de tela e inspecionar o DOM sem nenhuma configuração adicional. Veja [Chrome DevTools MCP](./chrome) para detalhes.
 
 ### Git
 
@@ -88,7 +87,7 @@ O container inclui um servidor [Chrome DevTools MCP](https://github.com/anthropi
 | `GIT_AUTHOR_NAME` | Nome para commits git | `git config user.name` |
 | `GIT_AUTHOR_EMAIL` | Email para commits git | `git config user.email` |
 
-Se o git estiver configurado no seu host, preencha ambos os valores automaticamente:
+Se o git está configurado no seu host, preencha ambos os valores automaticamente:
 
 ```bash
 echo "GIT_AUTHOR_EMAIL=$(git config user.email)" >> .env
@@ -105,17 +104,17 @@ echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
 
 | Variável | Descrição | Como Definir |
 |----------|-----------|--------------|
-| `GH_TOKEN` | Token de acesso pessoal do GitHub para o CLI `gh` e git HTTPS | `gh auth token` (se `gh` estiver instalado localmente) |
+| `GH_TOKEN` | Token de acesso pessoal do GitHub para `gh` CLI e git HTTPS | `gh auth token` (se `gh` está instalado localmente) |
 
-Quando `GH_TOKEN` está definido no `.env`, o CLI `gh` autentica automaticamente — sem necessidade de executar `gh auth login`. O entrypoint também executa `gh auth setup-git`, que configura o credential helper do git para que `git clone` e `git push` via HTTPS funcionem sem chaves SSH.
+Quando `GH_TOKEN` está definido no `.env`, o `gh` CLI se autentica automaticamente — sem necessidade de executar `gh auth login`. O entrypoint também executa `gh auth setup-git`, que configura o helper de credenciais do git para que `git clone` e `git push` via HTTPS funcionem sem chaves SSH.
 
-Se `gh` estiver instalado e autenticado na sua máquina host, extraia o token diretamente:
+Se `gh` está instalado e autenticado na sua máquina host, extraia o token diretamente:
 
 ```bash
 echo "GH_TOKEN=$(gh auth token)" >> .env
 ```
 
-Caso contrário, [crie um token de acesso pessoal](https://github.com/settings/tokens) e adicione-o manualmente. Tanto tokens refinados (recomendado) quanto tokens clássicos funcionam. Tokens refinados permitem que você restrinja o acesso a repositórios específicos. Tokens clássicos requerem o escopo `repo` para acesso a repositórios privados.
+Caso contrário, [crie um token de acesso pessoal](https://github.com/settings/tokens) e adicione-o manualmente. Tanto tokens fine-grained (recomendado) quanto tokens clássicos funcionam. Tokens fine-grained permitem que você limite o acesso a repositórios específicos. Tokens clássicos requerem o escopo `repo` para acesso a repositórios privados.
 
 Para verificar a autenticação dentro do container:
 
@@ -125,52 +124,52 @@ gh auth status
 
 ## Como as Ferramentas São Instaladas
 
-Cada runtime de linguagem, CLI e ferramenta é instalado diretamente no `Dockerfile` no momento do build da imagem. A imagem pré-construída é publicada em `ghcr.io/f5xc-salesdemos/devcontainer:latest` a cada push para `main`, então a maioria dos usuários nunca precisa fazer build localmente.
+Cada runtime de linguagem, CLI e ferramenta é instalada diretamente no `Dockerfile` no momento do build da imagem. A imagem pré-construída é publicada em `ghcr.io/f5xc-salesdemos/devcontainer:latest` a cada push para `main`, então a maioria dos usuários nunca precisa fazer build localmente.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-Executar `docker compose up -d` puxa a imagem pré-construída automaticamente. Para fazer build localmente após personalizar o Dockerfile, passe o arquivo de build explicitamente:
+Executar `docker compose up -d` baixa a imagem pré-construída automaticamente. Para fazer build localmente após personalizar o Dockerfile, passe o arquivo de build explicitamente:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
-Consulte [Desenvolvimento Local](./local-development) para detalhes.
+Veja [Desenvolvimento Local](./local-development) para detalhes.
 
 </TabItem>
 <TabItem label="Podman">
 
-Executar `podman-compose up -d` puxa a imagem pré-construída automaticamente. Para fazer build localmente após personalizar o Dockerfile, passe o arquivo de build explicitamente:
+Executar `podman-compose up -d` baixa a imagem pré-construída automaticamente. Para fazer build localmente após personalizar o Dockerfile, passe o arquivo de build explicitamente:
 
 ```bash
 podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
-Consulte [Desenvolvimento Local](./local-development) para detalhes.
+Veja [Desenvolvimento Local](./local-development) para detalhes.
 
 </TabItem>
 </Tabs>
 
-O Dockerfile usa um build em dois estágios otimizado para cache de camadas do Docker. Consulte [Desenvolvimento Local — Arquitetura de Build em Dois Estágios](./local-development#two-stage-build-architecture) para a descrição completa das camadas e detalhes do cache de build.
+O Dockerfile usa um build em dois estágios otimizado para cache de camadas Docker. Veja [Desenvolvimento Local — Arquitetura de Build em Dois Estágios](./local-development#two-stage-build-architecture) para o detalhamento completo das camadas e informações sobre cache de build.
 
-## Consciência de Ferramentas do Claude Code
+## Reconhecimento de Ferramentas do Claude Code
 
-O container inclui configuração integrada que impede o Claude Code de confundir nomes de ferramentas. A consciência de ferramentas é instalada em **duas** camadas de memória para defesa em profundidade:
+O container inclui configuração embutida que evita que o Claude Code confunda nomes de ferramentas. O reconhecimento de ferramentas é instalado em **dois** níveis de memória para defesa em profundidade:
 
-- **Política gerenciada** (`/etc/claude-code/CLAUDE.md`) — instalada no momento do build do Docker. Esta é a camada de maior prioridade na hierarquia de memória do Claude Code e é sempre carregada, mesmo quando um `CLAUDE.md` de projeto grande existe no diretório de trabalho.
-- **Memória do usuário** (`~/.claude/CLAUDE.md`) — semeada pelo entrypoint na primeira inicialização. Fornece uma camada de backup e uma cópia visível e personalizável para os usuários.
+- **Política gerenciada** (`/etc/claude-code/CLAUDE.md`) — instalada no momento do build do Docker. Este é o nível de maior prioridade na hierarquia de memória do Claude Code e é sempre carregado, mesmo quando um `CLAUDE.md` de projeto grande existe no diretório de trabalho.
+- **Memória do usuário** (`~/.claude/CLAUDE.md`) — populada pelo entrypoint na primeira inicialização. Fornece uma camada de backup e uma cópia visível e personalizável para os usuários.
 
-### Prioridade das Camadas de Memória
+### Prioridade dos Níveis de Memória
 
-O Claude Code carrega instruções de múltiplas camadas de memória (da maior para a menor prioridade):
+O Claude Code carrega instruções de múltiplos níveis de memória (da maior para a menor prioridade):
 
 1. **Política gerenciada** (`/etc/claude-code/`) — Sempre carregada, não pode ser excluída
 2. **Memória do projeto** (`./CLAUDE.md`) — Carregada por diretório de projeto
 3. **Memória do usuário** (`~/.claude/CLAUDE.md`) — Carregada globalmente para todas as sessões
 4. **Memória local** (`./CLAUDE.local.md`) — Substituições pessoais por projeto
 
-Sem a camada de Política gerenciada, a consciência de ferramentas na Memória do usuário pode ser despriorizada quando competindo com um `CLAUDE.md` grande em nível de projeto, fazendo com que o Claude perca a consciência dos seus nomes de ferramentas em PascalCase. A camada Gerenciada garante que a consciência de ferramentas seja sempre carregada com a maior prioridade.
+Sem o nível de Política gerenciada, o reconhecimento de ferramentas na Memória do usuário pode ser despriorizados ao competir com um `CLAUDE.md` grande no nível de projeto, fazendo com que o Claude perca o reconhecimento dos nomes de ferramentas em PascalCase. O nível Gerenciado garante que o reconhecimento de ferramentas seja sempre carregado com a maior prioridade.
 
 ### Autoteste
 
@@ -184,40 +183,40 @@ Isto verifica se todos os arquivos de configuração estão no lugar e contêm a
 
 ## Adicionando Ferramentas
 
-Para adicionar ferramentas à imagem, edite o `Dockerfile` e reconstrua localmente. Consulte [Desenvolvimento Local — Adicionando Ferramentas](./local-development#adding-tools) para instruções sobre como adicionar pacotes APT, ferramentas npm, ferramentas pip e downloads de binários.
+Para adicionar ferramentas à imagem, edite o `Dockerfile` e faça rebuild localmente. Veja [Desenvolvimento Local — Adicionando Ferramentas](./local-development#adding-tools) para instruções sobre como adicionar pacotes APT, ferramentas npm, ferramentas pip e downloads de binários.
 
 ## Extensões do VS Code
 
-As extensões são configuradas em `.devcontainer/devcontainer.json` em `customizations.vscode.extensions` e instaladas automaticamente ao abrir no VS Code.
+As extensões são configuradas em `.devcontainer/devcontainer.json` sob `customizations.vscode.extensions` e instaladas automaticamente ao abrir no VS Code.
 
 ## Persistência de Dados
 
-Todos os dados ficam em volumes nomeados — nenhum diretório do host é montado:
+Todos os dados residem em volumes nomeados — nenhum diretório do host é montado:
 
 | Volume | Ponto de Montagem | Conteúdo |
-|--------|--------------------|----------|
+|--------|-------------------|----------|
 | `workspace` | `/workspace` | Seus repositórios clonados e arquivos de projeto |
 | `home` | `/home/vscode` | Histórico do shell, configurações de ferramentas, caches, chaves SSH |
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-Ambos persistem entre reinicializações e reconstruções do container. Execute `docker compose pull` para buscar a imagem pré-construída mais recente antes de reiniciar.
+Ambos persistem entre reinicializações e rebuilds do container. Execute `docker compose pull` para buscar a imagem pré-construída mais recente antes de reiniciar.
 
 | Ação | Dados |
 |------|-------|
 | `docker compose down` | Preservados |
-| `docker compose down -v` | **Excluídos** |
+| `docker compose down -v` | **Deletados** |
 
 </TabItem>
 <TabItem label="Podman">
 
-Ambos persistem entre reinicializações e reconstruções do container. Execute `podman-compose pull` para buscar a imagem pré-construída mais recente antes de reiniciar.
+Ambos persistem entre reinicializações e rebuilds do container. Execute `podman-compose pull` para buscar a imagem pré-construída mais recente antes de reiniciar.
 
 | Ação | Dados |
 |------|-------|
 | `podman-compose down` | Preservados |
-| `podman-compose down -v` | **Excluídos** |
+| `podman-compose down -v` | **Deletados** |
 
 </TabItem>
 </Tabs>
@@ -226,6 +225,6 @@ Ambos persistem entre reinicializações e reconstruções do container. Execute
 
 | Host | Container | Serviço |
 |------|-----------|---------|
-| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | Display remoto noVNC (apenas localhost, substitua com `NOVNC_HOST_PORT`) |
+| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | Display remoto noVNC (somente localhost, substitua com `NOVNC_HOST_PORT`) |
 
-As portas estão vinculadas a `127.0.0.1` para que sejam acessíveis apenas pela sua máquina, não pela rede.
+As portas são vinculadas a `127.0.0.1` para que sejam acessíveis apenas da sua máquina, não da rede.

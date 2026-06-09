@@ -1,5 +1,5 @@
 ---
-title: Installazione Rapida
+title: Installazione rapida
 description: Un singolo comando per installare e configurare il devcontainer su macOS.
 sidebar:
   order: 0
@@ -17,11 +17,11 @@ curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | b
 Questo singolo comando gestisce l'intera configurazione iniziale:
 
 1. Installa i pacchetti Homebrew (podman, podman-compose, gh, iterm2, nerd fonts)
-2. Configura iTerm2 (font, suoneria, scrollback, tema scuro, scorciatoia Shift+Enter)
+2. Configura iTerm2 (font, campanella, scrollback, tema scuro, combinazione tasti Shift+Invio)
 3. Inizializza e ottimizza la macchina Podman (16 GB RAM, 4 CPU, 220 GB disco, zram, swappiness)
 4. Scarica `docker-compose.yml`, `devcontainer.sh` e il template `.env` nella directory corrente
 
-:::note[Homebrew necessario]
+:::note[Homebrew richiesto]
 Se Homebrew non è installato, lo script termina con le istruzioni per l'installazione.
 Il vostro reparto IT potrebbe fornire Homebrew come software gestito — verificate prima con loro.
 :::
@@ -40,7 +40,7 @@ Quindi avviate il container:
 ./devcontainer.sh
 ```
 
-Lo script rileva automaticamente il vostro fuso orario e recupera un token GitHub aggiornato da `gh auth token` ad ogni esecuzione.
+Lo script rileva automaticamente il fuso orario e recupera un token GitHub aggiornato da `gh auth token` ad ogni esecuzione.
 
 ## Cosa viene creato
 
@@ -48,9 +48,9 @@ Dopo aver eseguito l'installer, la vostra directory conterrà:
 
 | File | Scopo |
 |---|---|
-| `devcontainer.sh` | Script di avvio (eseguite questo per avviare il container) |
+| `devcontainer.sh` | Script di avvio (eseguitelo per avviare il container) |
 | `docker-compose.yml` | Definizione del servizio container |
-| `.env` | Le vostre credenziali (dal template, da modificare prima del primo avvio) |
+| `.env` | Le vostre credenziali (dal template, modificatelo prima del primo avvio) |
 
 ## Avvii successivi
 
@@ -66,7 +66,7 @@ podman exec -it devcontainer zsh
 
 ## Aggiornamento
 
-Scaricate l'ultima immagine e riavviate:
+Scaricate l'immagine più recente e riavviate:
 
 ```bash
 podman compose pull

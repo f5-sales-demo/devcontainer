@@ -1,7 +1,7 @@
 ---
-title: Integration Tests
+title: การทดสอบเชิงบูรณาการ
 description: >-
-  การทดสอบอัตโนมัติที่ตรวจสอบว่า runtime stack ของ devcontainer
+  การทดสอบอัตโนมัติที่ตรวจสอบว่า runtime stacks ของ devcontainer
   ทำงานได้อย่างครบถ้วนตั้งแต่ต้นจนจบ
 sidebar:
   order: 7
@@ -10,11 +10,11 @@ i18n:
   translator: machine
 ---
 
-การทดสอบเหล่านี้ตรวจสอบว่าระบบย่อยหลักของ devcontainer ทำงานร่วมกันได้ในขณะรันไทม์ การทดสอบเหล่านี้ไม่ได้ถูกฝังไว้ใน Docker image — ให้รันภายในคอนเทนเนอร์ที่กำลังทำงานอยู่เพื่อตรวจสอบความสามารถของมัน
+การทดสอบเหล่านี้ตรวจสอบว่าระบบย่อมหลักของ devcontainer ทำงานร่วมกันได้ในขณะรันไทม์ การทดสอบเหล่านี้ไม่ได้ถูกฝังอยู่ใน Docker image — ให้รันภายในคอนเทนเนอร์ที่กำลังทำงานอยู่เพื่อตรวจสอบความสามารถของมัน
 
-## การทดสอบที่มี
+## การทดสอบที่มีให้ใช้งาน
 
-| การทดสอบ | สิ่งที่พิสูจน์ |
+| การทดสอบ | สิ่งที่พิสูจน์ได้ |
 | ---- | ---- |
-| [Screen Recording](/devcontainer/tests/screen-recording/) | Xvfb display, headed Chromium (Playwright) และการบันทึก ffmpeg สร้างไฟล์ MP4 ที่ถูกต้อง |
-| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Chrome symlink, headless patch และการนำทาง MCP สร้างภาพหน้าจอที่ถูกต้อง |
+| [การบันทึกหน้าจอ](/devcontainer/tests/screen-recording/) | จอแสดงผล Xvfb, Chromium แบบมีหน้าจอ (Playwright) และการบันทึกด้วย ffmpeg สร้างไฟล์ MP4 ที่ถูกต้อง |
+| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Symlink ของ Chrome, แพตช์แบบ headless และการนำทางผ่าน MCP สร้างภาพหน้าจอที่ถูกต้อง |
