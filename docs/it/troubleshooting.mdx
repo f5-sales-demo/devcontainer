@@ -1,5 +1,5 @@
 ---
-title: Troubleshooting
+title: Risoluzione dei problemi
 description: Problemi comuni e come risolverli.
 sidebar:
   order: 8
@@ -60,7 +60,7 @@ podman-compose up -d
 
 ### Claude mostra "Not logged in"
 
-L'entrypoint popola `~/.claude.json` con i flag di onboarding. Se mancante:
+L'entrypoint inizializza `~/.claude.json` con i flag di onboarding. Se mancante:
 
 ```bash
 echo '{"hasCompletedOnboarding": true}' > ~/.claude.json
@@ -77,7 +77,7 @@ echo "$ANTHROPIC_API_KEY"
 Cause comuni:
 
 - **Chiave proxy LiteLLM mancante o non valida** — se state utilizzando la modalità proxy, assicuratevi che `LITELLM_API_KEY` nel file `.env` contenga le credenziali proxy corrette, quindi riavviate il container affinché l'entrypoint possa derivare `ANTHROPIC_API_KEY`.
-- **Token OAuth o mismatch della modalità proxy** — utilizzate esattamente una modalità di autenticazione. Se `CLAUDE_CODE_OAUTH_TOKEN` è impostato, ha la precedenza sulla modalità proxy LiteLLM.
+- **Token OAuth o mancata corrispondenza della modalità proxy** — utilizzate esattamente una modalità di autenticazione. Se `CLAUDE_CODE_OAUTH_TOKEN` è impostato, ha la precedenza sulla modalità proxy LiteLLM.
 
 ### Le richieste API falliscono con 401
 
@@ -103,21 +103,21 @@ La CLI `gh` richiede una variabile d'ambiente `GH_TOKEN`. Aggiungetela al vostro
 GH_TOKEN=ghp_your-token-here
 ```
 
-Create un token su [github.com/settings/tokens](https://github.com/settings/tokens). Sia i token fine-grained (consigliati) che i token classici con scope `repo` funzionano. Riavviate il container dopo aver aggiornato `.env`.
+Create un token su [github.com/settings/tokens](https://github.com/settings/tokens). Funzionano sia i token a grana fine (consigliati) che i token classici con scope `repo`. Riavviate il container dopo aver aggiornato `.env`.
 
 ### Il clone git via HTTPS fallisce con 401
 
-Quando `GH_TOKEN` è impostato, l'entrypoint esegue `gh auth setup-git` per configurare il credential helper di git per HTTPS. Se le operazioni HTTPS falliscono:
+Quando `GH_TOKEN` è impostato, l'entrypoint esegue `gh auth setup-git` per configurare l'helper delle credenziali git per HTTPS. Se le operazioni HTTPS falliscono:
 
 1. Verificate che il token sia valido: `gh auth status`
-2. Controllate che il credential helper sia configurato: `git config --global credential.helper`
+2. Controllate che l'helper delle credenziali sia configurato: `git config --global credential.helper`
 3. Riavviate il container per rieseguire l'entrypoint
 
 ### SSH vs HTTPS
 
 Entrambi i metodi di autenticazione possono coesistere nel container:
 
-- **SSH** (`SSH_PRIVATE_KEY` in `.env`) — utilizza URL `git@github.com:`. Necessario se la vostra organizzazione richiede SSH.
+- **SSH** (`SSH_PRIVATE_KEY` in `.env`) — utilizza URL `git@github.com:`. Necessario se la vostra organizzazione impone SSH.
 - **HTTPS** (`GH_TOKEN` in `.env`) — utilizza URL `https://github.com/`. Configurazione più semplice, nessuna gestione delle chiavi.
 
 Se entrambi sono configurati, git utilizza il protocollo corrispondente all'URL remoto. Per cambiare un clone esistente:
@@ -140,7 +140,7 @@ sudo chown -R $(id -u):$(id -g) /workspace ~
 
 ### npm install fallisce con EACCES
 
-L'entrypoint configura automaticamente un prefisso globale npm scrivibile dall'utente in `~/.npm-global`, quindi i comandi `npm install -g` a runtime dovrebbero funzionare senza `sudo`. Se continuate a vedere errori EACCES, applicate la correzione manualmente:
+L'entrypoint configura automaticamente un prefisso globale npm scrivibile dall'utente in `~/.npm-global`, quindi i comandi `npm install -g` a runtime dovrebbero funzionare senza `sudo`. Se riscontrate ancora errori EACCES, applicate la correzione manualmente:
 
 ```bash
 mkdir -p ~/.npm-global
@@ -190,11 +190,11 @@ podman system prune -a --volumes
 </TabItem>
 </Tabs>
 
-**Attenzione:** Questo rimuove tutti i container, le immagini e i volumi non utilizzati — non solo quelli di questo progetto.
+**Attenzione:** Questo comando rimuove tutti i container, le immagini e i volumi inutilizzati — non solo quelli di questo progetto.
 
 ## Rete
 
-### Impossibile raggiungere internet dall'interno del container
+### Impossibile raggiungere Internet dall'interno del container
 
 ```bash
 ping -c 1 8.8.8.8
@@ -289,7 +289,7 @@ podman-compose logs dev | grep -i vnc
 
 ### Porta 6080 già in uso
 
-Modificate la porta dell'host in `docker-compose.yml`:
+Cambiate la porta host in `docker-compose.yml`:
 
 ```yaml
 ports:
@@ -309,7 +309,7 @@ curl http://localhost:9222/json/version
 # Controllate i log di Chrome
 cat ~/.local/share/chrome-browser/chrome.log
 
-# Verificate il symlink
+# Verificate il collegamento simbolico
 ls -la /opt/google/chrome/chrome
 
 # Riavviate Chrome manualmente
@@ -317,20 +317,20 @@ ls -la /opt/google/chrome/chrome
 start_chrome_browser
 ```
 
-Se il symlink è mancante, scaricate l'ultima immagine e riavviate il container.
+Se il collegamento simbolico è mancante, scaricate l'ultima immagine e riavviate il container.
 
 ### Errore di blocco del profilo del browser
 
-Con l'architettura a browser condiviso, gli errori di blocco del profilo non dovrebbero verificarsi. Se ne riscontrate uno, un processo Chrome residuo potrebbe mantenere il blocco:
+Con l'architettura del browser condiviso, gli errori di blocco del profilo non dovrebbero verificarsi. Se ne riscontrate uno, un processo Chrome residuo potrebbe trattenere il blocco:
 
 ```bash
-# Terminate eventuali processi Chrome residui
+# Terminare eventuali processi Chrome residui
 pkill -f 'chrome.*remote-debugging-port' || true
 
-# Rimuovete il file di blocco
+# Rimuovere il file di blocco
 rm -f ~/.cache/chrome-devtools-mcp/chrome-profile/SingletonLock
 
-# Riavviate Chrome
+# Riavviare Chrome
 . /usr/local/lib/chrome-browser.sh
 start_chrome_browser
 ```
@@ -340,13 +340,13 @@ start_chrome_browser
 Il server chrome-devtools-mcp è ora registrato globalmente in `~/.claude/settings.json`. Se avete un `.mcp.json` per repository che lo registra anch'esso, vedrete strumenti duplicati. Rimuovete la voce `chrome-devtools-mcp` dai file `.mcp.json` per repository:
 
 ```bash
-# Controllate la configurazione per repository
+# Controllare la configurazione per repository
 cat .mcp.json
 ```
 
 Rimuovete la chiave `chrome-devtools-mcp` da qualsiasi `.mcp.json` per repository per utilizzare la registrazione globale.
 
-## Ripristinare tutto
+## Ripristino completo
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">

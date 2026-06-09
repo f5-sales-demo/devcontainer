@@ -12,7 +12,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Der Container führt einen virtuellen Anzeige-Stack (Xvfb + x11vnc + noVNC + fluxbox) aus, sodass Sie KI-Agenten bei der Steuerung eines Browsers beobachten und bei Bedarf eingreifen können — beispielsweise um Login- oder MFA-Aufforderungen zu behandeln.
+Der Container betreibt einen virtuellen Anzeige-Stack (Xvfb + x11vnc + noVNC + fluxbox), sodass Sie KI-Agenten bei der Browsersteuerung beobachten und bei Bedarf eingreifen können — beispielsweise um Login- oder MFA-Eingabeaufforderungen zu behandeln.
 
 ## Verbindung herstellen
 
@@ -23,7 +23,7 @@ KI-Agenten, die `@playwright/mcp` im sichtbaren Modus verwenden, rendern Chromiu
 
 ## Manueller Browser-Start
 
-Um einen Browser manuell innerhalb des Containers zu öffnen:
+Um einen Browser manuell im Container zu öffnen:
 
 ```bash
 chromium --no-sandbox &
@@ -38,7 +38,7 @@ npx playwright test --headed
 ## Umgebungsvariablen
 
 | Variable | Standard | Beschreibung |
-|----------|----------|-------------|
+|----------|----------|--------------|
 | `ENABLE_VNC` | `true` | Auf `false` setzen, um den VNC-Stack zu deaktivieren |
 | `VNC_RESOLUTION` | `1280x1024x24` | Auflösung der virtuellen Anzeige (BxHxFarbtiefe) |
 | `DISPLAY` | `:99` | X11-Anzeigenummer |
@@ -48,7 +48,7 @@ Setzen Sie diese in Ihrer `.env`-Datei oder in `.devcontainer/devcontainer.json`
 
 ## VNC-Stack deaktivieren
 
-Für den reinen Headless-Betrieb setzen Sie `ENABLE_VNC=false` in `.env` und starten den Container neu:
+Für reinen Headless-Betrieb setzen Sie `ENABLE_VNC=false` in `.env` und starten Sie den Container neu:
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -71,4 +71,4 @@ podman-compose up -d
 
 ## Fehlerbehebung
 
-Siehe [Fehlerbehebung — Remote-Anzeige](./troubleshooting#remote-display-novnc) für Lösungen bei schwarzen Bildschirmen, Verbindungsfehlern und Port-Konflikten.
+Siehe [Fehlerbehebung — Remote-Anzeige](./troubleshooting#remote-display-novnc) für Lösungen bei schwarzen Bildschirmen, Verbindungsablehnungsfehlern und Port-Konflikten.

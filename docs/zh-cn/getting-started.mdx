@@ -11,20 +11,20 @@ i18n:
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 :::tip[macOS 快速安装]
-如果您使用的是搭载 Apple Silicon 的 macOS，可以跳过本页面，使用[一行命令安装](/devcontainer/install/)：
+如果您使用的是搭载 Apple Silicon 的 macOS，请跳过本页，使用[一行命令安装脚本](/devcontainer/install/)：
 
 ```bash
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-它会处理 Homebrew 包、iTerm2 配置、Podman 设置，并下载所有所需内容。
+它会处理 Homebrew 软件包、iTerm2 配置、Podman 设置，并下载您所需的一切。
 ::::
 
 ## 前提条件
 
 ### 容器运行时
 
-您需要在机器上安装容器运行时。Docker 或 Podman 均可。
+您需要在本机上安装容器运行时。Docker 或 Podman 均可。
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -59,7 +59,7 @@ podman-compose version
 ```
 
 :::note[仅限 Linux]
-Linux 上的 Podman 直接运行容器（无虚拟机）。请确保 Podman socket 处于活动状态，以便 `podman-compose` 可以连接：
+Linux 上的 Podman 直接运行容器（无需虚拟机）。请确保 Podman socket 处于活动状态，以便 `podman-compose` 能够连接：
 
 ```bash
 systemctl --user enable --now podman.socket
@@ -85,7 +85,7 @@ systemctl --user enable --now podman.socket
 </TabItem>
 <TabItem label="Podman">
 
-在 **macOS/Windows** 上，可在 Podman Desktop &rarr; Settings &rarr; Resources 中调整资源限制，或通过 CLI：
+在 **macOS/Windows** 上，通过 Podman Desktop &rarr; Settings &rarr; Resources 调整资源限制，或通过命令行设置：
 
 ```bash
 podman machine set --cpus 4 --memory 12288
@@ -116,26 +116,26 @@ curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/
 CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-your-token-here
 ```
 
-### 选项 B：LiteLLM 或 Anthropic 兼容代理
+### 选项 B：LiteLLM 或兼容 Anthropic 的代理
 
-如果您有 LiteLLM 实例或其他 Anthropic 兼容代理，请设置以下两个变量：
+如果您有 LiteLLM 实例或其他兼容 Anthropic 的代理，请设置以下两个变量：
 
 ```ini
 LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
 LITELLM_API_KEY=your-api-key
 ```
 
-仅设置域名——容器会自动派生特定提供商的 URL 后缀（例如 Claude Code 的 `/anthropic`）。
+只需设置域名——容器会自动推导特定提供商的 URL 后缀（例如 Claude Code 使用 `/anthropic`）。
 
 ### 从本地凭据自动填充
 
-如果您的主机上已配置了 `git` 和 `gh`，可以自动填充大部分 `.env` 值。首先复制模板：
+如果您的主机上已配置 `git` 和 `gh`，可以自动填充大多数 `.env` 值。首先复制模板：
 
 ```bash
 cp .env.example .env
 ```
 
-然后运行与您的配置匹配的命令：
+然后运行与您配置匹配的命令：
 
 ```bash
 # Git 身份信息
@@ -155,7 +155,7 @@ echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 然后编辑 `.env` 添加您的 OAuth 令牌或 LiteLLM 代理设置（参见上述选项）。
 
 :::tip[AI 助手]
-`.env.example` 文件在每个可以从本地工具填充的变量上都包含 `@auto-detect` 标记。像 Claude Code 这样的 AI 助手可以扫描这些标记并运行相关命令，自动构建完整的 `.env` 文件。
+`.env.example` 文件在每个可从本地工具填充的变量上都包含 `@auto-detect` 标记。像 Claude Code 这样的 AI 助手可以扫描这些标记并运行相关命令，自动构建完整的 `.env` 文件。
 :::
 
 ## 3. 启动
@@ -177,7 +177,7 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-首次运行会从 ghcr.io 拉取预构建镜像（根据网络速度约需 1 分钟）。后续启动使用缓存镜像，仅需几秒钟。
+首次运行会从 ghcr.io 拉取预构建镜像（约 1 分钟，取决于网络速度）。后续启动使用缓存镜像，只需几秒钟。
 
 ## 4. 连接
 
@@ -211,7 +211,7 @@ node --version
 python3 --version
 go version
 
-# 云 CLI
+# 云端 CLI
 aws --version
 az --version
 terraform --version
@@ -234,11 +234,11 @@ claude
 
 ## 7. 远程显示（noVNC）
 
-容器包含一个虚拟显示器，用于观看 AI 代理控制浏览器。打开 `http://localhost:6080/vnc.html` 进行连接。详情请参阅[远程显示（noVNC）](./vnc)。
+容器包含虚拟显示器，用于观看 AI 代理控制浏览器。打开 `http://localhost:6080/vnc.html` 进行连接。详情请参阅[远程显示（noVNC）](./vnc)。
 
 ## 8. 浏览器自动化（Chrome DevTools MCP）
 
-Claude Code 可以使用内置的 Chrome DevTools MCP 服务器浏览网页、截取屏幕截图和检查 DOM。无需任何设置——它在无头模式下自动工作。详情请参阅 [Chrome DevTools MCP](./chrome)。
+Claude Code 可以使用内置的 Chrome DevTools MCP 服务器来浏览网页、截取屏幕截图和检查 DOM。无需额外设置——它在无头模式下自动工作。详情请参阅 [Chrome DevTools MCP](./chrome)。
 
 ## 9. 停止和重启
 
@@ -252,7 +252,7 @@ docker compose down
 # 重新启动
 docker compose up -d
 
-# 销毁所有数据并重新开始
+# 销毁所有内容并重新开始
 docker compose down -v
 docker compose up -d
 ```
@@ -264,10 +264,10 @@ docker compose up -d
 # 停止（保留数据）
 podman-compose down
 
-# 重新启动（pull 确保使用最新镜像）
+# 重新启动（pull 确保获取最新镜像）
 podman-compose pull && podman-compose up -d
 
-# 销毁所有数据并重新开始
+# 销毁所有内容并重新开始
 podman-compose down -v
 podman-compose pull && podman-compose up -d
 ```
@@ -275,8 +275,8 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-您在 `/workspace` 和主目录中的代码在重启后会持久保留。详情请参阅[配置 — 数据持久化](./configuration#data-persistence)。
+您在 `/workspace` 中的代码和主目录在重启后会持久保留。详情请参阅[配置 — 数据持久化](./configuration#data-persistence)。
 
 ---
 
-有关本地构建和 Dockerfile 自定义，请参阅[本地开发](./local-development)。有关 VS Code 集成，请参阅 [VS Code](./vscode)。有关远程显示选项，请参阅[远程显示（noVNC）](./vnc)。
+关于本地构建和 Dockerfile 自定义，请参阅[本地开发](./local-development)。关于 VS Code 集成，请参阅 [VS Code](./vscode)。关于远程显示选项，请参阅[远程显示（noVNC）](./vnc)。

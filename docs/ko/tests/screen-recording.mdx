@@ -1,8 +1,8 @@
 ---
-title: Screen Recording Test
+title: 화면 녹화 테스트
 description: >-
-  Xvfb, headed Chromium(Playwright 사용), ffmpeg 화면 녹화가 devcontainer 내부에서 모두 함께
-  작동하는지 증명합니다.
+  devcontainer 내부에서 Xvfb, 헤디드 Chromium(Playwright 경유), ffmpeg 화면 녹화가 모두 함께 작동하는지
+  증명합니다.
 sidebar:
   order: 1
 i18n:
@@ -12,25 +12,25 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-이 테스트는 headed 브라우저 세션을 MP4 파일로 녹화하여 전체 VNC/브라우저 스택을 검증합니다. 다음 사항을 증명합니다:
+이 테스트는 헤디드 브라우저 세션을 MP4 파일로 녹화하여 전체 VNC/브라우저 스택을 검증합니다. 다음 사항을 증명합니다:
 
 - **Xvfb**가 실행 중이며 `:99`에서 연결을 수락하고 있음
-- **Chromium**이 가상 디스플레이에서 headed 모드로 실행될 수 있음
+- **Chromium**이 가상 디스플레이에서 헤디드 모드로 실행될 수 있음
 - **ffmpeg**가 x11grab을 통해 디스플레이를 캡처할 수 있음
-- 생성된 **MP4**가 유효하고 재생 가능한 비디오임
+- 결과 **MP4**가 유효하고 재생 가능한 비디오임
 
 ## 작동 방식
 
 1. X 디스플레이가 준비될 때까지 `xdpyinfo -display :99`를 폴링합니다 (엔트리포인트와 동일한 패턴)
 2. 10 fps로 디스플레이를 녹화하는 ffmpeg를 시작합니다
-3. Playwright의 `sync_api`를 통해 headed Chromium을 실행합니다
-4. `https://example.com`으로 이동(3초 대기)한 후 `https://httpbin.org`로 이동합니다(3초 대기)
-5. 깨끗한 MP4 완료를 위해 ffmpeg에 SIGTERM을 전송합니다
+3. Playwright의 `sync_api`를 통해 헤디드 Chromium을 실행합니다
+4. `https://example.com`으로 이동 (3초 대기), 그 다음 `https://httpbin.org`로 이동 (3초 대기)
+5. 깔끔한 MP4 마무리를 위해 ffmpeg에 SIGTERM을 전송합니다
 6. 출력 경로와 파일 크기를 보고합니다
 
 ## 스크립트
 
-다음 내용을 컨테이너 내부에 `vnc-browser-test.py`로 저장하거나, 이 저장소의 `docs/tests/` 디렉터리에서 복사하세요:
+다음 내용을 컨테이너 내부에 `vnc-browser-test.py`로 저장하거나, 이 저장소의 `docs/tests/` 디렉토리에서 복사하세요:
 
 ```python
 #!/usr/bin/env python3
@@ -164,7 +164,7 @@ if __name__ == "__main__":
 ## 테스트 실행
 
 <Tabs>
-<TabItem label="실행 중인 컨테이너 내부">
+<TabItem label="실행 중인 컨테이너 내부에서">
 
 ```bash
 python3 vnc-browser-test.py /tmp/recording.mp4
@@ -196,13 +196,13 @@ Stopping ffmpeg ...
 SUCCESS: /tmp/recording.mp4 (1,234,567 bytes)
 ```
 
-MP4에는 fluxbox 데스크톱에서 두 웹사이트를 렌더링하는 Chromium 창이 표시되어야 합니다. `ffplay`, `vlc`로 재생하거나 컨테이너에서 다운로드하여 확인하세요.
+MP4에는 fluxbox 데스크톱에서 두 웹사이트를 렌더링하는 Chromium 창이 표시되어야 합니다. `ffplay`, `vlc`로 재생하거나, 컨테이너에서 다운로드하여 확인하세요.
 
-## 실패가 의미하는 것
+## 실패 시 의미
 
 | 증상 | 가능한 원인 |
 | ---- | ---- |
 | `Xvfb display :99 not ready` | Xvfb가 시작되지 않음 — 엔트리포인트가 VNC 스택을 실행했는지 확인하세요 |
-| `ffmpeg: x11grab error` | 디스플레이 불일치 또는 ffmpeg에 x11grab 지원이 없음 |
+| `ffmpeg: x11grab error` | 디스플레이 불일치 또는 ffmpeg에 x11grab 지원이 누락됨 |
 | `Playwright launch error` | Chromium이 설치되지 않았거나 `--no-sandbox`가 누락됨 |
 | MP4가 0바이트 | ffmpeg가 쓰기 전에 종료됨 — SIGTERM 처리를 확인하세요 |

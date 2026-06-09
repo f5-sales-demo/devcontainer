@@ -14,7 +14,7 @@ i18n:
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-Cette unique commande gère l'intégralité de la configuration initiale :
+Cette seule commande gère l'intégralité de la configuration initiale :
 
 1. Installe les paquets Homebrew (podman, podman-compose, gh, iterm2, nerd fonts)
 2. Configure iTerm2 (police, sonnerie, historique de défilement, thème sombre, raccourci clavier Shift+Entrée)
@@ -22,8 +22,8 @@ Cette unique commande gère l'intégralité de la configuration initiale :
 4. Télécharge `docker-compose.yml`, `devcontainer.sh` et le modèle `.env` dans le répertoire courant
 
 :::note[Homebrew requis]
-Si Homebrew n'est pas installé, le script s'arrête en affichant les instructions.
-Votre service informatique peut fournir Homebrew en tant que logiciel géré — vérifiez auprès d'eux au préalable.
+Si Homebrew n'est pas installé, le script s'arrête avec des instructions.
+Votre service informatique peut fournir Homebrew en tant que logiciel géré — vérifiez auprès d'eux en premier.
 :::
 
 ## Après l'installation
@@ -46,7 +46,7 @@ Le script détecte votre fuseau horaire et récupère un jeton GitHub à jour vi
 
 Après l'exécution de l'installateur, votre répertoire contiendra :
 
-| Fichier | Fonction |
+| Fichier | Objectif |
 |---|---|
 | `devcontainer.sh` | Script de lancement (exécutez-le pour démarrer le conteneur) |
 | `docker-compose.yml` | Définition du service conteneur |
@@ -58,7 +58,7 @@ Après l'exécution de l'installateur, votre répertoire contiendra :
 ./devcontainer.sh
 ```
 
-## Se connecter
+## Connexion
 
 ```bash
 podman exec -it devcontainer zsh

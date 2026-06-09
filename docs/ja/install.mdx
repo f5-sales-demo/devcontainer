@@ -8,27 +8,27 @@ i18n:
   translator: machine
 ---
 
-## ワンライナーインストール
+## ワンラインインストール
 
 ```bash
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-この単一のコマンドで、初回セットアップのすべてを処理します：
+この単一コマンドで初回セットアップがすべて完了します：
 
 1. Homebrewパッケージのインストール（podman、podman-compose、gh、iterm2、nerd fonts）
-2. iTerm2の設定（フォント、ベル、スクロールバック、ダークテーマ、Shift+Enterキーバインディング）
+2. iTerm2の設定（フォント、ベル、スクロールバック、ダークテーマ、Shift+Enterキーバインド）
 3. Podmanマシンの初期化とチューニング（16 GB RAM、4 CPU、220 GBディスク、zram、swappiness）
 4. `docker-compose.yml`、`devcontainer.sh`、`.env`テンプレートをカレントディレクトリにダウンロード
 
 :::note[Homebrewが必要です]
 Homebrewがインストールされていない場合、スクリプトは手順を表示して終了します。
-IT部門がHomebrewをマネージドソフトウェアとして提供している場合があります — まずそちらに確認してください。
+IT部門がHomebrewをマネージドソフトウェアとして提供している場合があります — まずIT部門に確認してください。
 :::
 
 ## インストール後
 
-`.env`に認証情報を入力します：
+`.env`に認証情報を入力してください：
 
 ```bash
 vi .env
@@ -48,9 +48,9 @@ vi .env
 
 | ファイル | 用途 |
 |---|---|
-| `devcontainer.sh` | ランチャースクリプト（コンテナを起動するにはこれを実行） |
+| `devcontainer.sh` | ランチャースクリプト（コンテナの起動にはこれを実行） |
 | `docker-compose.yml` | コンテナサービス定義 |
-| `.env` | 認証情報（テンプレートから作成、初回起動前に編集が必要） |
+| `.env` | 認証情報（テンプレートから生成、初回起動前に編集が必要） |
 
 ## 2回目以降の起動
 
@@ -75,7 +75,7 @@ podman compose pull
 
 ## ローカルビルド
 
-ソースからイメージをローカルでビルドします（arm64のみ）：
+ソースからローカルでイメージをビルドします（arm64のみ）：
 
 ```bash
 ./devcontainer.sh build

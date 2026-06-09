@@ -1,6 +1,6 @@
 ---
 title: Konfiguration
-description: 'Umgebungsvariablen, Build-Layer, Datenpersistenz und Anpassung.'
+description: 'Umgebungsvariablen, Build-Schichten, Datenpersistenz und Anpassung.'
 sidebar:
   order: 2
 i18n:
@@ -10,7 +10,7 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Die gesamte Konfiguration befindet sich in der `.env`-Datei im Projektstammverzeichnis. Diese Datei wird per gitignore ausgeschlossen — sie wird niemals committet.
+Die gesamte Konfiguration befindet sich in der `.env`-Datei im Projektstammverzeichnis. Diese Datei ist per gitignore ausgeschlossen — sie wird niemals committet.
 
 ## Umgebungsvariablen
 
@@ -21,15 +21,15 @@ Der Container unterstützt zwei **sich gegenseitig ausschließende** Authentifiz
 - **LiteLLM-Proxy** — setzen Sie `LITELLM_BASE_URL` und `LITELLM_API_KEY`, um über einen LiteLLM-Proxy zu routen (siehe unten).
 - **OAuth-Modus** — setzen Sie nur `CLAUDE_CODE_OAUTH_TOKEN` (siehe unten).
 
-Kombinieren Sie die Modi nicht — verwenden Sie genau einen.
+Kombinieren Sie keine Modi — verwenden Sie genau einen.
 
 ### Claude Max (OAuth)
 
 | Variable | Beschreibung | Beispiel |
 |----------|-------------|---------|
-| `CLAUDE_CODE_OAUTH_TOKEN` | OAuth-Token aus einem Claude Max-Abonnement | `sk-ant-oat01-...` |
+| `CLAUDE_CODE_OAUTH_TOKEN` | OAuth-Token aus einem Claude-Max-Abonnement | `sk-ant-oat01-...` |
 
-Wenn gesetzt, authentifiziert sich Claude Code direkt bei Anthropic über OAuth — kein API-Schlüssel oder Proxy erforderlich. Erhalten Sie Ihren Token über die Claude Code-Einstellungen oder die [Anthropic-Konsole](https://console.anthropic.com/).
+Wenn gesetzt, authentifiziert sich Claude Code direkt bei Anthropic über OAuth — kein API-Schlüssel oder Proxy erforderlich. Holen Sie Ihr Token aus den Claude-Code-Einstellungen oder der [Anthropic-Konsole](https://console.anthropic.com/).
 
 ### LiteLLM-Proxy
 
@@ -41,26 +41,26 @@ Wenn Ihr LiteLLM- (oder anderer) Proxy bereits die native Anthropic Messages API
 | Variable | Beschreibung | Beispiel |
 |----------|-------------|---------|
 | `LITELLM_BASE_URL` | Domain Ihres LiteLLM-Proxys (ohne Pfad-Suffix) | `https://litellm.example.com` |
-| `LITELLM_API_KEY` | API-Schlüssel für Proxy-Authentifizierung | `your-api-key` oder standardmäßig `litellm-proxy` |
+| `LITELLM_API_KEY` | API-Schlüssel für die Proxy-Authentifizierung | `your-api-key` oder standardmäßig `litellm-proxy` |
 
-Benutzer müssen nur die Domain angeben — Anbieter-Pfad-Suffixe werden automatisch hinzugefügt.
-Zur Laufzeit leitet der Entrypoint `ANTHROPIC_API_KEY` von `LITELLM_API_KEY` ab, sodass Claude Code die Proxy-Anmeldedaten verwenden kann, ohne eine separate benutzerseitige Variable zu benötigen.
+Benutzer müssen nur die Domain setzen — Anbieter-Pfad-Suffixe werden automatisch hinzugefügt.
+Zur Laufzeit leitet der Entrypoint `ANTHROPIC_API_KEY` aus `LITELLM_API_KEY` ab, sodass Claude Code die Proxy-Zugangsdaten nutzen kann, ohne eine separate benutzerseitige Variable zu benötigen.
 
-Modellnamen werden in diesem Modus **nicht** umgemappt. Claude Code sendet seine Standard-Modellbezeichnungen (z. B. `claude-sonnet-4-6`) und LiteLLM routet sie an Ihr konfiguriertes Backend.
+Modellnamen werden in diesem Modus **nicht** umgemappt. Claude Code sendet seine Standard-Modellbezeichner (z. B. `claude-sonnet-4-6`) und LiteLLM leitet sie an Ihr konfiguriertes Backend weiter.
 
 ### TLS-Zertifikatsvalidierung
 
-Standardmäßig validiert Node.js TLS-Zertifikate für alle HTTPS-Verbindungen. Wenn Ihr vorgelagerter API-Anbieter ein selbstsigniertes Zertifikat verwendet (häufig bei internen Open WebUI- oder LiteLLM-Proxys), können Sie die Validierung deaktivieren, indem Sie Folgendes zu Ihrer `.env`-Datei hinzufügen:
+Standardmäßig validiert Node.js TLS-Zertifikate für alle HTTPS-Verbindungen. Wenn Ihr vorgelagerter API-Anbieter ein selbstsigniertes Zertifikat verwendet (häufig bei internen Open-WebUI- oder LiteLLM-Proxys), können Sie die Validierung deaktivieren, indem Sie Folgendes zu Ihrer `.env`-Datei hinzufügen:
 
 ```ini
 NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
-Dies wird für den Produktiveinsatz **nicht empfohlen**. Setzen Sie dies nur, wenn Sie dem Netzwerkpfad zwischen dem Container und Ihrem API-Endpunkt vertrauen.
+Dies wird für den Produktionseinsatz **nicht empfohlen**. Setzen Sie dies nur, wenn Sie dem Netzwerkpfad zwischen dem Container und Ihrem API-Endpunkt vertrauen.
 
-### KI-Coding-Agenten
+### KI-Codierungs-Agenten
 
-Der Container enthält neben Claude Code mehrere KI-Coding-Agenten:
+Der Container enthält neben Claude Code mehrere KI-Codierungs-Agenten:
 
 | Agent | Befehl | Anbieter |
 |-------|---------|----------|
@@ -70,13 +70,13 @@ Der Container enthält neben Claude Code mehrere KI-Coding-Agenten:
 
 Pi und Oh-My-Pi werden als globale npm-Pakete installiert. Codex ist eine eigenständige Binärdatei, die sich zur Laufzeit selbst aktualisiert.
 
-### Remote-Display (noVNC)
+### Remote-Anzeige (noVNC)
 
-Der Container betreibt einen virtuellen Display-Stack zum Beobachten und Interagieren mit Browsern mit grafischer Oberfläche. Siehe [Remote-Display (noVNC)](./vnc) für Verbindungsanweisungen und Umgebungsvariablen (`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`).
+Der Container betreibt einen virtuellen Anzeigestapel zum Beobachten und Interagieren mit GUI-Browsern. Siehe [Remote-Anzeige (noVNC)](./vnc) für Verbindungsanweisungen und Umgebungsvariablen (`ENABLE_VNC`, `VNC_RESOLUTION`, `DISPLAY`, `NOVNC_HOST_PORT`).
 
 ### Chrome DevTools MCP
 
-Der Container enthält einen vorkonfigurierten [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp)-Server für Headless-Browser-Automatisierung. Claude Code kann Webseiten navigieren, Screenshots aufnehmen und das DOM inspizieren, ohne dass eine zusätzliche Einrichtung erforderlich ist. Siehe [Chrome DevTools MCP](./chrome) für Details.
+Der Container enthält einen vorkonfigurierten [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp)-Server für die Headless-Browser-Automatisierung. Claude Code kann Webseiten navigieren, Screenshots erstellen und das DOM inspizieren, ohne zusätzliche Einrichtung. Siehe [Chrome DevTools MCP](./chrome) für Details.
 
 ### Git
 
@@ -102,19 +102,19 @@ echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
 
 | Variable | Beschreibung | Einstellung |
 |----------|-------------|------------|
-| `GH_TOKEN` | GitHub Personal Access Token für `gh` CLI und HTTPS-Git | `gh auth token` (wenn `gh` lokal installiert ist) |
+| `GH_TOKEN` | Persönlicher GitHub-Zugriffstoken für die `gh`-CLI und HTTPS-Git | `gh auth token` (wenn `gh` lokal installiert ist) |
 
-Wenn `GH_TOKEN` in `.env` gesetzt ist, authentifiziert sich die `gh` CLI automatisch — kein `gh auth login` erforderlich. Der Entrypoint führt außerdem `gh auth setup-git` aus, das den Git-Credential-Helper konfiguriert, sodass HTTPS `git clone` und `git push` ohne SSH-Schlüssel funktionieren.
+Wenn `GH_TOKEN` in `.env` gesetzt ist, authentifiziert sich die `gh`-CLI automatisch — kein `gh auth login` erforderlich. Der Entrypoint führt außerdem `gh auth setup-git` aus, was den Git-Credential-Helper konfiguriert, sodass HTTPS `git clone` und `git push` ohne SSH-Schlüssel funktionieren.
 
-Wenn `gh` auf Ihrem Host-Rechner installiert und authentifiziert ist, extrahieren Sie den Token direkt:
+Wenn `gh` auf Ihrem Host installiert und authentifiziert ist, extrahieren Sie den Token direkt:
 
 ```bash
 echo "GH_TOKEN=$(gh auth token)" >> .env
 ```
 
-Andernfalls [erstellen Sie einen Personal Access Token](https://github.com/settings/tokens) und fügen Sie ihn manuell hinzu. Sowohl feingranulare Tokens (empfohlen) als auch klassische Tokens funktionieren. Feingranulare Tokens ermöglichen es Ihnen, den Zugriff auf bestimmte Repositories einzuschränken. Klassische Tokens benötigen den `repo`-Scope für den Zugriff auf private Repositories.
+Andernfalls [erstellen Sie einen persönlichen Zugriffstoken](https://github.com/settings/tokens) und fügen ihn manuell hinzu. Sowohl feingranulare Tokens (empfohlen) als auch klassische Tokens funktionieren. Feingranulare Tokens ermöglichen es Ihnen, den Zugriff auf bestimmte Repositories einzuschränken. Klassische Tokens erfordern den `repo`-Bereich für den Zugriff auf private Repositories.
 
-Um die Authentifizierung innerhalb des Containers zu überprüfen:
+Um die Authentifizierung im Container zu überprüfen:
 
 ```bash
 gh auth status
@@ -122,12 +122,12 @@ gh auth status
 
 ## Wie Tools installiert werden
 
-Jede Sprachlaufzeit, CLI und jedes Tool wird direkt im `Dockerfile` zur Image-Build-Zeit installiert. Das vorgefertigte Image wird bei jedem Push auf `main` unter `ghcr.io/f5xc-salesdemos/devcontainer:latest` veröffentlicht, sodass die meisten Benutzer nie lokal bauen müssen.
+Jede Laufzeitumgebung, CLI und jedes Tool wird direkt im `Dockerfile` zur Image-Build-Zeit installiert. Das vorgefertigte Image wird bei jedem Push auf `main` unter `ghcr.io/f5xc-salesdemos/devcontainer:latest` veröffentlicht, sodass die meisten Benutzer niemals lokal bauen müssen.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-Das Ausführen von `docker compose up -d` zieht automatisch das vorgefertigte Image. Um nach der Anpassung des Dockerfiles lokal zu bauen, geben Sie die Build-Datei explizit an:
+Das Ausführen von `docker compose up -d` zieht automatisch das vorgefertigte Image. Um nach Anpassungen am Dockerfile lokal zu bauen, geben Sie die Build-Datei explizit an:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
@@ -138,7 +138,7 @@ Siehe [Lokale Entwicklung](./local-development) für Details.
 </TabItem>
 <TabItem label="Podman">
 
-Das Ausführen von `podman-compose up -d` zieht automatisch das vorgefertigte Image. Um nach der Anpassung des Dockerfiles lokal zu bauen, geben Sie die Build-Datei explizit an:
+Das Ausführen von `podman-compose up -d` zieht automatisch das vorgefertigte Image. Um nach Anpassungen am Dockerfile lokal zu bauen, geben Sie die Build-Datei explizit an:
 
 ```bash
 podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
@@ -149,25 +149,25 @@ Siehe [Lokale Entwicklung](./local-development) für Details.
 </TabItem>
 </Tabs>
 
-Das Dockerfile verwendet einen zweistufigen Build, der für Docker-Layer-Caching optimiert ist. Siehe [Lokale Entwicklung — Zweistufige Build-Architektur](./local-development#two-stage-build-architecture) für die vollständige Layer-Aufschlüsselung und Build-Cache-Details.
+Das Dockerfile verwendet einen zweistufigen Build, der für Docker-Layer-Caching optimiert ist. Siehe [Lokale Entwicklung — Zweistufige Build-Architektur](./local-development#two-stage-build-architecture) für die vollständige Schichtaufschlüsselung und Build-Cache-Details.
 
 ## Claude Code Tool-Erkennung
 
 Der Container enthält eine integrierte Konfiguration, die verhindert, dass Claude Code Tool-Namen verwechselt. Die Tool-Erkennung ist auf **zwei** Speicherebenen installiert, um mehrschichtige Absicherung zu gewährleisten:
 
-- **Verwaltete Richtlinie** (`/etc/claude-code/CLAUDE.md`) — wird zur Docker-Build-Zeit installiert. Dies ist die Ebene mit der höchsten Priorität in der Speicherhierarchie von Claude Code und wird immer geladen, selbst wenn eine umfangreiche Projekt-`CLAUDE.md` im Arbeitsverzeichnis existiert.
+- **Verwaltete Richtlinie** (`/etc/claude-code/CLAUDE.md`) — wird zur Docker-Build-Zeit installiert. Dies ist die Ebene mit der höchsten Priorität in Claude Codes Speicherhierarchie und wird immer geladen, selbst wenn eine große Projekt-`CLAUDE.md` im Arbeitsverzeichnis existiert.
 - **Benutzerspeicher** (`~/.claude/CLAUDE.md`) — wird beim ersten Start durch den Entrypoint angelegt. Bietet eine Backup-Ebene und eine sichtbare, anpassbare Kopie für Benutzer.
 
 ### Priorität der Speicherebenen
 
-Claude Code lädt Anweisungen aus mehreren Speicherebenen (von höchster zu niedrigster Priorität):
+Claude Code lädt Anweisungen aus mehreren Speicherebenen (höchste bis niedrigste Priorität):
 
 1. **Verwaltete Richtlinie** (`/etc/claude-code/`) — Wird immer geladen, kann nicht ausgeschlossen werden
 2. **Projektspeicher** (`./CLAUDE.md`) — Wird pro Projektverzeichnis geladen
 3. **Benutzerspeicher** (`~/.claude/CLAUDE.md`) — Wird global für alle Sitzungen geladen
-4. **Lokaler Speicher** (`./CLAUDE.local.md`) — Persönliche projektspezifische Überschreibungen
+4. **Lokaler Speicher** (`./CLAUDE.local.md`) — Persönliche projektbezogene Überschreibungen
 
-Ohne die verwaltete Richtlinienebene kann die Tool-Erkennung im Benutzerspeicher herabgestuft werden, wenn sie mit einer umfangreichen `CLAUDE.md` auf Projektebene konkurriert, wodurch Claude das Bewusstsein für seine PascalCase-Tool-Namen verliert. Die verwaltete Ebene garantiert, dass die Tool-Erkennung immer mit der höchsten Priorität geladen wird.
+Ohne die Ebene der verwalteten Richtlinie kann die Tool-Erkennung im Benutzerspeicher herabgestuft werden, wenn sie mit einer großen `CLAUDE.md` auf Projektebene konkurriert, wodurch Claude das Bewusstsein für seine PascalCase-Tool-Namen verliert. Die verwaltete Ebene garantiert, dass die Tool-Erkennung immer mit höchster Priorität geladen wird.
 
 ### Selbsttest
 
@@ -177,11 +177,11 @@ Führen Sie den integrierten Selbsttest aus, um die Konfiguration zu überprüfe
 claude-self-test
 ```
 
-Dieser prüft, ob alle Konfigurationsdateien vorhanden sind und die erwarteten Tool-Referenzen enthalten.
+Dies prüft, ob alle Konfigurationsdateien vorhanden sind und die erwarteten Tool-Referenzen enthalten.
 
 ## Tools hinzufügen
 
-Um Tools zum Image hinzuzufügen, bearbeiten Sie das `Dockerfile` und bauen Sie lokal neu. Siehe [Lokale Entwicklung — Tools hinzufügen](./local-development#adding-tools) für Anweisungen zum Hinzufügen von APT-Paketen, npm-Tools, pip-Tools und Binär-Downloads.
+Um Tools zum Image hinzuzufügen, bearbeiten Sie das `Dockerfile` und bauen Sie lokal neu. Siehe [Lokale Entwicklung — Tools hinzufügen](./local-development#adding-tools) für Anleitungen zum Hinzufügen von APT-Paketen, npm-Tools, pip-Tools und Binär-Downloads.
 
 ## VS Code-Erweiterungen
 
@@ -189,9 +189,9 @@ Erweiterungen werden in `.devcontainer/devcontainer.json` unter `customizations.
 
 ## Datenpersistenz
 
-Alle Daten befinden sich in benannten Volumes — es werden keine Host-Verzeichnisse eingebunden:
+Alle Daten liegen in benannten Volumes — es werden keine Host-Verzeichnisse eingebunden:
 
-| Volume | Einhängepunkt | Inhalte |
+| Volume | Einhängepunkt | Inhalt |
 |--------|-------------|----------|
 | `workspace` | `/workspace` | Ihre geklonten Repositories und Projektdateien |
 | `home` | `/home/vscode` | Shell-Verlauf, Tool-Konfigurationen, Caches, SSH-Schlüssel |
@@ -199,7 +199,7 @@ Alle Daten befinden sich in benannten Volumes — es werden keine Host-Verzeichn
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-Beide bleiben über Container-Neustarts und Neubauten hinweg erhalten. Führen Sie `docker compose pull` aus, um das neueste vorgefertigte Image vor dem Neustart abzurufen.
+Beide bleiben über Container-Neustarts und Rebuilds hinweg erhalten. Führen Sie `docker compose pull` aus, um das neueste vorgefertigte Image vor dem Neustart abzurufen.
 
 | Aktion | Daten |
 |--------|------|
@@ -209,7 +209,7 @@ Beide bleiben über Container-Neustarts und Neubauten hinweg erhalten. Führen S
 </TabItem>
 <TabItem label="Podman">
 
-Beide bleiben über Container-Neustarts und Neubauten hinweg erhalten. Führen Sie `podman-compose pull` aus, um das neueste vorgefertigte Image vor dem Neustart abzurufen.
+Beide bleiben über Container-Neustarts und Rebuilds hinweg erhalten. Führen Sie `podman-compose pull` aus, um das neueste vorgefertigte Image vor dem Neustart abzurufen.
 
 | Aktion | Daten |
 |--------|------|
@@ -223,6 +223,6 @@ Beide bleiben über Container-Neustarts und Neubauten hinweg erhalten. Führen S
 
 | Host | Container | Dienst |
 |------|-----------|---------|
-| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNC Remote-Display (nur localhost, überschreibbar mit `NOVNC_HOST_PORT`) |
+| `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNC-Remote-Anzeige (nur localhost, überschreibbar mit `NOVNC_HOST_PORT`) |
 
 Ports sind an `127.0.0.1` gebunden, sodass sie nur von Ihrem Rechner aus zugänglich sind, nicht aus dem Netzwerk.

@@ -1,7 +1,7 @@
 ---
 title: Configuración
 description: >-
-  Variables de entorno, capas de compilación, persistencia de datos y
+  Variables de entorno, capas de construcción, persistencia de datos y
   personalización.
 sidebar:
   order: 2
@@ -12,18 +12,18 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Toda la configuración reside en el archivo `.env` en la raíz del proyecto. Este archivo está en el gitignore — nunca se incluye en los commits.
+Toda la configuración reside en el archivo `.env` en la raíz del proyecto. Este archivo está en gitignore — nunca se incluye en los commits.
 
 ## Variables de Entorno
 
 ### Proveedor de IA
 
-El contenedor admite dos modos de autenticación **mutuamente excluyentes** (en orden de prioridad):
+El contenedor soporta dos modos de autenticación **mutuamente excluyentes** (en orden de prioridad):
 
-- **Proxy LiteLLM** — establezca `LITELLM_BASE_URL` y `LITELLM_API_KEY` para enrutar a través de un proxy LiteLLM (ver más abajo).
-- **Modo OAuth** — establezca únicamente `CLAUDE_CODE_OAUTH_TOKEN` (ver más abajo).
+- **Proxy LiteLLM** — configure `LITELLM_BASE_URL` y `LITELLM_API_KEY` para enrutar a través de un proxy LiteLLM (ver abajo).
+- **Modo OAuth** — configure solo `CLAUDE_CODE_OAUTH_TOKEN` (ver abajo).
 
-No combine los modos — use exactamente uno.
+No combine modos — use exactamente uno.
 
 ### Claude Max (OAuth)
 
@@ -35,7 +35,7 @@ Cuando está configurado, Claude Code se autentica directamente con Anthropic us
 
 ### Proxy LiteLLM
 
-Si su proxy LiteLLM (u otro) ya habla la API nativa de Mensajes de Anthropic — incluyendo `web_search`, streaming y uso de herramientas — establezca `LITELLM_BASE_URL` con el dominio del proxy. El contenedor deriva automáticamente las URLs específicas del proveedor:
+Si su proxy LiteLLM (u otro) ya habla la API nativa de Mensajes de Anthropic — incluyendo `web_search`, streaming y uso de herramientas — configure `LITELLM_BASE_URL` con el dominio del proxy. El contenedor deriva automáticamente las URLs específicas del proveedor:
 
 - Endpoint de Anthropic → `${LITELLM_BASE_URL}/anthropic` (usado por Claude Code)
 - Endpoint compatible con OpenAI → `${LITELLM_BASE_URL}/openai/v1`
@@ -45,8 +45,8 @@ Si su proxy LiteLLM (u otro) ya habla la API nativa de Mensajes de Anthropic —
 | `LITELLM_BASE_URL` | Dominio de su proxy LiteLLM (sin sufijo de ruta) | `https://litellm.example.com` |
 | `LITELLM_API_KEY` | Clave API para autenticación del proxy | `your-api-key` o por defecto `litellm-proxy` |
 
-Los usuarios solo necesitan establecer el dominio — los sufijos de ruta del proveedor se agregan automáticamente.
-En tiempo de ejecución, el entrypoint deriva `ANTHROPIC_API_KEY` de `LITELLM_API_KEY` para que Claude Code pueda consumir la credencial del proxy sin requerir una variable adicional orientada al usuario.
+Los usuarios solo necesitan configurar el dominio — los sufijos de ruta del proveedor se agregan automáticamente.
+En tiempo de ejecución, el entrypoint deriva `ANTHROPIC_API_KEY` de `LITELLM_API_KEY` para que Claude Code pueda consumir la credencial del proxy sin requerir una variable separada orientada al usuario.
 
 Los nombres de modelos **no** se remapean en este modo. Claude Code envía sus identificadores de modelo estándar (p. ej. `claude-sonnet-4-6`) y LiteLLM los enruta a su backend configurado.
 
@@ -58,11 +58,11 @@ Por defecto, Node.js valida los certificados TLS para todas las conexiones HTTPS
 NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
-Esto **no se recomienda** para uso en producción. Solo establezca esto cuando confíe en la ruta de red entre el contenedor y su endpoint de API.
+Esto **no se recomienda** para uso en producción. Solo configúrelo cuando confíe en la ruta de red entre el contenedor y su endpoint de API.
 
-### Agentes de Codificación IA
+### Agentes de Codificación con IA
 
-El contenedor incluye varios agentes de codificación IA además de Claude Code:
+El contenedor incluye varios agentes de codificación con IA además de Claude Code:
 
 | Agente | Comando | Proveedor |
 |--------|---------|-----------|
@@ -84,8 +84,8 @@ El contenedor incluye un servidor [Chrome DevTools MCP](https://github.com/anthr
 
 | Variable | Descripción | Cómo Configurar |
 |----------|-------------|-----------------|
-| `GIT_AUTHOR_NAME` | Nombre para los commits de git | `git config user.name` |
-| `GIT_AUTHOR_EMAIL` | Email para los commits de git | `git config user.email` |
+| `GIT_AUTHOR_NAME` | Nombre para commits de git | `git config user.name` |
+| `GIT_AUTHOR_EMAIL` | Email para commits de git | `git config user.email` |
 
 Si git está configurado en su host, auto-complete ambos valores:
 
@@ -106,7 +106,7 @@ echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
 |----------|-------------|-----------------|
 | `GH_TOKEN` | Token de acceso personal de GitHub para `gh` CLI y git HTTPS | `gh auth token` (si `gh` está instalado localmente) |
 
-Cuando `GH_TOKEN` está configurado en `.env`, la CLI `gh` se autentica automáticamente — no es necesario ejecutar `gh auth login`. El entrypoint también ejecuta `gh auth setup-git`, que configura el asistente de credenciales de git para que `git clone` y `git push` por HTTPS funcionen sin claves SSH.
+Cuando `GH_TOKEN` está configurado en `.env`, el CLI `gh` se autentica automáticamente — no es necesario ejecutar `gh auth login`. El entrypoint también ejecuta `gh auth setup-git`, que configura el helper de credenciales de git para que `git clone` y `git push` por HTTPS funcionen sin claves SSH.
 
 Si `gh` está instalado y autenticado en su máquina host, extraiga el token directamente:
 
@@ -114,7 +114,7 @@ Si `gh` está instalado y autenticado en su máquina host, extraiga el token dir
 echo "GH_TOKEN=$(gh auth token)" >> .env
 ```
 
-De lo contrario, [cree un token de acceso personal](https://github.com/settings/tokens) y agréguelo manualmente. Tanto los tokens de granularidad fina (recomendados) como los tokens clásicos funcionan. Los tokens de granularidad fina le permiten limitar el acceso a repositorios específicos. Los tokens clásicos requieren el alcance `repo` para acceso a repositorios privados.
+De lo contrario, [cree un token de acceso personal](https://github.com/settings/tokens) y agréguelo manualmente. Tanto los tokens de grano fino (recomendados) como los tokens clásicos funcionan. Los tokens de grano fino le permiten limitar el acceso a repositorios específicos. Los tokens clásicos requieren el scope `repo` para acceso a repositorios privados.
 
 Para verificar la autenticación dentro del contenedor:
 
@@ -124,12 +124,12 @@ gh auth status
 
 ## Cómo Se Instalan las Herramientas
 
-Cada runtime de lenguaje, CLI y herramienta se instala directamente en el `Dockerfile` en tiempo de compilación de la imagen. La imagen precompilada se publica en `ghcr.io/f5xc-salesdemos/devcontainer:latest` con cada push a `main`, por lo que la mayoría de los usuarios nunca necesitan compilar localmente.
+Cada runtime de lenguaje, CLI y herramienta se instala directamente en el `Dockerfile` en tiempo de construcción de la imagen. La imagen preconstruida se publica en `ghcr.io/f5xc-salesdemos/devcontainer:latest` con cada push a `main`, por lo que la mayoría de los usuarios nunca necesitan construir localmente.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-Ejecutar `docker compose up -d` descarga la imagen precompilada automáticamente. Para compilar localmente después de personalizar el Dockerfile, pase el archivo de compilación explícitamente:
+Ejecutar `docker compose up -d` descarga la imagen preconstruida automáticamente. Para construir localmente después de personalizar el Dockerfile, pase el archivo de construcción explícitamente:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
@@ -140,7 +140,7 @@ Consulte [Desarrollo Local](./local-development) para más detalles.
 </TabItem>
 <TabItem label="Podman">
 
-Ejecutar `podman-compose up -d` descarga la imagen precompilada automáticamente. Para compilar localmente después de personalizar el Dockerfile, pase el archivo de compilación explícitamente:
+Ejecutar `podman-compose up -d` descarga la imagen preconstruida automáticamente. Para construir localmente después de personalizar el Dockerfile, pase el archivo de construcción explícitamente:
 
 ```bash
 podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
@@ -151,29 +151,29 @@ Consulte [Desarrollo Local](./local-development) para más detalles.
 </TabItem>
 </Tabs>
 
-El Dockerfile usa una compilación de dos etapas optimizada para el caché de capas de Docker. Consulte [Desarrollo Local — Arquitectura de Compilación en Dos Etapas](./local-development#two-stage-build-architecture) para el desglose completo de capas y detalles del caché de compilación.
+El Dockerfile usa una construcción en dos etapas optimizada para el caché de capas de Docker. Consulte [Desarrollo Local — Arquitectura de Construcción en Dos Etapas](./local-development#two-stage-build-architecture) para el desglose completo de capas y detalles del caché de construcción.
 
-## Conocimiento de Herramientas de Claude Code
+## Reconocimiento de Herramientas de Claude Code
 
-El contenedor incluye configuración integrada que evita que Claude Code confunda los nombres de las herramientas. El conocimiento de herramientas se instala en **dos** niveles de memoria para defensa en profundidad:
+El contenedor incluye configuración incorporada que evita que Claude Code confunda nombres de herramientas. El reconocimiento de herramientas se instala en **dos** niveles de memoria para defensa en profundidad:
 
-- **Política administrada** (`/etc/claude-code/CLAUDE.md`) — instalada en tiempo de compilación de Docker. Este es el nivel de mayor prioridad en la jerarquía de memoria de Claude Code y siempre se carga, incluso cuando existe un `CLAUDE.md` de proyecto grande en el directorio de trabajo.
+- **Política gestionada** (`/etc/claude-code/CLAUDE.md`) — instalada en tiempo de construcción de Docker. Este es el nivel de mayor prioridad en la jerarquía de memoria de Claude Code y siempre se carga, incluso cuando existe un `CLAUDE.md` de proyecto grande en el directorio de trabajo.
 - **Memoria de usuario** (`~/.claude/CLAUDE.md`) — sembrada por el entrypoint en el primer inicio. Proporciona una capa de respaldo y una copia visible y personalizable para los usuarios.
 
 ### Prioridad de Niveles de Memoria
 
 Claude Code carga instrucciones desde múltiples niveles de memoria (de mayor a menor prioridad):
 
-1. **Política administrada** (`/etc/claude-code/`) — Siempre se carga, no puede excluirse
-2. **Memoria de proyecto** (`./CLAUDE.md`) — Se carga por directorio de proyecto
-3. **Memoria de usuario** (`~/.claude/CLAUDE.md`) — Se carga globalmente para todas las sesiones
+1. **Política gestionada** (`/etc/claude-code/`) — Siempre cargada, no se puede excluir
+2. **Memoria de proyecto** (`./CLAUDE.md`) — Cargada por directorio de proyecto
+3. **Memoria de usuario** (`~/.claude/CLAUDE.md`) — Cargada globalmente para todas las sesiones
 4. **Memoria local** (`./CLAUDE.local.md`) — Sobrescrituras personales por proyecto
 
-Sin el nivel de Política administrada, el conocimiento de herramientas en la Memoria de usuario puede ser desprioritizado cuando compite con un `CLAUDE.md` grande a nivel de proyecto, causando que Claude pierda el conocimiento de sus nombres de herramientas en PascalCase. El nivel Administrado garantiza que el conocimiento de herramientas siempre se cargue con la mayor prioridad.
+Sin el nivel de Política gestionada, el reconocimiento de herramientas en la Memoria de usuario puede ser despriorizado cuando compite con un `CLAUDE.md` grande a nivel de proyecto, causando que Claude pierda el reconocimiento de sus nombres de herramientas en PascalCase. El nivel Gestionado garantiza que el reconocimiento de herramientas siempre se cargue con la mayor prioridad.
 
-### Auto-Test
+### Auto-prueba
 
-Ejecute el auto-test integrado para verificar la configuración:
+Ejecute la auto-prueba incorporada para verificar la configuración:
 
 ```bash
 claude-self-test
@@ -183,7 +183,7 @@ Esto verifica que todos los archivos de configuración estén en su lugar y cont
 
 ## Agregar Herramientas
 
-Para agregar herramientas a la imagen, edite el `Dockerfile` y recompile localmente. Consulte [Desarrollo Local — Agregar Herramientas](./local-development#adding-tools) para instrucciones sobre cómo agregar paquetes APT, herramientas npm, herramientas pip y descargas de binarios.
+Para agregar herramientas a la imagen, edite el `Dockerfile` y reconstruya localmente. Consulte [Desarrollo Local — Agregar Herramientas](./local-development#adding-tools) para instrucciones sobre cómo agregar paquetes APT, herramientas npm, herramientas pip y descargas de binarios.
 
 ## Extensiones de VS Code
 
@@ -191,7 +191,7 @@ Las extensiones se configuran en `.devcontainer/devcontainer.json` bajo `customi
 
 ## Persistencia de Datos
 
-Todos los datos residen en volúmenes con nombre — no se montan directorios del host:
+Todos los datos residen en volúmenes nombrados — no se montan directorios del host:
 
 | Volumen | Punto de Montaje | Contenido |
 |---------|-------------------|-----------|
@@ -201,7 +201,7 @@ Todos los datos residen en volúmenes con nombre — no se montan directorios de
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-Ambos persisten entre reinicios y reconstrucciones del contenedor. Ejecute `docker compose pull` para obtener la última imagen precompilada antes de reiniciar.
+Ambos persisten a través de reinicios y reconstrucciones del contenedor. Ejecute `docker compose pull` para obtener la última imagen preconstruida antes de reiniciar.
 
 | Acción | Datos |
 |--------|-------|
@@ -211,7 +211,7 @@ Ambos persisten entre reinicios y reconstrucciones del contenedor. Ejecute `dock
 </TabItem>
 <TabItem label="Podman">
 
-Ambos persisten entre reinicios y reconstrucciones del contenedor. Ejecute `podman-compose pull` para obtener la última imagen precompilada antes de reiniciar.
+Ambos persisten a través de reinicios y reconstrucciones del contenedor. Ejecute `podman-compose pull` para obtener la última imagen preconstruida antes de reiniciar.
 
 | Acción | Datos |
 |--------|-------|

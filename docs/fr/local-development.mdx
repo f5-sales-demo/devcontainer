@@ -39,7 +39,7 @@ cd devcontainer
 
 ## Fichier de compilation
 
-Le fichier `docker-compose.build.yml` ajoute le support de compilation locale. Il n'est **pas** fusionné automatiquement — vous devez le passer explicitement avec les flags `-f`. Cela signifie que `docker compose up -d` (ou `podman-compose up -d`) tire toujours l'image pré-compilée depuis GHCR, que vous ayez cloné le dépôt ou non.
+Le fichier `docker-compose.build.yml` ajoute le support de compilation locale. Il n'est **pas** fusionné automatiquement — vous devez le passer explicitement avec les options `-f`. Cela signifie que `docker compose up -d` (ou `podman-compose up -d`) récupère toujours l'image pré-compilée depuis GHCR, que vous ayez cloné le dépôt ou non.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -74,7 +74,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml config
 </TabItem>
 </Tabs>
 
-## Compiler localement
+## Compilation locale
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
@@ -93,7 +93,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-Cela fusionne le fichier de compilation avec le fichier compose de base, compile l'image à partir du `Dockerfile` local et démarre le conteneur. Le flag `--build` force une recompilation même si une image en cache existe.
+Cela fusionne le fichier de compilation avec le fichier compose de base, compile l'image à partir du `Dockerfile` local et démarre le conteneur. L'option `--build` force une recompilation même si une image en cache existe.
 
 ## Architecture de compilation en deux étapes
 
@@ -104,13 +104,13 @@ Le Dockerfile utilise une compilation en deux étapes optimisée pour la mise en
 Ces couches ne sont recompilées que lorsqu'un ARG de version est mis à jour ou que les paquets APT changent. Lors de modifications portant uniquement sur les outils, BuildKit ignore entièrement cette étape.
 
 | Section | Contenu |
-|---------|----------|
+|---------|---------|
 | 1. Dépôts APT | NodeSource, deadsnakes, HashiCorp, GitHub, Docker, Microsoft, Google Cloud, Dart SDK |
 | 2. Paquets APT | Outils système, Node.js, Python, Java, Terraform, GitHub CLI, moteur Docker, Azure CLI, PowerShell, locales |
 | 2b. Paquets APT de sécurité | Analyse réseau, scanners web, outils de mots de passe, rétro-ingénierie, forensique (~80 paquets) |
 | 3. Bootstrap Python | Liens symboliques + pip via get-pip.py |
 | 4. Go | Archive officielle (dernière version stable, résolue au moment de la compilation) |
-| 5. Rust | rustup (à l'échelle du système, dernière version stable) |
+| 5. Rust | rustup (système global, dernière version stable) |
 | 6. Maven + Gradle | Téléchargements binaires vers `/opt` |
 | 7. Pile VNC | Xvfb, x11vnc, noVNC, fluxbox — affichage distant via navigateur |
 | 8. Nerd Fonts | JetBrainsMono, Hack, FiraCode (dernières versions) |
@@ -120,12 +120,12 @@ Ces couches ne sont recompilées que lorsqu'un ARG de version est mis à jour ou
 Ces couches changent plus fréquemment (mises à jour npm/pip, modifications de configuration) mais se recompilent rapidement car l'étape lourde `deps` est en cache.
 
 | Section | Contenu |
-|---------|----------|
+|---------|---------|
 | 9. AWS CLI v2 | Installateur officiel |
 | 10. Outils binaires | kubectl, helm, tflint, terraform-docs, act, actionlint, yt-dlp, uv |
 | 10b. Binaires supplémentaires | VS Code CLI, oc, yq, terragrunt, ibmcloud, fzf, hadolint, codex |
 | 10c. Binaires Super-linter | shfmt, gitleaks, editorconfig-checker, trivy, clj-kondo, dotenv-linter, golangci-lint, goreleaser, kubeconform, protolint, scalafmt, ktlint |
-| 10d. Outils Java JAR | checkstyle, google-java-format (scripts wrapper) |
+| 10d. Outils Java JAR | checkstyle, google-java-format (scripts enveloppeurs) |
 | 10e. Linters PHP | phpcs, phpstan, psalm (téléchargements PHAR) |
 | 10f. Modules PowerShell | PSScriptAnalyzer, arm-ttk |
 | 10g. Binaires de sécurité | nuclei, subfinder, httpx, ffuf, gobuster, feroxbuster, dalfox, amass, trufflehog, grype, syft, bettercap (amd64) |
@@ -145,8 +145,8 @@ Ces couches changent plus fréquemment (mises à jour npm/pip, modifications de 
 | 14. Homebrew | Linuxbrew (dépendances assistant IA + formateurs) |
 | 15. Plugins ZSH | Plugins personnalisés oh-my-zsh |
 | 16. Bootstrap shell | npm-global, tfenv, compinit |
-| 17. Config Claude Code + Codex | Mémoire de connaissance des outils, politique gérée, script d'auto-test, config Codex |
-| 18. Entrypoint | Script de démarrage du conteneur (tout dernier COPY) |
+| 17. Configuration Claude Code + Codex | Mémoire de connaissance des outils, politique gérée, script d'auto-test, configuration Codex |
+| 18. Point d'entrée | Script de démarrage du conteneur (tout dernier COPY) |
 
 ## Ajouter des outils
 
@@ -169,7 +169,7 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-Ou dans VS Code : **Dev Containers &rarr; Reconstruire le conteneur**.
+Ou dans VS Code : **Dev Containers &rarr; Recompiler le conteneur**.
 
 ### Paquets APT
 
@@ -212,10 +212,10 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## Cache de compilation
 
-La CI utilise un **cache basé sur le registre** — les couches de compilation sont stockées dans GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) au lieu du cache GitHub Actions. Cela évite la limite de 10 Go du cache GHA qui provoquait des recompilations complètes fréquentes pour cette image multi-architecture d'environ 6 Go.
+L'intégration continue utilise un **cache basé sur le registre** — les couches de compilation sont stockées dans GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) au lieu du cache GitHub Actions. Cela évite la limite de 10 Go du cache GHA qui provoquait des recompilations complètes fréquentes pour cette image multi-architecture d'environ 6 Go.
 
 L'architecture en deux étapes fonctionne avec le cache de registre de sorte que :
 
-- **Mises à jour de versions d'outils** (npm, pip, outils binaires) — recompilation uniquement de l'étape `final` (~5 min)
-- **Modifications de fichiers de configuration** (`claude-config/`, `entrypoint.sh`) — recompilation uniquement des dernières couches (~1 min)
+- **Mises à jour de versions d'outils** (npm, pip, outils binaires) — recompile uniquement l'étape `final` (~5 min)
+- **Modifications de fichiers de configuration** (`claude-config/`, `entrypoint.sh`) — recompile uniquement les dernières couches (~1 min)
 - **Modifications des fondations** (paquets APT, versions Go/Rust/Java) — recompilation complète des deux étapes (~30 min)

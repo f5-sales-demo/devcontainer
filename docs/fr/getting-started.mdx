@@ -12,27 +12,27 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-:::tip[Installation rapide sur macOS]
-Si vous êtes sur macOS avec Apple Silicon, passez cette page et utilisez l'[installateur en une ligne](/devcontainer/install/) :
+:::tip[Installation rapide macOS]
+Si vous êtes sur macOS avec Apple Silicon, ignorez cette page et utilisez l'[installateur en une ligne](/devcontainer/install/) :
 
 ```bash
 curl -fsSL https://f5xc-salesdemos.github.io/devcontainer/scripts/install.sh | bash
 ```
 
-Il gère les paquets Homebrew, la configuration d'iTerm2, la mise en place de Podman et télécharge tout ce dont vous avez besoin.
+Il gère les paquets Homebrew, la configuration d'iTerm2, la mise en place de Podman, et télécharge tout ce dont vous avez besoin.
 ::::
 
 ## Prérequis
 
 ### Environnement d'exécution de conteneurs
 
-Vous avez besoin d'un environnement d'exécution de conteneurs sur votre machine. Docker ou Podman fonctionnent tous les deux.
+Vous avez besoin d'un environnement d'exécution de conteneurs sur votre machine. Docker ou Podman fonctionneront tous les deux.
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
 | Plateforme | Installation |
-|------------|-------------|
+|----------|---------|
 | macOS | [Docker Desktop pour Mac](https://docs.docker.com/desktop/install/mac-install/) |
 | Windows | [Docker Desktop pour Windows](https://docs.docker.com/desktop/install/windows-install/) (backend WSL2) |
 | Linux | [Docker Engine](https://docs.docker.com/engine/install/) ou [Docker Desktop pour Linux](https://docs.docker.com/desktop/install/linux/) |
@@ -48,7 +48,7 @@ docker compose version
 <TabItem label="Podman">
 
 | Plateforme | Installation |
-|------------|-------------|
+|----------|---------|
 | macOS | [Podman Desktop pour Mac](https://podman-desktop.io/docs/installation/macos-install) |
 | Windows | [Podman Desktop pour Windows](https://podman-desktop.io/docs/installation/windows-install) |
 | Linux | [Podman](https://podman.io/docs/installation#installing-on-linux) + [Podman Compose](https://github.com/containers/podman-compose#installation) |
@@ -74,7 +74,7 @@ systemctl --user enable --now podman.socket
 ### Ressources système
 
 | Ressource | Minimum | Recommandé |
-|-----------|---------|------------|
+|----------|---------|-------------|
 | Disque | 5 Go | 10 Go+ |
 | RAM | 8 Go alloués à l'environnement d'exécution de conteneurs | 12 Go+ |
 | CPU | 2 cœurs | 4+ cœurs |
@@ -110,7 +110,7 @@ curl -fsSLO https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main/
 
 ## 2. Ajoutez vos identifiants d'authentification (optionnel)
 
-Créez un fichier `.env` dans le même dossier pour préconfigurer Claude Code. Choisissez l'une des options suivantes :
+Créez un fichier `.env` dans le même dossier pour pré-configurer Claude Code. Choisissez l'une des options suivantes :
 
 ### Option A : Claude Max (OAuth)
 
@@ -127,11 +127,11 @@ LITELLM_BASE_URL=https://your-litellm-endpoint.example.com
 LITELLM_API_KEY=your-api-key
 ```
 
-Définissez uniquement le domaine — le conteneur dérive automatiquement les suffixes d'URL spécifiques au fournisseur (par ex. `/anthropic` pour Claude Code).
+Définissez uniquement le domaine — le conteneur dérive automatiquement les suffixes d'URL spécifiques au fournisseur (par exemple `/anthropic` pour Claude Code).
 
-### Remplissage automatique à partir des identifiants locaux
+### Remplissage automatique depuis les identifiants locaux
 
-Si vous avez `git` et `gh` configurés sur votre hôte, vous pouvez remplir automatiquement la plupart des valeurs du `.env`. Commencez par copier le modèle :
+Si vous avez `git` et `gh` configurés sur votre machine hôte, vous pouvez remplir automatiquement la plupart des valeurs du `.env`. Commencez par copier le modèle :
 
 ```bash
 cp .env.example .env
@@ -154,10 +154,10 @@ echo "GH_TOKEN=$(gh auth token)" >> .env
 echo "SSH_PRIVATE_KEY=$(base64 < ~/.ssh/id_ed25519)" >> .env
 ```
 
-Ensuite, modifiez `.env` pour ajouter votre jeton OAuth ou les paramètres du proxy LiteLLM (voir les options ci-dessus).
+Ensuite, éditez `.env` pour ajouter votre jeton OAuth ou les paramètres de proxy LiteLLM (voir les options ci-dessus).
 
 :::tip[Assistants IA]
-Le fichier `.env.example` contient des marqueurs `@auto-detect` sur chaque variable pouvant être remplie à partir des outils locaux. Les assistants IA comme Claude Code peuvent rechercher ces marqueurs et exécuter les commandes associées pour construire automatiquement un `.env` complet.
+Le fichier `.env.example` contient des marqueurs `@auto-detect` sur chaque variable pouvant être remplie à partir des outils locaux. Les assistants IA comme Claude Code peuvent scanner ces marqueurs et exécuter les commandes associées pour construire automatiquement un `.env` complet.
 :::
 
 ## 3. Démarrage
@@ -240,7 +240,7 @@ Le conteneur inclut un affichage virtuel pour observer les agents IA contrôler 
 
 ## 8. Automatisation du navigateur (Chrome DevTools MCP)
 
-Claude Code peut naviguer sur des pages web, prendre des captures d'écran et inspecter le DOM grâce au serveur Chrome DevTools MCP intégré. Aucune configuration nécessaire — il fonctionne automatiquement en mode headless. Consultez [Chrome DevTools MCP](./chrome) pour plus de détails.
+Claude Code peut naviguer sur des pages web, prendre des captures d'écran et inspecter le DOM grâce au serveur Chrome DevTools MCP intégré. Aucune configuration nécessaire — cela fonctionne automatiquement en mode headless. Consultez [Chrome DevTools MCP](./chrome) pour plus de détails.
 
 ## 9. Arrêt et redémarrage
 
@@ -248,13 +248,13 @@ Claude Code peut naviguer sur des pages web, prendre des captures d'écran et in
 <TabItem label="Docker">
 
 ```bash
-# Stop (preserves data)
+# Arrêt (préserve les données)
 docker compose down
 
-# Start again
+# Redémarrage
 docker compose up -d
 
-# Destroy everything and start fresh
+# Tout détruire et repartir de zéro
 docker compose down -v
 docker compose up -d
 ```
@@ -263,13 +263,13 @@ docker compose up -d
 <TabItem label="Podman">
 
 ```bash
-# Stop (preserves data)
+# Arrêt (préserve les données)
 podman-compose down
 
-# Start again (pull ensures latest image)
+# Redémarrage (pull garantit la dernière image)
 podman-compose pull && podman-compose up -d
 
-# Destroy everything and start fresh
+# Tout détruire et repartir de zéro
 podman-compose down -v
 podman-compose pull && podman-compose up -d
 ```
@@ -277,7 +277,7 @@ podman-compose pull && podman-compose up -d
 </TabItem>
 </Tabs>
 
-Votre code dans `/workspace` et le répertoire personnel persistent à travers les redémarrages. Consultez [Configuration — Persistance des données](./configuration#data-persistence) pour plus de détails.
+Votre code dans `/workspace` et le répertoire personnel persistent entre les redémarrages. Consultez [Configuration — Persistance des données](./configuration#data-persistence) pour plus de détails.
 
 ---
 

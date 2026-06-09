@@ -25,11 +25,11 @@ code devcontainer
 
 > **Dev Containers: Reopen in Container**
 
-يقوم VS Code ببناء (أو سحب) الصورة، ويشغّل الحاوية، ويثبّت الإضافات، ويفتح طرفية داخل الحاوية.
+يقوم VS Code ببناء (أو سحب) الصورة، ويبدأ تشغيل الحاوية، ويثبّت الإضافات، ويفتح طرفية داخل الحاوية.
 
 ## كيف يعمل
 
-يخبر ملف `.devcontainer/devcontainer.json` VS Code باستخدام Docker Compose:
+يخبر ملف `.devcontainer/devcontainer.json` برنامج VS Code باستخدام Docker Compose:
 
 ```json
 "dockerComposeFile": ["../docker-compose.yml", "../docker-compose.build.yml"],
@@ -37,7 +37,7 @@ code devcontainer
 "workspaceFolder": "/workspace"
 ```
 
-يتضمن تكوين devcontainer ملف البناء بشكل صريح، حتى يتمكن VS Code من بناء الصورة محليًا عند استخدام "إعادة الفتح في الحاوية" أو "إعادة بناء الحاوية".
+يتضمن إعداد حاوية التطوير ملف البناء بشكل صريح، بحيث يمكن لـ VS Code بناء الصورة محليًا عند استخدام "إعادة الفتح في الحاوية" أو "إعادة بناء الحاوية".
 
 ## الإضافات
 
@@ -46,8 +46,8 @@ code devcontainer
 | الإضافة | الوصف |
 |-----------|-------------|
 | Python | دعم لغة Python |
-| ESLint | فحص JavaScript/TypeScript |
-| Prettier | تنسيق الكود |
+| ESLint | فحص أكواد JavaScript/TypeScript |
+| Prettier | تنسيق الأكواد |
 | Docker | دعم Dockerfile و compose |
 | Terraform | دعم لغة HCL |
 | Go | دعم لغة Go |
@@ -55,7 +55,7 @@ code devcontainer
 | YAML | دعم لغة YAML |
 | Kubernetes | دعم ملفات Kubernetes |
 
-لإضافة إضافات، قم بتعديل مصفوفة `customizations.vscode.extensions` في `.devcontainer/devcontainer.json`.
+لإضافة إضافات، عدّل مصفوفة `customizations.vscode.extensions` في ملف `.devcontainer/devcontainer.json`.
 
 ## إعادة توجيه المنافذ
 
@@ -76,8 +76,8 @@ devcontainer exec --workspace-folder . zsh
 
 ## إعادة البناء
 
-بعد تغيير `Dockerfile` أو ملفات compose:
+بعد تغيير ملف `Dockerfile` أو ملفات compose:
 
 > **Dev Containers: Rebuild Container**
 
-هذا يعيد بناء الصورة ويعيد تشغيل الحاوية. تستمر وحدات التخزين المسماة (`workspace`، `home`) عبر عمليات إعادة البناء.
+يعيد هذا بناء الصورة ويعيد تشغيل الحاوية. تستمر وحدات التخزين المسماة (`workspace`، `home`) عبر عمليات إعادة البناء.

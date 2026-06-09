@@ -8,11 +8,11 @@ i18n:
   translator: machine
 ---
 
-这些测试验证开发容器的主要子系统在运行时能否协同工作。它们未内置于 Docker 镜像中——需要在运行中的容器内执行，以验证其各项功能。
+这些测试验证开发容器的主要子系统在运行时能够协同工作。它们并非内置于 Docker 镜像中——需要在运行中的容器内执行，以验证其各项能力。
 
 ## 可用测试
 
 | 测试 | 验证内容 |
 | ---- | ---- |
-| [屏幕录制](/devcontainer/tests/screen-recording/) | Xvfb 显示、有头模式 Chromium（Playwright）以及 ffmpeg 录制能够生成有效的 MP4 文件 |
-| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Chrome 符号链接、无头模式补丁以及 MCP 导航能够生成有效的截图 |
+| [屏幕录制](/devcontainer/tests/screen-recording/) | Xvfb 显示、有头模式 Chromium（Playwright）和 ffmpeg 录制能生成有效的 MP4 文件 |
+| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Chrome 符号链接、无头模式补丁和 MCP 导航能生成有效的截图 |

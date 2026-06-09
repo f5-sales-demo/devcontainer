@@ -1,6 +1,6 @@
 ---
 title: 設定
-description: 環境變數、建置層、資料持久化及自訂設定。
+description: 環境變數、建置層級、資料持久化及自訂配置。
 sidebar:
   order: 2
 i18n:
@@ -10,80 +10,80 @@ i18n:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-所有設定都位於專案根目錄的 `.env` 檔案中。此檔案已加入 gitignore — 永遠不會被提交。
+所有設定都位於專案根目錄的 `.env` 檔案中。此檔案已被 gitignore — 永遠不會被提交。
 
 ## 環境變數
 
 ### AI 供應商
 
-容器支援兩種**互斥的**驗證模式（按優先順序排列）：
+容器支援兩種**互斥的**驗證模式（依優先順序排列）：
 
-- **LiteLLM 代理** — 設定 `LITELLM_BASE_URL` 和 `LITELLM_API_KEY` 以透過 LiteLLM 代理進行路由（見下方）。
+- **LiteLLM 代理** — 設定 `LITELLM_BASE_URL` 和 `LITELLM_API_KEY` 以透過 LiteLLM 代理路由（見下方）。
 - **OAuth 模式** — 僅設定 `CLAUDE_CODE_OAUTH_TOKEN`（見下方）。
 
-請勿混合使用模式 — 請只使用其中一種。
+請勿混合使用模式 — 請選擇其中一種。
 
 ### Claude Max (OAuth)
 
 | 變數 | 說明 | 範例 |
-|------|------|------|
+|----------|-------------|---------|
 | `CLAUDE_CODE_OAUTH_TOKEN` | 來自 Claude Max 訂閱的 OAuth 權杖 | `sk-ant-oat01-...` |
 
-設定後，Claude Code 會使用 OAuth 直接向 Anthropic 驗證身份 — 不需要 API 金鑰或代理。您可以從 Claude Code 設定或 [Anthropic 主控台](https://console.anthropic.com/) 取得您的權杖。
+設定後，Claude Code 會直接使用 OAuth 向 Anthropic 進行驗證 — 不需要 API 金鑰或代理。您可以從 Claude Code 設定或 [Anthropic 控制台](https://console.anthropic.com/) 取得您的權杖。
 
 ### LiteLLM 代理
 
-如果您的 LiteLLM（或其他）代理已經支援原生 Anthropic Messages API — 包括 `web_search`、串流和工具使用 — 請將 `LITELLM_BASE_URL` 設定為代理網域。容器會自動衍生供應商特定的 URL：
+如果您的 LiteLLM（或其他）代理已支援原生 Anthropic Messages API — 包括 `web_search`、串流和工具使用 — 請將 `LITELLM_BASE_URL` 設定為代理網域。容器會自動推導供應商特定的 URL：
 
-- Anthropic 端點 → `${LITELLM_BASE_URL}/anthropic`（供 Claude Code 使用）
+- Anthropic 端點 → `${LITELLM_BASE_URL}/anthropic`（由 Claude Code 使用）
 - OpenAI 相容端點 → `${LITELLM_BASE_URL}/openai/v1`
 
 | 變數 | 說明 | 範例 |
-|------|------|------|
-| `LITELLM_BASE_URL` | LiteLLM 代理的網域（不含路徑後綴） | `https://litellm.example.com` |
+|----------|-------------|---------|
+| `LITELLM_BASE_URL` | 您的 LiteLLM 代理網域（不含路徑後綴） | `https://litellm.example.com` |
 | `LITELLM_API_KEY` | 代理驗證用的 API 金鑰 | `your-api-key` 或預設為 `litellm-proxy` |
 
-使用者只需設定網域 — 供應商路徑後綴會自動加入。
-在執行時，進入點會從 `LITELLM_API_KEY` 衍生 `ANTHROPIC_API_KEY`，讓 Claude Code 能使用代理憑證，無需另外設定面向使用者的變數。
+使用者只需設定網域 — 供應商路徑後綴會自動新增。
+在執行時期，進入點會從 `LITELLM_API_KEY` 推導 `ANTHROPIC_API_KEY`，讓 Claude Code 能夠使用代理憑證，而不需要額外的使用者面向變數。
 
-此模式下模型名稱**不會**被重新映射。Claude Code 會傳送其標準模型識別碼（例如 `claude-sonnet-4-6`），LiteLLM 會將其路由至您設定的後端。
+在此模式下，模型名稱**不會**被重新對應。Claude Code 會發送其標準模型識別碼（例如 `claude-sonnet-4-6`），而 LiteLLM 會將其路由到您設定的後端。
 
 ### TLS 憑證驗證
 
-預設情況下，Node.js 會驗證所有 HTTPS 連線的 TLS 憑證。如果您的上游 API 供應商使用自簽憑證（在內部 Open WebUI 或 LiteLLM 代理中很常見），您可以在 `.env` 檔案中加入以下設定來停用驗證：
+預設情況下，Node.js 會驗證所有 HTTPS 連線的 TLS 憑證。如果您的上游 API 供應商使用自簽憑證（在內部 Open WebUI 或 LiteLLM 代理中很常見），您可以在 `.env` 檔案中新增以下設定來停用驗證：
 
 ```ini
 NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
-這**不建議**在正式環境中使用。僅在您信任容器與 API 端點之間的網路路徑時才設定此項。
+這在正式環境中**不建議使用**。僅在您信任容器與 API 端點之間的網路路徑時才設定此項。
 
 ### AI 程式碼代理
 
-容器除了 Claude Code 之外還包含多個 AI 程式碼代理：
+容器除了 Claude Code 之外，還包含多個 AI 程式碼代理：
 
-| 代理 | 指令 | 供應商 |
-|------|------|--------|
+| 代理 | 命令 | 供應商 |
+|-------|---------|----------|
 | [Codex](https://github.com/openai/codex) | `codex` | OpenAI 相容 |
-| [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | 多供應商（在執行時設定） |
-| [Oh-My-Pi](https://github.com/can1357/oh-my-pi) | `omp` | 多供應商（在執行時設定） |
+| [Pi](https://github.com/mariozechner/pi-coding-agent) | `pi` | 多供應商（在執行時期設定） |
+| [Oh-My-Pi](https://github.com/can1357/oh-my-pi) | `omp` | 多供應商（在執行時期設定） |
 
-Pi 和 Oh-My-Pi 以全域 npm 套件方式安裝。Codex 是獨立的二進位檔，會在執行時自動更新。
+Pi 和 Oh-My-Pi 以全域 npm 套件方式安裝。Codex 是一個獨立的二進位檔，會在執行時期自動更新。
 
 ### 遠端顯示 (noVNC)
 
-容器執行虛擬顯示堆疊，用於觀看和互動有介面的瀏覽器。連線說明和環境變數（`ENABLE_VNC`、`VNC_RESOLUTION`、`DISPLAY`、`NOVNC_HOST_PORT`）請參閱[遠端顯示 (noVNC)](./vnc)。
+容器執行虛擬顯示堆疊，用於觀看和互動有圖形介面的瀏覽器。請參閱[遠端顯示 (noVNC)](./vnc) 以了解連線說明和環境變數（`ENABLE_VNC`、`VNC_RESOLUTION`、`DISPLAY`、`NOVNC_HOST_PORT`）。
 
 ### Chrome DevTools MCP
 
-容器包含預先設定的 [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) 伺服器，用於無頭瀏覽器自動化。Claude Code 無需任何額外設定即可瀏覽網頁、擷取螢幕截圖及檢查 DOM。詳情請參閱 [Chrome DevTools MCP](./chrome)。
+容器包含預先設定的 [Chrome DevTools MCP](https://github.com/anthropics/chrome-devtools-mcp) 伺服器，用於無頭瀏覽器自動化。Claude Code 可以瀏覽網頁、擷取螢幕截圖及檢查 DOM，無需任何額外設定。詳情請參閱 [Chrome DevTools MCP](./chrome)。
 
 ### Git
 
 | 變數 | 說明 | 設定方式 |
-|------|------|----------|
-| `GIT_AUTHOR_NAME` | git 提交使用的名稱 | `git config user.name` |
-| `GIT_AUTHOR_EMAIL` | git 提交使用的電子郵件 | `git config user.email` |
+|----------|-------------|------------|
+| `GIT_AUTHOR_NAME` | git 提交的名稱 | `git config user.name` |
+| `GIT_AUTHOR_EMAIL` | git 提交的電子郵件 | `git config user.email` |
 
 如果您的主機已設定 git，可自動填入兩個值：
 
@@ -95,16 +95,16 @@ echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
 ### SSH
 
 | 變數 | 說明 | 設定方式 |
-|------|------|----------|
+|----------|-------------|------------|
 | `SSH_PRIVATE_KEY` | Base64 編碼的私鑰 | `base64 < ~/.ssh/id_ed25519` |
 
 ### GitHub CLI
 
 | 變數 | 說明 | 設定方式 |
-|------|------|----------|
-| `GH_TOKEN` | `gh` CLI 和 HTTPS git 使用的 GitHub 個人存取權杖 | `gh auth token`（如果本機已安裝 `gh`） |
+|----------|-------------|------------|
+| `GH_TOKEN` | 用於 `gh` CLI 和 HTTPS git 的 GitHub 個人存取權杖 | `gh auth token`（如果本機已安裝 `gh`） |
 
-在 `.env` 中設定 `GH_TOKEN` 後，`gh` CLI 會自動驗證 — 無需執行 `gh auth login`。進入點也會執行 `gh auth setup-git`，設定 git 憑證輔助程式，讓 HTTPS `git clone` 和 `git push` 無需 SSH 金鑰即可運作。
+當 `.env` 中設定了 `GH_TOKEN`，`gh` CLI 會自動驗證 — 無需執行 `gh auth login`。進入點還會執行 `gh auth setup-git`，它會設定 git 憑證助手，使 HTTPS 的 `git clone` 和 `git push` 無需 SSH 金鑰即可運作。
 
 如果您的主機已安裝並驗證 `gh`，可直接擷取權杖：
 
@@ -112,22 +112,22 @@ echo "GIT_AUTHOR_NAME=\"$(git config user.name)\"" >> .env
 echo "GH_TOKEN=$(gh auth token)" >> .env
 ```
 
-否則，請[建立個人存取權杖](https://github.com/settings/tokens)並手動加入。細粒度權杖（建議使用）和傳統權杖均可使用。細粒度權杖可讓您將存取範圍限制在特定儲存庫。傳統權杖需要 `repo` 範圍才能存取私有儲存庫。
+否則，請[建立個人存取權杖](https://github.com/settings/tokens)並手動新增。細粒度權杖（建議使用）和傳統權杖皆可使用。細粒度權杖可讓您將存取範圍限定在特定儲存庫。傳統權杖需要 `repo` 範圍才能存取私有儲存庫。
 
-在容器內驗證身份：
+若要在容器內驗證驗證狀態：
 
 ```bash
 gh auth status
 ```
 
-## 工具安裝方式
+## 工具的安裝方式
 
-每個語言執行環境、CLI 和工具都在映像建置時直接安裝在 `Dockerfile` 中。預建映像在每次推送至 `main` 時都會發布到 `ghcr.io/f5xc-salesdemos/devcontainer:latest`，因此大多數使用者永遠不需要在本機建置。
+每個語言執行環境、CLI 和工具都直接在 `Dockerfile` 中於映像建置時安裝。預建映像會在每次推送到 `main` 時發布到 `ghcr.io/f5xc-salesdemos/devcontainer:latest`，因此大多數使用者無需在本機建置。
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-執行 `docker compose up -d` 會自動拉取預建映像。自訂 Dockerfile 後要在本機建置，請明確傳入建置檔案：
+執行 `docker compose up -d` 會自動拉取預建映像。若要在自訂 Dockerfile 後於本機建置，請明確指定建置檔案：
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
@@ -138,7 +138,7 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 <TabItem label="Podman">
 
-執行 `podman-compose up -d` 會自動拉取預建映像。自訂 Dockerfile 後要在本機建置，請明確傳入建置檔案：
+執行 `podman-compose up -d` 會自動拉取預建映像。若要在自訂 Dockerfile 後於本機建置，請明確指定建置檔案：
 
 ```bash
 podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
@@ -149,80 +149,80 @@ podman-compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 </TabItem>
 </Tabs>
 
-Dockerfile 使用針對 Docker 層快取最佳化的兩階段建置。完整的層級分析和建置快取詳情請參閱[本機開發 — 兩階段建置架構](./local-development#two-stage-build-architecture)。
+Dockerfile 使用針對 Docker 層級快取最佳化的兩階段建置。請參閱[本機開發 — 兩階段建置架構](./local-development#two-stage-build-architecture)以了解完整的層級分解和建置快取詳情。
 
 ## Claude Code 工具感知
 
-容器包含內建設定，防止 Claude Code 混淆工具名稱。工具感知安裝在**兩個**記憶層級，以提供縱深防禦：
+容器包含內建的設定，可防止 Claude Code 混淆工具名稱。工具感知安裝在**兩個**記憶層級，以實現縱深防禦：
 
-- **受管理策略** (`/etc/claude-code/CLAUDE.md`) — 在 Docker 建置時安裝。這是 Claude Code 記憶層級中最高優先順序的層級，即使工作目錄中存在大型專案 `CLAUDE.md` 也會始終載入。
-- **使用者記憶** (`~/.claude/CLAUDE.md`) — 在首次啟動時由進入點建立。提供備份層級以及使用者可見、可自訂的副本。
+- **受管理策略** (`/etc/claude-code/CLAUDE.md`) — 在 Docker 建置時安裝。這是 Claude Code 記憶階層中最高優先級的層級，即使工作目錄中存在大型專案 `CLAUDE.md` 也始終會載入。
+- **使用者記憶** (`~/.claude/CLAUDE.md`) — 由進入點在首次啟動時建立。提供備份層級和使用者可見、可自訂的副本。
 
 ### 記憶層級優先順序
 
 Claude Code 從多個記憶層級載入指令（從最高到最低優先順序）：
 
 1. **受管理策略** (`/etc/claude-code/`) — 始終載入，無法排除
-2. **專案記憶** (`./CLAUDE.md`) — 按專案目錄載入
-3. **使用者記憶** (`~/.claude/CLAUDE.md`) — 所有工作階段全域載入
-4. **本機記憶** (`./CLAUDE.local.md`) — 個人的專案層級覆寫
+2. **專案記憶** (`./CLAUDE.md`) — 依專案目錄載入
+3. **使用者記憶** (`~/.claude/CLAUDE.md`) — 全域載入，適用於所有工作階段
+4. **本機記憶** (`./CLAUDE.local.md`) — 個人的專案級別覆寫
 
-若沒有受管理策略層級，使用者記憶中的工具感知在與大型專案層級 `CLAUDE.md` 競爭時可能會被降低優先順序，導致 Claude 失去對其 PascalCase 工具名稱的感知。受管理層級保證工具感知始終以最高優先順序載入。
+如果沒有受管理策略層級，使用者記憶中的工具感知在與大型專案級別 `CLAUDE.md` 競爭時可能會被降低優先級，導致 Claude 失去對其 PascalCase 工具名稱的感知。受管理層級保證工具感知始終以最高優先級載入。
 
 ### 自我測試
 
-執行內建的自我測試來驗證設定：
+執行內建的自我測試以驗證設定：
 
 ```bash
 claude-self-test
 ```
 
-這會檢查所有設定檔案是否就位且包含預期的工具參考。
+這會檢查所有設定檔案是否就位，且包含預期的工具參考。
 
 ## 新增工具
 
-要將工具加入映像，請編輯 `Dockerfile` 並在本機重新建置。新增 APT 套件、npm 工具、pip 工具和二進位下載的說明請參閱[本機開發 — 新增工具](./local-development#adding-tools)。
+若要將工具新增至映像，請編輯 `Dockerfile` 並在本機重新建置。請參閱[本機開發 — 新增工具](./local-development#adding-tools)以了解新增 APT 套件、npm 工具、pip 工具和二進位檔下載的說明。
 
 ## VS Code 擴充功能
 
-擴充功能在 `.devcontainer/devcontainer.json` 的 `customizations.vscode.extensions` 下設定，在 VS Code 中開啟時會自動安裝。
+擴充功能在 `.devcontainer/devcontainer.json` 的 `customizations.vscode.extensions` 下設定，並在以 VS Code 開啟時自動安裝。
 
 ## 資料持久化
 
 所有資料都存放在具名磁碟區中 — 不掛載主機目錄：
 
 | 磁碟區 | 掛載點 | 內容 |
-|--------|--------|------|
+|--------|-------------|----------|
 | `workspace` | `/workspace` | 您複製的儲存庫和專案檔案 |
 | `home` | `/home/vscode` | Shell 歷史記錄、工具設定、快取、SSH 金鑰 |
 
 <Tabs syncKey="runtime">
 <TabItem label="Docker">
 
-兩者在容器重啟和重建後都會保留。執行 `docker compose pull` 以在重啟前取得最新的預建映像。
+兩者在容器重新啟動和重新建置後都會保留。執行 `docker compose pull` 以在重新啟動前取得最新的預建映像。
 
-| 動作 | 資料 |
-|------|------|
+| 操作 | 資料 |
+|--------|------|
 | `docker compose down` | 保留 |
 | `docker compose down -v` | **刪除** |
 
 </TabItem>
 <TabItem label="Podman">
 
-兩者在容器重啟和重建後都會保留。執行 `podman-compose pull` 以在重啟前取得最新的預建映像。
+兩者在容器重新啟動和重新建置後都會保留。執行 `podman-compose pull` 以在重新啟動前取得最新的預建映像。
 
-| 動作 | 資料 |
-|------|------|
+| 操作 | 資料 |
+|--------|------|
 | `podman-compose down` | 保留 |
 | `podman-compose down -v` | **刪除** |
 
 </TabItem>
 </Tabs>
 
-## 連接埠映射
+## 連接埠對應
 
 | 主機 | 容器 | 服務 |
-|------|------|------|
+|------|-----------|---------|
 | `127.0.0.1:${NOVNC_HOST_PORT:-6080}` | `6080` | noVNC 遠端顯示（僅限 localhost，可用 `NOVNC_HOST_PORT` 覆寫） |
 
-連接埠繫結至 `127.0.0.1`，因此只能從您的機器存取，無法從網路存取。
+連接埠綁定到 `127.0.0.1`，因此只能從您的機器存取，無法從網路存取。

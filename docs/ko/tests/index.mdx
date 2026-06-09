@@ -8,11 +8,11 @@ i18n:
   translator: machine
 ---
 
-이 테스트들은 개발 컨테이너의 주요 서브시스템이 런타임에 함께 작동하는지 검증합니다. Docker 이미지에 내장되어 있지 않으며, 실행 중인 컨테이너 내에서 실행하여 해당 기능을 확인합니다.
+이 테스트는 개발 컨테이너의 주요 하위 시스템이 런타임에서 함께 작동하는지 검증합니다. Docker 이미지에 포함되어 있지 않으며, 실행 중인 컨테이너 내부에서 실행하여 기능을 확인합니다.
 
 ## 사용 가능한 테스트
 
 | 테스트 | 검증 내용 |
 | ---- | ---- |
-| [화면 녹화](/devcontainer/tests/screen-recording/) | Xvfb 디스플레이, 헤디드 Chromium(Playwright), 그리고 ffmpeg 녹화가 유효한 MP4를 생성하는지 검증 |
-| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Chrome 심볼릭 링크, 헤드리스 패치, 그리고 MCP 내비게이션이 유효한 스크린샷을 생성하는지 검증 |
+| [화면 녹화](/devcontainer/tests/screen-recording/) | Xvfb 디스플레이, 헤디드 Chromium(Playwright), ffmpeg 녹화가 유효한 MP4를 생성하는지 검증 |
+| [Chrome DevTools MCP](/devcontainer/tests/chrome-devtools-mcp/) | Chrome 심볼릭 링크, 헤드리스 패치, MCP 내비게이션이 유효한 스크린샷을 생성하는지 검증 |

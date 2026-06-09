@@ -14,7 +14,7 @@ i18n:
 
 1. [VS Code](https://code.visualstudio.com/)
 2. [Dev Containers-Erweiterung](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
-3. Docker oder Podman muss auf Ihrem Rechner laufen (siehe [Erste Schritte](./getting-started#container-runtime)). VS Code Dev Containers unterstützt auch [Podman als Backend](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman).
+3. Docker oder Podman auf Ihrem Rechner (siehe [Erste Schritte](./getting-started#container-runtime)). VS Code Dev Containers unterstützt auch [Podman als Backend](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman).
 
 ## Schnellstart
 
@@ -27,7 +27,7 @@ VS Code erkennt `.devcontainer/devcontainer.json` und zeigt eine Benachrichtigun
 
 > **Dev Containers: Reopen in Container**
 
-VS Code baut (oder pullt) das Image, startet den Container, installiert Erweiterungen und öffnet ein Terminal innerhalb des Containers.
+VS Code erstellt (oder lädt) das Image, startet den Container, installiert Erweiterungen und öffnet ein Terminal innerhalb des Containers.
 
 ## Funktionsweise
 
@@ -59,15 +59,15 @@ Erweiterungen werden automatisch innerhalb des Containers installiert:
 
 Um Erweiterungen hinzuzufügen, bearbeiten Sie das Array `customizations.vscode.extensions` in `.devcontainer/devcontainer.json`.
 
-## Port-Weiterleitung
+## Portweiterleitung
 
-VS Code leitet automatisch die in der Compose-Datei definierten Ports weiter. Das noVNC-Display ist unter `http://localhost:6080/vnc.html` verfügbar — VS Code benachrichtigt Sie, wenn der Port bereit ist.
+VS Code leitet automatisch die in der Compose-Datei definierten Ports weiter. Die noVNC-Anzeige ist unter `http://localhost:6080/vnc.html` verfügbar — VS Code benachrichtigt Sie, wenn der Port bereit ist.
 
 Zusätzliche Ports können bei Bedarf über das **Ports**-Panel in VS Code weitergeleitet werden.
 
-## Devcontainer-CLI-Alternative
+## Devcontainer-CLI als Alternative
 
-Wenn Sie die Kommandozeile gegenüber der VS Code-Oberfläche bevorzugen:
+Wenn Sie die Befehlszeile der VS Code-Benutzeroberfläche vorziehen:
 
 ```bash
 npm install -g @devcontainers/cli
@@ -76,10 +76,10 @@ devcontainer up --workspace-folder .
 devcontainer exec --workspace-folder . zsh
 ```
 
-## Neuaufbau
+## Neuerstellen
 
-Nach Änderungen am `Dockerfile` oder den Compose-Dateien:
+Nach Änderungen am `Dockerfile` oder an Compose-Dateien:
 
 > **Dev Containers: Rebuild Container**
 
-Dies baut das Image neu und startet den Container neu. Benannte Volumes (`workspace`, `home`) bleiben über Neuaufbauten hinweg erhalten.
+Dies erstellt das Image neu und startet den Container neu. Benannte Volumes (`workspace`, `home`) bleiben über Neuerstellungen hinweg erhalten.

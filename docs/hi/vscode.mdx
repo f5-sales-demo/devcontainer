@@ -12,7 +12,7 @@ i18n:
 
 1. [VS Code](https://code.visualstudio.com/)
 2. [Dev Containers एक्सटेंशन](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
-3. आपकी मशीन पर Docker या Podman चल रहा होना चाहिए (देखें [शुरू करना](./getting-started#container-runtime))। VS Code Dev Containers [Podman को बैकएंड के रूप में](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman) भी सपोर्ट करता है।
+3. आपकी मशीन पर Docker या Podman चालू होना चाहिए (देखें [शुरू करना](./getting-started#container-runtime))। VS Code Dev Containers [Podman को बैकएंड के रूप में](https://code.visualstudio.com/remote/advancedcontainers/docker-options#_podman) भी सपोर्ट करता है।
 
 ## त्वरित शुरुआत
 
@@ -21,11 +21,11 @@ git clone https://github.com/f5xc-salesdemos/devcontainer.git
 code devcontainer
 ```
 
-VS Code `.devcontainer/devcontainer.json` का पता लगाता है और एक नोटिफिकेशन दिखाता है: **"Reopen in Container"**। इस पर क्लिक करें, या कमांड पैलेट का उपयोग करें:
+VS Code `.devcontainer/devcontainer.json` का पता लगाता है और एक सूचना दिखाता है: **"Reopen in Container"**। इस पर क्लिक करें, या कमांड पैलेट का उपयोग करें:
 
 > **Dev Containers: Reopen in Container**
 
-VS Code इमेज बिल्ड (या पुल) करता है, कंटेनर शुरू करता है, एक्सटेंशन इंस्टॉल करता है, और कंटेनर के अंदर एक टर्मिनल खोलता है।
+VS Code इमेज को बिल्ड (या पुल) करता है, कंटेनर शुरू करता है, एक्सटेंशन इंस्टॉल करता है, और कंटेनर के अंदर एक टर्मिनल खोलता है।
 
 ## यह कैसे काम करता है
 
@@ -61,7 +61,7 @@ devcontainer कॉन्फ़िग स्पष्ट रूप से बि
 
 VS Code स्वचालित रूप से compose फ़ाइल में परिभाषित पोर्ट्स को फ़ॉरवर्ड करता है। noVNC डिस्प्ले `http://localhost:6080/vnc.html` पर उपलब्ध है — जब पोर्ट तैयार होगा तो VS Code आपको सूचित करेगा।
 
-अतिरिक्त पोर्ट्स VS Code में **Ports** पैनल से ऑन-डिमांड फ़ॉरवर्ड किए जा सकते हैं।
+अतिरिक्त पोर्ट्स को VS Code में **Ports** पैनल से मांग पर फ़ॉरवर्ड किया जा सकता है।
 
 ## Devcontainer CLI विकल्प
 
@@ -76,8 +76,8 @@ devcontainer exec --workspace-folder . zsh
 
 ## पुनर्निर्माण
 
-`Dockerfile` या compose फ़ाइलों में बदलाव करने के बाद:
+`Dockerfile` या compose फ़ाइलों में परिवर्तन करने के बाद:
 
 > **Dev Containers: Rebuild Container**
 
-यह इमेज को पुनर्निर्मित करता है और कंटेनर को पुनः शुरू करता है। नामित वॉल्यूम (`workspace`, `home`) पुनर्निर्माण के बाद भी बने रहते हैं।
+यह इमेज को फिर से बिल्ड करता है और कंटेनर को पुनः शुरू करता है। नामित वॉल्यूम (`workspace`, `home`) पुनर्निर्माण के बाद भी बने रहते हैं।
