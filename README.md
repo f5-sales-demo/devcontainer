@@ -7,18 +7,10 @@
 
 Isolated development environment with AI coding tools
 
+
 ## Documentation
 
 Full documentation is available at **[https://f5xc-salesdemos.github.io/devcontainer/](https://f5xc-salesdemos.github.io/devcontainer/)**.
-
-## Getting Started
-
-```bash
-git clone https://github.com/f5xc-salesdemos/devcontainer.git
-```
-
-See the [documentation](https://f5xc-salesdemos.github.io/devcontainer/) for detailed setup
-and usage guides.
 
 ## Contributing
 
