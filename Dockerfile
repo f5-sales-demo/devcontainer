@@ -810,9 +810,11 @@ RUN true \
         zip-bin feroxbuster; \
     fi \
     # --- XSS scanner ---
+    && if [ "$DPKG_ARCH" = "amd64" ]; then DALFOX_ARCH="x86_64"; else DALFOX_ARCH="aarch64"; fi \
+    && DALFOX_VERSION=$(ghlatest hahwul/dalfox) \
     && install-release dalfox \
-        "https://github.com/hahwul/dalfox/releases/latest/download/dalfox-linux-${DPKG_ARCH}.tar.gz" \
-        tgz-bin dalfox "dalfox-linux-${DPKG_ARCH}" \
+        "https://github.com/hahwul/dalfox/releases/download/v${DALFOX_VERSION}/dalfox-v${DALFOX_VERSION}-linux-${DALFOX_ARCH}.tar.gz" \
+        tgz-bin dalfox \
     # --- Domain & URL enumeration ---
     && install-release amass \
         "https://github.com/owasp-amass/amass/releases/latest/download/amass_linux_${DPKG_ARCH}.tar.gz" \
