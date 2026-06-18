@@ -1,3 +1,17 @@
+🌐 English |
+[日本語](https://f5xc-salesdemos.github.io/devcontainer/ja/) |
+[한국어](https://f5xc-salesdemos.github.io/devcontainer/ko/) |
+[简体中文](https://f5xc-salesdemos.github.io/devcontainer/zh-cn/) |
+[繁體中文](https://f5xc-salesdemos.github.io/devcontainer/zh-tw/) |
+[Español](https://f5xc-salesdemos.github.io/devcontainer/es/) |
+[Português](https://f5xc-salesdemos.github.io/devcontainer/pt-br/) |
+[Français](https://f5xc-salesdemos.github.io/devcontainer/fr/) |
+[Deutsch](https://f5xc-salesdemos.github.io/devcontainer/de/) |
+[Italiano](https://f5xc-salesdemos.github.io/devcontainer/it/) |
+[العربية](https://f5xc-salesdemos.github.io/devcontainer/ar/) |
+[हिन्दी](https://f5xc-salesdemos.github.io/devcontainer/hi/) |
+[ไทย](https://f5xc-salesdemos.github.io/devcontainer/th/)
+
 # Dev Container
 
 [![GitHub Pages Deploy](https://github.com/f5xc-salesdemos/devcontainer/actions/workflows/github-pages-deploy.yml/badge.svg)](https://github.com/f5xc-salesdemos/devcontainer/actions/workflows/github-pages-deploy.yml)
