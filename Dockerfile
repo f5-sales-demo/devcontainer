@@ -980,7 +980,7 @@ RUN retry npm install -g \
     @anthropic-ai/claude-code \
     @mariozechner/pi-coding-agent \
     @oh-my-pi/pi-coding-agent \
-    @f5xc-salesdemos/xcsh \
+    @f5-sales-demo/xcsh \
     prettier \
     markdownlint-cli2 \
     @devcontainers/cli \
@@ -1355,7 +1355,7 @@ RUN chmod +x /opt/claude-config/install-plugins.sh
 
 # ============================================================
 # 12l. Claude Code plugins (pre-install from marketplaces)
-#      Clones the official and f5xc-salesdemos marketplaces,
+#      Clones the official and f5-sales-demo marketplaces,
 #      copies each enabled plugin into the cache, clones
 #      superpowers separately, and generates
 #      installed_plugins.json so Claude Code treats all
@@ -1368,15 +1368,15 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
         https://github.com/anthropics/claude-plugins-official.git \
         "${PLUGIN_BASE}/marketplaces/claude-plugins-official" \
     && retry git clone --depth=1 --single-branch --branch main \
-        https://github.com/f5xc-salesdemos/marketplace.git \
-        "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" \
+        https://github.com/f5-sales-demo/marketplace.git \
+        "${PLUGIN_BASE}/marketplaces/f5-sales-demo-marketplace" \
     && retry git clone --depth=1 --single-branch --branch main \
-        https://github.com/f5xc-salesdemos/codex-plugin-cc.git \
+        https://github.com/f5-sales-demo/codex-plugin-cc.git \
         "${PLUGIN_BASE}/marketplaces/openai-codex" \
     && TS="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
-    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"f5xc-salesdemos-marketplace":{"source":{"source":"github","repo":"f5xc-salesdemos/marketplace"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"openai-codex":{"source":{"source":"github","repo":"f5xc-salesdemos/codex-plugin-cc"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":false}}' \
+    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"f5-sales-demo-marketplace":{"source":{"source":"github","repo":"f5-sales-demo/marketplace"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"openai-codex":{"source":{"source":"github","repo":"f5-sales-demo/codex-plugin-cc"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":false}}' \
         "${PLUGIN_BASE}/marketplaces/claude-plugins-official" "$TS" \
-        "${PLUGIN_BASE}/marketplaces/f5xc-salesdemos-marketplace" "$TS" \
+        "${PLUGIN_BASE}/marketplaces/f5-sales-demo-marketplace" "$TS" \
         "${PLUGIN_BASE}/marketplaces/openai-codex" "$TS" \
         > "${PLUGIN_BASE}/known_marketplaces.json" \
     && printf '{"fetchedAt":"%s","plugins":[]}' "$TS" \
@@ -1731,7 +1731,7 @@ RUN printf '{"dependencies":{"@opencode-ai/plugin":"^1.4.3"}}\n' \
 # 18. Build fingerprint + 19. Entrypoint
 USER root
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN printf 'BUILD_COMMIT=%s\nBUILD_DATE=%s\nIMAGE=ghcr.io/f5xc-salesdemos/devcontainer\nREPO=https://github.com/f5xc-salesdemos/devcontainer\n' \
+RUN printf 'BUILD_COMMIT=%s\nBUILD_DATE=%s\nIMAGE=ghcr.io/f5-sales-demo/devcontainer\nREPO=https://github.com/f5-sales-demo/devcontainer\n' \
       "${BUILD_COMMIT}" "${BUILD_DATE}" > /etc/devcontainer-version \
     && chmod +x /usr/local/bin/entrypoint.sh \
     && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
