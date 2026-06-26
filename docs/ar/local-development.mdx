@@ -16,7 +16,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 ## استنساخ المستودع
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/devcontainer.git
+git clone https://github.com/f5-sales-demo/devcontainer.git
 cd devcontainer
 ```
 
@@ -213,7 +213,7 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## ذاكرة التخزين المؤقت للبناء
 
-يستخدم CI **التخزين المؤقت القائم على السجل** — تُخزّن طبقات البناء في GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) بدلاً من ذاكرة التخزين المؤقت لـ GitHub Actions. هذا يتجنب حد ذاكرة التخزين المؤقت لـ GHA البالغ 10 جيجابايت والذي كان يتسبب في إعادة بناء كاملة متكررة لهذه الصورة متعددة البنيات بحجم ~6 جيجابايت.
+يستخدم CI **التخزين المؤقت القائم على السجل** — تُخزّن طبقات البناء في GHCR (`ghcr.io/f5-sales-demo/devcontainer:cache-*`) بدلاً من ذاكرة التخزين المؤقت لـ GitHub Actions. هذا يتجنب حد ذاكرة التخزين المؤقت لـ GHA البالغ 10 جيجابايت والذي كان يتسبب في إعادة بناء كاملة متكررة لهذه الصورة متعددة البنيات بحجم ~6 جيجابايت.
 
 تعمل بنية المرحلتين مع ذاكرة التخزين المؤقت للسجل بحيث:
 

@@ -27,7 +27,7 @@ else
   exit 1
 fi
 
-IMAGE="${1:-ghcr.io/f5xc-salesdemos/devcontainer:latest}"
+IMAGE="${1:-ghcr.io/f5-sales-demo/devcontainer:latest}"
 CONTAINER="dev-smoke-test-$$"
 COMPOSE_DIR=$(mktemp -d /tmp/smoke-XXXX)
 PASS=0

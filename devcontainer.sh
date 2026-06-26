@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-REPO_BASE="https://raw.githubusercontent.com/f5xc-salesdemos/devcontainer/main"
+REPO_BASE="https://raw.githubusercontent.com/f5-sales-demo/devcontainer/main"
 RETRY_COUNT=3
 RETRY_DELAY=2
 

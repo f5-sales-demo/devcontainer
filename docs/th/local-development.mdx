@@ -15,7 +15,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 ## โคลนรีโพซิทอรี
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/devcontainer.git
+git clone https://github.com/f5-sales-demo/devcontainer.git
 cd devcontainer
 ```
 
@@ -212,7 +212,7 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## แคชการบิลด์
 
-CI ใช้ **registry-based caching** — เลเยอร์การบิลด์ถูกเก็บใน GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) แทนที่จะเป็นแคชของ GitHub Actions ซึ่งช่วยหลีกเลี่ยงขีดจำกัดแคช GHA 10 GB ที่ทำให้เกิดการบิลด์ใหม่ทั้งหมดบ่อยครั้งสำหรับ image แบบ multi-architecture ขนาด ~6 GB นี้
+CI ใช้ **registry-based caching** — เลเยอร์การบิลด์ถูกเก็บใน GHCR (`ghcr.io/f5-sales-demo/devcontainer:cache-*`) แทนที่จะเป็นแคชของ GitHub Actions ซึ่งช่วยหลีกเลี่ยงขีดจำกัดแคช GHA 10 GB ที่ทำให้เกิดการบิลด์ใหม่ทั้งหมดบ่อยครั้งสำหรับ image แบบ multi-architecture ขนาด ~6 GB นี้
 
 สถาปัตยกรรมแบบสองขั้นตอนทำงานร่วมกับ registry cache ดังนี้:
 

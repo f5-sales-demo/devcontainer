@@ -15,7 +15,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 ## 克隆仓库
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/devcontainer.git
+git clone https://github.com/f5-sales-demo/devcontainer.git
 cd devcontainer
 ```
 
@@ -212,7 +212,7 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## 构建缓存
 
-CI 使用**基于注册表的缓存**——构建层存储在 GHCR（`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`）中，而非 GitHub Actions 缓存。这避免了 10 GB GHA 缓存限制，该限制曾导致这个约 6 GB 的多架构镜像频繁进行完整重建。
+CI 使用**基于注册表的缓存**——构建层存储在 GHCR（`ghcr.io/f5-sales-demo/devcontainer:cache-*`）中，而非 GitHub Actions 缓存。这避免了 10 GB GHA 缓存限制，该限制曾导致这个约 6 GB 的多架构镜像频繁进行完整重建。
 
 两阶段架构与注册表缓存协同工作，使得：
 

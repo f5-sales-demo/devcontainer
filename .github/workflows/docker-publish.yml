@@ -35,7 +35,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  MAIN_IMAGE: ghcr.io/f5xc-salesdemos/devcontainer
+  MAIN_IMAGE: ghcr.io/f5-sales-demo/devcontainer
 
 jobs:
   # ── Main image: build each arch natively in parallel ──
