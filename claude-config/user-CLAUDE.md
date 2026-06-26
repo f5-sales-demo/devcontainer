@@ -1,7 +1,7 @@
 # Container Context
 
 You are running inside an ephemeral Docker container built from
-[f5xc-salesdemos/devcontainer](https://github.com/f5xc-salesdemos/devcontainer).
+[f5-sales-demo/devcontainer](https://github.com/f5-sales-demo/devcontainer).
 All filesystem changes are lost on container restart.
 
 Your build fingerprint is in `/etc/devcontainer-version`.

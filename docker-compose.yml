@@ -1,7 +1,7 @@
 ---
 services:
   dev:
-    image: ghcr.io/f5xc-salesdemos/devcontainer:latest
+    image: ghcr.io/f5-sales-demo/devcontainer:latest
     pull_policy: missing
     container_name: ${DEVCONTAINER_NAME:-devcontainer}
     hostname: ${DEVCONTAINER_NAME:-devcontainer}

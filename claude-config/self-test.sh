@@ -212,9 +212,9 @@ check "official marketplace cached" \
 warn "official marketplace.json in cache (Anthropic may not include one)" \
   test -f "$HOME/.claude/plugins/marketplaces/claude-plugins-official/.claude-plugin/marketplace.json"
 check "f5xc marketplace cached" \
-  test -d "$HOME/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace"
+  test -d "$HOME/.claude/plugins/marketplaces/f5-sales-demo-marketplace"
 check "f5xc marketplace.json in cache" \
-  test -f "$HOME/.claude/plugins/marketplaces/f5xc-salesdemos-marketplace/.claude-plugin/marketplace.json"
+  test -f "$HOME/.claude/plugins/marketplaces/f5-sales-demo-marketplace/.claude-plugin/marketplace.json"
 check "known_marketplaces.json exists" \
   test -f "$HOME/.claude/plugins/known_marketplaces.json"
 check "installed_plugins.json exists" \
@@ -222,7 +222,7 @@ check "installed_plugins.json exists" \
 check "official plugin cache populated" \
   test -d "$HOME/.claude/plugins/cache/claude-plugins-official"
 check "f5xc plugin cache populated" \
-  test -d "$HOME/.claude/plugins/cache/f5xc-salesdemos-marketplace"
+  test -d "$HOME/.claude/plugins/cache/f5-sales-demo-marketplace"
 check "superpowers pre-installed" \
   test -d "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers"
 CACHED_COUNT=$(jq '.plugins | keys | length' "$HOME/.claude/plugins/installed_plugins.json")
@@ -248,7 +248,7 @@ NON_EXEC_OFFICIAL=$(find "$HOME/.claude/plugins" \
   -path "*/claude-plugins-official/*" -name "*.sh" -type f \
   ! -perm -u+x 2>/dev/null | wc -l)
 NON_EXEC_F5XC=$(find "$HOME/.claude/plugins" \
-  -path "*/f5xc-salesdemos-marketplace/*" -name "*.sh" -type f \
+  -path "*/f5-sales-demo-marketplace/*" -name "*.sh" -type f \
   ! -perm -u+x 2>/dev/null | wc -l)
 NON_EXEC_TOTAL=$((NON_EXEC_OFFICIAL + NON_EXEC_F5XC))
 check "all plugin scripts executable (${NON_EXEC_TOTAL} non-exec: ${NON_EXEC_OFFICIAL} official, ${NON_EXEC_F5XC} f5xc)" \
@@ -294,7 +294,7 @@ check "no active hooks from non-enabled plugins (${NON_ENABLED_HOOKS} found)" \
 # Track upstream workarounds — the SessionStart hook and entrypoint chmod
 # sweep exist for TWO upstream bugs.  The workaround can only be removed
 # when BOTH are resolved:
-#   - #648  (f5xc-salesdemos/devcontainer) — plugin syncs reset .sh perms  [CLOSED 2026-03-27]
+#   - #648  (f5-sales-demo/devcontainer) — plugin syncs reset .sh perms  [CLOSED 2026-03-27]
 #   - #40013 (anthropics/claude-code)       — hooks fire from ALL plugins   [still open]
 CC_STATE=$(gh issue view 40013 --repo anthropics/claude-code \
   --json state --jq '.state' 2>/dev/null || echo "UNKNOWN")
@@ -359,7 +359,7 @@ if [ -d "$AUDIT_DIR" ]; then
   warn "settings.json matches source (ignoring runtime state)" \
     diff -q "$HOME/.claude/settings.json" "$AUDIT_DIR/claude-config/settings.json"
 else
-  echo "  SKIP: source repo not cloned (run: gh repo clone f5xc-salesdemos/devcontainer $AUDIT_DIR)"
+  echo "  SKIP: source repo not cloned (run: gh repo clone f5-sales-demo/devcontainer $AUDIT_DIR)"
 fi
 
 echo ""

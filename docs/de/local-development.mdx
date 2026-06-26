@@ -15,7 +15,7 @@ Diese Seite richtet sich an Entwickler, die das Repository klonen, das Image lok
 ## Repository klonen
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/devcontainer.git
+git clone https://github.com/f5-sales-demo/devcontainer.git
 cd devcontainer
 ```
 
@@ -212,7 +212,7 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## Build-Cache
 
-CI verwendet **Registry-basiertes Caching** — Build-Layer werden in GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) gespeichert, anstatt im GitHub Actions Cache. Dies vermeidet das 10 GB GHA-Cache-Limit, das bei diesem ~6 GB großen Multi-Architektur-Image häufige vollständige Neubauten verursachte.
+CI verwendet **Registry-basiertes Caching** — Build-Layer werden in GHCR (`ghcr.io/f5-sales-demo/devcontainer:cache-*`) gespeichert, anstatt im GitHub Actions Cache. Dies vermeidet das 10 GB GHA-Cache-Limit, das bei diesem ~6 GB großen Multi-Architektur-Image häufige vollständige Neubauten verursachte.
 
 Die zweistufige Architektur funktioniert mit dem Registry-Cache folgendermaßen:
 

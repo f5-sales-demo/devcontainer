@@ -15,7 +15,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 ## リポジトリのクローン
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/devcontainer.git
+git clone https://github.com/f5-sales-demo/devcontainer.git
 cd devcontainer
 ```
 
@@ -212,7 +212,7 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## ビルドキャッシュ
 
-CIは**レジストリベースのキャッシュ**を使用します — ビルドレイヤーはGitHub Actionsキャッシュではなく、GHCR（`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`）に保存されます。これにより、この約6 GBのマルチアーキテクチャイメージで頻繁なフルリビルドを引き起こしていた10 GBのGHAキャッシュ制限を回避できます。
+CIは**レジストリベースのキャッシュ**を使用します — ビルドレイヤーはGitHub Actionsキャッシュではなく、GHCR（`ghcr.io/f5-sales-demo/devcontainer:cache-*`）に保存されます。これにより、この約6 GBのマルチアーキテクチャイメージで頻繁なフルリビルドを引き起こしていた10 GBのGHAキャッシュ制限を回避できます。
 
 2ステージアーキテクチャはレジストリキャッシュと連携して以下のように動作します：
 

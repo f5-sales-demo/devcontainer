@@ -15,7 +15,7 @@ Esta página está dirigida a desarrolladores que desean clonar el repositorio, 
 ## Clonar el Repositorio
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/devcontainer.git
+git clone https://github.com/f5-sales-demo/devcontainer.git
 cd devcontainer
 ```
 
@@ -212,7 +212,7 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## Caché de Compilación
 
-CI utiliza **caché basado en registro** — las capas de compilación se almacenan en GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) en lugar del caché de GitHub Actions. Esto evita el límite de 10 GB del caché de GHA que causaba recompilaciones completas frecuentes para esta imagen multi-arquitectura de ~6 GB.
+CI utiliza **caché basado en registro** — las capas de compilación se almacenan en GHCR (`ghcr.io/f5-sales-demo/devcontainer:cache-*`) en lugar del caché de GitHub Actions. Esto evita el límite de 10 GB del caché de GHA que causaba recompilaciones completas frecuentes para esta imagen multi-arquitectura de ~6 GB.
 
 La arquitectura de dos etapas funciona con el caché de registro de modo que:
 

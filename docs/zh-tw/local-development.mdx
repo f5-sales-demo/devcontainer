@@ -15,7 +15,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 ## 複製儲存庫
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/devcontainer.git
+git clone https://github.com/f5-sales-demo/devcontainer.git
 cd devcontainer
 ```
 
@@ -212,7 +212,7 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## 建置快取
 
-CI 使用**基於登錄檔的快取**——建置層儲存在 GHCR（`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`）中，而非 GitHub Actions 快取。這避免了 10 GB GHA 快取限制，該限制曾導致此約 6 GB 多架構映像頻繁進行完整重新建置。
+CI 使用**基於登錄檔的快取**——建置層儲存在 GHCR（`ghcr.io/f5-sales-demo/devcontainer:cache-*`）中，而非 GitHub Actions 快取。這避免了 10 GB GHA 快取限制，該限制曾導致此約 6 GB 多架構映像頻繁進行完整重新建置。
 
 兩階段架構與登錄檔快取協同運作，使得：
 

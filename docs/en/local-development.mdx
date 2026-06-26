@@ -12,7 +12,7 @@ This page is for developers who want to clone the repository, build the image lo
 ## Clone the Repository
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/devcontainer.git
+git clone https://github.com/f5-sales-demo/devcontainer.git
 cd devcontainer
 ```
 
@@ -209,7 +209,7 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## Build Cache
 
-CI uses **registry-based caching** — build layers are stored in GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) instead of the GitHub Actions cache. This avoids the 10 GB GHA cache limit that caused frequent full rebuilds for this ~6 GB multi-architecture image.
+CI uses **registry-based caching** — build layers are stored in GHCR (`ghcr.io/f5-sales-demo/devcontainer:cache-*`) instead of the GitHub Actions cache. This avoids the 10 GB GHA cache limit that caused frequent full rebuilds for this ~6 GB multi-architecture image.
 
 The two-stage architecture works with the registry cache so that:
 

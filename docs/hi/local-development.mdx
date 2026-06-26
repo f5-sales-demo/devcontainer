@@ -17,7 +17,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 ## रिपॉजिटरी क्लोन करें
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/devcontainer.git
+git clone https://github.com/f5-sales-demo/devcontainer.git
 cd devcontainer
 ```
 
@@ -214,7 +214,7 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 ## बिल्ड कैश
 
-CI **रजिस्ट्री-आधारित कैशिंग** का उपयोग करता है — बिल्ड लेयर GitHub Actions कैश के बजाय GHCR (`ghcr.io/f5xc-salesdemos/devcontainer:cache-*`) में संग्रहीत होती हैं। यह 10 GB GHA कैश सीमा से बचाता है जो इस ~6 GB मल्टी-आर्किटेक्चर इमेज के लिए बार-बार पूर्ण रीबिल्ड का कारण बनती थी।
+CI **रजिस्ट्री-आधारित कैशिंग** का उपयोग करता है — बिल्ड लेयर GitHub Actions कैश के बजाय GHCR (`ghcr.io/f5-sales-demo/devcontainer:cache-*`) में संग्रहीत होती हैं। यह 10 GB GHA कैश सीमा से बचाता है जो इस ~6 GB मल्टी-आर्किटेक्चर इमेज के लिए बार-बार पूर्ण रीबिल्ड का कारण बनती थी।
 
 दो-चरण आर्किटेक्चर रजिस्ट्री कैश के साथ इस प्रकार काम करता है:
 
