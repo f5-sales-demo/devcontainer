@@ -26,9 +26,11 @@ on:
     - cron: "0 5 * * *"
   workflow_dispatch:
 
+# Least privilege by default. `packages: write` is granted only on the two jobs that
+# actually publish to GHCR (`build` pushes per-arch images by digest, `merge` pushes the
+# multi-arch manifest). `smoke-test` only pulls, so it gets `packages: read`.
 permissions:
   contents: read
-  packages: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,6 +43,10 @@ jobs:
   # ── Main image: build each arch natively in parallel ──
   build:
     runs-on: ${{ matrix.runner }}
+    # Pushes per-arch images to GHCR by digest.
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -88,10 +94,12 @@ jobs:
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
+        env:
+          RUNNER_TEMP_DIR: ${{ runner.temp }}
+          BUILD_DIGEST: ${{ steps.build.outputs.digest }}
         run: |
-          mkdir -p ${{ runner.temp }}/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+          mkdir -p "${RUNNER_TEMP_DIR}/digests"
+          touch "${RUNNER_TEMP_DIR}/digests/${BUILD_DIGEST#sha256:}"
 
       - name: Upload digest
         uses: actions/upload-artifact@v7
@@ -105,6 +113,10 @@ jobs:
   merge:
     runs-on: ubuntu-latest
     needs: build
+    # Pushes the multi-arch manifest to GHCR.
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Download digests
         uses: actions/download-artifact@v8
@@ -146,6 +158,10 @@ jobs:
   smoke-test:
     runs-on: ubuntu-24.04-arm
     needs: merge
+    # Only pulls the published image; no write scope needed.
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Checkout
         uses: actions/checkout@v7
