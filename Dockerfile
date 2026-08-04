@@ -1370,14 +1370,10 @@ RUN PLUGIN_BASE="/home/${USERNAME}/.claude/plugins" \
     && retry git clone --depth=1 --single-branch --branch main \
         https://github.com/f5-sales-demo/marketplace.git \
         "${PLUGIN_BASE}/marketplaces/f5-sales-demo-marketplace" \
-    && retry git clone --depth=1 --single-branch --branch main \
-        https://github.com/f5-sales-demo/codex-plugin-cc.git \
-        "${PLUGIN_BASE}/marketplaces/openai-codex" \
     && TS="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
-    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"f5-sales-demo-marketplace":{"source":{"source":"github","repo":"f5-sales-demo/marketplace"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"openai-codex":{"source":{"source":"github","repo":"f5-sales-demo/codex-plugin-cc"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":false}}' \
+    && printf '{"claude-plugins-official":{"source":{"source":"github","repo":"anthropics/claude-plugins-official"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true},"f5-sales-demo-marketplace":{"source":{"source":"github","repo":"f5-sales-demo/marketplace"},"installLocation":"%s","lastUpdated":"%s","autoUpdate":true}}' \
         "${PLUGIN_BASE}/marketplaces/claude-plugins-official" "$TS" \
         "${PLUGIN_BASE}/marketplaces/f5-sales-demo-marketplace" "$TS" \
-        "${PLUGIN_BASE}/marketplaces/openai-codex" "$TS" \
         > "${PLUGIN_BASE}/known_marketplaces.json" \
     && printf '{"fetchedAt":"%s","plugins":[]}' "$TS" \
         > "${PLUGIN_BASE}/blocklist.json" \
