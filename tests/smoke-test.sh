@@ -360,6 +360,12 @@ CS=$(run cat /home/vscode/.claude/settings.json)
 assert_contains "Claude: sonnet model in settings" "$CS" "claude-sonnet-4-6"
 assert_contains "Claude: opus model in settings" "$CS" "claude-opus-4-6"
 assert_contains "Claude: haiku model in settings" "$CS" "claude-haiku-4-5"
+assert_not_contains "Claude: deprecated code-review plugin absent" "$CS" "code-review@claude-plugins-official"
+assert_not_contains "Claude: deprecated PR-review plugin absent" "$CS" "pr-review-toolkit@claude-plugins-official"
+assert_not_contains "Claude: Codex bridge plugin absent" "$CS" "codex@openai-codex"
+assert_not_contains "Claude: no configured stop gate" "$CS" '"Stop"'
+KNOWN_MARKETPLACES=$(run cat /home/vscode/.claude/plugins/known_marketplaces.json)
+assert_not_contains "Claude: deprecated Codex marketplace absent" "$KNOWN_MARKETPLACES" "openai-codex"
 CJ=$(run cat /home/vscode/.claude.json)
 assert_contains "Claude: auto-approve key" "$CJ" "customApiKeyResponses"
 

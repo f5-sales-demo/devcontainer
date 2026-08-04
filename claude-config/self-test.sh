@@ -217,6 +217,16 @@ check "f5xc marketplace.json in cache" \
   test -f "$HOME/.claude/plugins/marketplaces/f5-sales-demo-marketplace/.claude-plugin/marketplace.json"
 check "known_marketplaces.json exists" \
   test -f "$HOME/.claude/plugins/known_marketplaces.json"
+check "deprecated review plugins are not enabled" \
+  jq -e '
+    .enabledPlugins["code-review@claude-plugins-official"] == null and
+    .enabledPlugins["pr-review-toolkit@claude-plugins-official"] == null and
+    .enabledPlugins["codex@openai-codex"] == null
+  ' "$HOME/.claude/settings.json"
+check "deprecated Codex marketplace is absent" \
+  jq -e '.["openai-codex"] == null' "$HOME/.claude/plugins/known_marketplaces.json"
+check "no configured Claude stop gate" \
+  jq -e '(.hooks.Stop // []) | length == 0' "$HOME/.claude/settings.json"
 check "installed_plugins.json exists" \
   test -f "$HOME/.claude/plugins/installed_plugins.json"
 check "official plugin cache populated" \
