@@ -23,7 +23,7 @@ Isolated development environment with AI coding tools
 
 ## Documentation
 
-Full documentation is available at **[https://f5-sales-demo.github.io/devcontainer/](https://f5-sales-demo.github.io/devcontainer/)**.
+Full documentation is available at __[https://f5-sales-demo.github.io/devcontainer/](https://f5-sales-demo.github.io/devcontainer/)__.
 
 ## Contributing
 
