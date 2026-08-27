@@ -40,13 +40,45 @@ env:
   MAIN_IMAGE: ghcr.io/f5-sales-demo/devcontainer
 
 jobs:
+  trust-gate:
+    name: Authorize Docker publication
+    runs-on: managed-socketless
+    permissions: {}
+    steps:
+      - name: Require a trusted publication event
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          REF_PROTECTED: ${{ github.ref_protected }}
+        run: |
+          set -euo pipefail
+          case "$EVENT_NAME" in
+            schedule | workflow_dispatch) exit 0 ;;
+            push)
+              if [[ "$REF" == "refs/heads/$DEFAULT_BRANCH" && "$REF_PROTECTED" == "true" ]]; then
+                exit 0
+              fi
+              ;;
+          esac
+          echo "::error::Docker publication requires manual dispatch, schedule, or a protected default-branch push."
+          exit 1
+
   # ── Main image: build each arch natively in parallel ──
   build-amd64:
-    runs-on: [self-hosted, Linux, X64, devcontainer, container-build]
+    name: Build and push linux/amd64 image
+    needs: trust-gate
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'push' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      github.ref_protected == true)
+    runs-on: managed-container-build
     # Pushes per-arch images to GHCR by digest.
     permissions:
       contents: read
-      packages: write
+      packages: write # Pushes the linux/amd64 image and registry cache to GHCR.
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -102,11 +134,19 @@ jobs:
           retention-days: 1
 
   build-arm64:
+    name: Build and push linux/arm64 image
+    needs: trust-gate
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'push' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      github.ref_protected == true)
     runs-on: ubuntu-24.04-arm
     # Pushes per-arch images to GHCR by digest.
     permissions:
       contents: read
-      packages: write
+      packages: write # Pushes the linux/arm64 image and registry cache to GHCR.
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -163,12 +203,19 @@ jobs:
 
   # ── Merge per-arch digests into a multi-arch manifest ──
   merge:
-    runs-on: [self-hosted, Linux, X64, devcontainer, container-build]
+    name: Publish multi-architecture manifest
+    runs-on: managed-container-build
     needs: [build-amd64, build-arm64]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'push' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      github.ref_protected == true)
     # Pushes the multi-arch manifest to GHCR.
     permissions:
       contents: read
-      packages: write
+      packages: write # Publishes the multi-architecture manifest to GHCR.
     steps:
       - name: Download digests
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -199,21 +246,24 @@ jobs:
 
       - name: Create and push manifest
         working-directory: ${{ runner.temp }}/digests
+        env:
+          IMAGE: ${{ env.MAIN_IMAGE }}
         run: |
           tags=$(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON")
-          sources=$(printf '${{ env.MAIN_IMAGE }}@sha256:%s ' *)
+          sources=$(printf "${IMAGE}@sha256:%s " *)
           # shellcheck disable=SC2086
           docker buildx imagetools create $tags $sources
 
 
   # ── Post-build smoke test (render-only in CI, no VPN/API keys) ──
   smoke-test-arm64:
+    name: Smoke-test published linux/arm64 image
     runs-on: ubuntu-24.04-arm
     needs: merge
     # Only pulls the published image; no write scope needed.
     permissions:
       contents: read
-      packages: read
+      packages: read # Pulls the private published image from GHCR for validation.
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -228,7 +278,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull published image
-        run: docker pull ${{ env.MAIN_IMAGE }}:latest
+        env:
+          IMAGE: ${{ env.MAIN_IMAGE }}
+        run: docker pull "${IMAGE}:latest"
 
       - name: Run smoke test (render-only)
-        run: ./tests/smoke-test.sh ${{ env.MAIN_IMAGE }}:latest
+        env:
+          IMAGE: ${{ env.MAIN_IMAGE }}
+        run: ./tests/smoke-test.sh "${IMAGE}:latest"
