@@ -27,7 +27,7 @@ You need a container runtime on your machine. Either Docker or Podman will work.
 <TabItem label="Docker">
 
 | Platform | Install |
-|----------|---------|
+| ---------- | --------- |
 | macOS | [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) |
 | Windows | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) (WSL2 backend) |
 | Linux | [Docker Engine](https://docs.docker.com/engine/install/) or [Docker Desktop for Linux](https://docs.docker.com/desktop/install/linux/) |
@@ -43,7 +43,7 @@ docker compose version
 <TabItem label="Podman">
 
 | Platform | Install |
-|----------|---------|
+| ---------- | --------- |
 | macOS | [Podman Desktop for Mac](https://podman-desktop.io/docs/installation/macos-install) |
 | Windows | [Podman Desktop for Windows](https://podman-desktop.io/docs/installation/windows-install) |
 | Linux | [Podman](https://podman.io/docs/installation#installing-on-linux) + [Podman Compose](https://github.com/containers/podman-compose#installation) |
@@ -61,6 +61,7 @@ Podman on Linux runs containers directly (no VM). Ensure the Podman socket is ac
 ```bash
 systemctl --user enable --now podman.socket
 ```
+
 :::
 
 </TabItem>
@@ -69,7 +70,7 @@ systemctl --user enable --now podman.socket
 ### System Resources
 
 | Resource | Minimum | Recommended |
-|----------|---------|-------------|
+| ---------- | --------- | ------------- |
 | Disk | 5 GB | 10 GB+ |
 | RAM | 8 GB allocated to container runtime | 12 GB+ |
 | CPU | 2 cores | 4+ cores |
@@ -277,5 +278,3 @@ Your code in `/workspace` and home directory persist across restarts. See [Confi
 ---
 
 For local builds and Dockerfile customization, see [Local Development](./local-development). For VS Code integration, see [VS Code](./vscode). For remote display options, see [Remote Display (noVNC)](./vnc).
-
-<!-- linked-issue verification: #1782 -->
