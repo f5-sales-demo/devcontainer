@@ -156,7 +156,7 @@ services:
     environment:
       - TZ=America/Toronto
       - GIT_AUTHOR_NAME=Smoke Tester
-      - GIT_AUTHOR_EMAIL=smoke@test.local
+      - GIT_AUTHOR_EMAIL=smoke@example.com
       - SSH_PRIVATE_KEY=\${SSH_PRIVATE_KEY:-}
       - GH_TOKEN=test-gh-token-12345
       - GITLAB_TOKEN=\${GITLAB_TOKEN:-}
@@ -244,7 +244,24 @@ for _wait in $(seq 1 90); do
   sleep 1
 done
 unset _wait
-sleep 5
+
+# The environment receipt is written before the entrypoint finishes rendering
+# client configuration.  Wait for the two files checked below so a slow first
+# boot is not reported as a configuration regression merely because the
+# assertions raced the remaining entrypoint setup.
+for _config_wait in $(seq 1 30); do
+  if run grep -Fq "${TEST_URL}/openai/v1" /home/vscode/.codex/config.toml &&
+    run grep -Fq "${TEST_URL}/anthropic" /home/vscode/.config/crush/crush.json; then
+    break
+  fi
+  if ! "$RT" inspect "$CONTAINER" --format '{{.State.Running}}' 2>/dev/null | grep -q true; then
+    echo "ERROR: container exited before client configuration rendered" >&2
+    "$RT" logs "$CONTAINER" 2>&1 | tail -30 >&2
+    exit 1
+  fi
+  sleep 1
+done
+unset _config_wait
 
 # ============================================================
 # 1. Entrypoint env rendering (always runs — real or dummy values)
@@ -269,7 +286,7 @@ assert_contains "ANTHROPIC_DEFAULT_HAIKU_MODEL" "$ENV_FILE" "claude-haiku-4-5"
 assert_contains "ANTHROPIC_DEFAULT_SONNET_MODEL" "$ENV_FILE" "claude-sonnet-4-6"
 assert_contains "ANTHROPIC_DEFAULT_OPUS_MODEL" "$ENV_FILE" "claude-opus-4-6"
 assert_contains "GIT_COMMITTER_NAME derived" "$ENV_FILE" "GIT_COMMITTER_NAME="
-assert_contains "GIT_COMMITTER_EMAIL derived" "$ENV_FILE" "GIT_COMMITTER_EMAIL=smoke@test.local"
+assert_contains "GIT_COMMITTER_EMAIL derived" "$ENV_FILE" "GIT_COMMITTER_EMAIL=smoke@example.com"
 
 assert_contains "PI_DEFAULT_MODEL set" "$ENV_FILE" "PI_DEFAULT_MODEL=anthropic/claude-sonnet-4-6"
 assert_contains "PI_SMOL_MODEL set" "$ENV_FILE" "PI_SMOL_MODEL=anthropic/claude-haiku-4-5"
@@ -313,7 +330,7 @@ echo "-----------"
 assert_eq "TZ=EDT" "$(run date +%Z)" "EDT"
 assert_eq "GH_TOKEN" "$(run printenv GH_TOKEN)" "test-gh-token-12345"
 assert_eq "git user.name" "$(run git config --global user.name)" "Smoke Tester"
-assert_eq "git user.email" "$(run git config --global user.email)" "smoke@test.local"
+assert_eq "git user.email" "$(run git config --global user.email)" "smoke@example.com"
 assert_eq "HOME=/home/vscode" "$(run printenv HOME)" "/home/vscode"
 assert_eq "user=vscode" "$(run whoami)" "vscode"
 

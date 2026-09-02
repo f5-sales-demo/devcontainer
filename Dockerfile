@@ -400,6 +400,22 @@ RUN if command -v browsh >/dev/null 2>&1; then \
     fi
 
 
+# The final-stage configuration payload is intentionally allowlisted.  Keeping
+# its assembly in a scratch stage means its many source copies do not add to
+# the published image's overlay2 layer stack.
+FROM scratch AS tail-config
+COPY claude-config/ /payload/claude-config/
+COPY codex-config/ /payload/codex-config/
+COPY pi-config/ /payload/pi-config/
+COPY omp-config/ /payload/omp-config/
+COPY opencode-config/ /payload/opencode-config/
+COPY hermes-config/ /payload/hermes-config/
+COPY crush-config/ /payload/crush-config/
+COPY maki-config/ /payload/maki-config/
+COPY kilocode-config/ /payload/kilocode-config/
+COPY .devcontainer/scripts/ /payload/.devcontainer/scripts/
+COPY scripts/nightly-update.sh /payload/scripts/nightly-update.sh
+
 # ╔════════════════════════════════════════════════════════════╗
 # ║  Stage 2: final  (volatile tools + user setup, ~1.5 GB)  ║
 # ║  Changes to tools here don't rebuild the deps stage.      ║
@@ -544,8 +560,8 @@ RUN true \
     # gogcli (resolve version — asset name contains version)
     && GOGCLI_VERSION=$(ghlatest steipete/gogcli) \
     && install-release gog \
-        "https://github.com/steipete/gogcli/releases/latest/download/gogcli_${GOGCLI_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
-        tgz-bin gog \
+        "https://github.com/steipete/gogcli/releases/download/v${GOGCLI_VERSION}/gogcli_${GOGCLI_VERSION}_linux_${DPKG_ARCH}.tar.gz" \
+        tgz-bin gog ./gog \
     # glab — GitLab CLI (resolve version from GitLab permalink redirect)
     && GLAB_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
         "https://gitlab.com/gitlab-org/cli/-/releases/permalink/latest" | sed 's|.*/||;s|^v||') \
@@ -814,7 +830,7 @@ RUN true \
     && DALFOX_VERSION=$(ghlatest hahwul/dalfox) \
     && install-release dalfox \
         "https://github.com/hahwul/dalfox/releases/download/v${DALFOX_VERSION}/dalfox-v${DALFOX_VERSION}-linux-${DALFOX_ARCH}.tar.gz" \
-        tgz-bin dalfox \
+        tgz-bin dalfox "dalfox-v${DALFOX_VERSION}-linux-${DALFOX_ARCH}/dalfox" \
     # --- Domain & URL enumeration ---
     && install-release amass \
         "https://github.com/owasp-amass/amass/releases/latest/download/amass_linux_${DPKG_ARCH}.tar.gz" \
@@ -1484,18 +1500,20 @@ ENV FORCE_AUTOUPDATE_PLUGINS=true \
 
 # Consolidated root block: bun symlinks, npm cleanup, chrome symlink, linuxbrew dir
 USER root
-RUN ln -s /home/vscode/.bun/bin/bun /usr/local/bin/bun \
+RUN LINUXBREW_HOME="$(dirname "/home/${USERNAME}")/linuxbrew" \
+    && ln -s /home/vscode/.bun/bin/bun /usr/local/bin/bun \
     && ln -s /home/vscode/.bun/bin/bunx /usr/local/bin/bunx \
     && npm uninstall -g @anthropic-ai/claude-code \
     && CHROME_BIN="$(find /home/vscode/.cache/ms-playwright \
         -name chrome -path '*/chromium-*/chrome-linux*/chrome' -print -quit)" \
     && mkdir -p /opt/google/chrome \
     && ln -sf "$CHROME_BIN" /opt/google/chrome/chrome \
-    && mkdir -p /home/linuxbrew && chown ${USERNAME}:${USERNAME} /home/linuxbrew
+    && mkdir -p "$LINUXBREW_HOME" && chown ${USERNAME}:${USERNAME} "$LINUXBREW_HOME"
 USER $USERNAME
 
 # hadolint ignore=DL3059
 RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
+    && LINUXBREW_HOME="$(dirname "/home/${USERNAME}")/linuxbrew" \
     && if [ "$UNAME_ARCH" = "x86_64" ]; then AIR_ARCH="x86_64"; else AIR_ARCH="aarch64"; fi \
     && curl ${CURL_RETRY} -fsSL \
       "https://github.com/posit-dev/air/releases/latest/download/air-${AIR_ARCH}-unknown-linux-gnu.tar.gz" \
@@ -1520,13 +1538,13 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) && UNAME_ARCH=$(uname -m) \
       && unzip -qo /tmp/ormolu.zip ormolu -d /tmp \
       && rm /tmp/ormolu.zip; \
     else \
-      mkdir -p /home/linuxbrew/.linuxbrew \
+      mkdir -p "$LINUXBREW_HOME/.linuxbrew" \
       && NONINTERACTIVE=1 /bin/bash -c "$(curl ${CURL_RETRY} -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" 2>&1 | grep -v "is not in your PATH" \
-      && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
+      && eval "$("$LINUXBREW_HOME/.linuxbrew/bin/brew" shellenv)" \
       && brew install nixfmt ormolu \
       && brew cleanup --prune=all -s \
-      && cp /home/linuxbrew/.linuxbrew/bin/nixfmt /tmp/nixfmt \
-      && cp /home/linuxbrew/.linuxbrew/bin/ormolu /tmp/ormolu; \
+      && cp "$LINUXBREW_HOME/.linuxbrew/bin/nixfmt" /tmp/nixfmt \
+      && cp "$LINUXBREW_HOME/.linuxbrew/bin/ormolu" /tmp/ormolu; \
     fi
 
 USER root
@@ -1655,52 +1673,58 @@ RUN retry bash /tmp/setup-nvim.sh && rm /tmp/setup-nvim.sh \
 # ============================================================
 USER root
 
-# --- System-wide scripts and managed policy ---
-COPY claude-config/self-test.sh \
-     claude-config/statusline.sh \
-     claude-config/subagent-statusline.sh \
-     claude-config/api-key-helper.sh \
-     claude-config/install-plugins.sh \
-     claude-config/neutralize-hooks.sh \
-     /opt/claude-config/
-COPY claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md
-COPY claude-config/chrome-browser.sh /usr/local/lib/chrome-browser.sh
-COPY .devcontainer/scripts/post-start.sh scripts/nightly-update.sh /opt/devcontainer/
-RUN chmod +x /opt/claude-config/self-test.sh \
-      /usr/local/lib/chrome-browser.sh \
-      /opt/claude-config/statusline.sh /opt/claude-config/subagent-statusline.sh \
-      /opt/claude-config/api-key-helper.sh \
-      /opt/claude-config/install-plugins.sh \
-      /opt/claude-config/neutralize-hooks.sh \
-      /opt/devcontainer/post-start.sh \
-      /opt/devcontainer/nightly-update.sh \
+# Copy the allowlisted tail payload once, then install every file at the same
+# path, mode, and owner as the former COPY instructions.  User ownership is
+# established before the USER ${USERNAME} sync step; relying on the later
+# recursive chown caused the reverted broad-context attempt to regress.
+COPY --from=tail-config /payload/ /tmp/tail-config/
+# hadolint ignore=DL3059
+RUN set -eu \
+    && install -d -o ${USERNAME} -g ${USERNAME} -m 755 \
+      /home/${USERNAME}/.claude \
+      /home/${USERNAME}/.codex \
+      /home/${USERNAME}/.pi/agent \
+      /home/${USERNAME}/.omp/agent \
+      /home/${USERNAME}/.config/opencode \
+      /home/${USERNAME}/.hermes \
+      /home/${USERNAME}/.config/crush \
+      /home/${USERNAME}/.maki/providers \
+      /home/${USERNAME}/.config/kilo \
+    && install -D -m 755 /tmp/tail-config/claude-config/self-test.sh /opt/claude-config/self-test.sh \
+    && install -D -m 755 /tmp/tail-config/claude-config/statusline.sh /opt/claude-config/statusline.sh \
+    && install -D -m 755 /tmp/tail-config/claude-config/subagent-statusline.sh /opt/claude-config/subagent-statusline.sh \
+    && install -D -m 755 /tmp/tail-config/claude-config/api-key-helper.sh /opt/claude-config/api-key-helper.sh \
+    && install -D -m 755 /tmp/tail-config/claude-config/install-plugins.sh /opt/claude-config/install-plugins.sh \
+    && install -D -m 755 /tmp/tail-config/claude-config/neutralize-hooks.sh /opt/claude-config/neutralize-hooks.sh \
+    && install -D -m 755 /tmp/tail-config/claude-config/chrome-browser.sh /usr/local/lib/chrome-browser.sh \
+    && install -D -m 755 /tmp/tail-config/.devcontainer/scripts/post-start.sh /opt/devcontainer/post-start.sh \
+    && install -D -m 755 /tmp/tail-config/scripts/nightly-update.sh /opt/devcontainer/nightly-update.sh \
+    && install -D -m 755 /tmp/tail-config/codex-config/sync-agents.sh /opt/codex-config/sync-agents.sh \
+    && install -D -m 644 /tmp/tail-config/claude-config/CLAUDE.md /etc/claude-code/CLAUDE.md \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/claude-config/settings.json /home/${USERNAME}/.claude/settings.json \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/claude-config/user-CLAUDE.md /home/${USERNAME}/.claude/CLAUDE.md \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/claude-config/claude.json /home/${USERNAME}/.claude.json \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/codex-config/config.toml /home/${USERNAME}/.codex/config.toml \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/omp-config/settings.json /home/${USERNAME}/.omp/agent/settings.json \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/omp-config/config.yml /home/${USERNAME}/.omp/agent/config.yml \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/opencode-config/opencode.json /home/${USERNAME}/.config/opencode/opencode.json \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/opencode-config/oh-my-openagent.json /home/${USERNAME}/.config/opencode/oh-my-openagent.json \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/opencode-config/opencode-permissions.json /home/${USERNAME}/.config/opencode/opencode-permissions.json \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/crush-config/crush.json /home/${USERNAME}/.config/crush/crush.json \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 755 /tmp/tail-config/maki-config/litellm /home/${USERNAME}/.maki/providers/litellm \
+    && install -D -o ${USERNAME} -g ${USERNAME} -m 644 /tmp/tail-config/kilocode-config/kilo.jsonc /home/${USERNAME}/.config/kilo/kilo.jsonc \
     && ln -s /opt/claude-config/self-test.sh /usr/local/bin/claude-self-test \
     && mkdir -p /etc/claude-code/.claude/rules \
-    && echo "0 3 * * * /opt/devcontainer/nightly-update.sh" \
-      | crontab -u ${USERNAME} -
-
-# --- Claude Code: settings.json + claude.json → final $HOME paths ---
-COPY --chown=${USERNAME}:${USERNAME} claude-config/settings.json claude-config/user-CLAUDE.md /home/${USERNAME}/.claude/
-COPY --chown=${USERNAME}:${USERNAME} claude-config/claude.json /home/${USERNAME}/.claude.json
-
-
-
-# --- Codex + Pi + Hermes: bake static defaults ---
-COPY --chown=${USERNAME}:${USERNAME} codex-config/config.toml /home/${USERNAME}/.codex/config.toml
-COPY --chown=${USERNAME}:${USERNAME} codex-config/sync-agents.sh /opt/codex-config/sync-agents.sh
+    && echo "0 3 * * * /opt/devcontainer/nightly-update.sh" | crontab -u ${USERNAME} - \
+    && rm -rf /tmp/tail-config
 
 # 17a. Sync Claude Code plugin agents → Codex .toml format
 USER $USERNAME
 # hadolint ignore=DL3059
-RUN chmod +x /opt/codex-config/sync-agents.sh && /opt/codex-config/sync-agents.sh
+RUN /opt/codex-config/sync-agents.sh
 USER root
-COPY --chown=${USERNAME}:${USERNAME} pi-config/settings.json /home/${USERNAME}/.pi/agent/settings.json
-COPY --chown=${USERNAME}:${USERNAME} omp-config/settings.json omp-config/config.yml /home/${USERNAME}/.omp/agent/
-COPY --chown=${USERNAME}:${USERNAME} opencode-config/opencode.json opencode-config/oh-my-openagent.json opencode-config/opencode-permissions.json /home/${USERNAME}/.config/opencode/
-COPY --chown=${USERNAME}:${USERNAME} hermes-config/config.yaml /home/${USERNAME}/.hermes/config.yaml
-COPY --chown=${USERNAME}:${USERNAME} crush-config/crush.json /home/${USERNAME}/.config/crush/crush.json
-COPY --chown=${USERNAME}:${USERNAME} maki-config/litellm /home/${USERNAME}/.maki/providers/litellm
-COPY --chown=${USERNAME}:${USERNAME} kilocode-config/kilo.jsonc /home/${USERNAME}/.config/kilo/kilo.jsonc
 
 # ────────────────────────────────────────────────────────────
 # OpenCode npm pre-warm: pre-install base SDK and plugin deps
