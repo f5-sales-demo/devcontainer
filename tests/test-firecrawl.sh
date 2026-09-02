@@ -6,6 +6,29 @@ set -euo pipefail
 PASS=0
 FAIL=0
 
+stack_available=true
+if ! command -v redis-cli >/dev/null 2>&1 || ! redis-cli -p 6379 ping >/dev/null 2>&1; then
+  stack_available=false
+fi
+if ! command -v pg_isready >/dev/null 2>&1 ||
+  ! pg_isready -h /var/run/postgresql -q >/dev/null 2>&1; then
+  stack_available=false
+fi
+if ! command -v curl >/dev/null 2>&1 ||
+  ! curl -sf --connect-timeout 2 http://localhost:3000/health >/dev/null 2>&1; then
+  stack_available=false
+fi
+if ! command -v curl >/dev/null 2>&1 ||
+  ! curl -sf --connect-timeout 2 http://localhost:3002/ >/dev/null 2>&1; then
+  stack_available=false
+fi
+
+if [ "$stack_available" != true ]; then
+  echo "::notice::Firecrawl stack is incomplete; skipping live-service integration tests"
+  echo "Set up the devcontainer stack before running this test for integration coverage."
+  exit 0
+fi
+
 check() {
   local desc="$1"
   shift
