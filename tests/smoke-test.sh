@@ -250,8 +250,8 @@ unset _wait
 # boot is not reported as a configuration regression merely because the
 # assertions raced the remaining entrypoint setup.
 for _config_wait in $(seq 1 30); do
-  if run grep -Fq "${TEST_URL}/openai/v1" /home/vscode/.codex/config.toml \
-    && run grep -Fq "${TEST_URL}/anthropic" /home/vscode/.config/crush/crush.json; then
+  if run grep -Fq "${TEST_URL}/openai/v1" /home/vscode/.codex/config.toml &&
+    run grep -Fq "${TEST_URL}/anthropic" /home/vscode/.config/crush/crush.json; then
     break
   fi
   if ! "$RT" inspect "$CONTAINER" --format '{{.State.Running}}' 2>/dev/null | grep -q true; then
