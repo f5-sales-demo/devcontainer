@@ -1301,23 +1301,6 @@ RUN retry git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/te
         /opt/docker-bench-security/.git /opt/recon-ng/.git /opt/spiderfoot/.git
 
 # ============================================================
-# 12j. ATT&CK Navigator (MITRE threat matrix visualization)
-#      Angular app — built at image time, served as static files.
-# ============================================================
-# hadolint ignore=DL3059
-# trivy:ignore:DS-0013
-RUN retry git clone --depth=1 https://github.com/mitre-attack/attack-navigator.git /tmp/attack-navigator \
-    && cd /tmp/attack-navigator/nav-app \
-    && npm ci --ignore-scripts \
-    && NODE_OPTIONS="--max-old-space-size=4096" npx ng build --configuration production 2>&1 | grep -v "chunkSizeWarningLimit" \
-    && mkdir -p /opt/attack-navigator \
-    && cp -r dist/browser/* /opt/attack-navigator/ \
-    && rm -rf /tmp/attack-navigator \
-    && printf '#!/bin/sh\necho "ATT&CK Navigator: http://localhost:${1:-4200}"\nexec npx serve /opt/attack-navigator -l ${1:-4200} -s\n' \
-      > /usr/local/bin/attack-navigator \
-    && chmod +x /usr/local/bin/attack-navigator
-
-# ============================================================
 # 12k. CALDERA (MITRE adversary emulation platform)
 #      Installed in /opt/caldera with isolated Python 3.12 venv.
 #      Runs on port 8888 (HTTP) / 8443 (HTTPS).

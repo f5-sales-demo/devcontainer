@@ -190,7 +190,6 @@ check "wpscan installed" command -v wpscan
 check "evil-winrm installed" command -v evil-winrm
 # MITRE ATT&CK tools
 check "mitreattack-python installed" python3 -c "import mitreattack"
-check "ATT&CK Navigator installed" test -d /opt/attack-navigator
 check "CALDERA installed" test -f /opt/caldera/server.py
 # Architecture-conditional (amd64 only)
 if [ "$DPKG_ARCH" = "amd64" ]; then
