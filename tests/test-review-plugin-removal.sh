@@ -19,4 +19,11 @@ if grep -Eq 'f5-sales-demo/codex-plugin-cc|marketplaces/openai-codex|"openai-cod
   exit 1
 fi
 
-echo "Deprecated Claude/Codex review plugins and stop gates are absent"
+for source in "${DOCKERFILE}" "${REPO_ROOT}/claude-config/self-test.sh"; do
+  if grep -Eqi 'attack-navigator|ATT&CK Navigator' "${source}"; then
+    echo "Optional ATT&CK Navigator integration remains in ${source}" >&2
+    exit 1
+  fi
+done
+
+echo "Deprecated optional review and Navigator integrations are absent"
