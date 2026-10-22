@@ -12,14 +12,18 @@
       ".github/workflows/translation-audit.yml",
       ".github/workflows/workflow-security-audit.yml",
       ".github/workflows/require-linked-issue.yml",
-      ".github/workflows/github-pages-deploy.yml"
+      ".github/workflows/github-pages-deploy.yml",
+      ".gitignore",
+      ".pre-commit-config.yaml",
+      ".github/workflows/antigravity-review.yml",
+      "scripts/lint-mdx-prose.sh"
     ],
     "xcsh-action": ["README.md"],
     "terraform-provider-xcsh": [".github/workflows/translation-audit.yml", "scripts/locale-lint.sh"],
     "api-specs": [".ruff.toml", ".python-lint", ".mypy.ini"],
     "api-specs-enriched": [".ruff.toml", ".python-lint", ".mypy.ini", ".github/workflows/github-pages-deploy.yml"],
     "vscode-xcsh": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg", "README.md"],
-    "docs": [
+    "f5-sales-demo.github.io": [
       ".github/workflows/auto-merge.yml",
       ".github/workflows/translation-audit.yml",
       ".github/workflows/workflow-security-audit.yml",
@@ -49,6 +53,14 @@
       ".github/workflows/github-pages-deploy.yml",
       ".github/workflows/super-linter.yml"
     ],
+    "html-to-markdown": [
+      "README.md",
+      "LICENSE",
+      ".ruff.toml",
+      ".mypy.ini",
+      ".gitignore",
+      ".github/workflows/github-pages-deploy.yml"
+    ],
     "i18n-core": [
       ".ruff.toml",
       ".mypy.ini",
@@ -62,7 +74,7 @@
       ".github/workflows/super-linter.yml",
       ".github/workflows/semgrep.yml"
     ],
-    "console": [".ruff.toml", ".mypy.ini", ".isort.cfg"],
+    "console": [".mypy.ini", ".isort.cfg"],
     "xcsh-chrome-extension": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],
     "apt-repo": ["README.md"],
     "demo-resource-template": ["README.md"],
@@ -77,9 +89,14 @@
       ".github/workflows/super-linter.yml"
     ],
     "starlight-mega-menu": ["README.md"],
-    "traffic-generator": ["README.md"]
+    "traffic-generator": ["README.md"],
+    "blindfold-contract": ["README.md"]
   },
   "protected_files": [
+    ".github/workflows/certificate-wingman-image.yml",
+    ".github/workflows/certificate-current-artifacts-pr.yml",
+    ".github/workflows/certificate-current-artifacts.yml",
+    ".github/workflows/github-pages-config-sources.yml",
     ".github/workflows/github-pages-deploy.yml",
     ".github/workflows/reconcile-fleet-content.yml",
     ".github/workflows/reconcile-fleet-settings.yml",
@@ -134,6 +151,11 @@
     "scripts/locale-lint.sh",
     "scripts/agy-review.sh",
     "scripts/agy-review-output.schema.json",
+    "scripts/agy_review.py",
+    "scripts/agy_review_report.py",
+    "scripts/agy_review_catastrophe.py",
+    "scripts/agy-model-policy.json",
+    "scripts/agy-review-policy.txt",
     "scripts/run-with-progress.sh",
     "scripts/collect-antigravity-fleet-state.sh",
     "scripts/github-api-resilience.cjs",
@@ -185,6 +207,7 @@
       "administration": "content",
       "api-protection": "content",
       "api-specs": "developer",
+      "blindfold-contract": "developer",
       "api-specs-enriched": "developer",
       "apt-repo": "scaffolding",
       "bot-advanced": "content",
@@ -198,11 +221,12 @@
       "demo-resources": "content",
       "devcontainer": "scaffolding",
       "dns": "content",
-      "docs": "content",
+      "f5-sales-demo.github.io": "content",
       "docs-builder": "developer",
       "docs-control": "scaffolding",
       "docs-icons": "developer",
       "docs-theme": "developer",
+      "html-to-markdown": "developer",
       "i18n-core": "developer",
       "marketplace": "developer",
       "marketplace-claude-code": "developer",
@@ -212,15 +236,19 @@
       "origin-server": "content",
       "starlight-llms-txt": "developer",
       "starlight-mega-menu": "developer",
+      "statistics": "content",
+      "certificate-management": "content",
       "terraform-provider-xcsh": "developer",
       "traffic-generator": "content",
       "vscode-xcsh": "developer",
-      "waf": "content",
       "was": "content",
       "webapp-api-protection": "content",
       "xcsh": "developer",
       "xcsh-action": "developer",
-      "xcsh-chrome-extension": "developer"
+      "xcsh-chrome-extension": "developer",
+      "canada": "content",
+      "custom-responses": "content",
+      "gitops": "content"
     }
   }
 }

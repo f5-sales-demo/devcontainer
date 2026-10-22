@@ -17,6 +17,9 @@
     "**/internal/provider/**",
     "**/*_pairs.py",
     "**/templates/**",
-    "**/docs/**"
+    "**/docs/**",
+    "**/documentation/**",
+    "**/shared/assets/**",
+    "**/shared/v*/releases/**"
   ]
 }
