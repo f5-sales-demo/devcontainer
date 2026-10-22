@@ -29,6 +29,14 @@ check() {
   fi
 }
 
+# GNU chmod preserves inherited setgid bits on shared directories. Verify the
+# required access permissions separately from these ownership-related bits.
+directory_access_permissions() {
+  local mode
+  mode=$(stat -c '%a' -- "$1") || return 1
+  printf '%s\n' "${mode: -3}"
+}
+
 # ── Mock environment helpers ──────────────────────────────────────
 MOCK_HOME=""
 
@@ -156,14 +164,14 @@ teardown_mock_env
 echo ""
 echo "2. Basic Neutralization"
 
-# Test 5: non-enabled plugin hooks.json → {} with 444/555 perms
+# Test 5: non-enabled plugin hooks.json → {} with 444 file/755 directory access
 setup_mock_env
 create_mock_mkt_plugin "test-mkt" "gamma" '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo bad"}]}]}}'
 source_neutralize_fn
 HOME="$MOCK_HOME" neutralize_non_enabled_hooks
 CONTENT=$(cat "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks/hooks.json")
 FPERMS=$(stat -c '%a' "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks/hooks.json" 2>/dev/null)
-DPERMS=$(stat -c '%a' "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks" 2>/dev/null)
+DPERMS=$(directory_access_permissions "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks" 2>/dev/null)
 check "non-enabled plugin hooks.json neutralized to {}" \
   test "$CONTENT" = "{}"
 check "non-enabled plugin hooks.json perms 444" \
@@ -226,7 +234,7 @@ echo "3. Staging Marketplace"
 setup_mock_env
 mkdir -p "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt.staging/plugins"
 create_mock_mkt_plugin "test-mkt.staging" "alpha" '{"hooks":{"PreToolUse":[]}}'
-# alpha@test-mkt is enabled, but alpha@test-mkt.staging is NOT
+# alpha is enabled in test-mkt; its staging marketplace copy is disabled.
 source_neutralize_fn
 HOME="$MOCK_HOME" neutralize_non_enabled_hooks
 CONTENT=$(cat "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt.staging/plugins/alpha/hooks/hooks.json")
@@ -403,7 +411,7 @@ setup_mock_env
 create_mock_mkt_plugin "test-mkt" "gamma" '{"hooks":{"SessionStart":[]}}'
 if [ -f "$SCRIPT" ]; then
   HOME="$MOCK_HOME" bash "$SCRIPT" 2>/dev/null
-  DPERMS=$(stat -c '%a' "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks" 2>/dev/null)
+  DPERMS=$(directory_access_permissions "${MOCK_HOME}/.claude/plugins/marketplaces/test-mkt/plugins/gamma/hooks" 2>/dev/null)
   check "neutralized hooks dir has 755 (not 555)" test "$DPERMS" = "755"
 else
   echo "  FAIL: neutralize-hooks.sh not found"
