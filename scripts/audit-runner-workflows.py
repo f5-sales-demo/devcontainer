@@ -17,6 +17,7 @@ import yaml  # pylint: disable=import-error
 SHA_RE = re.compile(r"[0-9a-f]{40}")
 RUNNER_IMAGE_PREFIX = r"ghcr\.io/f5-sales-demo/self-hosted-runner@sha256:"
 IMAGE_DIGEST_RE = re.compile(RUNNER_IMAGE_PREFIX + r"[0-9a-f]{64}")
+CLOUD_MACHINE_RE = re.compile(r"(?:Standard_[A-Za-z0-9_]+|[a-z][a-z0-9]*[.][a-z0-9]+)")
 SAFE_RUNNER_LABEL_RE = re.compile(r"[a-z0-9][a-z0-9.-]*")
 CANONICAL_REPOSITORY_LABEL = "${{ github.event.repository.name }}"
 PULL_REQUEST_EVENT = "github.event_name == 'pull_request' && "
@@ -31,8 +32,9 @@ BENCHMARK_TRUST_GUARD = (
 )
 TRUSTED_COMPUTE_ROUTE_EXPRESSIONS = {
     "terraform-provider-xcsh-compute": (
-        "${{ github.event.pull_request.head.repo.full_name == github.repository && "
-        "'terraform-provider-xcsh-compute' || 'ubuntu-latest' }}"
+        "${{ github.event_name == 'pull_request' && "
+        "github.event.pull_request.head.repo.full_name != github.repository && "
+        "'ubuntu-latest' || 'terraform-provider-xcsh-compute' }}"
     ),
 }
 CALLABLE_DOCKER_GUARD = (
@@ -115,6 +117,22 @@ XCSH_CANDIDATE_RESTRICTED_GRANTS = {
 # fmt: off
 XCSH_CANDIDATE_GRANT_IDENTITIES = frozenset().union(*XCSH_CANDIDATE_RESTRICTED_GRANTS.values())
 # fmt: on
+PROVIDER_REPOSITORY = "f5-sales-demo/terraform-provider-xcsh"
+PROVIDER_BENCHMARK_WORKFLOW = ".github/workflows/workload-benchmark.yml"
+PROVIDER_CANDIDATE_LABEL = "terraform-provider-xcsh-32vcpu-candidate"
+PROVIDER_MANUAL_COMPUTE_ROUTE_EXPRESSION = "${{ needs.validate.outputs.runner_label }}"
+PROVIDER_MANUAL_COMPUTE_ROUTE_LABELS = {
+    "eks-candidate": frozenset({"terraform-provider-xcsh-compute"}),
+}
+# fmt: off
+PROVIDER_CANDIDATE_GRANT_IDENTITIES = frozenset(
+    (PROVIDER_REPOSITORY, PROVIDER_BENCHMARK_WORKFLOW, job_id)
+    for job_id in PROVIDER_MANUAL_COMPUTE_ROUTE_LABELS
+)
+CANDIDATE_GRANT_IDENTITIES = (
+    XCSH_CANDIDATE_GRANT_IDENTITIES | PROVIDER_CANDIDATE_GRANT_IDENTITIES
+)
+# fmt: on
 DOCS_ICONS_REPOSITORY = "f5-sales-demo/docs-icons"
 DOCS_SOCKETLESS_ROUTE_EXPRESSION = "${{ github.repository == 'f5-sales-demo/docs-icons' && 'docs-socketless' || 'managed-socketless' }}"  # fmt: skip
 DOCS_SOCKETLESS_ROUTE_LABELS = {DOCS_ICONS_REPOSITORY: "docs-socketless"}
@@ -157,7 +175,7 @@ REUSABLE_DEFINITION_ROUTES = {
 DOCS_ARC_COHORT = frozenset(
     f"f5-sales-demo/{name}"
     for name in (
-        "docs",
+        "f5-sales-demo.github.io",
         "docs-builder",
         "docs-icons",
         "docs-theme",
@@ -178,22 +196,28 @@ MANAGED_ARC_COHORT = frozenset(
         "cdn-simulator",
         "console",
         "csd",
+        "custom-responses",
         "ddos",
         "demo-resource-template",
         "demo-resources",
         "devcontainer",
         "dns",
         "docs-control",
+        "html-to-markdown",
         "marketplace",
         "marketplace-claude-code",
         "multi-cloud-networking",
+        "canada",
         "nginx",
         "observability",
         "origin-server",
         "starlight-mega-menu",
+        "statistics",
+        "gitops",
+        "certificate-management",
+        "blindfold-contract",
         "traffic-generator",
         "vscode-xcsh",
-        "waf",
         "was",
         "webapp-api-protection",
         "xcsh-action",
@@ -201,6 +225,20 @@ MANAGED_ARC_COHORT = frozenset(
     )
 )
 ARC_SHARED_CONTRACTS = (
+    (
+        frozenset({"f5-sales-demo/gitops"}),
+        {
+            "socketless": {"label": "managed-socketless", "profile": "ubuntu-24.04"},
+            "container-build": {
+                "label": "managed-container-build",
+                "profile": "container-build",
+            },
+            "terraform": {
+                "label": "gitops-terraform",
+                "attestation": "gitops-terraform",
+            },
+        },
+    ),
     (
         DOCS_ARC_COHORT,
         {
@@ -289,14 +327,22 @@ XCSH_CANDIDATE_SCALE_SETS = {
         "attestation": "xcsh-compute-f32-candidate",
     },
 }
+PROVIDER_CANDIDATE_SCALE_SETS = {
+    "compute-32-vcpu-density-candidate": {
+        "label": "terraform-provider-xcsh-32vcpu-candidate",
+        "attestation": "terraform-provider-xcsh-32vcpu-candidate",
+    },
+}
 RESERVED_ARC_LABELS = frozenset(
     {
+        "gitops-terraform",
         "api-specs-enriched-compute",
         "docs-container-build",
         "docs-socketless",
         "managed-container-build",
         "managed-socketless",
         "terraform-provider-xcsh-compute",
+        "terraform-provider-xcsh-32vcpu-candidate",
         "xcsh-container-build",
         "xcsh-compute",
         "xcsh-compute-16-vcpu-candidate",
@@ -319,9 +365,13 @@ def arc_scale_sets_match_contract(repository, scale_sets):
     expected = expected_arc_scale_sets(repository)
     if scale_sets == expected:
         return True
-    if repository != XCSH_REPOSITORY or expected is None:
+    if expected is None:
         return False
-    return scale_sets == {**expected, **XCSH_CANDIDATE_SCALE_SETS}
+    if repository == XCSH_REPOSITORY:
+        return scale_sets == {**expected, **XCSH_CANDIDATE_SCALE_SETS}
+    if repository == PROVIDER_REPOSITORY:
+        return scale_sets == {**expected, **PROVIDER_CANDIDATE_SCALE_SETS}
+    return False
 
 
 def validate_xcsh_candidate_grants(repository, scale_sets, restricted_routes):
@@ -345,6 +395,26 @@ def validate_xcsh_candidate_grants(repository, scale_sets, restricted_routes):
             raise AuditError(f"xcsh candidate grants are invalid for {label}")
 
 
+def validate_provider_candidate_grants(repository, scale_sets, restricted_routes):
+    expected_scale_sets = expected_arc_scale_sets(repository)
+    candidate_contract = (
+        repository == PROVIDER_REPOSITORY
+        and expected_scale_sets is not None
+        and scale_sets == {**expected_scale_sets, **PROVIDER_CANDIDATE_SCALE_SETS}
+    )
+    if not candidate_contract:
+        return
+    expected = {(PROVIDER_REPOSITORY, PROVIDER_BENCHMARK_WORKFLOW, "eks-candidate")}
+    grants = (restricted_routes or {}).get(PROVIDER_CANDIDATE_LABEL, [])
+    actual = {
+        (grant.get("repository"), grant.get("workflow"), grant.get("job"))
+        for grant in grants
+        if isinstance(grant, dict)
+    }
+    if actual != expected:
+        raise AuditError("provider candidate grants are invalid")
+
+
 class AuditError(ValueError):
     """A deterministic workflow policy violation."""
 
@@ -355,7 +425,26 @@ def workflow_on(value):
 
 def benchmark_trust_guard_is_allowed(repository, relative, job_id, route_label, guard):
     """Require the generic same-repository guard for direct restricted routes."""
-    del repository, relative, job_id, route_label
+    if route_label == "gitops-terraform":
+        expected_events = {
+            (".github/workflows/terraform-deploy.yml", "deploy"): "push",
+            (".github/workflows/terraform-cleanup.yml", "cleanup"): "delete",
+        }
+        event = expected_events.get((relative, job_id))
+        expected_guard = (
+            "github.repository == 'f5-sales-demo/gitops' && "
+            f"(github.event_name == '{event}' || github.event_name == 'workflow_dispatch')"
+        )
+        if event == "push":
+            create_guard = expected_guard.replace(
+                "github.event_name == 'push' ||",
+                "github.event_name == 'push' || (github.event_name == 'create' && github.event.ref_type == 'branch') ||",
+            )
+            # Keep the current push/manual deployment valid during fleet rollout.
+            if guard == create_guard:
+                guard = expected_guard
+        identity_matches = repository == "f5-sales-demo/gitops" and event is not None
+        return identity_matches and guard == expected_guard
     return guard == BENCHMARK_TRUST_GUARD
 
 
@@ -415,7 +504,7 @@ def validate_arc_attestations(policy):
             not isinstance(spec["runner_profile"], str)
             or not SAFE_RUNNER_LABEL_RE.fullmatch(spec["runner_profile"])
             or not isinstance(spec["vm_size"], str)
-            or not spec["vm_size"].startswith("Standard_")
+            or not CLOUD_MACHINE_RE.fullmatch(spec["vm_size"])
             or not isinstance(spec["cpu_limit"], int)
             or spec["cpu_limit"] <= 0
             or not isinstance(spec["memory_limit_bytes"], int)
@@ -453,7 +542,7 @@ def validate_arc_attestations(policy):
 def remote_dependency(value):
     if not isinstance(value, str):
         raise AuditError(f"uses must be a string, got {value!r}")
-    if value.startswith(("./", "docker://")):
+    if value.startswith(("./", "$/", "docker://")):
         return None
     if "@" not in value:
         raise AuditError(f"remote action has no revision: {value}")
@@ -540,6 +629,11 @@ def repository_routes(policy, repository):
             scale_sets,
             policy.get("restricted_routes"),
         )
+        validate_provider_candidate_grants(
+            repository,
+            scale_sets,
+            policy.get("restricted_routes"),
+        )
         if expected is None:
             leaked = set(profiles_by_label) & RESERVED_ARC_LABELS
             if leaked:
@@ -602,9 +696,30 @@ def canonical_route_label(value, repository):
     return value
 
 
+def scoped_route_label(repository, relative, job_id, value):
+    """Resolve the exact fork-isolated provider shell job and no other context."""
+    expression = "${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'managed-socketless' }}"
+    if (
+        repository == PROVIDER_REPOSITORY
+        and relative == ".github/workflows/ci.yml"
+        and job_id == "validate-shell-scripts"
+        and value == expression
+    ):
+        return "managed-socketless"
+    return value
+
+
 def trusted_dynamic_route_labels(repository, relative, job_id, runs_on, workflow):
-    """Resolve the one manual xcsh route expression in its exact job context."""
+    """Resolve exact manual benchmark route expressions in their job context."""
     triggers = workflow_on(workflow)
+    if (
+        repository == PROVIDER_REPOSITORY
+        and relative == PROVIDER_BENCHMARK_WORKFLOW
+        and runs_on == PROVIDER_MANUAL_COMPUTE_ROUTE_EXPRESSION
+        and isinstance(triggers, dict)
+        and set(triggers) == {"workflow_dispatch"}
+    ):
+        return PROVIDER_MANUAL_COMPUTE_ROUTE_LABELS.get(job_id)
     if (
         repository != XCSH_REPOSITORY
         or relative != XCSH_COMPUTE_WORKFLOW
@@ -862,7 +977,7 @@ def audit_job(  # noqa: PLR0917
                 f"{relative}/{job_id}: reusable-workflow job cannot set runs-on",
             )
         return errors
-    runs_on = job.get("runs-on")
+    runs_on = scoped_route_label(repository, relative, job_id, job.get("runs-on"))
     exception = exception_for(exceptions, relative, job_id)
     if exception is not None:
         allowed = exception.get("runs_on") if isinstance(exception, dict) else None
@@ -889,15 +1004,23 @@ def audit_job(  # noqa: PLR0917
             runs_on,
             workflow,
         )
-        is_candidate_job = identity in XCSH_CANDIDATE_GRANT_IDENTITIES
-        is_manual_route = runs_on == XCSH_MANUAL_COMPUTE_ROUTE_EXPRESSION
+        is_candidate_job = identity in CANDIDATE_GRANT_IDENTITIES
+        is_manual_route = isinstance(runs_on, str) and runs_on in {
+            XCSH_MANUAL_COMPUTE_ROUTE_EXPRESSION,
+            PROVIDER_MANUAL_COMPUTE_ROUTE_EXPRESSION,
+        }
         if is_candidate_job and not is_manual_route:
-            message = "xcsh candidate job requires the exact manual route expression"
+            message = "candidate job requires the exact manual route expression"
             errors.append(f"{relative}/{job_id}: {message}")
         if is_manual_route and dynamic_route_labels is None:
-            message = "xcsh manual route requires its workflow_dispatch job context"
+            message = "manual route requires its workflow_dispatch job context"
             errors.append(f"{relative}/{job_id}: {message}")
-        resolved_profile = profile_for_route(runs_on, profiles, routes, repository)
+        resolved_profile = profile_for_route(
+            runs_on,
+            profiles,
+            routes,
+            repository,
+        )
         if dynamic_route_labels is not None:
             profiles_by_label = routes["profiles_by_label"]
             dynamic_profiles = set(map(profiles_by_label.get, dynamic_route_labels))
@@ -913,7 +1036,10 @@ def audit_job(  # noqa: PLR0917
             errors.append(
                 f"{relative}/{job_id}: runs-on must use the canonical repository route, got {runs_on!r}",
             )
-        canonical_label = canonical_route_label(runs_on, repository)
+        canonical_label = canonical_route_label(
+            runs_on,
+            repository,
+        )
         route_labels = dynamic_route_labels or frozenset({canonical_label})
         for route_label in route_labels:
             grants = routes.get("restricted_grants", {}).get(route_label)
@@ -1005,7 +1131,13 @@ def audit_repository(root, repository, policy_path):
     for workflow, jobs in exceptions.items():
         for job_id in jobs:
             declared_exceptions.add((workflow, job_id))
-    for workflow, job_id in sorted(declared_exceptions - actual_exceptions):
+    staged_exceptions = set()
+    is_provider = repository == PROVIDER_REPOSITORY
+    route_labels = routes.get("profiles_by_label", {})
+    if is_provider and PROVIDER_CANDIDATE_LABEL in route_labels:
+        staged_exceptions.add((PROVIDER_BENCHMARK_WORKFLOW, "hosted-serial"))
+    unused_exceptions = declared_exceptions - actual_exceptions - staged_exceptions
+    for workflow, job_id in sorted(unused_exceptions):
         errors.append(f"unused hosted exception: {workflow}/{job_id}")
     return errors
 

@@ -122,25 +122,32 @@ Use short, culture-neutral given names with a surname initial: `Dana R.`, `Kiran
   otherwise. Do not assign gender to roles.
 - Do not distribute names by stereotype. The security engineer, the finance approver, and the
   attacker in a scenario should not be drawn from predictable demographics.
-- Never cast a real colleague, customer contact, or executive as an example persona — not even
-  favorably, and not in internal drafts.
+- Never cast a real colleague, customer contact, or executive as an example persona.
 
 ### Email addresses
 
 A placeholder name at a reserved domain: `dana@example.com`, `kiran.m@example.net`. Role
 addresses are fine: `security@example.com`, `noreply@example.com`.
 
-### Never use real customer data
+### Keep public content synthetic
 
-This applies to internal drafts, demo tenants, and screenshots, not only to published work. When
-you need realistic-looking data, generate it. A sanitized real dataset is still a real dataset;
-treat removal of identifying details as unreliable and synthesis as the default.
+Every repository example, template, and fixture remains fictional or placeholder-based. Generate
+realistic-looking data for public documentation, demo tenants, screenshots, issues, pull requests,
+logs, telemetry, and other published evidence. A sanitized real dataset is still a real dataset;
+treat removal of identifying details as unreliable and synthesis as the public-content default.
+
+Private local drafts and installed-tool outputs may contain authorized real customer data when a
+workflow requires it. This includes model context and user-selected local files containing names,
+contact details, account names, customer relationship management identifiers, correspondence, or
+source-system data. Authorization from the organization or source system is sufficient; the tool
+does not need to add a second authorization mode or activation gate. Keep that data within the
+operator's approved access and retention boundary, and never copy it into Git or public artifacts.
 
 ### Personally identifiable information across the repository
 
-The same rule applies outside prose. Do not commit personally identifiable information (PII) to
-source code, fixtures, test snapshots, generated files, logs, telemetry examples, error output,
-media metadata, filenames, or commit messages. PII includes direct identifiers and values that can
+Do not commit personally identifiable information (PII) to source code, fixtures, test snapshots,
+generated files, logs, telemetry examples, error output, media metadata, filenames, or commit
+messages. PII includes direct identifiers and values that can
 identify or single out a party when combined:
 
 - Real names, person-specific email addresses, phone numbers, postal addresses, avatars, and
@@ -156,11 +163,15 @@ describe the system. Preserve legally required license and copyright notices, au
 upstream attribution, and normal Git or GitHub contributor provenance. These are narrow provenance
 exceptions, not permission to reuse their values as examples or fixtures.
 
-Demo and lab software does not need a person's profile. Remove name, email, avatar, address, and
-similar inputs and outputs unless the behavior genuinely cannot work without them. Authentication
-may use a provider-issued opaque subject only for the active authorization decision. Do not log it,
-expose it in errors, or persist it unless the design documents why persistence is indispensable and
-how access and deletion are controlled.
+Repository PII sweeps replace stored personal values with synthetic data; they do not remove
+collection functions, inspection commands, profile interfaces, authentication behavior, or schema
+field names that support authorized private workflows. Source aliases and type declarations describe
+the system; literal personal values in source fixtures, comments, generated content, and serialized
+records remain subject to the publication boundary.
+
+Minimize personal data that a workflow does not need. Keep authorized private runtime processing,
+including provider identity and profile persistence, within the operator's approved access and
+retention boundary. Do not copy private values into published logs, telemetry, errors, or evidence.
 
 Use the managed scanner as a first pass; it cannot prove that free-form prose or pixels are clean:
 
@@ -207,6 +218,38 @@ When output genuinely must be shown:
 - Or replace the value with the placeholder form above.
 - For certificate and key material, generate a throwaway self-signed pair specifically for the
   document and say so in a note. Never excerpt from a real chain.
+
+### Shared personalized examples
+
+Use `XCSH_` for guide environment variables and `<XCSH_VARIABLE_NAME>` for
+canonical authoring placeholders. The browser also supports legacy
+`xXCSH_VARIABLE_NAMEx` during adoption.
+
+Common fields are `XCSH_API_URL`, `XCSH_API_TOKEN`, `XCSH_NAMESPACE`,
+`XCSH_LB_NAME`, and `XCSH_DOMAINNAME`. Select these names from the shared
+docs-builder field catalog in a version 2 `docs/placeholders.json` manifest.
+Use `example-corp` for tenant examples, `demo-app` for namespaces, reserved
+`example.com` subdomains, and the role-specific documentation address ranges
+above. Credentials and account identifiers use angle-bracket placeholders.
+
+Keep DNS zones (`XCSH_DNS_ZONE`), application hostnames
+(`XCSH_DOMAINNAME`), origin identities, and repository-specific fields distinct.
+Preserve native tool inputs such as `TF_VAR_*`; map guide values to those inputs.
+Calculate query times and discover telemetry identities rather than adding them
+to the form.
+
+Annotate runnable shell blocks with `data-xcsh-context="shell"` and
+`data-xcsh-fields="XCSH_API_URL XCSH_NAMESPACE"` on a surrounding `div`.
+The displayed and copied block includes shell-quoted exports of those fields.
+Use `data-xcsh-context="json"` or `"hcl"` for structured templates.
+Protect historical measurements with `data-personalize="off"`.
+Keep downloadable scripts dependent on exported configuration; browser edits
+must never change download bytes, static Markdown, or machine content.
+
+Reader edits to noncredential fields share one versioned browser-origin record.
+Untouched fields retain guide defaults. Credentials use tab-session storage,
+never persistent storage. Show separate reset-shared-values and clear-credentials
+controls and explain browser storage behavior.
 
 ### Tenant, namespace, and account identifiers
 

@@ -8,26 +8,33 @@ self-hosted-runner:
     - api-specs-enriched-compute
     - apt-repo
     - automation
+    - blindfold-contract
     - bot-advanced
     - bot-standard
+    - canada
     - cdn
     - cdn-simulator
+    - certificate-management
     - console
     - container-build
     - csd
+    - custom-responses
     - ddos
     - demo-resource-template
     - demo-resources
     - devcontainer
     - dns
-    - docs
     - docs-builder
     - docs-container-build
     - docs-control
     - docs-icons
     - docs-socketless
     - docs-theme
+    - f5-sales-demo.github.io
     - fixture
+    - gitops
+    - gitops-terraform
+    - html-to-markdown
     - i18n-core
     - macos-15-intel
     - managed-container-build
@@ -40,12 +47,13 @@ self-hosted-runner:
     - origin-server
     - starlight-llms-txt
     - starlight-mega-menu
+    - statistics
     - terraform-provider-xcsh
+    - terraform-provider-xcsh-32vcpu-candidate
     - terraform-provider-xcsh-compute
     - traffic-generator
     - ubuntu-24.04-arm
     - vscode-xcsh
-    - waf
     - was
     - webapp-api-protection
     - xcsh
